@@ -50,15 +50,80 @@
     }
 
     .cm-bet-console {
-        padding: 14px 18px !important;
+        padding: 10px 16px !important;
+    }
+
+    .cm-countdown-card, .cm-last-result-card {
+        padding: 10px 16px !important;
+        border-radius: 16px !important;
+    }
+
+    .cm-dial-wrapper {
+        width: 68px !important;
+        height: 68px !important;
+    }
+
+    .cm-sphere-ball {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    .cm-ball-num {
+        font-size: 24px !important;
+    }
+
+    .cm-crystal-btn {
+        padding: 8px 8px 6px !important;
+        gap: 3px !important;
+    }
+
+    .cm-gem-frame {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .cm-crystal-title {
+        font-size: 14px !important;
+    }
+
+    .cm-crystal-badge {
+        font-size: 10px !important;
+        padding: 1px 8px !important;
+    }
+
+    .cm-numbers-sphere-grid {
+        gap: 8px !important;
+    }
+
+    .cm-num-sphere {
+        padding: 8px 0 !important;
+        border-radius: 12px !important;
+    }
+
+    .cm-sphere-text {
+        font-size: 20px !important;
+    }
+
+    .cm-pocket-btn {
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .cm-pocket-title {
+        font-size: 15px !important;
+    }
+
+    .cm-section-header {
+        margin-bottom: 4px !important;
+        margin-top: 6px !important;
     }
 
     .cm-chips-dock {
-        padding: 14px 18px !important;
+        padding: 12px 16px !important;
     }
 
     .cm-tab-panel {
-        max-height: 180px !important;
+        max-height: 170px !important;
         overflow-y: auto;
     }
 }
