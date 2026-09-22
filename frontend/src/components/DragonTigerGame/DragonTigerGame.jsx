@@ -85,6 +85,15 @@ function DragonTigerGame() {
         setBets({ dragon: 0, tie: 0, tiger: 0 })
     }
 
+    const doubleBets = () => {
+        if (isDealing || totalBet === 0 || totalBet * 2 > balance) return
+        setBets(prev => ({
+            dragon: prev.dragon * 2,
+            tie: prev.tie * 2,
+            tiger: prev.tiger * 2
+        }))
+    }
+
     // Deal Round
     const dealCards = useCallback(() => {
         if (isDealing || totalBet <= 0 || totalBet > balance) return
@@ -146,9 +155,16 @@ function DragonTigerGame() {
                 <div className="dt-felt">
                     {/* Road Map History Header */}
                     <div className="dt-roadmap">
-                        <span className="dt-roadmap-label">Roadmap:</span>
+                        <div className="dt-roadmap-header-line">
+                            <span className="dt-roadmap-label">Macau Bead Roadmap</span>
+                            <div className="dt-streak-stats">
+                                <span className="stat-pill stat-dragon">D: {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%</span>
+                                <span className="stat-pill stat-tiger">T: {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%</span>
+                                <span className="stat-pill stat-tie">Tie: {Math.round(((history.filter(h => h.winner === 'tie').length) / (history.length || 1)) * 100)}%</span>
+                            </div>
+                        </div>
                         <div className="dt-roadmap-beads">
-                            {history.slice(0, 14).map((h, i) => (
+                            {history.slice(0, 18).map((h, i) => (
                                 <div key={i} className={`dt-bead ${h.winner}`}>
                                     {h.winner === 'dragon' ? 'D' : (h.winner === 'tiger' ? 'T' : 'Tie')}
                                 </div>
@@ -271,6 +287,13 @@ function DragonTigerGame() {
                             className="dt-clear-btn"
                         >
                             Clear
+                        </Button>
+                        <Button
+                            onClick={doubleBets}
+                            disabled={isDealing || totalBet === 0 || totalBet * 2 > balance}
+                            className="dt-clear-btn dt-double-btn"
+                        >
+                            2X Double
                         </Button>
                         <Button
                             type="primary"

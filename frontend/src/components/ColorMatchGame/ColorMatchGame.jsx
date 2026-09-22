@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Typography, Modal, Statistic, Row, Col, Badge } from 'antd'
+import { Button, Typography, Modal, Tabs, message } from 'antd'
 import {
     SafetyCertificateOutlined,
-    HistoryOutlined,
     ClockCircleOutlined,
     TrophyOutlined,
     UndoOutlined,
-    FireOutlined
+    FireOutlined,
+    LineChartOutlined,
+    HistoryOutlined,
+    UserOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import './ColorMatchGame.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 // Number color mapping:
 // 1, 3, 7, 9 = Green
@@ -32,6 +35,7 @@ const NUMBER_DATA = [
 ]
 
 const CHIP_PRESETS = [10, 50, 100, 500, 1000, 5000]
+const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
 
 // Web Audio sound generator
 function playTone(freq, duration, type = 'sine') {
@@ -55,21 +59,23 @@ function playTone(freq, duration, type = 'sine') {
 function ColorMatchGame() {
     const { balance, currencySymbol, placeBet, addWinnings, notifyWin, notifyLoss } = useWallet()
 
-    // Period and Timer (30s cycle)
-    const [periodId, setPeriodId] = useState(202609220045)
+    // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
+    const [gameMode, setGameMode] = useState('30s')
+    const [periodId, setPeriodId] = useState(202609220058)
     const [timeLeft, setTimeLeft] = useState(25)
+    const [maxTime, setMaxTime] = useState(30)
     const [isLocked, setIsLocked] = useState(false)
     const [isDrawing, setIsDrawing] = useState(false)
 
     // Current bet selection
     const [selectedChip, setSelectedChip] = useState(100)
-    // bets structure: { green: 0, violet: 0, red: 0, big: 0, small: 0, num_0: 0, ... num_9: 0 }
+    const [activeMultiplier, setActiveMultiplier] = useState(1)
     const [bets, setBets] = useState({})
 
     // Current draw display
     const [displayNum, setDisplayNum] = useState(null)
     const [lastDraw, setLastDraw] = useState({
-        period: 202609220044,
+        period: 202609220057,
         num: 7,
         colors: ['green'],
         bigSmall: 'big'
@@ -77,17 +83,21 @@ function ColorMatchGame() {
 
     // History roadmap
     const [history, setHistory] = useState([
-        { period: 202609220044, num: 7, colors: ['green'], bigSmall: 'big' },
-        { period: 202609220043, num: 2, colors: ['red'], bigSmall: 'small' },
-        { period: 202609220042, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
-        { period: 202609220041, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
-        { period: 202609220040, num: 9, colors: ['green'], bigSmall: 'big' },
-        { period: 202609220039, num: 4, colors: ['red'], bigSmall: 'small' },
-        { period: 202609220038, num: 8, colors: ['red'], bigSmall: 'big' },
-        { period: 202609220037, num: 3, colors: ['green'], bigSmall: 'small' },
-        { period: 202609220036, num: 1, colors: ['green'], bigSmall: 'small' },
-        { period: 202609220035, num: 6, colors: ['red'], bigSmall: 'big' },
+        { period: 202609220057, num: 7, colors: ['green'], bigSmall: 'big' },
+        { period: 202609220056, num: 2, colors: ['red'], bigSmall: 'small' },
+        { period: 202609220055, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
+        { period: 202609220054, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
+        { period: 202609220053, num: 9, colors: ['green'], bigSmall: 'big' },
+        { period: 202609220052, num: 4, colors: ['red'], bigSmall: 'small' },
+        { period: 202609220051, num: 8, colors: ['red'], bigSmall: 'big' },
+        { period: 202609220050, num: 3, colors: ['green'], bigSmall: 'small' },
+        { period: 202609220049, num: 1, colors: ['green'], bigSmall: 'small' },
+        { period: 202609220048, num: 6, colors: ['red'], bigSmall: 'big' },
     ])
+
+    // Player personal bets record
+    const [myBets, setMyBets] = useState([])
+    const [activeTab, setActiveTab] = useState('history')
 
     // Modals
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -96,24 +106,25 @@ function ColorMatchGame() {
 
     // Total active stake placed for this round
     const totalStaked = Object.values(bets).reduce((a, b) => a + b, 0)
+    const currentBetAmount = selectedChip * activeMultiplier
 
     // Handle placing chips on betting spots
     const addBet = (spotKey) => {
         if (isLocked || isDrawing) return
 
-        if (balance < selectedChip) {
+        if (balance < currentBetAmount) {
             notifyLoss?.('Insufficient balance to place chip!')
             return
         }
 
         // Deduct from wallet immediately
-        const success = placeBet(selectedChip)
+        const success = placeBet(currentBetAmount)
         if (!success) return
 
-        playTone(520, 0.08)
+        playTone(540, 0.08)
         setBets(prev => ({
             ...prev,
-            [spotKey]: (prev[spotKey] || 0) + selectedChip
+            [spotKey]: (prev[spotKey] || 0) + currentBetAmount
         }))
     }
 
@@ -134,7 +145,7 @@ function ColorMatchGame() {
         const success = placeBet(totalStaked)
         if (!success) return
 
-        playTone(600, 0.1)
+        playTone(620, 0.1)
         setBets(prev => {
             const next = {}
             for (const [k, v] of Object.entries(prev)) {
@@ -154,25 +165,16 @@ function ColorMatchGame() {
         const activeBets = { ...bets }
 
         // 1. Color payouts:
-        // Green: 2x (if pure green), 1.5x (if 5 = violet + green)
-        if (activeBets.green) {
-            if (colors.includes('green')) {
-                const mult = colors.includes('violet') ? 1.5 : 2.0
-                totalWin += activeBets.green * mult
-            }
+        if (activeBets.green && colors.includes('green')) {
+            const mult = colors.includes('violet') ? 1.5 : 2.0
+            totalWin += activeBets.green * mult
         }
-        // Red: 2x (if pure red), 1.5x (if 0 = violet + red)
-        if (activeBets.red) {
-            if (colors.includes('red')) {
-                const mult = colors.includes('violet') ? 1.5 : 2.0
-                totalWin += activeBets.red * mult
-            }
+        if (activeBets.red && colors.includes('red')) {
+            const mult = colors.includes('violet') ? 1.5 : 2.0
+            totalWin += activeBets.red * mult
         }
-        // Violet: 4.5x (if 0 or 5)
-        if (activeBets.violet) {
-            if (colors.includes('violet')) {
-                totalWin += activeBets.violet * 4.5
-            }
+        if (activeBets.violet && colors.includes('violet')) {
+            totalWin += activeBets.violet * 4.5
         }
 
         // 2. Exact Number: 9x payout!
@@ -189,12 +191,26 @@ function ColorMatchGame() {
         // Apply winnings
         if (totalWin > 0) {
             addWinnings(totalWin)
-            notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match Round #${periodId}!`)
+            notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match #${periodId}!`)
             playTone(880, 0.25, 'triangle')
             setTimeout(() => playTone(1100, 0.3, 'triangle'), 150)
         } else if (Object.keys(activeBets).length > 0) {
-            notifyLoss?.(`Round #${periodId} ended. No win this round.`)
+            notifyLoss?.(`Round #${periodId} result: ${winningNum}. Better luck next round!`)
             playTone(220, 0.2, 'sawtooth')
+        }
+
+        // Save round to player history
+        if (Object.keys(activeBets).length > 0) {
+            setMyBets(prev => [
+                {
+                    period: periodId,
+                    stake: totalStaked,
+                    win: totalWin,
+                    resultNum: winningNum,
+                    winStatus: totalWin > 0
+                },
+                ...prev.slice(0, 19)
+            ])
         }
 
         // Add to history
@@ -212,7 +228,7 @@ function ColorMatchGame() {
         setPeriodId(prev => prev + 1)
         setIsDrawing(false)
         setIsLocked(false)
-    }, [bets, periodId, currencySymbol, addWinnings, notifyWin, notifyLoss])
+    }, [bets, periodId, currencySymbol, totalStaked, addWinnings, notifyWin, notifyLoss])
 
     // Trigger Draw Sequence
     const triggerDraw = useCallback(() => {
@@ -238,13 +254,13 @@ function ColorMatchGame() {
         }, 80)
     }, [resolveRound])
 
-    // Countdown Clock Effect (30s)
+    // Countdown Clock Effect
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev <= 1) {
                     triggerDraw()
-                    return 30
+                    return maxTime
                 }
                 const next = prev - 1
                 if (next <= 5) {
@@ -256,27 +272,34 @@ function ColorMatchGame() {
         }, 1000)
 
         return () => clearInterval(timer)
-    }, [triggerDraw])
+    }, [triggerDraw, maxTime])
+
+    // Switch game modes (30s, 1Min, 3Min, 5Min)
+    const handleModeSwitch = (mode, seconds) => {
+        if (isDrawing) return
+        setGameMode(mode)
+        setMaxTime(seconds)
+        setTimeLeft(seconds)
+        setIsLocked(false)
+    }
+
+    // Circular progress stroke for timer
+    const circleRadius = 38
+    const circleCircumference = 2 * Math.PI * circleRadius
+    const strokeDashoffset = circleCircumference - (timeLeft / maxTime) * circleCircumference
 
     return (
-        <div className="color-match-container">
-            {/* Header / Game Info */}
-            <div className="cm-header-card">
-                <div className="cm-period-info">
-                    <span className="cm-label"><FireOutlined style={{ color: '#ffd700' }} /> Period</span>
-                    <span className="cm-period-number">{periodId}</span>
-                </div>
-
-                <div className={`cm-countdown-box ${timeLeft <= 5 ? 'cm-urgent' : ''}`}>
-                    <div className="cm-time-title">
-                        <ClockCircleOutlined /> Time Remaining
-                    </div>
-                    <div className="cm-digital-timer">
-                        00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
+        <div className="color-match-page">
+            {/* VIP Brand Banner */}
+            <div className="cm-top-banner">
+                <div className="cm-banner-left">
+                    <span className="cm-vip-crown">👑</span>
+                    <div>
+                        <div className="cm-brand-title">WIN GO · COLOR MATCH</div>
+                        <div className="cm-brand-subtitle">High-Speed Provably Fair 99% RTP Live Lottery</div>
                     </div>
                 </div>
-
-                <div className="cm-actions-group">
+                <div className="cm-banner-right">
                     <Button
                         type="text"
                         icon={<SafetyCertificateOutlined style={{ color: '#00e676' }} />}
@@ -288,181 +311,280 @@ function ColorMatchGame() {
                 </div>
             </div>
 
-            {/* Lock Notice Overlay Bar */}
-            {isLocked && (
-                <div className="cm-lock-banner">
-                    <span className="cm-lock-pulse"></span>
-                    {isDrawing ? 'DRAWING RESULT...' : 'BETTING CLOSED FOR THIS ROUND'}
-                </div>
-            )}
+            {/* Game Speed Mode Tabs */}
+            <div className="cm-speed-tabs">
+                {[
+                    { id: '30s', label: 'Win Go 30s', sec: 30, icon: '⚡' },
+                    { id: '1m', label: 'Win Go 1Min', sec: 60, icon: '⏱️' },
+                    { id: '3m', label: 'Win Go 3Min', sec: 180, icon: '🎯' },
+                    { id: '5m', label: 'Win Go 5Min', sec: 300, icon: '🏆' }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        className={`cm-speed-tab ${gameMode === tab.id ? 'active' : ''}`}
+                        onClick={() => handleModeSwitch(tab.id, tab.sec)}
+                    >
+                        <span className="cm-tab-icon">{tab.icon}</span>
+                        <span>{tab.label}</span>
+                    </button>
+                ))}
+            </div>
 
-            {/* Live Draw Spotlight */}
-            <div className="cm-spotlight-section">
-                <div className="cm-last-draw-card">
-                    <div className="cm-last-title">LAST RESULT</div>
-                    <div className="cm-last-display">
-                        <div
-                            className={`cm-result-ball ball-${lastDraw.colors[0]} ${lastDraw.colors[1] ? 'ball-split-' + lastDraw.colors[1] : ''}`}
-                        >
-                            {lastDraw.num}
+            {/* Main Stage Grid (Live Countdown + Result Spotlight) */}
+            <div className="cm-stage-grid">
+                {/* Countdown Dial Card */}
+                <div className={`cm-countdown-card ${timeLeft <= 5 ? 'cm-urgent' : ''}`}>
+                    <div className="cm-card-meta">
+                        <div className="cm-meta-period">
+                            <span className="cm-meta-kicker"><FireOutlined style={{ color: '#ffd700' }} /> PERIOD NUMBER</span>
+                            <span className="cm-period-id">#{periodId}</span>
                         </div>
-                        <div className="cm-result-details">
-                            <div className="cm-result-color-tags">
+                    </div>
+
+                    <div className="cm-dial-wrapper">
+                        <svg className="cm-dial-svg" width="100" height="100" viewBox="0 0 100 100">
+                            <circle
+                                className="cm-dial-bg"
+                                cx="50"
+                                cy="50"
+                                r={circleRadius}
+                            />
+                            <circle
+                                className="cm-dial-progress"
+                                cx="50"
+                                cy="50"
+                                r={circleRadius}
+                                strokeDasharray={circleCircumference}
+                                strokeDashoffset={strokeDashoffset}
+                            />
+                        </svg>
+                        <div className="cm-dial-time">
+                            <span className="cm-time-num">00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</span>
+                            <span className="cm-time-lbl">{timeLeft <= 5 ? 'LOCKED' : 'TIME LEFT'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Last Result Showcase Card */}
+                <div className="cm-last-result-card">
+                    <div className="cm-showcase-header">
+                        <span>LAST ROUND OUTCOME</span>
+                        <span className="cm-showcase-period">#{lastDraw.period}</span>
+                    </div>
+
+                    <div className="cm-showcase-body">
+                        <div className={`cm-sphere-ball ball-${lastDraw.colors[0]} ${lastDraw.colors[1] ? 'ball-split-' + lastDraw.colors[1] : ''}`}>
+                            <span className="cm-ball-num">{lastDraw.num}</span>
+                            <div className="cm-ball-sheen"></div>
+                        </div>
+
+                        <div className="cm-showcase-info">
+                            <div className="cm-color-badges">
                                 {lastDraw.colors.map(c => (
-                                    <span key={c} className={`cm-tag tag-${c}`}>{c.toUpperCase()}</span>
+                                    <span key={c} className={`cm-badge-pill pill-${c}`}>
+                                        {c.toUpperCase()}
+                                    </span>
                                 ))}
-                                <span className={`cm-tag tag-bs tag-${lastDraw.bigSmall}`}>
+                                <span className={`cm-badge-pill pill-${lastDraw.bigSmall}`}>
                                     {lastDraw.bigSmall.toUpperCase()}
                                 </span>
                             </div>
-                            <div className="cm-result-period">Period #{lastDraw.period}</div>
+                            <div className="cm-payout-quote">
+                                Winning Outcome: <strong>{lastDraw.colors.join(' + ').toUpperCase()} ({lastDraw.num})</strong>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Animated Draw Stage if Drawing */}
-                {isDrawing && displayNum !== null && (
-                    <div className="cm-draw-stage">
-                        <div className="cm-drawing-label">ROLLING...</div>
-                        <div className="cm-drawing-wheel">
-                            <span className="cm-draw-wheel-num">{displayNum}</span>
+                    {/* Animated Drawing Overlay */}
+                    {isDrawing && displayNum !== null && (
+                        <div className="cm-drawing-curtain">
+                            <div className="cm-drawing-label">ROLLING RESULT...</div>
+                            <div className="cm-drawing-spinner">
+                                <span className="cm-spinner-num">{displayNum}</span>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* Primary Color Bet Area */}
-            <div className="cm-bet-card">
-                <div className="cm-section-label">SELECT COLOR (1.5x - 4.5x)</div>
-                <div className="cm-colors-row">
+            {/* Lock Notice Banner */}
+            {isLocked && (
+                <div className="cm-lock-banner">
+                    <span className="cm-lock-pulse"></span>
+                    <span>{isDrawing ? 'DRAWING LIVE RESULT...' : 'BETTING CLOSED · DRAWING IN PROGRESS'}</span>
+                </div>
+            )}
+
+            {/* Primary Action Console (Colors · Numbers · Big/Small) */}
+            <div className="cm-bet-console">
+                {/* 1. 3D Crystal Color Buttons */}
+                <div className="cm-section-header">
+                    <span>SELECT COLOR</span>
+                    <span className="cm-section-hint">Green 2x · Violet 4.5x · Red 2x</span>
+                </div>
+
+                <div className="cm-color-crystals">
                     <button
-                        className={`cm-color-btn btn-green ${bets.green ? 'active-bet' : ''}`}
+                        className={`cm-crystal-btn btn-green ${bets.green ? 'active-bet' : ''}`}
                         disabled={isLocked || isDrawing}
                         onClick={() => addBet('green')}
                     >
-                        <div className="cm-btn-title">GREEN</div>
-                        <div className="cm-btn-mult">2X / 1.5X</div>
+                        <div className="cm-crystal-icon">💎</div>
+                        <div className="cm-crystal-title">GREEN</div>
+                        <div className="cm-crystal-badge">2X / 1.5X</div>
                         {bets.green > 0 && (
-                            <div className="cm-bet-badge">{currencySymbol}{bets.green}</div>
+                            <div className="cm-staked-badge">{currencySymbol}{bets.green}</div>
                         )}
                     </button>
 
                     <button
-                        className={`cm-color-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
+                        className={`cm-crystal-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
                         disabled={isLocked || isDrawing}
                         onClick={() => addBet('violet')}
                     >
-                        <div className="cm-btn-title">VIOLET</div>
-                        <div className="cm-btn-mult">4.5X</div>
+                        <div className="cm-crystal-icon">🔮</div>
+                        <div className="cm-crystal-title">VIOLET</div>
+                        <div className="cm-crystal-badge">4.5X</div>
                         {bets.violet > 0 && (
-                            <div className="cm-bet-badge">{currencySymbol}{bets.violet}</div>
+                            <div className="cm-staked-badge">{currencySymbol}{bets.violet}</div>
                         )}
                     </button>
 
                     <button
-                        className={`cm-color-btn btn-red ${bets.red ? 'active-bet' : ''}`}
+                        className={`cm-crystal-btn btn-red ${bets.red ? 'active-bet' : ''}`}
                         disabled={isLocked || isDrawing}
                         onClick={() => addBet('red')}
                     >
-                        <div className="cm-btn-title">RED</div>
-                        <div className="cm-btn-mult">2X / 1.5X</div>
+                        <div className="cm-crystal-icon">🔥</div>
+                        <div className="cm-crystal-title">RED</div>
+                        <div className="cm-crystal-badge">2X / 1.5X</div>
                         {bets.red > 0 && (
-                            <div className="cm-bet-badge">{currencySymbol}{bets.red}</div>
+                            <div className="cm-staked-badge">{currencySymbol}{bets.red}</div>
                         )}
                     </button>
                 </div>
 
-                {/* Number Bet Grid (0-9) */}
-                <div className="cm-section-label" style={{ marginTop: 20 }}>SELECT NUMBER (9X PAYOUT)</div>
-                <div className="cm-numbers-grid">
+                {/* 2. 3D Lottery Number Balls Grid (0 to 9) */}
+                <div className="cm-section-header" style={{ marginTop: 24 }}>
+                    <span>SELECT NUMBER (9X PAYOUT)</span>
+                    <span className="cm-section-hint">High Multiplier Direct Hit</span>
+                </div>
+
+                <div className="cm-numbers-sphere-grid">
                     {NUMBER_DATA.map(item => {
                         const key = `num_${item.num}`
                         const isPlaced = bets[key] > 0
                         const bgClass = item.colors.length > 1
-                            ? `num-split-${item.colors[0]}-${item.colors[1]}`
-                            : `num-solid-${item.colors[0]}`
+                            ? `sphere-split-${item.colors[0]}-${item.colors[1]}`
+                            : `sphere-solid-${item.colors[0]}`
 
                         return (
                             <button
                                 key={item.num}
-                                className={`cm-num-btn ${bgClass} ${isPlaced ? 'active-bet' : ''}`}
+                                className={`cm-num-sphere ${bgClass} ${isPlaced ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
                                 onClick={() => addBet(key)}
                             >
-                                <span className="cm-num-text">{item.num}</span>
+                                <span className="cm-sphere-text">{item.num}</span>
+                                <div className="cm-sphere-glare"></div>
                                 {isPlaced && (
-                                    <div className="cm-bet-badge">{currencySymbol}{bets[key]}</div>
+                                    <div className="cm-staked-badge">{currencySymbol}{bets[key]}</div>
                                 )}
                             </button>
                         )
                     })}
                 </div>
 
-                {/* Big / Small Choice */}
-                <div className="cm-section-label" style={{ marginTop: 20 }}>BIG / SMALL (2X)</div>
-                <div className="cm-bigsmall-row">
+                {/* 3. Big / Small Dual Bet Pockets */}
+                <div className="cm-section-header" style={{ marginTop: 24 }}>
+                    <span>BIG / SMALL (2X PAYOUT)</span>
+                    <span className="cm-section-hint">Big (5-9) · Small (0-4)</span>
+                </div>
+
+                <div className="cm-bigsmall-duo">
                     <button
-                        className={`cm-bs-btn btn-big ${bets.big ? 'active-bet' : ''}`}
+                        className={`cm-pocket-btn btn-big ${bets.big ? 'active-bet' : ''}`}
                         disabled={isLocked || isDrawing}
                         onClick={() => addBet('big')}
                     >
-                        <div className="cm-btn-title">BIG (5-9)</div>
-                        <div className="cm-btn-mult">2.0X</div>
+                        <div className="cm-pocket-title">BIG</div>
+                        <div className="cm-pocket-sub">5, 6, 7, 8, 9</div>
+                        <div className="cm-pocket-mult">2.0X</div>
                         {bets.big > 0 && (
-                            <div className="cm-bet-badge">{currencySymbol}{bets.big}</div>
+                            <div className="cm-staked-badge">{currencySymbol}{bets.big}</div>
                         )}
                     </button>
 
                     <button
-                        className={`cm-bs-btn btn-small ${bets.small ? 'active-bet' : ''}`}
+                        className={`cm-pocket-btn btn-small ${bets.small ? 'active-bet' : ''}`}
                         disabled={isLocked || isDrawing}
                         onClick={() => addBet('small')}
                     >
-                        <div className="cm-btn-title">SMALL (0-4)</div>
-                        <div className="cm-btn-mult">2.0X</div>
+                        <div className="cm-pocket-title">SMALL</div>
+                        <div className="cm-pocket-sub">0, 1, 2, 3, 4</div>
+                        <div className="cm-pocket-mult">2.0X</div>
                         {bets.small > 0 && (
-                            <div className="cm-bet-badge">{currencySymbol}{bets.small}</div>
+                            <div className="cm-staked-badge">{currencySymbol}{bets.small}</div>
                         )}
                     </button>
                 </div>
             </div>
 
-            {/* Chip Selector & Action Controls */}
-            <div className="cm-controls-card">
-                <div className="cm-chips-bar">
-                    <span className="cm-chips-label">CHIP VALUE:</span>
-                    <div className="cm-chips-list">
-                        {CHIP_PRESETS.map(val => (
-                            <button
-                                key={val}
-                                className={`cm-chip-btn chip-${val} ${selectedChip === val ? 'selected' : ''}`}
-                                onClick={() => setSelectedChip(val)}
-                            >
-                                {val >= 1000 ? `${val / 1000}k` : val}
-                            </button>
-                        ))}
+            {/* 3D Casino Chips Tray & Multiplier Modifiers */}
+            <div className="cm-chips-dock">
+                <div className="cm-dock-row">
+                    <div className="cm-chips-belt">
+                        <span className="cm-dock-lbl">CHIP:</span>
+                        <div className="cm-chips-carousel">
+                            {CHIP_PRESETS.map(val => (
+                                <button
+                                    key={val}
+                                    type="button"
+                                    className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
+                                    onClick={() => setSelectedChip(val)}
+                                >
+                                    {val >= 1000 ? `${val / 1000}k` : val}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="cm-mult-modifiers">
+                        <span className="cm-dock-lbl">MULTIPLIER:</span>
+                        <div className="cm-mult-pills">
+                            {MULTIPLIERS.map(m => (
+                                <button
+                                    key={m}
+                                    type="button"
+                                    className={`cm-mult-btn ${activeMultiplier === m ? 'active' : ''}`}
+                                    onClick={() => setActiveMultiplier(m)}
+                                >
+                                    X{m}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="cm-bet-summary-row">
-                    <div className="cm-total-stake-box">
-                        <span className="cm-stake-title">TOTAL STAKE:</span>
-                        <span className="cm-stake-amt">{currencySymbol}{totalStaked.toLocaleString()}</span>
+                <div className="cm-summary-bar">
+                    <div className="cm-stake-readout">
+                        <span className="cm-readout-lbl">TOTAL ROUND STAKE</span>
+                        <span className="cm-readout-val">{currencySymbol}{totalStaked.toLocaleString()}</span>
                     </div>
 
-                    <div className="cm-quick-actions">
+                    <div className="cm-dock-actions">
                         <Button
                             icon={<UndoOutlined />}
                             onClick={clearBets}
                             disabled={isLocked || isDrawing || totalStaked === 0}
-                            className="cm-action-btn"
+                            className="cm-ctrl-btn"
                         >
                             Clear
                         </Button>
                         <Button
                             onClick={doubleBets}
                             disabled={isLocked || isDrawing || totalStaked === 0}
-                            className="cm-action-btn"
+                            className="cm-ctrl-btn cm-btn-double"
                         >
                             2X Double
                         </Button>
@@ -470,48 +592,128 @@ function ColorMatchGame() {
                 </div>
             </div>
 
-            {/* Game History Roadmap */}
-            <div className="cm-history-card">
-                <div className="cm-history-header">
-                    <HistoryOutlined style={{ color: '#ffd700' }} />
-                    <span>RECENT ROUND HISTORY</span>
+            {/* Interactive Data Hub: Game History, Trend Chart, My Bets */}
+            <div className="cm-data-hub">
+                <div className="cm-hub-tabs">
+                    <button
+                        className={`cm-hub-tab ${activeTab === 'history' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('history')}
+                    >
+                        <HistoryOutlined /> Game History
+                    </button>
+                    <button
+                        className={`cm-hub-tab ${activeTab === 'chart' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('chart')}
+                    >
+                        <LineChartOutlined /> Chart Trend
+                    </button>
+                    <button
+                        className={`cm-hub-tab ${activeTab === 'mybets' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('mybets')}
+                    >
+                        <UserOutlined /> My Bets {myBets.length > 0 && `(${myBets.length})`}
+                    </button>
                 </div>
-                <div className="cm-history-table-wrap">
-                    <table className="cm-history-table">
-                        <thead>
-                            <tr>
-                                <th>Period</th>
-                                <th>Number</th>
-                                <th>Size</th>
-                                <th>Color</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {history.map(item => (
-                                <tr key={item.period}>
-                                    <td className="col-period">#{item.period}</td>
-                                    <td className="col-number">
-                                        <span className={`cm-sm-ball ball-${item.colors[0]}`}>
-                                            {item.num}
-                                        </span>
-                                    </td>
-                                    <td className="col-bs">
-                                        <span className={`cm-text-badge text-${item.bigSmall}`}>
-                                            {item.bigSmall.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="col-colors">
-                                        <div className="cm-dots-flex">
-                                            {item.colors.map(c => (
-                                                <span key={c} className={`cm-dot dot-${c}`}></span>
-                                            ))}
-                                        </div>
-                                    </td>
+
+                {/* Tab 1: Game History */}
+                {activeTab === 'history' && (
+                    <div className="cm-tab-panel">
+                        <table className="cm-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Number</th>
+                                    <th>Big / Small</th>
+                                    <th>Color</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {history.map(item => (
+                                    <tr key={item.period}>
+                                        <td className="col-period">#{item.period}</td>
+                                        <td className="col-num">
+                                            <span className={`cm-mini-ball ball-${item.colors[0]}`}>
+                                                {item.num}
+                                            </span>
+                                        </td>
+                                        <td className="col-bs">
+                                            <span className={`cm-pill-tag tag-${item.bigSmall}`}>
+                                                {item.bigSmall.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="col-dots">
+                                            <div className="cm-dots-cluster">
+                                                {item.colors.map(c => (
+                                                    <span key={c} className={`cm-dot dot-${c}`}></span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Tab 2: Chart Trend Matrix (0-9 Occurrence) */}
+                {activeTab === 'chart' && (
+                    <div className="cm-tab-panel cm-trend-chart-panel">
+                        <div className="cm-chart-header">
+                            <span>Occurrence Statistics (Last 10 Rounds)</span>
+                        </div>
+                        <div className="cm-matrix-grid">
+                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+                                const count = history.filter(h => h.num === num).length
+                                return (
+                                    <div key={num} className="cm-matrix-col">
+                                        <div className="cm-matrix-bar-wrap">
+                                            <div
+                                                className="cm-matrix-bar"
+                                                style={{ height: `${Math.max(count * 25, 10)}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="cm-matrix-num">{num}</span>
+                                        <span className="cm-matrix-count">{count}x</span>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab 3: My Bets */}
+                {activeTab === 'mybets' && (
+                    <div className="cm-tab-panel">
+                        {myBets.length === 0 ? (
+                            <div className="cm-empty-history">
+                                No bets placed in this session yet. Place a chip above to start playing!
+                            </div>
+                        ) : (
+                            <table className="cm-data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>Stake</th>
+                                        <th>Result</th>
+                                        <th>Payout</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {myBets.map((b, idx) => (
+                                        <tr key={idx}>
+                                            <td className="col-period">#{b.period}</td>
+                                            <td>{currencySymbol}{b.stake}</td>
+                                            <td>{b.resultNum}</td>
+                                            <td style={{ color: b.winStatus ? '#00e676' : '#94a3b8', fontWeight: 800 }}>
+                                                {b.winStatus ? `+${currencySymbol}${b.win.toLocaleString()}` : `${currencySymbol}0`}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Provably Fair Modal */}
@@ -528,7 +730,7 @@ function ColorMatchGame() {
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <Text style={{ color: '#94a3b8' }}>
-                        Color Match outcomes are calculated using cryptographic HMAC-SHA256 hashing. The result is deterministic and cannot be altered by either the player or the server.
+                        Color Match outcomes are generated using cryptographic HMAC-SHA256 hashing. The outcome is deterministic and cannot be modified by the server or player.
                     </Text>
                     <div>
                         <Text strong style={{ color: '#e2e8f0' }}>Server Seed (SHA256 Hash):</Text>
@@ -542,8 +744,8 @@ function ColorMatchGame() {
                         <Text strong style={{ color: '#e2e8f0' }}>Period Nonce:</Text>
                         <div className="cm-hash-code">{periodId}</div>
                     </div>
-                    <div style={{ background: 'rgba(0, 230, 118, 0.1)', padding: 10, borderRadius: 8, border: '1px solid rgba(0, 230, 118, 0.2)' }}>
-                        <Text style={{ color: '#00e676', fontWeight: 600 }}>
+                    <div style={{ background: 'rgba(0, 230, 118, 0.1)', padding: 12, borderRadius: 10, border: '1px solid rgba(0, 230, 118, 0.25)' }}>
+                        <Text style={{ color: '#00e676', fontWeight: 700 }}>
                             RTP: 99.0% Provably Fair Standard. Independent verification available for every period.
                         </Text>
                     </div>
