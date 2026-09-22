@@ -4,16 +4,16 @@
 [![RTP 99.00% Verified](https://img.shields.io/badge/RTP-99.00%25%20Verified-gold?style=for-the-badge)](https://amratgames.com)
 [![Direct INR & Crypto](https://img.shields.io/badge/Currencies-%E2%82%B9%20INR%20%C2%B7%20%E2%82%BF%20BTC%20%C2%B7%20%E2%82%AE%20USDT-26a17b?style=for-the-badge)](https://amratgames.com)
 
-The active gaming web application for **AmratGames.com**, built with React 18, Vite, Phaser 3, HTML5 Canvas, Ant Design, and Tailwind CSS v4.
+The active gaming web application for **AmratGames.com**, built with React 18, Vite, Ant Design, and Tailwind CSS v4.
 
 ---
 
 ## 🎮 Included Originals
 
-- **Crash**: Real-time canvas curve with exponential multiplier and auto-cashout.
-- **Plinko**: Custom canvas physics engine, 8–16 rows, Low/Medium/High volatility, and special ball tiers.
+- **Crash**: Real-time curve with exponential multiplier and auto-cashout.
+- **Plinko**: Physics pegboard with 8–16 rows, Low/Medium/High volatility, and special ball tiers.
 - **Mines**: 5×5 diamond minefield with configurable 1–24 mines and instant cashout.
-- **Dino Run**: Phaser 3 arcade runner with obstacle jumping and increasing survival multipliers.
+- **Dino Run**: Endless arcade runner with obstacle jumping and increasing survival multipliers.
 
 ---
 

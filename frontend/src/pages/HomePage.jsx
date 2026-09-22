@@ -77,8 +77,8 @@ function HomePage() {
                 </div>
             </section>
 
-            {/* 10/10 GEO & SEO Algorithmic Metrics */}
-            <section className="home-metrics-section" aria-label="Game Engine Specifications">
+            {/* Platform Feature Highlights */}
+            <section className="home-metrics-section" aria-label="Platform Highlights">
                 <div className="home-metrics-grid">
                     <div className="metric-card">
                         <span className="metric-badge">Direct Payments</span>
@@ -88,26 +88,26 @@ function HomePage() {
                     <div className="metric-card">
                         <span className="metric-badge">Fairness Guarantee</span>
                         <div className="metric-value">99% RTP</div>
-                        <p className="metric-desc">Mathematically backed 1% house edge across all original titles with transparent cryptographic odds.</p>
+                        <p className="metric-desc">Mathematically backed 1% house edge across all original titles with transparent odds.</p>
                     </div>
                     <div className="metric-card">
-                        <span className="metric-badge">Cryptography</span>
-                        <div className="metric-value">HMAC-SHA256</div>
-                        <p className="metric-desc">Unhackable provably fair seeds verifiable before and after every round by any player.</p>
+                        <span className="metric-badge">Provably Fair</span>
+                        <div className="metric-value">100% Verifiable</div>
+                        <p className="metric-desc">Independent cryptographic verification before and after every round by any player.</p>
                     </div>
                     <div className="metric-card">
-                        <span className="metric-badge">Indian 5G Optimized</span>
-                        <div className="metric-value">&lt; 10ms Latency</div>
-                        <p className="metric-desc">Blazing-fast Canvas &amp; Phaser 3 arcade physics rendering on Jio, Airtel 5G, and high-speed mobile networks.</p>
+                        <span className="metric-badge">Fast Payouts</span>
+                        <div className="metric-value">24/7 Withdrawals</div>
+                        <p className="metric-desc">Instant settlements directly to your bank account or crypto wallet around the clock.</p>
                     </div>
                 </div>
             </section>
 
-            {/* 10/10 AEO (Answer Engine Optimization) FAQ Section */}
+            {/* Frequently Asked Questions */}
             <section className="home-faq-section" itemScope itemType="https://schema.org/FAQPage" aria-labelledby="faq-heading">
                 <div className="faq-header">
                     <h2 id="faq-heading">Frequently Asked Questions for Indian Players</h2>
-                    <p>Authoritative answers on INR payments, UPI deposits, provably fair gaming, and platform security.</p>
+                    <p>Helpful answers on INR payments, UPI deposits, provably fair gaming, and platform security.</p>
                 </div>
                 <div className="faq-list">
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
@@ -141,7 +141,7 @@ function HomePage() {
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
                             <p itemProp="text">
-                                AmratGames operates on standard HMAC-SHA256 cryptographic proof. Before every wager, a hashed server seed is committed to the player. The round outcome is calculated by combining this server seed with the player’s autonomous client seed and an incrementing nonce. Once you rotate seeds, you can verify that the outcome was never altered or predetermined.
+                                AmratGames operates on standard cryptographic proof. Before every wager, a hashed server seed is committed to the player. The round outcome is calculated by combining this server seed with the player’s autonomous client seed and an incrementing nonce. Once you rotate seeds, you can verify that the outcome was never altered or predetermined.
                             </p>
                         </div>
                     </article>
@@ -161,11 +161,11 @@ function HomePage() {
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-                            Is AmratGames accessible on mobile devices and 5G networks in India?
+                            Can I play AmratGames on my mobile phone?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
                             <p itemProp="text">
-                                Yes. AmratGames is fully optimized as a Progressive Web Application (PWA) with touch-responsive sliding bet sheets, adaptive canvas scaling, and portrait/landscape support across iOS and Android browsers, tested for ultra-low latency on Jio and Airtel 5G.
+                                Yes! AmratGames is fully responsive on all smartphones and tablets. You can play directly in your mobile browser with seamless touch controls, full-screen gameplay, and zero app download required.
                             </p>
                         </div>
                     </article>
