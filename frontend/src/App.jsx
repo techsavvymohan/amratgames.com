@@ -1,15 +1,43 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
-const CrashPage = lazy(() => import('./pages/CrashPage'))
-const PlinkoPage = lazy(() => import('./pages/PlinkoPage'))
-const DinoPage = lazy(() => import('./pages/DinoPage'))
-const MinesPage = lazy(() => import('./pages/MinesPage'))
+const loadCrash = () => import('./pages/CrashPage')
+const loadPlinko = () => import('./pages/PlinkoPage')
+const loadDino = () => import('./pages/DinoPage')
+const loadMines = () => import('./pages/MinesPage')
+
+const CrashPage = lazy(loadCrash)
+const PlinkoPage = lazy(loadPlinko)
+const DinoPage = lazy(loadDino)
+const MinesPage = lazy(loadMines)
 
 function App() {
+    // Eagerly prefetch game modules during browser idle time
+    useEffect(() => {
+        const schedulePreload = () => {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(() => {
+                    loadCrash()
+                    loadPlinko()
+                    loadDino()
+                    loadMines()
+                })
+            } else {
+                setTimeout(() => {
+                    loadCrash()
+                    loadPlinko()
+                    loadDino()
+                    loadMines()
+                }, 800)
+            }
+        }
+
+        schedulePreload()
+    }, [])
+
     return (
         <AntApp>
             <Suspense
