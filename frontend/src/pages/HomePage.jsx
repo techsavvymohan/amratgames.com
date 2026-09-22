@@ -5,7 +5,6 @@ import '../styles/home.css'
 const games = [
     ...GAMES,
     { id: 'dice', name: 'Dice', comingSoon: true },
-    { id: 'limbo', name: 'Limbo', comingSoon: true },
 ]
 
 const categories = ['Amrat Originals', 'Popular', 'New', 'Slots', 'Live Casino', 'Table Games', 'Jackpot', 'Providers']
@@ -70,7 +69,7 @@ function HomePage() {
                 <div className="section-header-copy">
                     <p className="section-kicker">Play now</p>
                     <h2>Amrat Originals</h2>
-                    <p>Four fast games. Pick your style and play directly in Indian Rupees (₹) or Crypto.</p>
+                    <p>Seven fast games. Pick your style and play directly in Indian Rupees (₹) or Crypto.</p>
                 </div>
                 <div className="amrat-games-grid">
                     {games.map((game) => <GameCard key={game.id} game={game} />)}

@@ -1,0 +1,419 @@
+.dt-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+}
+
+.dt-container {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .dt-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Table Felt */
+.dt-felt {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 520px;
+    padding: 24px;
+    border-radius: 20px;
+    background: radial-gradient(circle at 50% 50%, #0d2818 0%, #05160d 75%, #020b06 100%);
+    border: 2px solid rgba(245, 175, 25, 0.3);
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.7), 0 16px 40px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Roadmap */
+.dt-roadmap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dt-roadmap-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b1b6c6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dt-roadmap-beads {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.dt-bead {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+.dt-bead.dragon {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.dt-bead.tiger {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.dt-bead.tie {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+
+/* Duel Arena & Cards */
+.dt-duel-arena {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 30px 10px;
+    gap: 16px;
+}
+
+.dt-player-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.dt-box-title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    padding: 4px 18px;
+    border-radius: 20px;
+}
+
+.dt-player-box.dragon .dt-box-title {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.dt-player-box.tiger .dt-box-title {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dt-card-slot {
+    width: 120px;
+    height: 170px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.dt-empty-slot {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 3D Card Flip */
+.dt-card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+}
+
+.dt-card.flipped {
+    transform: rotateY(180deg);
+}
+
+.dt-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+    font-weight: 800;
+}
+
+.dt-card-front {
+    background: #ffffff;
+    transform: rotateY(180deg);
+}
+
+.dt-card-back {
+    background: linear-gradient(135deg, #b45309, #78350f);
+    border: 3px solid #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.dt-card-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    font-size: 16px;
+}
+
+.dt-card-corner.bottom {
+    transform: rotate(180deg);
+}
+
+.dt-card-center {
+    align-self: center;
+    font-size: 34px;
+}
+
+/* VS Badge */
+.dt-vs-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fbbf24;
+}
+
+.dt-result-tag {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 900;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    animation: popWinner 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dt-result-tag.dragon {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.dt-result-tag.tiger {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+.dt-result-tag.tie {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes popWinner {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Betting Zones */
+.dt-bet-zones {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 2fr;
+    gap: 12px;
+}
+
+.dt-bet-zone {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.dt-bet-zone:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.dt-bet-zone.dragon-zone:hover,
+.dt-bet-zone.dragon-zone.active {
+    border-color: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+}
+
+.dt-bet-zone.tie-zone:hover,
+.dt-bet-zone.tie-zone.active {
+    border-color: #10b981;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+.dt-bet-zone.tiger-zone:hover,
+.dt-bet-zone.tiger-zone.active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.35);
+}
+
+.dt-zone-name {
+    font-size: 16px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+}
+
+.dt-zone-payout {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fbbf24;
+}
+
+.dt-zone-chips {
+    margin-top: 4px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid #fbbf24;
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* Controls Dashboard */
+.dt-controls-card {
+    background: #10131b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dt-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8f9bb3;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.dt-chips-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.dt-chip-btn {
+    height: 44px;
+    border-radius: 50px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.dt-chip-btn.chip-10 { background: #334155; color: #ffffff; }
+.dt-chip-btn.chip-50 { background: #1e3a8a; color: #60a5fa; }
+.dt-chip-btn.chip-100 { background: #065f46; color: #34d399; }
+.dt-chip-btn.chip-500 { background: #831843; color: #f472b6; }
+.dt-chip-btn.chip-1000 { background: #78350f; color: #fbbf24; }
+.dt-chip-btn.chip-5000 { background: #4c1d95; color: #c084fc; }
+
+.dt-chip-btn.selected {
+    transform: scale(1.08);
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.dt-total-bet-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #8f9bb3;
+}
+
+.dt-actions-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 10px;
+}
+
+.dt-clear-btn {
+    height: 48px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+}
+
+.dt-deal-btn {
+    height: 48px !important;
+    background: linear-gradient(135deg, #f5af19 0%, #d49110 100%) !important;
+    border: none !important;
+    color: #0b0d12 !important;
+    font-weight: 800 !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.3) !important;
+}
+
+.dt-deal-btn:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(245, 175, 25, 0.45) !important;
+}
+
+.dt-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dt-btn-secondary {
+    color: #8f9bb3 !important;
+}

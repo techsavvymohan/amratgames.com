@@ -8,11 +8,17 @@ const loadCrash = () => import('./pages/CrashPage')
 const loadPlinko = () => import('./pages/PlinkoPage')
 const loadDino = () => import('./pages/DinoPage')
 const loadMines = () => import('./pages/MinesPage')
+const loadLimbo = () => import('./pages/LimboPage')
+const loadDragonTiger = () => import('./pages/DragonTigerPage')
+const loadColorMatch = () => import('./pages/ColorMatchPage')
 
 const CrashPage = lazy(loadCrash)
 const PlinkoPage = lazy(loadPlinko)
 const DinoPage = lazy(loadDino)
 const MinesPage = lazy(loadMines)
+const LimboPage = lazy(loadLimbo)
+const DragonTigerPage = lazy(loadDragonTiger)
+const ColorMatchPage = lazy(loadColorMatch)
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -24,6 +30,9 @@ function App() {
                     loadPlinko()
                     loadDino()
                     loadMines()
+                    loadLimbo()
+                    loadDragonTiger()
+                    loadColorMatch()
                 })
             } else {
                 setTimeout(() => {
@@ -31,6 +40,9 @@ function App() {
                     loadPlinko()
                     loadDino()
                     loadMines()
+                    loadLimbo()
+                    loadDragonTiger()
+                    loadColorMatch()
                 }, 800)
             }
         }
@@ -54,6 +66,9 @@ function App() {
                         <Route path="plinko" element={<PlinkoPage />} />
                         <Route path="dino" element={<DinoPage />} />
                         <Route path="mines" element={<MinesPage />} />
+                        <Route path="limbo" element={<LimboPage />} />
+                        <Route path="dragon-tiger" element={<DragonTigerPage />} />
+                        <Route path="color-match" element={<ColorMatchPage />} />
                     </Route>
                 </Routes>
             </Suspense>

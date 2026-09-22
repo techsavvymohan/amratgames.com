@@ -49,11 +49,36 @@ const MinesIcon = () => (
     </svg>
 )
 
+const LimboIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+    </svg>
+)
+
+const DragonTigerIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="13" height="16" rx="2"/>
+        <path d="M8 2h11a2 2 0 0 1 2 2v13"/>
+    </svg>
+)
+
+const ColorMatchIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2"/>
+        <path d="M12 3a9 9 0 0 1 9 9h-9z" fill="#ff1744"/>
+        <path d="M12 12v9a9 9 0 0 1-9-9z" fill="#00e676"/>
+        <path d="M3 12a9 9 0 0 1 9-9v9z" fill="#7c4dff"/>
+    </svg>
+)
+
 const GAME_ICONS = {
     crash: CrashIcon,
     plinko: PlinkoIcon,
     dino: DinoIcon,
-    mines: MinesIcon
+    mines: MinesIcon,
+    limbo: LimboIcon,
+    'dragon-tiger': DragonTigerIcon,
+    'color-match': ColorMatchIcon
 }
 
 const primaryRoutes = [

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 600" width="100%" height="100%">
+  <defs>
+    <radialGradient id="feltBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c3822"/>
+      <stop offset="60%" stop-color="#062314"/>
+      <stop offset="100%" stop-color="#020d07"/>
+    </radialGradient>
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe259"/>
+      <stop offset="100%" stop-color="#ffa751"/>
+    </linearGradient>
+    <linearGradient id="dragonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff1744"/>
+      <stop offset="100%" stop-color="#b71c1c"/>
+    </linearGradient>
+    <linearGradient id="tigerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffb300"/>
+      <stop offset="100%" stop-color="#f57c00"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Table Felt Background -->
+  <rect width="450" height="600" fill="url(#feltBg)"/>
+
+  <!-- Ornate Border -->
+  <rect x="15" y="15" width="420" height="570" rx="20" fill="none" stroke="rgba(255, 215, 0, 0.25)" stroke-width="2"/>
+  <rect x="22" y="22" width="406" height="556" rx="15" fill="none" stroke="rgba(255, 215, 0, 0.1)" stroke-width="1"/>
+
+  <!-- Header Branding -->
+  <g transform="translate(225, 75)">
+    <rect x="-85" y="-26" width="170" height="30" rx="15" fill="rgba(255, 215, 0, 0.15)" stroke="#ffd700" stroke-width="1.2"/>
+    <text x="0" y="-6" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="13" font-weight="800" letter-spacing="2">
+      VIP TABLE GAME
+    </text>
+    <text x="0" y="44" text-anchor="middle" fill="url(#goldText)" font-family="'Impact', sans-serif" font-size="44" font-weight="900" letter-spacing="2">
+      DRAGON TIGER
+    </text>
+  </g>
+
+  <!-- VS Emblem in Center -->
+  <g transform="translate(225, 285)">
+    <circle cx="0" cy="0" r="28" fill="#111" stroke="#ffd700" stroke-width="2.5"/>
+    <text x="0" y="8" text-anchor="middle" fill="#ffd700" font-family="'Impact', sans-serif" font-size="22" font-weight="900">
+      VS
+    </text>
+  </g>
+
+  <!-- Dragon Card (Left) -->
+  <g transform="translate(130, 285) rotate(-8)" filter="url(#cardShadow)">
+    <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+    <rect x="-58" y="-88" width="116" height="176" rx="6" fill="none" stroke="#ff1744" stroke-width="1" opacity="0.4"/>
+    <!-- Rank & Suit -->
+    <text x="-48" y="-60" fill="#ff1744" font-family="'Georgia', serif" font-size="28" font-weight="900">K</text>
+    <text x="-48" y="-36" fill="#ff1744" font-family="'Georgia', serif" font-size="24">♦</text>
+    <text x="0" y="25" text-anchor="middle" fill="#ff1744" font-family="'Georgia', serif" font-size="64">♦</text>
+    <text x="0" y="80" text-anchor="middle" fill="#b71c1c" font-family="sans-serif" font-size="14" font-weight="800" letter-spacing="1">DRAGON</text>
+  </g>
+
+  <!-- Tiger Card (Right) -->
+  <g transform="translate(320, 285) rotate(8)" filter="url(#cardShadow)">
+    <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+    <rect x="-58" y="-88" width="116" height="176" rx="6" fill="none" stroke="#0f172a" stroke-width="1" opacity="0.4"/>
+    <!-- Rank & Suit -->
+    <text x="-48" y="-60" fill="#0f172a" font-family="'Georgia', serif" font-size="28" font-weight="900">Q</text>
+    <text x="-48" y="-36" fill="#0f172a" font-family="'Georgia', serif" font-size="24">♠</text>
+    <text x="0" y="25" text-anchor="middle" fill="#0f172a" font-family="'Georgia', serif" font-size="64">♠</text>
+    <text x="0" y="80" text-anchor="middle" fill="#f57c00" font-family="sans-serif" font-size="14" font-weight="800" letter-spacing="1">TIGER</text>
+  </g>
+
+  <!-- Betting Spots Graphic (Dragon 1:1 · Tie 8:1 · Tiger 1:1) -->
+  <g transform="translate(225, 450)">
+    <rect x="-180" y="0" width="105" height="50" rx="8" fill="rgba(255, 23, 68, 0.2)" stroke="#ff1744" stroke-width="1.5"/>
+    <text x="-127" y="24" text-anchor="middle" fill="#ff5252" font-family="sans-serif" font-size="14" font-weight="800">DRAGON</text>
+    <text x="-127" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">1 : 1</text>
+
+    <rect x="-55" y="0" width="110" height="50" rx="8" fill="rgba(0, 230, 118, 0.2)" stroke="#00e676" stroke-width="1.5"/>
+    <text x="0" y="24" text-anchor="middle" fill="#00e676" font-family="sans-serif" font-size="14" font-weight="800">TIE</text>
+    <text x="0" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">8 : 1</text>
+
+    <rect x="75" y="0" width="105" height="50" rx="8" fill="rgba(255, 179, 0, 0.2)" stroke="#ffb300" stroke-width="1.5"/>
+    <text x="127" y="24" text-anchor="middle" fill="#ffb300" font-family="sans-serif" font-size="14" font-weight="800">TIGER</text>
+    <text x="127" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">1 : 1</text>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(225, 545)">
+    <text x="0" y="0" text-anchor="middle" fill="#a7f3d0" font-family="sans-serif" font-size="14" font-weight="700" letter-spacing="1">
+      HIGH ROLLER CASINO · FAST TWO-CARD BACCARAT
+    </text>
+  </g>
+</svg>
