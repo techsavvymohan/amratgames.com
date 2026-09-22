@@ -69,8 +69,8 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
         <header className={`header ${isHomePage ? 'header-home' : ''}`}>
             <div className="header-left">
                 <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-                    <img src="/amrat-logo.png" alt="AmratGames" style={{ height: '32px', width: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(245, 175, 25, 0.5))' }} />
-                    <span className="logo" style={{
+                    <img src="/amrat-logo.png" alt="AmratGames" className="header-logo-img" style={{ height: '32px', width: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(245, 175, 25, 0.5))' }} />
+                    <span className="logo logo-text" style={{
                         background: 'linear-gradient(135deg, #fff3cc 0%, #f5af19 50%, #d49110 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',

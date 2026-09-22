@@ -1602,6 +1602,16 @@ body {
         padding: env(safe-area-inset-top) 10px 0;
     }
 
+    .logo-text {
+        display: none !important;
+    }
+
+    .header-logo-img {
+        height: 38px !important;
+        width: 38px !important;
+        filter: drop-shadow(0 0 10px rgba(245, 175, 25, 0.6)) !important;
+    }
+
     .header-center {
         min-width: 0;
         margin: 0 4px 0 auto;
