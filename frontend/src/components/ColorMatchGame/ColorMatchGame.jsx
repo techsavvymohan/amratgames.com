@@ -435,7 +435,7 @@ function ColorMatchGame() {
                         {CHIP_PRESETS.map(val => (
                             <button
                                 key={val}
-                                className={`cm-chip-btn ${selectedChip === val ? 'selected' : ''}`}
+                                className={`cm-chip-btn chip-${val} ${selectedChip === val ? 'selected' : ''}`}
                                 onClick={() => setSelectedChip(val)}
                             >
                                 {val >= 1000 ? `${val / 1000}k` : val}
