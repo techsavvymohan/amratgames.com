@@ -1,0 +1,25 @@
+# Robots.txt for AmratGames.com Backend & Developer API Studio
+User-agent: *
+Allow: /
+Allow: /api-explorer
+Allow: /features
+Allow: /pricing
+Allow: /cloud
+Allow: /cli
+Allow: /open-source
+Allow: /legal
+Allow: /privacy
+Allow: /terms
+
+# Sitemaps
+Sitemap: https://amratgames.com/sitemap.xml
+
+# LLM Crawler Access for Generative Engine Discovery
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /

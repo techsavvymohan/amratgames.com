@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://amratgames.com/</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://amratgames.com/amrat-logo.png</image:loc>
+      <image:title>AmratGames.com Royal Gold Crown Logo</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://amratgames.com/crash</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://amratgames.com/images/crash.avif</image:loc>
+      <image:title>Amrat Crash Game - Provably Fair Multiplier Game</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://amratgames.com/plinko</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://amratgames.com/images/plinko.avif</image:loc>
+      <image:title>Amrat Plinko Game - Custom Physics Casino Original</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://amratgames.com/mines</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://amratgames.com/images/mines.avif</image:loc>
+      <image:title>Amrat Mines Game - 5x5 Grid Provably Fair Game</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://amratgames.com/dino</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://amratgames.com/images/dino.avif</image:loc>
+      <image:title>Amrat Dino Run - Phaser 3 Arcade Casino Game</image:title>
+    </image:image>
+  </url>
+</urlset>

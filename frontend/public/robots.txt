@@ -1,0 +1,31 @@
+# Robots.txt for AmratGames.com
+# 10/10 Search & Generative Engine Directives
+
+User-agent: *
+Allow: /
+Allow: /crash
+Allow: /plinko
+Allow: /mines
+Allow: /dino
+Allow: /amrat-logo.png
+Allow: /images/
+
+# Disallow internal debug or private endpoints
+Disallow: /api/
+Disallow: /_api/
+
+# Sitemaps
+Sitemap: https://amratgames.com/sitemap.xml
+
+# LLM & AI Generative Search Optimization (Perplexity, GPTBot, ClaudeBot, Google-Extended)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
