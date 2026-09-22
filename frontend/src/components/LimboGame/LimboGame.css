@@ -2,20 +2,61 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px 16px 80px;
+    padding: 16px 16px 60px;
 }
 
 .limbo-container {
     display: grid;
     grid-template-columns: 1fr 380px;
-    gap: 20px;
+    gap: 16px;
     align-items: stretch;
+}
+
+/* Laptop Viewport Fit: No vertical scrolling required on laptop screens */
+@media (min-width: 901px) {
+    .limbo-page {
+        height: calc(100vh - 70px);
+        max-height: calc(100vh - 70px);
+        overflow: hidden;
+        padding: 8px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .limbo-container {
+        height: 100%;
+        max-height: 580px;
+    }
+    .limbo-arena {
+        height: 100%;
+        min-height: unset !important;
+        padding: 18px 20px !important;
+    }
+    .limbo-controls-card {
+        height: 100%;
+        padding: 18px 20px !important;
+        justify-content: space-between;
+    }
 }
 
 @media (max-width: 900px) {
     .limbo-container {
         grid-template-columns: 1fr;
     }
+}
+
+/* Touch responsiveness for mobile: zero delay, instant tactile press */
+button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.limbo-bet-btn:active,
+.limbo-quick-actions button:active,
+.limbo-history-pill:active {
+    transform: scale(0.93) !important;
+    filter: brightness(1.22) !important;
+    transition: transform 0.05s ease !important;
 }
 
 /* Roll Arena */

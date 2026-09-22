@@ -290,307 +290,334 @@ function ColorMatchGame() {
 
     return (
         <div className="color-match-page">
-            {/* VIP Brand Banner */}
-            <div className="cm-top-banner">
-                <div className="cm-banner-left">
+            {/* Top Row: VIP Brand Banner + Speed Modes */}
+            <div className="cm-top-bar">
+                <div className="cm-top-left">
                     <span className="cm-vip-crown">👑</span>
                     <div>
                         <div className="cm-brand-title">WIN GO · COLOR MATCH</div>
                         <div className="cm-brand-subtitle">High-Speed Provably Fair 99% RTP Live Lottery</div>
                     </div>
                 </div>
-                <div className="cm-banner-right">
+
+                {/* Speed Mode Tabs */}
+                <div className="cm-speed-tabs">
+                    {[
+                        { id: '30s', label: '30s', sec: 30, icon: '⚡' },
+                        { id: '1m', label: '1Min', sec: 60, icon: '⏱️' },
+                        { id: '3m', label: '3Min', sec: 180, icon: '🎯' },
+                        { id: '5m', label: '5Min', sec: 300, icon: '🏆' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`cm-speed-tab ${gameMode === tab.id ? 'active' : ''}`}
+                            onClick={() => handleModeSwitch(tab.id, tab.sec)}
+                        >
+                            <span className="cm-tab-icon">{tab.icon}</span>
+                            <span>{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="cm-top-right">
                     <Button
                         type="text"
                         icon={<SafetyCertificateOutlined style={{ color: '#00e676' }} />}
                         onClick={() => setFairnessOpen(true)}
                         className="cm-fair-btn"
                     >
-                        Provably Fair
+                        Fairness
                     </Button>
                 </div>
             </div>
 
-            {/* Game Speed Mode Tabs */}
-            <div className="cm-speed-tabs">
-                {[
-                    { id: '30s', label: 'Win Go 30s', sec: 30, icon: '⚡' },
-                    { id: '1m', label: 'Win Go 1Min', sec: 60, icon: '⏱️' },
-                    { id: '3m', label: 'Win Go 3Min', sec: 180, icon: '🎯' },
-                    { id: '5m', label: 'Win Go 5Min', sec: 300, icon: '🏆' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        className={`cm-speed-tab ${gameMode === tab.id ? 'active' : ''}`}
-                        onClick={() => handleModeSwitch(tab.id, tab.sec)}
-                    >
-                        <span className="cm-tab-icon">{tab.icon}</span>
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
-            </div>
-
-            {/* Main Stage Grid (Live Countdown + Result Spotlight) */}
-            <div className="cm-stage-grid">
-                {/* Countdown Dial Card */}
-                <div className={`cm-countdown-card ${timeLeft <= 5 ? 'cm-urgent' : ''}`}>
-                    <div className="cm-card-meta">
-                        <div className="cm-meta-period">
-                            <span className="cm-meta-kicker"><FireOutlined style={{ color: '#ffd700' }} /> PERIOD NUMBER</span>
-                            <span className="cm-period-id">#{periodId}</span>
-                        </div>
-                    </div>
-
-                    <div className="cm-dial-wrapper">
-                        <svg className="cm-dial-svg" width="100" height="100" viewBox="0 0 100 100">
-                            <circle
-                                className="cm-dial-bg"
-                                cx="50"
-                                cy="50"
-                                r={circleRadius}
-                            />
-                            <circle
-                                className="cm-dial-progress"
-                                cx="50"
-                                cy="50"
-                                r={circleRadius}
-                                strokeDasharray={circleCircumference}
-                                strokeDashoffset={strokeDashoffset}
-                            />
-                        </svg>
-                        <div className="cm-dial-time">
-                            <span className="cm-time-num">00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</span>
-                            <span className="cm-time-lbl">{timeLeft <= 5 ? 'LOCKED' : 'TIME LEFT'}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Last Result Showcase Card */}
-                <div className="cm-last-result-card">
-                    <div className="cm-showcase-header">
-                        <span>LAST ROUND OUTCOME</span>
-                        <span className="cm-showcase-period">#{lastDraw.period}</span>
-                    </div>
-
-                    <div className="cm-showcase-body">
-                        <div className={`cm-sphere-ball ball-${lastDraw.colors[0]} ${lastDraw.colors[1] ? 'ball-split-' + lastDraw.colors[1] : ''}`}>
-                            <span className="cm-ball-num">{lastDraw.num}</span>
-                            <div className="cm-ball-sheen"></div>
-                        </div>
-
-                        <div className="cm-showcase-info">
-                            <div className="cm-color-badges">
-                                {lastDraw.colors.map(c => (
-                                    <span key={c} className={`cm-badge-pill pill-${c}`}>
-                                        {c.toUpperCase()}
-                                    </span>
-                                ))}
-                                <span className={`cm-badge-pill pill-${lastDraw.bigSmall}`}>
-                                    {lastDraw.bigSmall.toUpperCase()}
-                                </span>
+            {/* Main Cockpit Split: Left Stage & Bets + Right Chips & Records */}
+            <div className="cm-main-split">
+                {/* Left Side: Game Stage & Betting Targets */}
+                <div className="cm-left-cockpit">
+                    {/* Live Stage Grid (Countdown Dial + Last Outcome) */}
+                    <div className="cm-stage-grid">
+                        {/* Countdown Dial Card */}
+                        <div className={`cm-countdown-card ${timeLeft <= 5 ? 'cm-urgent' : ''}`}>
+                            <div className="cm-card-meta">
+                                <span className="cm-meta-kicker"><FireOutlined style={{ color: '#ffd700' }} /> PERIOD</span>
+                                <span className="cm-period-id">#{periodId}</span>
                             </div>
-                            <div className="cm-payout-quote">
-                                Winning Outcome: <strong>{lastDraw.colors.join(' + ').toUpperCase()} ({lastDraw.num})</strong>
+
+                            <div className="cm-dial-wrapper">
+                                <svg className="cm-dial-svg" width="84" height="84" viewBox="0 0 100 100">
+                                    <circle
+                                        className="cm-dial-bg"
+                                        cx="50"
+                                        cy="50"
+                                        r={circleRadius}
+                                    />
+                                    <circle
+                                        className="cm-dial-progress"
+                                        cx="50"
+                                        cy="50"
+                                        r={circleRadius}
+                                        strokeDasharray={circleCircumference}
+                                        strokeDashoffset={strokeDashoffset}
+                                    />
+                                </svg>
+                                <div className="cm-dial-time">
+                                    <span className="cm-time-num">00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</span>
+                                    <span className="cm-time-lbl">{timeLeft <= 5 ? 'LOCKED' : 'LEFT'}</span>
+                                </div>
                             </div>
                         </div>
+
+                        {/* Last Result Showcase Card */}
+                        <div className="cm-last-result-card">
+                            <div className="cm-showcase-header">
+                                <span>LAST OUTCOME</span>
+                                <span className="cm-showcase-period">#{lastDraw.period}</span>
+                            </div>
+
+                            <div className="cm-showcase-body">
+                                <div className={`cm-sphere-ball ball-${lastDraw.colors[0]} ${lastDraw.colors[1] ? 'ball-split-' + lastDraw.colors[1] : ''}`}>
+                                    <span className="cm-ball-num">{lastDraw.num}</span>
+                                    <div className="cm-ball-sheen"></div>
+                                </div>
+
+                                <div className="cm-showcase-info">
+                                    <div className="cm-color-badges">
+                                        {lastDraw.colors.map(c => (
+                                            <span key={c} className={`cm-badge-pill pill-${c}`}>
+                                                {c.toUpperCase()}
+                                            </span>
+                                        ))}
+                                        <span className={`cm-badge-pill pill-${lastDraw.bigSmall}`}>
+                                            {lastDraw.bigSmall.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="cm-payout-quote">
+                                        Result: <strong>{lastDraw.colors.join(' + ').toUpperCase()} ({lastDraw.num})</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Animated Drawing Overlay */}
+                            {isDrawing && displayNum !== null && (
+                                <div className="cm-drawing-curtain">
+                                    <div className="cm-drawing-label">ROLLING RESULT...</div>
+                                    <div className="cm-drawing-spinner">
+                                        <span className="cm-spinner-num">{displayNum}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Animated Drawing Overlay */}
-                    {isDrawing && displayNum !== null && (
-                        <div className="cm-drawing-curtain">
-                            <div className="cm-drawing-label">ROLLING RESULT...</div>
-                            <div className="cm-drawing-spinner">
-                                <span className="cm-spinner-num">{displayNum}</span>
-                            </div>
+                    {/* Lock Notice Banner */}
+                    {isLocked && (
+                        <div className="cm-lock-banner">
+                            <span className="cm-lock-pulse"></span>
+                            <span>{isDrawing ? 'DRAWING LIVE RESULT...' : 'BETTING CLOSED · DRAWING IN PROGRESS'}</span>
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Lock Notice Banner */}
-            {isLocked && (
-                <div className="cm-lock-banner">
-                    <span className="cm-lock-pulse"></span>
-                    <span>{isDrawing ? 'DRAWING LIVE RESULT...' : 'BETTING CLOSED · DRAWING IN PROGRESS'}</span>
-                </div>
-            )}
+                    {/* 1. 3D Crystal Color Buttons (Using Generated 8K Raytraced Gem Assets) */}
+                    <div className="cm-bet-console">
+                        <div className="cm-section-header">
+                            <span>SELECT COLOR</span>
+                            <span className="cm-section-hint">Green 2x · Violet 4.5x · Red 2x</span>
+                        </div>
 
-            {/* Primary Action Console (Colors · Numbers · Big/Small) */}
-            <div className="cm-bet-console">
-                {/* 1. 3D Crystal Color Buttons */}
-                <div className="cm-section-header">
-                    <span>SELECT COLOR</span>
-                    <span className="cm-section-hint">Green 2x · Violet 4.5x · Red 2x</span>
-                </div>
-
-                <div className="cm-color-crystals">
-                    <button
-                        className={`cm-crystal-btn btn-green ${bets.green ? 'active-bet' : ''}`}
-                        disabled={isLocked || isDrawing}
-                        onClick={() => addBet('green')}
-                    >
-                        <div className="cm-crystal-icon">💎</div>
-                        <div className="cm-crystal-title">GREEN</div>
-                        <div className="cm-crystal-badge">2X / 1.5X</div>
-                        {bets.green > 0 && (
-                            <div className="cm-staked-badge">{currencySymbol}{bets.green}</div>
-                        )}
-                    </button>
-
-                    <button
-                        className={`cm-crystal-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
-                        disabled={isLocked || isDrawing}
-                        onClick={() => addBet('violet')}
-                    >
-                        <div className="cm-crystal-icon">🔮</div>
-                        <div className="cm-crystal-title">VIOLET</div>
-                        <div className="cm-crystal-badge">4.5X</div>
-                        {bets.violet > 0 && (
-                            <div className="cm-staked-badge">{currencySymbol}{bets.violet}</div>
-                        )}
-                    </button>
-
-                    <button
-                        className={`cm-crystal-btn btn-red ${bets.red ? 'active-bet' : ''}`}
-                        disabled={isLocked || isDrawing}
-                        onClick={() => addBet('red')}
-                    >
-                        <div className="cm-crystal-icon">🔥</div>
-                        <div className="cm-crystal-title">RED</div>
-                        <div className="cm-crystal-badge">2X / 1.5X</div>
-                        {bets.red > 0 && (
-                            <div className="cm-staked-badge">{currencySymbol}{bets.red}</div>
-                        )}
-                    </button>
-                </div>
-
-                {/* 2. 3D Lottery Number Balls Grid (0 to 9) */}
-                <div className="cm-section-header" style={{ marginTop: 24 }}>
-                    <span>SELECT NUMBER (9X PAYOUT)</span>
-                    <span className="cm-section-hint">High Multiplier Direct Hit</span>
-                </div>
-
-                <div className="cm-numbers-sphere-grid">
-                    {NUMBER_DATA.map(item => {
-                        const key = `num_${item.num}`
-                        const isPlaced = bets[key] > 0
-                        const bgClass = item.colors.length > 1
-                            ? `sphere-split-${item.colors[0]}-${item.colors[1]}`
-                            : `sphere-solid-${item.colors[0]}`
-
-                        return (
+                        <div className="cm-color-crystals">
                             <button
-                                key={item.num}
-                                className={`cm-num-sphere ${bgClass} ${isPlaced ? 'active-bet' : ''}`}
+                                type="button"
+                                className={`cm-crystal-btn btn-green ${bets.green ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
-                                onClick={() => addBet(key)}
+                                onClick={() => addBet('green')}
                             >
-                                <span className="cm-sphere-text">{item.num}</span>
-                                <div className="cm-sphere-glare"></div>
-                                {isPlaced && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets[key]}</div>
+                                <div className="cm-gem-frame">
+                                    <img
+                                        src="/images/gem-emerald.jpg"
+                                        alt="Emerald Gem"
+                                        className="cm-gem-img"
+                                    />
+                                </div>
+                                <div className="cm-crystal-title">GREEN</div>
+                                <div className="cm-crystal-badge">2X / 1.5X</div>
+                                {bets.green > 0 && (
+                                    <div className="cm-staked-badge">{currencySymbol}{bets.green}</div>
                                 )}
                             </button>
-                        )
-                    })}
-                </div>
 
-                {/* 3. Big / Small Dual Bet Pockets */}
-                <div className="cm-section-header" style={{ marginTop: 24 }}>
-                    <span>BIG / SMALL (2X PAYOUT)</span>
-                    <span className="cm-section-hint">Big (5-9) · Small (0-4)</span>
-                </div>
+                            <button
+                                type="button"
+                                className={`cm-crystal-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
+                                disabled={isLocked || isDrawing}
+                                onClick={() => addBet('violet')}
+                            >
+                                <div className="cm-gem-frame">
+                                    <img
+                                        src="/images/gem-violet.jpg"
+                                        alt="Violet Amethyst Gem"
+                                        className="cm-gem-img"
+                                    />
+                                </div>
+                                <div className="cm-crystal-title">VIOLET</div>
+                                <div className="cm-crystal-badge">4.5X</div>
+                                {bets.violet > 0 && (
+                                    <div className="cm-staked-badge">{currencySymbol}{bets.violet}</div>
+                                )}
+                            </button>
 
-                <div className="cm-bigsmall-duo">
-                    <button
-                        className={`cm-pocket-btn btn-big ${bets.big ? 'active-bet' : ''}`}
-                        disabled={isLocked || isDrawing}
-                        onClick={() => addBet('big')}
-                    >
-                        <div className="cm-pocket-title">BIG</div>
-                        <div className="cm-pocket-sub">5, 6, 7, 8, 9</div>
-                        <div className="cm-pocket-mult">2.0X</div>
-                        {bets.big > 0 && (
-                            <div className="cm-staked-badge">{currencySymbol}{bets.big}</div>
-                        )}
-                    </button>
+                            <button
+                                type="button"
+                                className={`cm-crystal-btn btn-red ${bets.red ? 'active-bet' : ''}`}
+                                disabled={isLocked || isDrawing}
+                                onClick={() => addBet('red')}
+                            >
+                                <div className="cm-gem-frame">
+                                    <img
+                                        src="/images/gem-ruby.jpg"
+                                        alt="Ruby Gem"
+                                        className="cm-gem-img"
+                                    />
+                                </div>
+                                <div className="cm-crystal-title">RED</div>
+                                <div className="cm-crystal-badge">2X / 1.5X</div>
+                                {bets.red > 0 && (
+                                    <div className="cm-staked-badge">{currencySymbol}{bets.red}</div>
+                                )}
+                            </button>
+                        </div>
 
-                    <button
-                        className={`cm-pocket-btn btn-small ${bets.small ? 'active-bet' : ''}`}
-                        disabled={isLocked || isDrawing}
-                        onClick={() => addBet('small')}
-                    >
-                        <div className="cm-pocket-title">SMALL</div>
-                        <div className="cm-pocket-sub">0, 1, 2, 3, 4</div>
-                        <div className="cm-pocket-mult">2.0X</div>
-                        {bets.small > 0 && (
-                            <div className="cm-staked-badge">{currencySymbol}{bets.small}</div>
-                        )}
-                    </button>
-                </div>
-            </div>
+                        {/* 2. 3D Lottery Number Balls Grid (0 to 9) */}
+                        <div className="cm-section-header" style={{ marginTop: 14 }}>
+                            <span>SELECT NUMBER (9X PAYOUT)</span>
+                            <span className="cm-section-hint">High Multiplier Direct Hit</span>
+                        </div>
 
-            {/* 3D Casino Chips Tray & Multiplier Modifiers */}
-            <div className="cm-chips-dock">
-                <div className="cm-dock-row">
-                    <div className="cm-chips-belt">
-                        <span className="cm-dock-lbl">CHIP:</span>
-                        <div className="cm-chips-carousel">
-                            {CHIP_PRESETS.map(val => (
-                                <button
-                                    key={val}
-                                    type="button"
-                                    className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
-                                    onClick={() => setSelectedChip(val)}
-                                >
-                                    {val >= 1000 ? `${val / 1000}k` : val}
-                                </button>
-                            ))}
+                        <div className="cm-numbers-sphere-grid">
+                            {NUMBER_DATA.map(item => {
+                                const key = `num_${item.num}`
+                                const isPlaced = bets[key] > 0
+                                const bgClass = item.colors.length > 1
+                                    ? `sphere-split-${item.colors[0]}-${item.colors[1]}`
+                                    : `sphere-solid-${item.colors[0]}`
+
+                                return (
+                                    <button
+                                        key={item.num}
+                                        type="button"
+                                        className={`cm-num-sphere ${bgClass} ${isPlaced ? 'active-bet' : ''}`}
+                                        disabled={isLocked || isDrawing}
+                                        onClick={() => addBet(key)}
+                                    >
+                                        <span className="cm-sphere-text">{item.num}</span>
+                                        <div className="cm-sphere-glare"></div>
+                                        {isPlaced && (
+                                            <div className="cm-staked-badge">{currencySymbol}{bets[key]}</div>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        {/* 3. Big / Small Dual Bet Pockets */}
+                        <div className="cm-section-header" style={{ marginTop: 14 }}>
+                            <span>BIG / SMALL (2X PAYOUT)</span>
+                            <span className="cm-section-hint">Big (5-9) · Small (0-4)</span>
+                        </div>
+
+                        <div className="cm-bigsmall-duo">
+                            <button
+                                type="button"
+                                className={`cm-pocket-btn btn-big ${bets.big ? 'active-bet' : ''}`}
+                                disabled={isLocked || isDrawing}
+                                onClick={() => addBet('big')}
+                            >
+                                <div className="cm-pocket-title">BIG</div>
+                                <div className="cm-pocket-sub">5, 6, 7, 8, 9</div>
+                                <div className="cm-pocket-mult">2.0X</div>
+                                {bets.big > 0 && (
+                                    <div className="cm-staked-badge">{currencySymbol}{bets.big}</div>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`cm-pocket-btn btn-small ${bets.small ? 'active-bet' : ''}`}
+                                disabled={isLocked || isDrawing}
+                                onClick={() => addBet('small')}
+                            >
+                                <div className="cm-pocket-title">SMALL</div>
+                                <div className="cm-pocket-sub">0, 1, 2, 3, 4</div>
+                                <div className="cm-pocket-mult">2.0X</div>
+                                {bets.small > 0 && (
+                                    <div className="cm-staked-badge">{currencySymbol}{bets.small}</div>
+                                )}
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div className="cm-mult-modifiers">
-                        <span className="cm-dock-lbl">MULTIPLIER:</span>
-                        <div className="cm-mult-pills">
-                            {MULTIPLIERS.map(m => (
-                                <button
-                                    key={m}
-                                    type="button"
-                                    className={`cm-mult-btn ${activeMultiplier === m ? 'active' : ''}`}
-                                    onClick={() => setActiveMultiplier(m)}
+                {/* Right Side: VIP Chip Rack, Multipliers & Live Trend Records */}
+                <div className="cm-right-dashboard">
+                    {/* Chips & Multiplier Dock */}
+                    <div className="cm-chips-dock">
+                        <div className="cm-dock-block">
+                            <span className="cm-dock-lbl">CHIP PRESET ({currencySymbol})</span>
+                            <div className="cm-chips-carousel">
+                                {CHIP_PRESETS.map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
+                                        onClick={() => setSelectedChip(val)}
+                                    >
+                                        {val >= 1000 ? `${val / 1000}k` : val}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="cm-dock-block">
+                            <span className="cm-dock-lbl">MULTIPLIER MODIFIER</span>
+                            <div className="cm-mult-pills">
+                                {MULTIPLIERS.map(m => (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        className={`cm-mult-btn ${activeMultiplier === m ? 'active' : ''}`}
+                                        onClick={() => setActiveMultiplier(m)}
+                                    >
+                                        X{m}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="cm-summary-bar">
+                            <div className="cm-stake-readout">
+                                <span className="cm-readout-lbl">TOTAL ROUND STAKE</span>
+                                <span className="cm-readout-val">{currencySymbol}{totalStaked.toLocaleString()}</span>
+                            </div>
+
+                            <div className="cm-dock-actions">
+                                <Button
+                                    icon={<UndoOutlined />}
+                                    onClick={clearBets}
+                                    disabled={isLocked || isDrawing || totalStaked === 0}
+                                    className="cm-ctrl-btn"
                                 >
-                                    X{m}
-                                </button>
-                            ))}
+                                    Clear
+                                </Button>
+                                <Button
+                                    onClick={doubleBets}
+                                    disabled={isLocked || isDrawing || totalStaked === 0}
+                                    className="cm-ctrl-btn cm-btn-double"
+                                >
+                                    2X Double
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="cm-summary-bar">
-                    <div className="cm-stake-readout">
-                        <span className="cm-readout-lbl">TOTAL ROUND STAKE</span>
-                        <span className="cm-readout-val">{currencySymbol}{totalStaked.toLocaleString()}</span>
-                    </div>
-
-                    <div className="cm-dock-actions">
-                        <Button
-                            icon={<UndoOutlined />}
-                            onClick={clearBets}
-                            disabled={isLocked || isDrawing || totalStaked === 0}
-                            className="cm-ctrl-btn"
-                        >
-                            Clear
-                        </Button>
-                        <Button
-                            onClick={doubleBets}
-                            disabled={isLocked || isDrawing || totalStaked === 0}
-                            className="cm-ctrl-btn cm-btn-double"
-                        >
-                            2X Double
-                        </Button>
-                    </div>
-                </div>
-            </div>
 
             {/* Interactive Data Hub: Game History, Trend Chart, My Bets */}
             <div className="cm-data-hub">
@@ -715,8 +742,35 @@ function ColorMatchGame() {
                     </div>
                 )}
             </div>
+        </div>
+    </div>
 
-            {/* Provably Fair Modal */}
+    {/* Mobile Sticky Bottom Wager Bar */}
+    <div className="cm-mobile-bottom-bar">
+        <div className="cm-mbar-stake">
+            <span className="cm-mbar-lbl">TOTAL WAGER</span>
+            <strong className="cm-mbar-val">{currencySymbol}{totalStaked.toLocaleString()}</strong>
+        </div>
+        <div className="cm-mbar-actions">
+            <Button
+                size="middle"
+                icon={<UndoOutlined />}
+                onClick={clearBets}
+                disabled={isLocked || isDrawing || totalStaked === 0}
+                className="cm-ctrl-btn"
+            >
+                Clear
+            </Button>
+            <Button
+                size="middle"
+                onClick={doubleBets}
+                disabled={isLocked || isDrawing || totalStaked === 0}
+                className="cm-ctrl-btn cm-btn-double"
+            >
+                2X
+            </Button>
+        </div>
+    </div>
             <Modal
                 title={<div style={{ color: '#ffd700' }}><SafetyCertificateOutlined /> Provably Fair Verification</div>}
                 open={fairnessOpen}

@@ -70,10 +70,57 @@ function DragonTigerGame() {
 
     const totalBet = bets.dragon + bets.tie + bets.tiger
 
+// Web Audio sound generator for tactile feedback
+function playSound(type) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+        if (type === 'chip') {
+            const osc = audioCtx.createOscillator()
+            const gain = audioCtx.createGain()
+            osc.type = 'triangle'
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime)
+            gain.gain.setValueAtTime(0.09, audioCtx.currentTime)
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06)
+            osc.connect(gain)
+            gain.connect(audioCtx.destination)
+            osc.start()
+            osc.stop(audioCtx.currentTime + 0.06)
+        } else if (type === 'deal') {
+            const osc = audioCtx.createOscillator()
+            const gain = audioCtx.createGain()
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(320, audioCtx.currentTime)
+            osc.frequency.exponentialRampToValueAtTime(540, audioCtx.currentTime + 0.15)
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15)
+            osc.connect(gain)
+            gain.connect(audioCtx.destination)
+            osc.start()
+            osc.stop(audioCtx.currentTime + 0.15)
+        } else if (type === 'win') {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator()
+                    const gain = audioCtx.createGain()
+                    osc.type = 'triangle'
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime)
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2)
+                    osc.connect(gain)
+                    gain.connect(audioCtx.destination)
+                    osc.start()
+                    osc.stop(audioCtx.currentTime + 0.2)
+                }, i * 90)
+            })
+        }
+    } catch (e) {}
+}
+
     // Place chip on betting zone
     const handleAddBet = (zone) => {
         if (isDealing) return
         if (totalBet + selectedChip > balance) return
+        playSound('chip')
         setBets(prev => ({
             ...prev,
             [zone]: prev[zone] + selectedChip
@@ -82,11 +129,13 @@ function DragonTigerGame() {
 
     const clearBets = () => {
         if (isDealing) return
+        playSound('chip')
         setBets({ dragon: 0, tie: 0, tiger: 0 })
     }
 
     const doubleBets = () => {
         if (isDealing || totalBet === 0 || totalBet * 2 > balance) return
+        playSound('chip')
         setBets(prev => ({
             dragon: prev.dragon * 2,
             tie: prev.tie * 2,
@@ -101,6 +150,7 @@ function DragonTigerGame() {
         const success = placeBet(totalBet, 'Dragon Tiger')
         if (!success) return
 
+        playSound('deal')
         setIsDealing(true)
         setRevealed(false)
         setRoundResult(null)
@@ -140,6 +190,7 @@ function DragonTigerGame() {
             }
 
             if (payout > 0) {
+                playSound('win')
                 addWinnings(payout, 'Dragon Tiger', payout / totalBet)
                 notifyWin(payout, (payout / totalBet).toFixed(2))
             } else {
@@ -156,7 +207,7 @@ function DragonTigerGame() {
                     {/* Road Map History Header */}
                     <div className="dt-roadmap">
                         <div className="dt-roadmap-header-line">
-                            <span className="dt-roadmap-label">Macau Bead Roadmap</span>
+                            <span className="dt-roadmap-label">Macau Trend Roadmap</span>
                             <div className="dt-streak-stats">
                                 <span className="stat-pill stat-dragon">D: {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%</span>
                                 <span className="stat-pill stat-tiger">T: {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%</span>
@@ -164,7 +215,7 @@ function DragonTigerGame() {
                             </div>
                         </div>
                         <div className="dt-roadmap-beads">
-                            {history.slice(0, 18).map((h, i) => (
+                            {history.slice(0, 16).map((h, i) => (
                                 <div key={i} className={`dt-bead ${h.winner}`}>
                                     {h.winner === 'dragon' ? 'D' : (h.winner === 'tiger' ? 'T' : 'Tie')}
                                 </div>
@@ -172,11 +223,19 @@ function DragonTigerGame() {
                         </div>
                     </div>
 
-                    {/* Table Arena & Cards */}
+                    {/* Table Arena & Mascot Duel */}
                     <div className="dt-duel-arena">
                         {/* Dragon Spot */}
                         <div className={`dt-player-box dragon ${roundResult === 'dragon' ? 'winner' : ''}`}>
-                            <div className="dt-box-title">DRAGON</div>
+                            <div className="dt-mascot-frame dragon">
+                                <img
+                                    src="/images/dragon-mascot.jpg"
+                                    alt="3D Crimson Dragon"
+                                    className="dt-mascot-img"
+                                />
+                                <span className="dt-mascot-glow"></span>
+                                <span className="dt-mascot-badge">DRAGON</span>
+                            </div>
                             <div className="dt-card-slot">
                                 {dragonCard ? (
                                     <div className={`dt-card ${revealed ? 'flipped' : ''}`}>
@@ -185,10 +244,14 @@ function DragonTigerGame() {
                                             <div className="dt-card-center">{dragonCard.suit}</div>
                                             <div className="dt-card-corner bottom">{dragonCard.rank}<span>{dragonCard.suit}</span></div>
                                         </div>
-                                        <div className="dt-card-face dt-card-back">👑</div>
+                                        <div className="dt-card-face dt-card-back">
+                                            <div className="dt-card-back-pattern">👑</div>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="dt-empty-slot">🐉</div>
+                                    <div className="dt-empty-slot">
+                                        <div className="dt-slot-placeholder">DEAL</div>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -200,13 +263,21 @@ function DragonTigerGame() {
                                     {roundResult.toUpperCase()} WINS!
                                 </span>
                             ) : (
-                                <span>VS</span>
+                                <div className="dt-vs-emblem">VS</div>
                             )}
                         </div>
 
                         {/* Tiger Spot */}
                         <div className={`dt-player-box tiger ${roundResult === 'tiger' ? 'winner' : ''}`}>
-                            <div className="dt-box-title">TIGER</div>
+                            <div className="dt-mascot-frame tiger">
+                                <img
+                                    src="/images/tiger-mascot.jpg"
+                                    alt="3D Sapphire Tiger"
+                                    className="dt-mascot-img"
+                                />
+                                <span className="dt-mascot-glow"></span>
+                                <span className="dt-mascot-badge">TIGER</span>
+                            </div>
                             <div className="dt-card-slot">
                                 {tigerCard ? (
                                     <div className={`dt-card ${revealed ? 'flipped' : ''}`}>
@@ -215,10 +286,14 @@ function DragonTigerGame() {
                                             <div className="dt-card-center">{tigerCard.suit}</div>
                                             <div className="dt-card-corner bottom">{tigerCard.rank}<span>{tigerCard.suit}</span></div>
                                         </div>
-                                        <div className="dt-card-face dt-card-back">👑</div>
+                                        <div className="dt-card-face dt-card-back">
+                                            <div className="dt-card-back-pattern">👑</div>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="dt-empty-slot">🐅</div>
+                                    <div className="dt-empty-slot">
+                                        <div className="dt-slot-placeholder">DEAL</div>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -226,32 +301,35 @@ function DragonTigerGame() {
 
                     {/* Betting Zones */}
                     <div className="dt-bet-zones">
-                        <div
+                        <button
+                            type="button"
                             className={`dt-bet-zone dragon-zone ${bets.dragon > 0 ? 'active' : ''}`}
                             onClick={() => handleAddBet('dragon')}
                         >
                             <span className="dt-zone-name">DRAGON</span>
                             <span className="dt-zone-payout">1 : 1</span>
                             {bets.dragon > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.dragon}</span>}
-                        </div>
+                        </button>
 
-                        <div
+                        <button
+                            type="button"
                             className={`dt-bet-zone tie-zone ${bets.tie > 0 ? 'active' : ''}`}
                             onClick={() => handleAddBet('tie')}
                         >
                             <span className="dt-zone-name">TIE</span>
                             <span className="dt-zone-payout">8 : 1</span>
                             {bets.tie > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.tie}</span>}
-                        </div>
+                        </button>
 
-                        <div
+                        <button
+                            type="button"
                             className={`dt-bet-zone tiger-zone ${bets.tiger > 0 ? 'active' : ''}`}
                             onClick={() => handleAddBet('tiger')}
                         >
                             <span className="dt-zone-name">TIGER</span>
                             <span className="dt-zone-payout">1 : 1</span>
                             {bets.tiger > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.tiger}</span>}
-                        </div>
+                        </button>
                     </div>
                 </div>
 
