@@ -3,7 +3,6 @@
   "framework": "vite",
   "buildCommand": "cd frontend && pnpm install && pnpm run build",
   "outputDirectory": "frontend/dist",
-  "cleanUrls": true,
   "headers": [
     {
       "source": "/(.*)",
@@ -46,7 +45,7 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|images/|vendor/|favicon\\.ico|robots\\.txt|sitemap\\.xml|manifest\\.json).*)",
       "destination": "/index.html"
     }
   ]
