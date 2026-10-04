@@ -277,6 +277,28 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                         <span>👑</span>
                         <span>Admin Panel</span>
                     </NavLink>
+                    <a
+                        href="mailto:support@amratgames.com"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '10px 14px',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '10px',
+                            color: '#94a3b8',
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            textDecoration: 'none',
+                            marginTop: '8px',
+                            minHeight: '40px'
+                        }}
+                    >
+                        <span>💬</span>
+                        <span>Live Support: support@amratgames.com</span>
+                    </a>
                 </div>
                 <div className="mobile-coming-soon" aria-label="Coming soon">
                     {comingSoon.map(label => (

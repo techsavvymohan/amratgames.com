@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { db, normalizePhone } from '../db/db.js'
 import { CONFIG } from '../config.js'
 import { requireAuth } from '../middleware/auth.js'
+import { emailService } from '../services/EmailService.js'
 
 const router = express.Router()
 
@@ -83,6 +84,18 @@ router.post('/send-otp', (req, res) => {
 
         const target = isEmail ? cleanId.toLowerCase() : normalizedPhone
         const { otp, expiresAt } = db.generateOtp(target)
+
+        // Dispatch real email via support@amratgames.com if recipient is an email address
+        if (isEmail) {
+            const user = db.findUserByLogin(target)
+            emailService.sendOtpEmail({
+                to: target,
+                otp,
+                username: user?.username || 'Player'
+            }).catch(e => {
+                console.warn('[AUTH] Notice sending OTP email:', e.message)
+            })
+        }
 
         res.json({
             success: true,
@@ -290,17 +303,35 @@ router.post('/quick-demo-login', (req, res) => {
     }
 })
 
-// Backwards compatibility endpoint for admin login
-router.post('/quick-admin-login', (req, res) => {
+// ── 6. Contact & Support Inquiry Route ────────────────────
+// POST /api/auth/contact
+router.post('/contact', async (req, res) => {
     try {
-        const adminUser = db.data.users.find(u => u.role === 'admin')
-        if (!adminUser) return res.status(404).json({ success: false, error: 'Admin account not found' })
-        db.updateUser(adminUser.id, { lastLoginAt: new Date().toISOString() })
-        const token = generateToken(adminUser)
-        res.json({ success: true, token, user: sanitizeUser(adminUser), message: 'Logged in as Master Administrator' })
+        const { name, email, phone, subject, message } = req.body
+        if (!name || !email || !message) {
+            return res.status(400).json({ success: false, error: 'Name, email, and message are required' })
+        }
+
+        const result = await emailService.sendContactInquiry({ name, email, phone, subject, message })
+        res.json({
+            success: true,
+            ticketId: result.ticketId,
+            message: `Thank you! Your message has been sent to ${CONFIG.SUPPORT_EMAIL}. We will respond within 24 hours.`
+        })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
     }
+})
+
+// GET /api/auth/support-info
+router.get('/support-info', (req, res) => {
+    res.json({
+        success: true,
+        email: CONFIG.SUPPORT_EMAIL,
+        telegram: '@AmratGamesSupport',
+        hours: '24/7/365 Live Player Support',
+        smtpActive: emailService.isSmtpConfigured()
+    })
 })
 
 export default router

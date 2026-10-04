@@ -68,6 +68,15 @@ export const CONFIG = {
     DEMO_OTP_BYPASS_ENABLED: process.env.DEMO_OTP_BYPASS_ENABLED !== 'false',
     DEMO_OTP_CODE: process.env.DEMO_OTP_CODE || '777777',
 
+    // Official Support & Outgoing Email Dispatcher
+    SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@amratgames.com',
+    SMTP_HOST: process.env.SMTP_HOST || '',
+    SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
+    SMTP_SECURE: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+    SMTP_USER: process.env.SMTP_USER || 'support@amratgames.com',
+    SMTP_PASS: process.env.SMTP_PASS || '',
+    SMTP_FROM: process.env.SMTP_FROM || 'AmratGames Support <support@amratgames.com>',
+
     // 6. Indian Payments & UPI (INR)
     UPI_MERCHANT_VPA: process.env.UPI_MERCHANT_VPA || 'amratgames@upi',
     UPI_MERCHANT_NAME: process.env.UPI_MERCHANT_NAME || 'AmratGames India',
@@ -137,6 +146,7 @@ export function logConfigSummary() {
         console.log(`⚡ Supabase URL:         ${CONFIG.SUPABASE_URL || 'NOT SET'}`)
     }
     console.log(`🛡️  Admin Account:        ${CONFIG.ADMIN_DEFAULT_EMAIL} (Phone: +91 ${CONFIG.ADMIN_DEFAULT_PHONE})`)
+    console.log(`📧 Support Email:        ${CONFIG.SUPPORT_EMAIL} (Sender: ${CONFIG.SMTP_FROM})`)
     console.log(`🔑 JWT Secret:           ${mask(CONFIG.JWT_SECRET)} (${CONFIG.JWT_EXPIRES_IN})`)
     console.log(`📲 SMS Provider:         ${CONFIG.SMS_GATEWAY_PROVIDER.toUpperCase()} (Demo Bypass: ${CONFIG.DEMO_OTP_BYPASS_ENABLED ? 'ENABLED [' + CONFIG.DEMO_OTP_CODE + ']' : 'DISABLED'})`)
     console.log(`🇮🇳 UPI Merchant:         ${CONFIG.UPI_MERCHANT_VPA} (${CONFIG.UPI_MERCHANT_NAME})`)

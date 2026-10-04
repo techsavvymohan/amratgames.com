@@ -97,6 +97,19 @@ function Sidebar({ isOpen, toggleSidebar }) {
                         <span>Admin Panel</span>
                     </NavLink>
                 </div>
+
+                <div className="nav-section" style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                    <h3 className="nav-title" style={{ color: '#94a3b8' }}>Support</h3>
+                    <a
+                        href="mailto:support@amratgames.com"
+                        className="nav-item"
+                        style={{ color: '#94a3b8' }}
+                        title="Contact 24/7 Support: support@amratgames.com"
+                    >
+                        <span className="nav-icon" style={{ fontSize: '16px', lineHeight: 1 }}>💬</span>
+                        <span>Live Support</span>
+                    </a>
+                </div>
             </nav>
         </aside>
     )
