@@ -39,7 +39,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
     }, [multiplier, phase, betPlaced, autoCashout, cashoutAt, onCashout])
 
     const handleBetClick = () => {
-        if (phase === 'waiting') {
+        if (phase === 'idle' || phase === 'waiting') {
             if (betAmount > 0) {
                 onBet(betAmount)
             }
@@ -49,17 +49,27 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
     }
 
     const getButtonText = () => {
+        if (phase === 'idle') {
+            return `Place Bet & Launch`
+        }
         if (phase === 'waiting') {
             return betPlaced ? 'Cancel Bet' : 'Place Bet'
         }
-        if (phase === 'running' && betPlaced) {
-            return `Cash Out ${currencySymbol}${(betAmount * multiplier).toFixed(2)}`
+        if (phase === 'running') {
+            if (betPlaced) {
+                return `Cash Out ${currencySymbol}${(betAmount * multiplier).toFixed(2)}`
+            }
+            return 'Flight in Progress'
         }
-        return 'Place Bet'
+        if (phase === 'crashed') {
+            return 'Crashed'
+        }
+        return 'Place Bet & Launch'
     }
 
     const getButtonClass = () => {
         if (phase === 'running' && betPlaced) return 'bet-button cashout-btn'
+        if (phase === 'crashed') return 'bet-button crashed-btn'
         return 'bet-button'
     }
 
@@ -165,7 +175,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                     <button
                         onClick={handleBetClick}
                         className={getButtonClass()}
-                        disabled={phase === 'running' && !betPlaced}
+                        disabled={phase === 'crashed' || (phase === 'running' && !betPlaced)}
                     >
                         <ThunderboltOutlined style={{ marginRight: 6 }} />
                         {getButtonText()}

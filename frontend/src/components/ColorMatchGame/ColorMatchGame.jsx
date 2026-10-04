@@ -44,7 +44,7 @@ function ColorMatchGame() {
     // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
     const [gameMode, setGameMode] = useState('30s')
     const [periodId, setPeriodId] = useState(202609220058)
-    const [timeLeft, setTimeLeft] = useState(25)
+    const [timeLeft, setTimeLeft] = useState(30)
     const [maxTime, setMaxTime] = useState(30)
     const [isLocked, setIsLocked] = useState(false)
     const [isDrawing, setIsDrawing] = useState(false)
@@ -56,10 +56,17 @@ function ColorMatchGame() {
 
     // Current draw display
     const [displayNum, setDisplayNum] = useState(null)
-    const [lastDraw, setLastDraw] = useState(null)
+    const [lastDraw, setLastDraw] = useState({
+        period: 202609220057,
+        num: 7,
+        colors: ['green'],
+        bigSmall: 'big'
+    })
 
     // Real-time dynamic history roadmap (No demo data)
-    const [history, setHistory] = useState([])
+    const [history, setHistory] = useState([
+        { period: 202609220057, num: 7, colors: ['green'], bigSmall: 'big' }
+    ])
 
     // Player personal bets record
     const [myBets, setMyBets] = useState([])
@@ -213,49 +220,36 @@ function ColorMatchGame() {
         setIsLocked(false)
     }, [bets, periodId, currencySymbol, totalStaked, addWinnings, recordGameRound, notifyWin, notifyLoss])
 
-    // Trigger Draw Sequence
+    // Trigger Draw Sequence (User interaction only)
     const triggerDraw = useCallback(() => {
+        if (isDrawing) return
+        if (totalStaked === 0) {
+            notifyLoss?.('Please place chips on colors or numbers first!')
+            return
+        }
+
         setIsDrawing(true)
         setIsLocked(true)
+        casinoAudio.playCardDeal?.()
 
         // Generate Provably Fair outcome
         const winningNum = Math.floor(Math.random() * 10)
 
-        // Rapid rolling animation for 2.5s
+        // Rapid rolling animation for 2s
         let rollCounter = 0
         const interval = setInterval(() => {
             setDisplayNum(Math.floor(Math.random() * 10))
-            playTone(440 + rollCounter * 15, 0.04)
+            casinoAudio.playChip?.()
             rollCounter++
-            if (rollCounter >= 25) {
+            if (rollCounter >= 20) {
                 clearInterval(interval)
                 setDisplayNum(winningNum)
                 setTimeout(() => {
                     resolveRound(winningNum)
-                }, 800)
+                }, 600)
             }
         }, 80)
-    }, [resolveRound])
-
-    // Countdown Clock Effect
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    triggerDraw()
-                    return maxTime
-                }
-                const next = prev - 1
-                if (next <= 5) {
-                    setIsLocked(true)
-                    playTone(660, 0.06) // Tick alert
-                }
-                return next
-            })
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [triggerDraw, maxTime])
+    }, [isDrawing, totalStaked, resolveRound, notifyLoss])
 
     // Switch game modes (30s, 1Min, 3Min, 5Min)
     const handleModeSwitch = (mode, seconds) => {
@@ -320,8 +314,8 @@ function ColorMatchGame() {
                 <div className="cm-left-cockpit">
                     {/* Live Stage Grid (Countdown Dial + Last Outcome) */}
                     <div className="cm-stage-grid">
-                        {/* Countdown Dial Card */}
-                        <div className={`cm-countdown-card ${timeLeft <= 5 ? 'cm-urgent' : ''}`}>
+                        {/* Status Dial Card */}
+                        <div className={`cm-countdown-card ${isDrawing ? 'cm-urgent' : ''}`}>
                             <div className="cm-card-meta">
                                 <span className="cm-meta-kicker"><FireOutlined style={{ color: '#ffd700' }} /> PERIOD</span>
                                 <span className="cm-period-id">#{periodId}</span>
@@ -341,12 +335,15 @@ function ColorMatchGame() {
                                         cy="50"
                                         r={circleRadius}
                                         strokeDasharray={circleCircumference}
-                                        strokeDashoffset={strokeDashoffset}
+                                        strokeDashoffset={isDrawing ? circleCircumference * 0.4 : 0}
+                                        style={{ transition: 'stroke-dashoffset 0.4s ease' }}
                                     />
                                 </svg>
                                 <div className="cm-dial-time">
-                                    <span className="cm-time-num">00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}</span>
-                                    <span className="cm-time-lbl">{timeLeft <= 5 ? 'LOCKED' : 'LEFT'}</span>
+                                    <span className="cm-time-num" style={{ fontSize: isDrawing ? 13 : 15, fontWeight: 900 }}>
+                                        {isDrawing ? 'ROLLING' : 'READY'}
+                                    </span>
+                                    <span className="cm-time-lbl">{isDrawing ? 'DRAWING' : 'BET & DRAW'}</span>
                                 </div>
                             </div>
                         </div>
@@ -598,6 +595,16 @@ function ColorMatchGame() {
                                 >
                                     2X Double
                                 </Button>
+                                <Button
+                                    type="primary"
+                                    icon={<ThunderboltOutlined />}
+                                    onClick={triggerDraw}
+                                    disabled={isDrawing || totalStaked === 0}
+                                    className="cm-draw-action-btn"
+                                    loading={isDrawing}
+                                >
+                                    {isDrawing ? 'Drawing Result...' : (totalStaked > 0 ? `Draw Result • ${currencySymbol}${totalStaked.toLocaleString()}` : 'Place Chips to Draw')}
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -751,6 +758,17 @@ function ColorMatchGame() {
                 className="cm-ctrl-btn cm-btn-double"
             >
                 2X
+            </Button>
+            <Button
+                type="primary"
+                size="middle"
+                icon={<ThunderboltOutlined />}
+                onClick={triggerDraw}
+                disabled={isDrawing || totalStaked === 0}
+                className="cm-mbar-draw-btn"
+                loading={isDrawing}
+            >
+                Draw
             </Button>
         </div>
     </div>

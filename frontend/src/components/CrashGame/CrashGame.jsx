@@ -55,6 +55,7 @@ const { Text, Title, Paragraph } = Typography
 
 // Game phases
 const PHASE = {
+    IDLE: 'idle',
     WAITING: 'waiting',
     RUNNING: 'running',
     CRASHED: 'crashed'
@@ -64,9 +65,9 @@ const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: l
 
 function CrashGame() {
     const { balance, placeBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet()
-    const [phase, setPhase] = useState(PHASE.WAITING)
+    const [phase, setPhase] = useState(PHASE.IDLE)
     const [multiplier, setMultiplier] = useState(1.00)
-    const [countdown, setCountdown] = useState(5)
+    const [countdown, setCountdown] = useState(0)
     const [crashPoint, setCrashPoint] = useState(0)
     const [elapsedTime, setElapsedTime] = useState(0)
     const [history, setHistory] = useState([])
@@ -338,16 +339,17 @@ function CrashGame() {
         return point
     }, [])
 
-    // Start countdown
-    const startCountdown = useCallback(() => {
-        setPhase(PHASE.WAITING)
+    // Reset to idle ready state
+    const resetToIdle = useCallback(() => {
+        setPhase(PHASE.IDLE)
         setMultiplier(1.00)
         setElapsedTime(0)
         multiplierRef.current = 1.00
         elapsedTimeRef.current = 0
-        setCountdown(5)
-        setPlayerCashouts([])
+        setCountdown(0)
+        setBetPlaced(false)
         setUserBetData(null)
+        setPlayerCashouts([])
     }, [])
 
     // Handle crash
@@ -388,8 +390,18 @@ function CrashGame() {
         }
 
         setBetPlaced(false)
-        setTimeout(startCountdown, 3000)
-    }, [startCountdown, userBetData, betPlaced, showToast, recordGameRound, currencySymbol])
+        // Return to IDLE state after crash explosion (2.5s) - NO AUTO RESTART!
+        setTimeout(() => {
+            setPhase(PHASE.IDLE)
+            setMultiplier(1.00)
+            setElapsedTime(0)
+            multiplierRef.current = 1.00
+            elapsedTimeRef.current = 0
+            setCountdown(0)
+            setUserBetData(null)
+            setPlayerCashouts([])
+        }, 2500)
+    }, [userBetData, betPlaced, showToast, recordGameRound, currencySymbol])
 
     // Handle player cashout notification
     const handlePlayerCashout = useCallback((cashoutData) => {
@@ -438,30 +450,10 @@ function CrashGame() {
         }
     }, [phase, crashPoint, handleCrash])
 
-    // Countdown timer
-    useEffect(() => {
-        if (phase === PHASE.WAITING && countdown > 0) {
-            const timer = setTimeout(() => {
-                setCountdown(prev => prev - 0.1)
-            }, 100)
-            return () => clearTimeout(timer)
-        } else if (phase === PHASE.WAITING && countdown <= 0) {
-            // Generate crash point async with ProvablyFair
-            generateCrashPoint().then(point => {
-                setCrashPoint(point)
-                setPhase(PHASE.RUNNING)
-                startTimeRef.current = Date.now()
-            })
-        }
-    }, [phase, countdown, generateCrashPoint])
+    // Handle user betting and starting flight (User Interaction Only)
+    const handleBet = async (amount) => {
+        if (phase !== PHASE.IDLE) return
 
-    // Initial start
-    useEffect(() => {
-        const timer = setTimeout(startCountdown, 1000)
-        return () => clearTimeout(timer)
-    }, [startCountdown])
-
-    const handleBet = (amount) => {
         if (amount > balance) {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
             return
@@ -485,7 +477,17 @@ function CrashGame() {
             cashoutAt: null,
             profit: null
         })
-        showToast('bet', 'Bet Placed', `${currencySymbol}${amount.toFixed(2)}`, 2500)
+        showToast('bet', 'Flight Launched!', `${currencySymbol}${amount.toFixed(2)}`, 2000)
+
+        // Generate Provably Fair crash point and launch flight immediately
+        const point = await generateCrashPoint()
+        setCrashPoint(point)
+        setMultiplier(1.00)
+        setElapsedTime(0)
+        multiplierRef.current = 1.00
+        elapsedTimeRef.current = 0
+        startTimeRef.current = Date.now()
+        setPhase(PHASE.RUNNING)
     }
 
     // Handle cashout

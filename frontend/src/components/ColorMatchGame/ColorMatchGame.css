@@ -1063,6 +1063,36 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     color: #ffd700 !important;
 }
 
+.cm-draw-action-btn {
+    background: linear-gradient(135deg, #00e676, #00b0ff) !important;
+    border: none !important;
+    color: #0b0f19 !important;
+    border-radius: 12px !important;
+    font-weight: 900 !important;
+    font-size: 14px !important;
+    height: 42px !important;
+    padding: 0 20px !important;
+    box-shadow: 0 4px 18px rgba(0, 230, 118, 0.4) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.cm-draw-action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 230, 118, 0.6) !important;
+    color: #000000 !important;
+}
+
+.cm-mbar-draw-btn {
+    background: linear-gradient(135deg, #00e676, #00b0ff) !important;
+    border: none !important;
+    color: #0b0f19 !important;
+    border-radius: 10px !important;
+    font-weight: 900 !important;
+    height: 38px !important;
+    padding: 0 16px !important;
+    box-shadow: 0 2px 12px rgba(0, 230, 118, 0.4) !important;
+}
+
 /* Interactive Data Hub (Tabs: Game History · Trend Chart · My Bets) */
 .cm-data-hub {
     background: #0f141f;
@@ -1275,14 +1305,14 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         align-items: center;
         justify-content: space-between;
         position: fixed;
-        bottom: 0;
+        bottom: var(--mobile-nav-space, 68px);
         left: 0;
         right: 0;
         background: rgba(15, 20, 31, 0.96);
         backdrop-filter: blur(12px);
         border-top: 1.5px solid rgba(255, 215, 0, 0.35);
-        padding: 10px 16px 16px;
-        z-index: 1000;
+        padding: 8px 14px;
+        z-index: 90;
         box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.75);
     }
     .cm-mbar-stake {
@@ -1340,12 +1370,33 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         padding: 4px 2px !important;
         font-size: 10px !important;
     }
+    .cm-stage-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
     .cm-countdown-card {
-        padding: 6px 10px !important;
-        border-radius: 10px !important;
+        padding: 6px 8px !important;
+        border-radius: 12px !important;
+    }
+    .cm-dial-wrapper {
+        width: 48px !important;
+        height: 48px !important;
+        flex-shrink: 0 !important;
+    }
+    .cm-dial-wrapper svg,
+    .cm-dial-svg {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    .cm-time-num {
+        font-size: 10px !important;
+    }
+    .cm-time-lbl {
+        font-size: 7px !important;
     }
     .cm-period-id {
-        font-size: 13px !important;
+        font-size: 11px !important;
     }
     .cm-crystal-colors-row {
         gap: 6px !important;

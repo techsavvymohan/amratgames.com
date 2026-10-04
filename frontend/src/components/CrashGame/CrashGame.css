@@ -465,6 +465,42 @@
     height: 100%;
 }
 
+.crash-game .crash-rocket-img {
+    position: absolute;
+    width: 95px;
+    height: auto;
+    display: none;
+    pointer-events: none;
+    z-index: 10;
+    filter: drop-shadow(0 0 10px rgba(247, 147, 26, 0.8));
+    will-change: transform, left, top;
+}
+
+.crash-game .crash-exhaust-img {
+    position: absolute;
+    width: 130px;
+    height: auto;
+    display: none;
+    pointer-events: none;
+    z-index: 9;
+    mix-blend-mode: screen;
+    filter: hue-rotate(340deg) saturate(2);
+    image-rendering: pixelated;
+    will-change: transform, left, top;
+}
+
+.crash-game .crash-explosion-img {
+    position: absolute;
+    width: 220px;
+    height: auto;
+    display: none;
+    pointer-events: none;
+    z-index: 11;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: screen;
+    image-rendering: pixelated;
+}
+
 /* Y Axis - Clean Labels */
 .crash-game .chart-container-antd .y-axis-antd {
     position: absolute;
@@ -1102,19 +1138,43 @@
         width: 100% !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        max-height: 48vh !important;
+        max-height: 52vh !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
         overflow: hidden !important;
         padding: 4px 6px !important;
     }
 
-    .crash-game .game-chart {
+    .crash-game .chart-container-antd {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
+        height: 100% !important;
+        min-height: 220px !important;
+        margin: 0 !important;
+        margin-top: 4px !important;
+        align-self: stretch !important;
+        position: relative !important;
+    }
+
+    .crash-game .chart-container-antd .crash-canvas {
         width: 100% !important;
         height: 100% !important;
-        max-height: 38vh !important;
+    }
+
+    .crash-game .crash-rocket-img {
+        width: 58px !important;
+    }
+
+    .crash-game .crash-exhaust-img {
+        width: 75px !important;
+    }
+
+    .crash-game .crash-explosion-img {
+        width: 130px !important;
     }
 
     /* Remove unnecessary mobile clutter */
@@ -1205,12 +1265,47 @@
         touch-action: pan-x;
     }
 
+    .crash-game .chart-container-antd .multiplier-container {
+        top: 38% !important;
+        left: 52% !important;
+    }
+
     .crash-game .chart-container-antd .multiplier-title {
-        font-size: 48px !important;
+        font-size: 44px !important;
     }
 
     .crash-game .chart-container-antd .multiplier-suffix {
-        font-size: 32px;
+        font-size: 26px !important;
+    }
+
+    .crash-game .chart-container-antd .status-container {
+        top: 54% !important;
+        left: 52% !important;
+    }
+
+    .crash-game .chart-container-antd .y-axis-antd {
+        left: 4px !important;
+        top: 25px !important;
+        bottom: 40px !important;
+    }
+
+    .crash-game .chart-container-antd .axis-label {
+        font-size: 10px !important;
+    }
+
+    .crash-game .chart-container-antd .x-axis-antd {
+        bottom: 6px !important;
+        left: 42px !important;
+        right: 60px !important;
+    }
+
+    .crash-game .chart-container-antd .x-label {
+        font-size: 9px !important;
+    }
+
+    .crash-game .chart-container-antd .total-time-antd {
+        right: -55px !important;
+        font-size: 9px !important;
     }
 
     .mobile-game-modal .ant-modal {

@@ -9,7 +9,7 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
     const rocketRef = useRef(null)
     const exhaustRef = useRef(null)
     const explosionRef = useRef(null)
-    // Cache canvas dimensions to avoid expensive getBoundingClientRect every frame
+    // Cache canvas dimensions
     const canvasSizeRef = useRef({ width: 0, height: 0, dpr: 1 })
 
     // Dynamic scaling for both axes
@@ -44,34 +44,8 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
         return labels
     }, [Math.ceil(maxTime)])
 
-    // Handle canvas resize only when needed (not every frame)
-    useEffect(() => {
-        const canvas = canvasRef.current
-        if (!canvas) return
-
-        const observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const dpr = window.devicePixelRatio || 1
-                const { width, height } = entry.contentRect
-                canvas.width = width * dpr
-                canvas.height = height * dpr
-                canvasSizeRef.current = { width, height, dpr }
-            }
-        })
-        observer.observe(canvas)
-
-        // Initial size
-        const rect = canvas.getBoundingClientRect()
-        const dpr = window.devicePixelRatio || 1
-        canvas.width = rect.width * dpr
-        canvas.height = rect.height * dpr
-        canvasSizeRef.current = { width: rect.width, height: rect.height, dpr }
-
-        return () => observer.disconnect()
-    }, [])
-
-    // Draw chart - optimized
-    useEffect(() => {
+    // Draw canvas function (callable both from resize and frame updates)
+    const drawChart = useCallback(() => {
         const canvas = canvasRef.current
         if (!canvas) return
 
@@ -83,9 +57,13 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
         ctx.clearRect(0, 0, width, height)
 
-        const padding = { left: 60, right: 30, top: 50, bottom: 60 }
-        const chartWidth = width - padding.left - padding.right
-        const chartHeight = height - padding.top - padding.bottom
+        const isMobile = width < 600
+        const padding = isMobile
+            ? { left: 40, right: 16, top: 25, bottom: 35 }
+            : { left: 60, right: 30, top: 50, bottom: 60 }
+
+        const chartWidth = Math.max(10, width - padding.left - padding.right)
+        const chartHeight = Math.max(10, height - padding.top - padding.bottom)
 
         // Helper functions
         const timeToX = (time) => padding.left + (time / maxTime) * chartWidth
@@ -115,10 +93,12 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
         ctx.stroke()
         ctx.setLineDash([])
 
-        // Draw curve when game is running or crashed
-        if ((phase === 'running' || phase === 'crashed') && elapsedTime > 0) {
-            // OPTIMIZED: Cap points at 200 max, use adaptive sampling
-            const numPoints = Math.min(200, Math.max(80, Math.floor(elapsedTime * 20)))
+        // Check running/crashed state
+        const isFlying = (phase === 'running' || phase === 'crashed') && elapsedTime > 0
+
+        if (isFlying) {
+            // Adaptive sampling
+            const numPoints = Math.min(200, Math.max(40, Math.floor(elapsedTime * 20)))
             const points = new Array(numPoints + 1)
 
             for (let i = 0; i <= numPoints; i++) {
@@ -130,7 +110,7 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                 points[i] = { x, y }
             }
 
-            // Gradient fill under curve (single draw call)
+            // Gradient fill under curve
             const fillGradient = ctx.createLinearGradient(
                 padding.left, height - padding.bottom,
                 timeToX(elapsedTime), multiplierToY(multiplier)
@@ -158,25 +138,24 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
             ctx.fillStyle = fillGradient
             ctx.fill()
 
-            // OPTIMIZED: Single glow layer instead of 3 separate ones
+            // Main line with glow
             const lineColor = phase === 'crashed' ? '#ed4245' : '#f7931a'
-
             ctx.beginPath()
             ctx.moveTo(points[0].x, points[0].y)
             for (let i = 1; i <= numPoints; i++) {
                 ctx.lineTo(points[i].x, points[i].y)
             }
             ctx.strokeStyle = phase === 'crashed'
-                ? 'rgba(237, 66, 69, 0.15)'
-                : 'rgba(247, 147, 26, 0.15)'
-            ctx.lineWidth = 12
+                ? 'rgba(237, 66, 69, 0.2)'
+                : 'rgba(247, 147, 26, 0.2)'
+            ctx.lineWidth = isMobile ? 8 : 12
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctx.shadowColor = lineColor
             ctx.shadowBlur = 10
             ctx.stroke()
 
-            // Main line with gradient (no shadow for performance)
+            // Main sharp line
             ctx.shadowBlur = 0
             const lineGradient = ctx.createLinearGradient(
                 padding.left, 0,
@@ -199,24 +178,24 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                 ctx.lineTo(points[i].x, points[i].y)
             }
             ctx.strokeStyle = lineGradient
-            ctx.lineWidth = 4
+            ctx.lineWidth = isMobile ? 3 : 4
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctx.stroke()
 
-            // Draw endpoint calculations
+            // Endpoint coordinates
             const endX = timeToX(elapsedTime)
             const endY = multiplierToY(multiplier)
 
-            // Calculate rotation angle
+            // Rotation angle
             let angle = 0
             if (numPoints >= 2) {
-                const p1 = points[Math.max(0, numPoints - 10)]
+                const p1 = points[Math.max(0, numPoints - 8)]
                 const p2 = points[numPoints]
                 angle = Math.atan2(p2.y - p1.y, p2.x - p1.x)
             }
 
-            // Sync HTML Elements over Canvas (using will-change for GPU acceleration)
+            // Sync HTML Elements over Canvas
             if (rocketRef.current) {
                 if (phase === 'running') {
                     rocketRef.current.style.display = 'block'
@@ -232,7 +211,8 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                     exhaustRef.current.style.display = 'block'
                     exhaustRef.current.style.left = `${endX}px`
                     exhaustRef.current.style.top = `${endY}px`
-                    exhaustRef.current.style.transform = `translate(-50%, -50%) rotate(${angle}rad) rotate(90deg) translate(0px, 95px)`
+                    const exhaustOffset = isMobile ? 55 : 85
+                    exhaustRef.current.style.transform = `translate(-50%, -50%) rotate(${angle}rad) rotate(90deg) translate(0px, ${exhaustOffset}px)`
                 } else {
                     exhaustRef.current.style.display = 'none'
                 }
@@ -249,16 +229,82 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                             if (explosionRef.current) {
                                 explosionRef.current.style.display = 'none'
                             }
-                        }, 1000)
+                        }, 1200)
                     }
                 } else {
                     explosionRef.current.style.display = 'none'
                 }
             }
+        } else {
+            // IDLE or WAITING / READY state: Plane is PARKED on the launchpad at 1.00x!
+            const startX = padding.left
+            const startY = height - padding.bottom
+
+            // Runway glowing dot
+            ctx.beginPath()
+            ctx.arc(startX, startY, isMobile ? 5 : 7, 0, Math.PI * 2)
+            ctx.fillStyle = '#f7931a'
+            ctx.shadowColor = '#f7931a'
+            ctx.shadowBlur = 10
+            ctx.fill()
+            ctx.shadowBlur = 0
+
+            if (rocketRef.current) {
+                rocketRef.current.style.display = 'block'
+                rocketRef.current.style.left = `${startX + (isMobile ? 12 : 20)}px`
+                rocketRef.current.style.top = `${startY - (isMobile ? 12 : 20)}px`
+                rocketRef.current.style.transform = `translate(-50%, -50%) rotate(-45deg)`
+            }
+            if (exhaustRef.current) {
+                exhaustRef.current.style.display = 'none'
+            }
+            if (explosionRef.current) {
+                explosionRef.current.style.display = 'none'
+            }
         }
     }, [phase, multiplier, elapsedTime, maxTime, maxMultiplier])
 
+    // ResizeObserver handler
+    useEffect(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
+
+        const updateSize = () => {
+            const rect = canvas.getBoundingClientRect()
+            const dpr = window.devicePixelRatio || 1
+            if (rect.width > 0 && rect.height > 0) {
+                canvas.width = rect.width * dpr
+                canvas.height = rect.height * dpr
+                canvasSizeRef.current = { width: rect.width, height: rect.height, dpr }
+                drawChart()
+            }
+        }
+
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (width > 0 && height > 0) {
+                    const dpr = window.devicePixelRatio || 1
+                    canvas.width = width * dpr
+                    canvas.height = height * dpr
+                    canvasSizeRef.current = { width, height, dpr }
+                    drawChart()
+                }
+            }
+        })
+        observer.observe(canvas)
+        updateSize()
+
+        return () => observer.disconnect()
+    }, [drawChart])
+
+    // Redraw on phase/multiplier changes
+    useEffect(() => {
+        drawChart()
+    }, [drawChart])
+
     const getStatusText = () => {
+        if (phase === 'idle') return 'Ready to Launch'
         if (phase === 'waiting') return `Starting in ${countdown.toFixed(1)}s`
         if (phase === 'crashed') return `Crashed @${multiplier.toFixed(2)}×`
         return null
@@ -276,24 +322,24 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
         <div className="chart-container-antd" style={{ position: 'relative' }}>
             <canvas ref={canvasRef} className="crash-canvas" />
 
-            {/* In-game Overlay Assets - will-change for GPU compositing */}
+            {/* In-game Overlay Assets */}
             <img
                 ref={rocketRef}
                 src="/images/spaceship.png"
                 alt="Rocket"
-                style={{ position: 'absolute', width: '105px', height: 'auto', display: 'none', pointerEvents: 'none', zIndex: 10, filter: 'drop-shadow(0 0 10px rgba(247, 147, 26, 0.8))', willChange: 'transform, left, top' }}
+                className="crash-rocket-img"
             />
             <img
                 ref={exhaustRef}
                 src="/images/exhaust/exhaust02_preview.gif"
                 alt="Exhaust"
-                style={{ position: 'absolute', width: '150px', height: 'auto', display: 'none', pointerEvents: 'none', zIndex: 9, mixBlendMode: 'screen', filter: 'hue-rotate(340deg) saturate(2)', imageRendering: 'pixelated', willChange: 'transform, left, top' }}
+                className="crash-exhaust-img"
             />
             <img
                 ref={explosionRef}
                 src="/images/explosions/normal_explosion.gif"
                 alt="Explosion"
-                style={{ position: 'absolute', width: '250px', height: 'auto', display: 'none', pointerEvents: 'none', zIndex: 11, transform: 'translate(-50%, -50%)', mixBlendMode: 'screen', imageRendering: 'pixelated' }}
+                className="crash-explosion-img"
             />
 
             {/* Y Axis Labels */}
@@ -325,7 +371,6 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                     style={{
                         color: getMultiplierColor(),
                         margin: 0,
-                        fontSize: 90,
                         fontWeight: 800,
                         letterSpacing: '-2px',
                         textShadow: `0 0 40px ${getMultiplierColor()}50, 0 0 80px ${getMultiplierColor()}30`,
@@ -339,16 +384,16 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
             </div>
 
             {/* Status Message */}
-            {(phase === 'waiting' || phase === 'crashed') && (
+            {(phase === 'idle' || phase === 'waiting' || phase === 'crashed') && (
                 <div className="status-container">
                     <Tag
-                        color={phase === 'crashed' ? 'error' : 'warning'}
+                        color={phase === 'crashed' ? 'error' : (phase === 'idle' ? 'processing' : 'warning')}
                         className="status-tag"
                         style={{
-                            fontSize: 15,
-                            padding: '8px 24px',
+                            fontSize: 14,
+                            padding: '6px 20px',
                             borderRadius: 24,
-                            fontWeight: 600,
+                            fontWeight: 700,
                             letterSpacing: '0.5px',
                             textTransform: 'uppercase'
                         }}
