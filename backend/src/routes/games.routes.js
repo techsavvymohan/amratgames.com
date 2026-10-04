@@ -1,7 +1,7 @@
 import express from 'express'
 import crypto from 'node:crypto'
 import { db } from '../db/db.js'
-import { requireAuth } from '../middleware/auth.js'
+import { authenticate } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
 
 const router = express.Router()
@@ -33,7 +33,7 @@ router.get('/provably-fair/seed', (req, res) => {
 })
 
 // POST /api/games/bet
-router.post('/bet', requireAuth, (req, res) => {
+router.post('/bet', authenticate, (req, res) => {
     try {
         const {
             game = 'crash',
@@ -49,48 +49,71 @@ router.post('/bet', requireAuth, (req, res) => {
             return res.status(400).json({ success: false, error: 'Valid bet amount is required' })
         }
 
-        const user = db.findUserById(req.user.id)
-        const currentBal = user.balances?.[currency] || 0
-
-        if (parsedAmount > currentBal) {
-            return res.status(400).json({ success: false, error: `Insufficient ${currency} balance to place bet` })
-        }
-
         const numMultiplier = Math.max(0, parseFloat(multiplier) || 0)
         const payout = won ? parseFloat((parsedAmount * numMultiplier).toFixed(2)) : 0
         const profit = payout - parsedAmount
 
-        // Deduct wager & add payout atomically
-        const netChange = profit
-        db.updateUserBalance(
-            user.id,
-            currency,
-            netChange,
-            `Bet on ${gameName} (${won ? `Won ${numMultiplier.toFixed(2)}x` : 'Bust'})`
-        )
+        let betRecord = null
+        let updatedBalances = null
 
-        const betRecord = db.recordBet({
-            userId: user.id,
-            username: user.username,
-            game,
-            gameName,
-            currency,
-            betAmount: parsedAmount,
-            multiplier: parseFloat(numMultiplier.toFixed(2)),
-            payout,
-            profit,
-            won: Boolean(won),
-            hash: crypto.randomBytes(16).toString('hex')
-        })
+        if (req.user) {
+            const user = db.findUserById(req.user.id)
+            const currentBal = user.balances?.[currency] || 0
 
-        // Broadcast live bet to all connected clients
+            // If user's balance is lower than wager, enforce check
+            if (parsedAmount > currentBal + 0.01) {
+                return res.status(400).json({ success: false, error: `Insufficient ${currency} balance to place bet` })
+            }
+
+            // Deduct wager & add payout atomically in DB
+            const netChange = profit
+            db.updateUserBalance(
+                user.id,
+                currency,
+                netChange,
+                `Bet on ${gameName} (${won ? `Won ${numMultiplier.toFixed(2)}x` : 'Bust'})`
+            )
+
+            betRecord = db.recordBet({
+                userId: user.id,
+                username: user.username,
+                game,
+                gameName,
+                currency,
+                betAmount: parsedAmount,
+                multiplier: parseFloat(numMultiplier.toFixed(2)),
+                payout,
+                profit,
+                won: Boolean(won),
+                hash: crypto.randomBytes(16).toString('hex')
+            })
+
+            const updatedUser = db.findUserById(user.id)
+            updatedBalances = updatedUser.balances
+        } else {
+            // Unauthenticated guest player
+            betRecord = db.recordBet({
+                userId: null,
+                username: 'Player_' + crypto.randomBytes(2).toString('hex'),
+                game,
+                gameName,
+                currency,
+                betAmount: parsedAmount,
+                multiplier: parseFloat(numMultiplier.toFixed(2)),
+                payout,
+                profit,
+                won: Boolean(won),
+                hash: crypto.randomBytes(16).toString('hex')
+            })
+        }
+
+        // Broadcast live bet to all connected clients & admin panel
         broadcastEvent('NEW_BET', betRecord)
 
-        const updatedUser = db.findUserById(user.id)
         res.json({
             success: true,
             bet: betRecord,
-            balances: updatedUser.balances
+            balances: updatedBalances
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })

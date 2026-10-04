@@ -1,4 +1,5 @@
 import { MAX_ACTIVE_BALLS } from './constants';
+import casinoAudio from '../../utils/casinoAudio';
 
 export async function dropPlinkoBall({
     engine,
@@ -20,6 +21,7 @@ export async function dropPlinkoBall({
         if (engine.getActiveBallCount() >= MAX_ACTIVE_BALLS) return 'busy';
         if (!placeBet(betAmount)) return 'insufficient-funds';
 
+        casinoAudio.playBet();
         engine.updateBallStyle(currentBall.color, currentBall.image);
         const binIndex = fairnessResult.path.reduce((sum, direction) => sum + direction, 0);
         return engine.dropBall(binIndex, selectedBallType) ? 'dropped' : 'busy';

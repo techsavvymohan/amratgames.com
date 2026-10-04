@@ -7,6 +7,7 @@ import {
     TrophyOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
+import casinoAudio from '../../utils/casinoAudio'
 import './DragonTigerGame.css'
 
 const { Text, Title } = Typography
@@ -38,7 +39,7 @@ function getRandomCard() {
 }
 
 function DragonTigerGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
 
     // Chip & Bet state
     const [selectedChip, setSelectedChip] = useState(100)
@@ -70,51 +71,14 @@ function DragonTigerGame() {
 
     const totalBet = bets.dragon + bets.tie + bets.tiger
 
-// Web Audio sound generator for tactile feedback
-function playSound(type) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-        if (type === 'chip') {
-            const osc = audioCtx.createOscillator()
-            const gain = audioCtx.createGain()
-            osc.type = 'triangle'
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime)
-            gain.gain.setValueAtTime(0.09, audioCtx.currentTime)
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06)
-            osc.connect(gain)
-            gain.connect(audioCtx.destination)
-            osc.start()
-            osc.stop(audioCtx.currentTime + 0.06)
-        } else if (type === 'deal') {
-            const osc = audioCtx.createOscillator()
-            const gain = audioCtx.createGain()
-            osc.type = 'sine'
-            osc.frequency.setValueAtTime(320, audioCtx.currentTime)
-            osc.frequency.exponentialRampToValueAtTime(540, audioCtx.currentTime + 0.15)
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15)
-            osc.connect(gain)
-            gain.connect(audioCtx.destination)
-            osc.start()
-            osc.stop(audioCtx.currentTime + 0.15)
-        } else if (type === 'win') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                setTimeout(() => {
-                    const osc = audioCtx.createOscillator()
-                    const gain = audioCtx.createGain()
-                    osc.type = 'triangle'
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime)
-                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2)
-                    osc.connect(gain)
-                    gain.connect(audioCtx.destination)
-                    osc.start()
-                    osc.stop(audioCtx.currentTime + 0.2)
-                }, i * 90)
-            })
-        }
-    } catch (e) {}
-}
+    // Audio dispatcher
+    const playSound = (type) => {
+        if (type === 'chip') casinoAudio.playChip()
+        else if (type === 'deal') casinoAudio.playCardDeal()
+        else if (type === 'win') casinoAudio.playWin()
+        else if (type === 'bigWin') casinoAudio.playBigWin()
+        else if (type === 'loss') casinoAudio.playLoss()
+    }
 
     // Place chip on betting zone
     const handleAddBet = (zone) => {
@@ -190,14 +154,33 @@ function playSound(type) {
             }
 
             if (payout > 0) {
-                playSound('win')
+                if (winner === 'tie' || (payout / totalBet) >= 3) {
+                    playSound('bigWin')
+                } else {
+                    playSound('win')
+                }
                 addWinnings(payout, 'Dragon Tiger', payout / totalBet)
+                recordGameRound({
+                    game: 'dragon-tiger',
+                    gameName: 'Dragon Tiger',
+                    betAmount: totalBet,
+                    multiplier: payout / totalBet,
+                    won: true
+                }).catch(() => {})
                 notifyWin(payout, (payout / totalBet).toFixed(2))
             } else {
+                playSound('loss')
+                recordGameRound({
+                    game: 'dragon-tiger',
+                    gameName: 'Dragon Tiger',
+                    betAmount: totalBet,
+                    multiplier: 0,
+                    won: false
+                }).catch(() => {})
                 notifyLoss(totalBet)
             }
         }, 900)
-    }, [isDealing, totalBet, balance, bets, placeBet, addWinnings, notifyWin, notifyLoss])
+    }, [isDealing, totalBet, balance, bets, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss])
 
     return (
         <div className="dt-page">

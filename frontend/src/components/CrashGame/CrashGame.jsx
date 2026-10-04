@@ -47,6 +47,7 @@ import GameHistory from './GameHistory'
 import PlayerBets from './PlayerBets'
 import PlayerResults from './PlayerResults'
 import ProvablyFair from '../../utils/ProvablyFair'
+import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import './CrashGame.css'
 
@@ -62,7 +63,7 @@ const PHASE = {
 const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
 function CrashGame() {
-    const { balance, placeBet, addWinnings, showToast, currencySymbol, currency } = useWallet()
+    const { balance, placeBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet()
     const [phase, setPhase] = useState(PHASE.WAITING)
     const [multiplier, setMultiplier] = useState(1.00)
     const [countdown, setCountdown] = useState(5)
@@ -356,6 +357,7 @@ function CrashGame() {
     // Handle crash
     const handleCrash = useCallback((crashMultiplier) => {
         setHistory(prev => [crashMultiplier, ...prev].slice(0, 30))
+        casinoAudio.playExplosion()
 
         let profit = 0;
         let didPlay = false;
@@ -365,6 +367,13 @@ function CrashGame() {
             if (betPlaced) {
                 // User didn't cash out in time, lost bet
                 profit = -userBetData.amount
+                recordGameRound({
+                    game: 'crash',
+                    gameName: 'Crash 1000x',
+                    betAmount: userBetData.amount,
+                    multiplier: 0,
+                    won: false
+                }).catch(() => {})
                 showToast('loss', 'You Lost!', `-${currencySymbol}${userBetData.amount.toFixed(2)} — Crashed @${crashMultiplier.toFixed(2)}×`, 4000)
             } else {
                 // User cashed out
@@ -384,7 +393,7 @@ function CrashGame() {
 
         setBetPlaced(false)
         setTimeout(startCountdown, 3000)
-    }, [startCountdown, userBetData, betPlaced, showToast])
+    }, [startCountdown, userBetData, betPlaced, showToast, recordGameRound, currencySymbol])
 
     // Handle player cashout notification
     const handlePlayerCashout = useCallback((cashoutData) => {
@@ -465,6 +474,7 @@ function CrashGame() {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
             return
         }
+        casinoAudio.playBet()
         setBetAmount(amount)
         setBetPlaced(true)
         setUserBetData({
@@ -488,6 +498,13 @@ function CrashGame() {
             const winAmount = betAmount * multiplier
             const profit = winAmount - betAmount
             addWinnings(winAmount)
+            recordGameRound({
+                game: 'crash',
+                gameName: 'Crash 1000x',
+                betAmount,
+                multiplier,
+                won: true
+            }).catch(() => {})
             setBetPlaced(false)
             setUserBetData(prev => prev ? {
                 ...prev,
@@ -497,6 +514,11 @@ function CrashGame() {
             } : null)
 
             showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${multiplier.toFixed(2)}×`, 4000)
+            if (multiplier >= 3) {
+                casinoAudio.playBigWin()
+            } else {
+                casinoAudio.playCashout()
+            }
         }
     }
 

@@ -18,6 +18,7 @@ import { Modal, Tooltip, Statistic, Row, Col, Space, Button, Typography, Tag, Di
 import Chart from 'chart.js/auto'
 
 const { Title, Text, Paragraph } = Typography;
+import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { CurrencyIcon } from '../Header'
 import ProvablyFair from '../../utils/ProvablyFair'
@@ -49,7 +50,7 @@ const StatsIcon = () => (
 )
 
 function MinesGame() {
-    const { balance, placeBet, addWinnings, showToast, currencySymbol, currency } = useWallet();
+    const { balance, placeBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet();
     const [isPlaying, setIsPlaying] = useState(false);
     const [betAmount, setBetAmount] = useState(1);
     const [minesCount, setMinesCount] = useState(3);
@@ -62,7 +63,7 @@ function MinesGame() {
 
     // Bottom Controls State
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [soundEnabled, setSoundEnabled] = useState(true);
+    const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
 
     // Debug & Fairness State
     const [isDebugMode, setIsDebugMode] = useState(false);
@@ -330,11 +331,36 @@ function MinesGame() {
         };
     }, []);
 
-    // Audio setup (mock for now, or use standard web audio)
-    const playSound = (type) => {
-        // Here we could implement sound effects
-        // console.log(`Playing sound: ${type}`)
-    }
+    // Audio setup with Web Audio synthesis & haptics
+    const playSound = (type, param) => {
+        if (!soundEnabled) return;
+        switch (type) {
+            case 'chip':
+                casinoAudio.playChip();
+                break;
+            case 'bet':
+                casinoAudio.playBet();
+                break;
+            case 'gem':
+                casinoAudio.playGem(typeof param === 'number' ? param : (revealedTiles.length + 1));
+                break;
+            case 'explosion':
+            case 'loss':
+                casinoAudio.playExplosion();
+                break;
+            case 'cashout':
+                casinoAudio.playCashout();
+                break;
+            case 'win':
+                casinoAudio.playWin();
+                break;
+            case 'bigWin':
+                casinoAudio.playBigWin();
+                break;
+            default:
+                break;
+        }
+    };
 
     const currentMultiplier = useMemo(() => {
         return calculateMultiplier(minesCount, revealedTiles.length);
@@ -350,12 +376,19 @@ function MinesGame() {
         setBetAmount(val);
     };
 
-    const handleBetAmountHalf = () => setBetAmount(prev => Math.max(0, prev / 2));
-    const handleBetAmountDouble = () => setBetAmount(prev => prev * 2);
+    const handleBetAmountHalf = () => {
+        playSound('chip');
+        setBetAmount(prev => Math.max(0, prev / 2));
+    };
+    const handleBetAmountDouble = () => {
+        playSound('chip');
+        setBetAmount(prev => prev * 2);
+    };
 
     const handleMinesChange = (e) => {
         const count = parseInt(e.target.value, 10);
         if (count >= 1 && count <= 24) {
+            playSound('chip');
             setMinesCount(count);
         }
     };
@@ -374,6 +407,7 @@ function MinesGame() {
             return;
         }
 
+        playSound('bet');
         setFairnessData(data);
         setMineLocations(Array.from(mines));
         setRevealedTiles([]);
@@ -388,6 +422,13 @@ function MinesGame() {
         if (reason === 'win') {
             const profit = potentialWin - betAmount;
             addWinnings(potentialWin);
+            recordGameRound({
+                game: 'mines',
+                gameName: 'Mines',
+                betAmount,
+                multiplier: currentMultiplier,
+                won: true
+            }).catch(() => {});
 
             // Update stats
             setTotalProfit(prev => prev + profit);
@@ -396,16 +437,28 @@ function MinesGame() {
             profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
             showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${currentMultiplier.toFixed(2)}×`, 4000);
-            playSound('win');
+            if (currentMultiplier >= 3) {
+                playSound('bigWin');
+            } else {
+                playSound('cashout');
+            }
         } else if (reason === 'loss') {
+            recordGameRound({
+                game: 'mines',
+                gameName: 'Mines',
+                betAmount,
+                multiplier: 0,
+                won: false
+            }).catch(() => {});
+
             // Update stats
             setTotalProfit(prev => prev - betAmount);
             setLossesCount(prev => prev + 1);
             setWinRecords(prev => [...prev, -betAmount]);
             profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
 
-            showToast('loss', 'Boom!', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
-            playSound('loss');
+            showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
+            playSound('explosion');
         }
     };
 
@@ -423,6 +476,7 @@ function MinesGame() {
             }
         }
         if (unrevealedSafe.length > 0) {
+            playSound('chip');
             const randomPick = unrevealedSafe[Math.floor(Math.random() * unrevealedSafe.length)];
             handleTileClick(randomPick);
         }
@@ -439,7 +493,7 @@ function MinesGame() {
             // Hit a gem
             const newRevealed = [...revealedTiles, index];
             setRevealedTiles(newRevealed);
-            playSound('gem');
+            playSound('gem', newRevealed.length);
 
             // Check if user found all gems
             if (newRevealed.length === 25 - minesCount) {
@@ -450,6 +504,13 @@ function MinesGame() {
                 const finalWin = betAmount * finalMult;
                 const profit = finalWin - betAmount;
                 addWinnings(finalWin);
+                recordGameRound({
+                    game: 'mines',
+                    gameName: 'Mines',
+                    betAmount,
+                    multiplier: finalMult,
+                    won: true
+                }).catch(() => {});
 
                 // Update stats
                 setTotalProfit(prev => prev + profit);
@@ -458,6 +519,7 @@ function MinesGame() {
                 profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
                 showToast('win', 'All Gems Found!', `+${currencySymbol}${profit.toFixed(2)} at ${finalMult.toFixed(2)}×`, 4000);
+                playSound('bigWin');
             }
         }
     };
@@ -744,7 +806,11 @@ function MinesGame() {
                                 <Button type="text" icon={isFullscreen ? <FullscreenExitOutlined /> : <ExpandOutlined />} className="control-btn" onClick={toggleFullscreen} />
                             </Tooltip>
                             <Tooltip title={soundEnabled ? "Mute" : "Unmute"}>
-                                <Button type="text" icon={<SoundOutlined />} className={`control-btn ${!soundEnabled ? 'muted' : ''}`} onClick={() => setSoundEnabled(!soundEnabled)} />
+                                <Button type="text" icon={<SoundOutlined />} className={`control-btn ${!soundEnabled ? 'muted' : ''}`} onClick={() => {
+                                    const next = !soundEnabled;
+                                    setSoundEnabled(next);
+                                    casinoAudio.setMuted(!next);
+                                }} />
                             </Tooltip>
                             <Tooltip title={isDebugMode ? "Disable Debug" : "Enable Debug (Peek Fairness)"}>
                                 <Button

@@ -55,6 +55,7 @@ import ProvablyFair from '../../utils/ProvablyFair';
 import { useWallet } from '../../context/WalletContext';
 import { CurrencyIcon } from '../Header';
 import MobileBetSheet from '../MobileBetSheet';
+import casinoAudio from '../../utils/casinoAudio';
 import './DinoGame.css';
 
 const { Text, Title, Paragraph } = Typography;
@@ -119,7 +120,7 @@ class DinoGameInstance extends Phaser.Game {
 
 function DinoGame() {
     App.useApp();
-    const { balance, placeBet: walletPlaceBet, addWinnings, showToast, currencySymbol, currency } = useWallet();
+    const { balance, placeBet: walletPlaceBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet();
     const [betAmount, setBetAmount] = useState(1);
     const [difficulty, setDifficulty] = useState('medium');
     const [gamePhase, setGamePhase] = useState('idle'); // idle | betting | running | waiting | crashed | cashed_out
@@ -135,7 +136,7 @@ function DinoGame() {
     const [totalProfit, setTotalProfit] = useState(0);
 
     // UI
-    const [soundEnabled, setSoundEnabled] = useState(true);
+    const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [statsDrawerOpen, setStatsDrawerOpen] = useState(false);
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false);
@@ -293,6 +294,14 @@ function DinoGame() {
                                 obstaclesCleared: gameSceneRef.current?.obstaclesCleared || 0,
                                 amount: betAmountRef.current,
                             });
+                            casinoAudio.playExplosion();
+                            recordGameRound({
+                                game: 'dino',
+                                gameName: 'Dino Run',
+                                betAmount: betAmountRef.current,
+                                multiplier: 0,
+                                won: false
+                            }).catch(() => {});
 
                             showToast('loss', 'Dino Crashed!', `-${currencySymbol}${betAmountRef.current.toFixed(2)}`, 3000);
                         }
@@ -318,13 +327,14 @@ function DinoGame() {
                 gameSceneRef.current = null;
             }
         };
-    }, []);
+    }, [recordGameRound, currencySymbol]);
 
     // Place bet
     const placeBet = useCallback(() => {
         if (betAmount <= 0 || betAmount > balance) return;
 
         if (!walletPlaceBet(betAmount)) return;
+        casinoAudio.playBet();
         setTotalWagered(prev => prev + betAmount);
         setGamesPlayed(prev => prev + 1);
         setGamePhase('betting');
@@ -392,6 +402,7 @@ function DinoGame() {
 
             if (newCleared > highScore) setHighScore(newCleared);
 
+            casinoAudio.playGem(newCleared);
             showToast('win', 'Obstacle Cleared!', `Jump ${newCleared} — ${newMult.toFixed(2)}×`, 1500);
         } else {
             // RNG says die!
@@ -407,6 +418,14 @@ function DinoGame() {
 
         const winAmount = betAmountRef.current * currentMultiplier;
         addWinnings(winAmount);
+        recordGameRound({
+            game: 'dino',
+            gameName: 'Dino Run',
+            betAmount: betAmountRef.current,
+            multiplier: currentMultiplier,
+            won: true
+        }).catch(() => {});
+
         const profit = winAmount - betAmountRef.current;
         setTotalProfit(prev => prev + profit);
         setWinRecords(prev => [...prev, profit]);
@@ -419,6 +438,12 @@ function DinoGame() {
         setGamePhase('cashed_out');
         gamePhaseRef.current = 'cashed_out'; // Immediate sync to prevent GAME_OVER listener from logging a loss
 
+        if (currentMultiplier >= 3) {
+            casinoAudio.playBigWin();
+        } else {
+            casinoAudio.playCashout();
+        }
+
         // Disable betting mode and trigger game over to reset
         if (gameScene) {
             gameScene.events.emit(CONFIG.EVENTS.BETTING_MODE_OFF);
@@ -426,7 +451,7 @@ function DinoGame() {
         }
 
         showToast('win', 'Cashed Out!', `+${currencySymbol}${(winAmount - betAmountRef.current).toFixed(2)} at ${currentMultiplier.toFixed(2)}×`, 4000);
-    }, [gamePhase, currentMultiplier, obstaclesCleared, showToast, currencySymbol]);
+    }, [gamePhase, currentMultiplier, obstaclesCleared, showToast, currencySymbol, recordGameRound]);
 
     // Fullscreen
     const toggleFullscreen = useCallback(() => {
@@ -798,6 +823,18 @@ function DinoGame() {
                             </Tooltip>
                             <Tooltip title="Fairness">
                                 <Button type="text" icon={<SafetyCertificateOutlined />} className="footer-btn" onClick={() => setFairnessModalOpen(true)} />
+                            </Tooltip>
+                            <Tooltip title={soundEnabled ? "Mute Sound" : "Unmute Sound"}>
+                                <Button
+                                    type="text"
+                                    icon={<SoundOutlined />}
+                                    className={`footer-btn ${!soundEnabled ? 'muted' : ''}`}
+                                    onClick={() => {
+                                        const next = !soundEnabled;
+                                        setSoundEnabled(next);
+                                        casinoAudio.setMuted(!next);
+                                    }}
+                                />
                             </Tooltip>
                         </div>
                         </div>

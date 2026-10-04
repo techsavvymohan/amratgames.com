@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import PlinkoEngine from './PlinkoEngine';
 import { getBinColors, BIN_PAYOUTS } from './constants';
+import casinoAudio from '../../utils/casinoAudio';
 import './Plinko.css';
 
 let outcomesPromise;
@@ -132,6 +133,9 @@ function Plinko({
                 onBalanceChange: (amount) => {
                     onBalanceChange?.(amount);
                 },
+                onPinHit: () => {
+                    casinoAudio.playPegBounce();
+                }
             });
 
             engine.start();

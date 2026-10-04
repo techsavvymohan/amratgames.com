@@ -11,6 +11,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import ProvablyFair from '../../utils/ProvablyFair'
 import MobileBetSheet from '../MobileBetSheet'
+import casinoAudio from '../../utils/casinoAudio'
 import './LimboGame.css'
 
 const { Text, Title } = Typography
@@ -21,7 +22,7 @@ const MAX_MULTIPLIER = 1000000
 const MIN_MULTIPLIER = 1.01
 
 function LimboGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
 
     // Betting states
     const [betAmount, setBetAmount] = useState(100)
@@ -91,6 +92,8 @@ function LimboGame() {
             return
         }
 
+        casinoAudio.playBet()
+
         // Increment nonce
         setNonce(prev => prev + 1)
 
@@ -109,6 +112,7 @@ function LimboGame() {
             if (elapsed < animDuration) {
                 const randomTick = (Math.random() * target * 1.5 + 1).toFixed(2)
                 setCurrentRoll(parseFloat(randomTick))
+                casinoAudio.playTick()
             } else {
                 clearInterval(interval)
                 setCurrentRoll(outcome)
@@ -122,22 +126,54 @@ function LimboGame() {
                 if (isWin) {
                     const winAmount = betAmount * target
                     addWinnings(winAmount, 'Limbo', target)
+                    recordGameRound({
+                        game: 'limbo',
+                        gameName: 'Limbo Multiplier',
+                        betAmount,
+                        multiplier: target,
+                        won: true
+                    }).catch(() => {})
                     notifyWin(winAmount, target)
+                    if (target >= 5) {
+                        casinoAudio.playBigWin()
+                    } else {
+                        casinoAudio.playWin()
+                    }
                 } else {
+                    recordGameRound({
+                        game: 'limbo',
+                        gameName: 'Limbo Multiplier',
+                        betAmount,
+                        multiplier: 0,
+                        won: false
+                    }).catch(() => {})
                     notifyLoss(betAmount)
+                    casinoAudio.playLoss()
                 }
 
                 // Add to history
                 setHistory(prev => [{ roll: outcome, target, win: isWin }, ...prev.slice(0, 14)])
             }
         }, 30)
-    }, [isRolling, betAmount, balance, targetMultiplier, placeBet, addWinnings, notifyWin, notifyLoss])
+    }, [isRolling, betAmount, balance, targetMultiplier, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss])
 
     // Quick multiplier shortcuts
-    const halveBet = () => setBetAmount(prev => Math.max(1, Math.floor(prev / 2)))
-    const doubleBet = () => setBetAmount(prev => Math.min(balance, prev * 2))
-    const minBet = () => setBetAmount(10)
-    const maxBet = () => setBetAmount(balance)
+    const halveBet = () => {
+        casinoAudio.playChip()
+        setBetAmount(prev => Math.max(1, Math.floor(prev / 2)))
+    }
+    const doubleBet = () => {
+        casinoAudio.playChip()
+        setBetAmount(prev => Math.min(balance, prev * 2))
+    }
+    const minBet = () => {
+        casinoAudio.playChip()
+        setBetAmount(10)
+    }
+    const maxBet = () => {
+        casinoAudio.playChip()
+        setBetAmount(balance)
+    }
 
     return (
         <div className="limbo-page">

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { GAMES } from '../games'
+import LivePlatformBets from '../components/LivePlatformBets'
 import '../styles/home.css'
 
 const games = [
@@ -74,6 +75,9 @@ function HomePage() {
                     {games.map((game) => <GameCard key={game.id} game={game} />)}
                 </div>
             </section>
+
+            {/* Live Real-Time Platform Bets */}
+            <LivePlatformBets />
 
             {/* Platform Feature Highlights */}
             <section className="home-metrics-section" aria-label="Platform Highlights">

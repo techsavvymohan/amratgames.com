@@ -41,6 +41,7 @@ import { DEFAULT_BALANCE, getBinColors, BIN_PAYOUTS } from './constants';
 import { dropPlinkoBall } from './dropPlinkoBall';
 import { ProvablyFair } from '../../utils/ProvablyFair';
 import { useWallet } from '../../context/WalletContext';
+import casinoAudio from '../../utils/casinoAudio';
 import './PlinkoGame.css';
 
 const { Text, Title, Paragraph } = Typography;
@@ -111,13 +112,13 @@ const BALL_TYPES = {
 
 function PlinkoGame() {
     // Shared Wallet
-    const { balance, placeBet, addWinnings, currencySymbol, currency } = useWallet()
+    const { balance, placeBet, addWinnings, recordGameRound, currencySymbol, currency } = useWallet()
     // State
     const [betAmount, setBetAmount] = useState(1);
     const [rowCount, setRowCount] = useState(16);
     const [riskLevel, setRiskLevel] = useState('medium');
     const [winRecords, setWinRecords] = useState([]);
-    const [soundEnabled, setSoundEnabled] = useState(true);
+    const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
     const [selectedBallType, setSelectedBallType] = useState('normal');
 
     // Provably Fair System
@@ -211,6 +212,21 @@ function PlinkoGame() {
         const finalPayout = data.betAmount * finalMultiplier;
         const profit = finalPayout - (data.betAmount * actualBall.cost);
 
+        casinoAudio.playBinLand(finalMultiplier);
+        if (finalMultiplier >= 5) {
+            casinoAudio.playBigWin();
+        } else if (profit > 0) {
+            casinoAudio.playWin();
+        }
+
+        recordGameRound({
+            game: 'plinko',
+            gameName: 'Plinko',
+            betAmount: data.betAmount * actualBall.cost,
+            multiplier: finalMultiplier,
+            won: profit >= 0
+        }).catch(() => {});
+
         const newRecord = {
             id: Date.now() + Math.random(),
             ...data,
@@ -243,7 +259,7 @@ function PlinkoGame() {
         if (costAdjustment !== 0) {
             handleBalanceChange(-costAdjustment);
         }
-    }, [selectedBallType, calculateBonusMultiplier, handleBalanceChange, maxStreak]);
+    }, [selectedBallType, calculateBonusMultiplier, handleBalanceChange, maxStreak, recordGameRound]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -592,7 +608,11 @@ function PlinkoGame() {
                                         type="text"
                                         icon={<SoundOutlined />}
                                         className={`control-btn ${soundEnabled ? '' : 'muted'}`}
-                                        onClick={() => setSoundEnabled(!soundEnabled)}
+                                        onClick={() => {
+                                            const next = !soundEnabled;
+                                            setSoundEnabled(next);
+                                            casinoAudio.setMuted(!next);
+                                        }}
                                     />
                                 </Tooltip>
                                 <Tooltip title={isDebugMode ? "Disable Debug" : "Enable Debug (Peek Fairness)"}>

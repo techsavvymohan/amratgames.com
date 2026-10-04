@@ -187,16 +187,16 @@ export function WalletProvider({ children }) {
         }, ...txs].slice(0, 100))
     }, [setStoredBalance])
 
-    // Record game round with backend (if user is authenticated)
+    // Record game round with backend (authenticated or guest)
     const recordGameRound = useCallback(async ({ game, gameName, betAmount, multiplier = 0, won = false }) => {
-        if (!token) return null
         try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) {
+                headers.Authorization = `Bearer ${token}`
+            }
             const res = await fetch('/api/games/bet', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify({
                     game,
                     gameName,

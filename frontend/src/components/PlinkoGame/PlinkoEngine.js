@@ -36,6 +36,7 @@ class PlinkoEngine {
         this.riskLevel = options.riskLevel || 'medium';
         this.onBallEnterBin = options.onBallEnterBin || (() => { });
         this.onBalanceChange = options.onBalanceChange || (() => { });
+        this.onPinHit = options.onPinHit || null;
         this.outcomes = options.outcomes || {};
 
         this.balls = [];
@@ -386,6 +387,14 @@ class PlinkoEngine {
     removeAllBalls() {
         this.balls = [];
         this.betAmountOfExistingBalls = {};
+    }
+
+    triggerPinAnimation(pinId) {
+        if (!pinId) return;
+        this.pinAnimations.set(pinId, { frames: 12 });
+        if (typeof this.onPinHit === 'function') {
+            this.onPinHit(pinId);
+        }
     }
 
     getActiveBallCount() {

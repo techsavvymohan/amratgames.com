@@ -15,6 +15,7 @@ import {
 
 import { useWallet } from '../../context/WalletContext'
 import { CurrencyIcon } from '../Header'
+import casinoAudio from '../../utils/casinoAudio'
 
 const { Text } = Typography
 
@@ -68,13 +69,19 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
             <div className="bet-mode-tabs">
                 <button
                     className={`bet-mode-tab ${activeTab === 'manual' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('manual')}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setActiveTab('manual')
+                    }}
                 >
                     Manual
                 </button>
                 <button
                     className={`bet-mode-tab ${activeTab === 'auto' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('auto')}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setActiveTab('auto')
+                    }}
                 >
                     Auto
                 </button>
@@ -102,8 +109,14 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                                 parser={(v) => v.replace(/[₹$₿₮\s,]/g, '')}
                             />
                             <Button.Group>
-                                <Button onClick={() => setBetAmount(prev => Math.max(0, prev / 2))}>½</Button>
-                                <Button onClick={() => setBetAmount(prev => prev * 2)}>2×</Button>
+                                <Button onClick={() => {
+                                    casinoAudio.playChip()
+                                    setBetAmount(prev => Math.max(0, prev / 2))
+                                }}>½</Button>
+                                <Button onClick={() => {
+                                    casinoAudio.playChip()
+                                    setBetAmount(prev => prev * 2)
+                                }}>2×</Button>
                             </Button.Group>
                         </div>
                     </div>

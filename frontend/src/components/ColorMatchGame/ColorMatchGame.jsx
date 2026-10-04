@@ -12,6 +12,7 @@ import {
     ThunderboltOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
+import casinoAudio from '../../utils/casinoAudio'
 import './ColorMatchGame.css'
 
 const { Text } = Typography
@@ -37,27 +38,8 @@ const NUMBER_DATA = [
 const CHIP_PRESETS = [10, 50, 100, 500, 1000, 5000]
 const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
 
-// Web Audio sound generator
-function playTone(freq, duration, type = 'sine') {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-        const osc = audioCtx.createOscillator()
-        const gain = audioCtx.createGain()
-        osc.type = type
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime)
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration)
-        osc.connect(gain)
-        gain.connect(audioCtx.destination)
-        osc.start()
-        osc.stop(audioCtx.currentTime + duration)
-    } catch (e) {
-        // AudioContext not allowed before user interaction
-    }
-}
-
 function ColorMatchGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
 
     // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
     const [gameMode, setGameMode] = useState('30s')
@@ -121,7 +103,7 @@ function ColorMatchGame() {
         const success = placeBet(currentBetAmount)
         if (!success) return
 
-        playTone(540, 0.08)
+        casinoAudio.playChip()
         setBets(prev => ({
             ...prev,
             [spotKey]: (prev[spotKey] || 0) + currentBetAmount
@@ -133,7 +115,7 @@ function ColorMatchGame() {
         // Refund back to wallet
         addWinnings(totalStaked)
         setBets({})
-        playTone(300, 0.1)
+        casinoAudio.playChip()
     }
 
     const doubleBets = () => {
@@ -145,7 +127,7 @@ function ColorMatchGame() {
         const success = placeBet(totalStaked)
         if (!success) return
 
-        playTone(620, 0.1)
+        casinoAudio.playChip()
         setBets(prev => {
             const next = {}
             for (const [k, v] of Object.entries(prev)) {
@@ -191,12 +173,29 @@ function ColorMatchGame() {
         // Apply winnings
         if (totalWin > 0) {
             addWinnings(totalWin)
+            recordGameRound({
+                game: 'color-match',
+                gameName: 'Color Match',
+                betAmount: totalStaked,
+                multiplier: totalWin / (totalStaked || 1),
+                won: true
+            }).catch(() => {})
             notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match #${periodId}!`)
-            playTone(880, 0.25, 'triangle')
-            setTimeout(() => playTone(1100, 0.3, 'triangle'), 150)
+            if ((totalWin / (totalStaked || 1)) >= 3) {
+                casinoAudio.playBigWin()
+            } else {
+                casinoAudio.playWin()
+            }
         } else if (Object.keys(activeBets).length > 0) {
+            recordGameRound({
+                game: 'color-match',
+                gameName: 'Color Match',
+                betAmount: totalStaked,
+                multiplier: 0,
+                won: false
+            }).catch(() => {})
             notifyLoss?.(`Round #${periodId} result: ${winningNum}. Better luck next round!`)
-            playTone(220, 0.2, 'sawtooth')
+            casinoAudio.playLoss()
         }
 
         // Save round to player history
@@ -228,7 +227,7 @@ function ColorMatchGame() {
         setPeriodId(prev => prev + 1)
         setIsDrawing(false)
         setIsLocked(false)
-    }, [bets, periodId, currencySymbol, totalStaked, addWinnings, notifyWin, notifyLoss])
+    }, [bets, periodId, currencySymbol, totalStaked, addWinnings, recordGameRound, notifyWin, notifyLoss])
 
     // Trigger Draw Sequence
     const triggerDraw = useCallback(() => {
