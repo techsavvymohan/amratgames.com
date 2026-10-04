@@ -328,8 +328,10 @@ router.get('/support-info', (req, res) => {
     res.json({
         success: true,
         email: CONFIG.SUPPORT_EMAIL,
+        supportEmail: CONFIG.SUPPORT_EMAIL,
         telegram: '@AmratGamesSupport',
         hours: '24/7/365 Live Player Support',
+        expectedResponseTime: '< 2 hours',
         smtpActive: emailService.isSmtpConfigured()
     })
 })
