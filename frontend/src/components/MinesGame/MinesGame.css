@@ -1452,8 +1452,8 @@
         gap: 6px !important;
     }
 
-    .mines-bet-sheet .form-group {
-        margin-bottom: 0 !important;
+    .mines-bet-sheet .sidebar-footer {
+        display: none !important;
     }
 
     .mines-bet-sheet .btn-bet-mines {

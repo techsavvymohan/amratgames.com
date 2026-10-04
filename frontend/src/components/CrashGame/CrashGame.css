@@ -1118,7 +1118,10 @@
     }
 
     /* Remove unnecessary mobile clutter */
-    .crash-game .game-controls {
+    .crash-game .game-controls,
+    .crash-game .bottom-controls-antd,
+    .crash-game .crash-mobile-tabs,
+    .crash-game .recent-plays {
         display: none !important;
     }
 
