@@ -125,4 +125,21 @@ export class AdminApiClient {
         const data = await res.json()
         return data.bets || []
     }
+
+    async getSupabaseStatus() {
+        const res = await fetch(`${this.baseUrl}/supabase/status`, { headers: this._getHeaders() })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to fetch Supabase status')
+        return data
+    }
+
+    async migrateToSupabase() {
+        const res = await fetch(`${this.baseUrl}/supabase/migrate`, {
+            method: 'POST',
+            headers: this._getHeaders()
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to migrate to Supabase')
+        return data.report
+    }
 }

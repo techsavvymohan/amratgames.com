@@ -5,6 +5,7 @@ import { CONFIG, validateConfig, logConfigSummary } from './config.js'
 import { authenticate } from './middleware/auth.js'
 import { initWebSocketServer, broadcastEvent } from './websocket.js'
 import { db } from './db/db.js'
+import { testSupabaseConnection } from './db/SupabaseClient.js'
 
 import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
@@ -35,7 +36,17 @@ app.get('/api/health', (req, res) => {
         rtp: db.data.settings.rtp,
         serverTime: new Date().toISOString(),
         activePlayers: db.data.users.filter(u => !u.isBanned).length,
-        tokenTreasuryRemaining: db.data.settings.tokenTreasury.treasuryBalance
+        tokenTreasuryRemaining: db.data.settings.tokenTreasury.treasuryBalance,
+        database: CONFIG.USE_SUPABASE ? 'Supabase (PostgreSQL)' : 'Local JSON DB'
+    })
+})
+
+// Supabase Connection Health Check
+app.get('/api/health/supabase', async (req, res) => {
+    const status = await testSupabaseConnection()
+    res.json({
+        success: status.ok,
+        ...status
     })
 })
 
@@ -115,6 +126,10 @@ server.listen(PORT, CONFIG.HOST, () => {
     console.log(`📡 WebSocket server live at ws://${CONFIG.HOST}:${PORT}/ws`)
     console.log(`🛡️  Admin account: ${CONFIG.ADMIN_DEFAULT_EMAIL}`)
     console.log(`======================================================\n`)
+
+    if (CONFIG.USE_SUPABASE) {
+        db.hydrateFromSupabase().catch(() => {})
+    }
 })
 
 process.on('SIGINT', () => {

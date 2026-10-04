@@ -3,6 +3,8 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { CONFIG } from '../config.js'
+import { supabaseSync } from './SupabaseSyncService.js'
+import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.js'
 
 export function normalizePhone(phone) {
     if (!phone) return ''
@@ -418,6 +420,10 @@ class Database {
         console.log(`💡 Demo Universal QA OTP: 777777 or 123456`)
         console.log(`======================================================\n`)
 
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncOtp(key, otp, expiresAt).catch(() => {})
+        }
+
         return { otp, expiresAt }
     }
 
@@ -429,6 +435,9 @@ class Database {
         // Universal Demo QA Codes
         if (codeStr === '777777' || codeStr === '123456') {
             this.otps.delete(key)
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.deleteOtp(key).catch(() => {})
+            }
             return true
         }
 
@@ -437,17 +446,26 @@ class Database {
 
         if (Date.now() > record.expiresAt) {
             this.otps.delete(key)
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.deleteOtp(key).catch(() => {})
+            }
             return false
         }
 
         record.attempts += 1
         if (record.attempts > 5) {
             this.otps.delete(key)
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.deleteOtp(key).catch(() => {})
+            }
             return false
         }
 
         if (record.otp === codeStr) {
             this.otps.delete(key)
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.deleteOtp(key).catch(() => {})
+            }
             return true
         }
 
@@ -501,6 +519,11 @@ class Database {
         this.data.users.push(newUser)
         this.updateTreasurySupply()
         this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncUser(newUser).catch(() => {})
+        }
+
         return newUser
     }
 
@@ -510,6 +533,11 @@ class Database {
         this.data.users[index] = { ...this.data.users[index], ...updates }
         this.updateTreasurySupply()
         this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncUser(this.data.users[index]).catch(() => {})
+        }
+
         return this.data.users[index]
     }
 
@@ -537,6 +565,11 @@ class Database {
         this.data.transactions.unshift(tx)
         this.updateTreasurySupply()
         this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncUser(user).catch(() => {})
+            supabaseSync.syncTransaction(tx).catch(() => {})
+        }
 
         return { user, transaction: tx }
     }
@@ -615,6 +648,13 @@ class Database {
         this.updateTreasurySupply()
         this.persist()
 
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncAirdrop(airdropRecord).catch(() => {})
+            for (const user of recipients) {
+                supabaseSync.syncUser(user).catch(() => {})
+            }
+        }
+
         return {
             airdrop: airdropRecord,
             recipientsCount: recipients.length,
@@ -648,6 +688,11 @@ class Database {
             this.data.bets = this.data.bets.slice(0, 500)
         }
         this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncBet(bet).catch(() => {})
+        }
+
         return bet
     }
 
@@ -705,6 +750,10 @@ class Database {
         this.data.settings.serverSeedHash = newHash
         this.persist()
 
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncSettings(this.data.settings).catch(() => {})
+        }
+
         return {
             revealedPreviousSeed: oldSeed,
             newServerSeedHash: newHash
@@ -714,7 +763,119 @@ class Database {
     updateSettings(newSettings) {
         this.data.settings = { ...this.data.settings, ...newSettings }
         this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncSettings(this.data.settings).catch(() => {})
+        }
+
         return this.data.settings
+    }
+
+    // ── Supabase Cloud Integration Methods ───────────────────
+    async testSupabase() {
+        return testSupabaseConnection()
+    }
+
+    async migrateToSupabase() {
+        return supabaseSync.migrateLocalToSupabase(this.data)
+    }
+
+    async hydrateFromSupabase() {
+        if (!CONFIG.USE_SUPABASE || !isSupabaseConfigured()) {
+            return false
+        }
+        try {
+            const client = supabaseSync.getClient()
+            if (!client) return false
+
+            console.log('[DB] Hydrating state from Supabase Cloud PostgreSQL...')
+
+            // 1. Fetch settings
+            const { data: cloudSettings, error: sErr } = await client
+                .from('platform_settings')
+                .select('*')
+                .eq('id', 'default')
+                .maybeSingle()
+
+            if (!sErr && cloudSettings) {
+                this.data.settings = {
+                    ...this.data.settings,
+                    rtp: parseFloat(cloudSettings.rtp) || this.data.settings.rtp,
+                    houseEdge: parseFloat(cloudSettings.house_edge) || this.data.settings.houseEdge,
+                    maintenanceMode: Boolean(cloudSettings.maintenance_mode),
+                    activeAnnouncements: cloudSettings.active_announcements || this.data.settings.activeAnnouncements,
+                    currentServerSeed: cloudSettings.current_server_seed || this.data.settings.currentServerSeed,
+                    serverSeedHash: cloudSettings.server_seed_hash || this.data.settings.serverSeedHash,
+                    tokenTreasury: cloudSettings.token_treasury || this.data.settings.tokenTreasury
+                }
+            }
+
+            // 2. Fetch users
+            const { data: cloudUsers, error: uErr } = await client
+                .from('users')
+                .select('*')
+                .limit(1000)
+
+            if (!uErr && cloudUsers && cloudUsers.length > 0) {
+                const mappedUsers = cloudUsers.map(u => ({
+                    id: u.id,
+                    username: u.username,
+                    email: u.email || '',
+                    phone: u.phone || '',
+                    passwordHash: u.password_hash,
+                    role: u.role || 'player',
+                    status: u.status || 'active',
+                    isBanned: Boolean(u.is_banned),
+                    kycStatus: u.kyc_status || 'unverified',
+                    phoneVerified: Boolean(u.phone_verified),
+                    emailVerified: Boolean(u.email_verified),
+                    avatar: u.avatar || '👤',
+                    balances: u.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 },
+                    createdAt: u.created_at,
+                    lastLoginAt: u.last_login_at
+                }))
+
+                const userMap = new Map()
+                for (const lu of this.data.users) userMap.set(lu.id, lu)
+                for (const cu of mappedUsers) userMap.set(cu.id, cu)
+                this.data.users = Array.from(userMap.values())
+                console.log(`[DB] Successfully synced ${mappedUsers.length} user accounts from Supabase!`)
+            }
+
+            // 3. Fetch recent bets
+            const { data: cloudBets, error: bErr } = await client
+                .from('bets')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100)
+
+            if (!bErr && cloudBets && cloudBets.length > 0) {
+                const mappedBets = cloudBets.map(b => ({
+                    id: b.id,
+                    userId: b.user_id,
+                    username: b.username,
+                    game: b.game,
+                    gameName: b.game_name,
+                    currency: b.currency,
+                    betAmount: parseFloat(b.bet_amount),
+                    multiplier: parseFloat(b.multiplier),
+                    payout: parseFloat(b.payout),
+                    profit: parseFloat(b.profit),
+                    won: Boolean(b.won),
+                    hash: b.hash,
+                    roundData: b.round_data,
+                    timestamp: b.created_at
+                }))
+                this.data.bets = mappedBets
+            }
+
+            this.updateTreasurySupply()
+            this.persist()
+            return true
+        } catch (err) {
+            console.warn('[DB] Supabase hydration notice:', err.message)
+            return false
+        }
     }
 }
 

@@ -2,6 +2,8 @@ import { AdminUserManager } from '../services/AdminUserManager.js'
 import { TokenDistributionEngine } from '../services/TokenDistributionEngine.js'
 import { PlatformAnalyticsService } from '../services/PlatformAnalyticsService.js'
 import { GameEngineManager } from '../services/GameEngineManager.js'
+import { db } from '../../db/db.js'
+import { testSupabaseConnection } from '../../db/SupabaseClient.js'
 
 /**
  * AdminController — OOP Controller orchestrating admin API requests
@@ -25,6 +27,8 @@ export class AdminController {
         this.getSettings = this.getSettings.bind(this)
         this.updateSettings = this.updateSettings.bind(this)
         this.rotateSeed = this.rotateSeed.bind(this)
+        this.getSupabaseStatus = this.getSupabaseStatus.bind(this)
+        this.migrateToSupabase = this.migrateToSupabase.bind(this)
     }
 
     async getStats(req, res) {
@@ -173,6 +177,24 @@ export class AdminController {
         try {
             const result = this.gameManager.rotateSeed()
             res.json({ success: true, message: 'Server seed rotated successfully', ...result })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async getSupabaseStatus(req, res) {
+        try {
+            const status = await testSupabaseConnection()
+            res.json({ success: true, ...status })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async migrateToSupabase(req, res) {
+        try {
+            const report = await db.migrateToSupabase()
+            res.json({ success: true, message: 'Database migration to Supabase completed!', report })
         } catch (err) {
             res.status(500).json({ success: false, error: err.message })
         }

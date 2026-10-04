@@ -28,6 +28,10 @@ export function createAdminRouter() {
     router.patch('/settings', controller.updateSettings)
     router.post('/seed/rotate', controller.rotateSeed)
 
+    // Supabase Cloud Database Management
+    router.get('/supabase/status', controller.getSupabaseStatus)
+    router.post('/supabase/migrate', controller.migrateToSupabase)
+
     return router
 }
 

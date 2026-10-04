@@ -429,6 +429,8 @@ export default function AdminPanel() {
                     stats={stats}
                     onRotateSeed={handleRotateSeed}
                     onSaveSettings={handleSaveSettings}
+                    apiClient={apiClient}
+                    triggerToast={triggerToast}
                 />
             )}
 

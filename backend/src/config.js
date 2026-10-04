@@ -55,6 +55,12 @@ export const CONFIG = {
     DB_FILE: process.env.DB_FILE || 'amratgames_db.json',
     REDIS_URL: process.env.REDIS_URL || null,
 
+    // Supabase PostgreSQL Integration
+    SUPABASE_URL: process.env.SUPABASE_URL || '',
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
+    USE_SUPABASE: process.env.USE_SUPABASE === 'true' || Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)),
+
     // 5. SMS & OTP Verification Gateway
     SMS_GATEWAY_PROVIDER: process.env.SMS_GATEWAY_PROVIDER || 'mock',
     SMS_GATEWAY_API_KEY: process.env.SMS_GATEWAY_API_KEY || '',
@@ -126,7 +132,10 @@ export function logConfigSummary() {
     console.log(`======================================================`)
     console.log(`⚙️  Environment:         ${CONFIG.NODE_ENV.toUpperCase()}`)
     console.log(`🌐 Server Host & Port:   http://${CONFIG.HOST}:${CONFIG.PORT}`)
-    console.log(`📂 Database Storage:     ${CONFIG.DATA_DIR}/${CONFIG.DB_FILE}`)
+    console.log(`📂 Primary Database:     ${CONFIG.USE_SUPABASE ? 'SUPABASE (PostgreSQL Cloud)' : 'LOCAL JSON DB (' + CONFIG.DATA_DIR + '/' + CONFIG.DB_FILE + ')'}`)
+    if (CONFIG.USE_SUPABASE) {
+        console.log(`⚡ Supabase URL:         ${CONFIG.SUPABASE_URL || 'NOT SET'}`)
+    }
     console.log(`🛡️  Admin Account:        ${CONFIG.ADMIN_DEFAULT_EMAIL} (Phone: +91 ${CONFIG.ADMIN_DEFAULT_PHONE})`)
     console.log(`🔑 JWT Secret:           ${mask(CONFIG.JWT_SECRET)} (${CONFIG.JWT_EXPIRES_IN})`)
     console.log(`📲 SMS Provider:         ${CONFIG.SMS_GATEWAY_PROVIDER.toUpperCase()} (Demo Bypass: ${CONFIG.DEMO_OTP_BYPASS_ENABLED ? 'ENABLED [' + CONFIG.DEMO_OTP_CODE + ']' : 'DISABLED'})`)
