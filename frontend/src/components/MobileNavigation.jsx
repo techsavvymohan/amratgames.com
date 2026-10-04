@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Drawer } from 'antd'
 import { NavLink, useLocation } from 'react-router-dom'
 import { GAMES } from '../games'

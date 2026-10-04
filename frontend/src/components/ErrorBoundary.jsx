@@ -44,6 +44,36 @@ export class ErrorBoundary extends Component {
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '420px', marginBottom: '1.5rem', lineHeight: 1.5 }}>
                         An unexpected issue occurred while rendering this view. You can reload the game or return to the casino lobby.
                     </p>
+                    {this.state.error && (
+                        <details style={{
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            color: '#f87171',
+                            fontSize: '0.8rem',
+                            textAlign: 'left',
+                            maxWidth: '650px',
+                            width: '100%',
+                            marginBottom: '1.5rem',
+                            cursor: 'pointer'
+                        }}>
+                            <summary style={{ fontWeight: 600, color: '#fca5a5' }}>
+                                View Diagnostic Information ({this.state.error.message || 'Error details'})
+                            </summary>
+                            <pre style={{
+                                marginTop: '10px',
+                                fontSize: '0.75rem',
+                                maxHeight: '180px',
+                                overflow: 'auto',
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                                color: '#fecaca'
+                            }}>
+                                {this.state.error.stack || this.state.error.toString()}
+                            </pre>
+                        </details>
+                    )}
                     <div style={{ display: 'flex', gap: '12px' }}>
                         <button
                             type="button"
