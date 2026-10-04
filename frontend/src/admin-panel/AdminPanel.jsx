@@ -69,30 +69,44 @@ export default function AdminPanel() {
         if (!isAdmin) return
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${protocol}//${window.location.host}/ws`
+        const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '3001'
+            ? `${protocol}//${window.location.hostname}:3001/ws`
+            : `${protocol}//${window.location.host}/ws`
 
-        try {
-            const ws = new WebSocket(wsUrl)
-            wsRef.current = ws
+        let reconnectTimer = null
+        let ws = null
 
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data)
-                    if (data.type === 'NEW_BET' && data.payload) {
-                        setLiveBets((prev) => [data.payload, ...prev].slice(0, 30))
+        const connect = () => {
+            try {
+                ws = new WebSocket(wsUrl)
+                wsRef.current = ws
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data)
+                        if (data.type === 'NEW_BET' && data.payload) {
+                            setLiveBets((prev) => [data.payload, ...prev].slice(0, 30))
+                        }
+                    } catch {
+                        // ignore
                     }
-                } catch {
-                    // ignore
                 }
-            }
 
-            return () => {
-                if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                    ws.close()
+                ws.onclose = () => {
+                    reconnectTimer = setTimeout(connect, 3000)
                 }
+            } catch {
+                reconnectTimer = setTimeout(connect, 5000)
             }
-        } catch {
-            // ignore
+        }
+
+        connect()
+
+        return () => {
+            if (reconnectTimer) clearTimeout(reconnectTimer)
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+                ws.close()
+            }
         }
     }, [isAdmin])
 

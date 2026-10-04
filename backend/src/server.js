@@ -50,6 +50,15 @@ app.use('/api/*', (req, res) => {
     res.status(404).json({ success: false, error: 'Endpoint not found on AmratGames API' })
 })
 
+// Central error handler
+app.use((err, req, res, next) => {
+    console.error('[API ERROR]', err)
+    res.status(err.status || 500).json({
+        success: false,
+        error: err.message || 'Internal Server Error'
+    })
+})
+
 // Background Live Community Activity Simulator (Realistic real-time casino feel)
 const SIMULATED_PLAYERS = ['rohit_777', 'priya_crypto', 'vikram_dice', 'neha_lucky', 'kabir_whale']
 const GAMES = [

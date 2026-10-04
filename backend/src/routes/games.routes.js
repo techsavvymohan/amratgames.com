@@ -56,7 +56,8 @@ router.post('/bet', requireAuth, (req, res) => {
             return res.status(400).json({ success: false, error: `Insufficient ${currency} balance to place bet` })
         }
 
-        const payout = won ? parseFloat((parsedAmount * multiplier).toFixed(2)) : 0
+        const numMultiplier = Math.max(0, parseFloat(multiplier) || 0)
+        const payout = won ? parseFloat((parsedAmount * numMultiplier).toFixed(2)) : 0
         const profit = payout - parsedAmount
 
         // Deduct wager & add payout atomically
@@ -65,7 +66,7 @@ router.post('/bet', requireAuth, (req, res) => {
             user.id,
             currency,
             netChange,
-            `Bet on ${gameName} (${won ? `Won ${multiplier}x` : 'Bust'})`
+            `Bet on ${gameName} (${won ? `Won ${numMultiplier.toFixed(2)}x` : 'Bust'})`
         )
 
         const betRecord = db.recordBet({
@@ -75,7 +76,7 @@ router.post('/bet', requireAuth, (req, res) => {
             gameName,
             currency,
             betAmount: parsedAmount,
-            multiplier: parseFloat(multiplier.toFixed(2)),
+            multiplier: parseFloat(numMultiplier.toFixed(2)),
             payout,
             profit,
             won: Boolean(won),

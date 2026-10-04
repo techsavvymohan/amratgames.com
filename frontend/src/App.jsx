@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const loadCrash = () => import('./pages/CrashPage')
@@ -54,30 +55,32 @@ function App() {
 
     return (
         <AntApp>
-            <Suspense
-                fallback={
-                    <div className="route-loading" role="status" aria-live="polite">
-                        Loading…
-                    </div>
-                }
-            >
-                <Routes>
-                    {/* Casino Games & Player Portal (Wrapped in Casino Layout) */}
-                    <Route path="/" element={<Layout />}>
-                        <Route index element={<HomePage />} />
-                        <Route path="crash" element={<CrashPage />} />
-                        <Route path="plinko" element={<PlinkoPage />} />
-                        <Route path="dino" element={<DinoPage />} />
-                        <Route path="mines" element={<MinesPage />} />
-                        <Route path="limbo" element={<LimboPage />} />
-                        <Route path="dragon-tiger" element={<DragonTigerPage />} />
-                        <Route path="color-match" element={<ColorMatchPage />} />
-                    </Route>
+            <ErrorBoundary>
+                <Suspense
+                    fallback={
+                        <div className="route-loading" role="status" aria-live="polite">
+                            Loading…
+                        </div>
+                    }
+                >
+                    <Routes>
+                        {/* Casino Games & Player Portal (Wrapped in Casino Layout) */}
+                        <Route path="/" element={<Layout />}>
+                            <Route index element={<HomePage />} />
+                            <Route path="crash" element={<CrashPage />} />
+                            <Route path="plinko" element={<PlinkoPage />} />
+                            <Route path="dino" element={<DinoPage />} />
+                            <Route path="mines" element={<MinesPage />} />
+                            <Route path="limbo" element={<LimboPage />} />
+                            <Route path="dragon-tiger" element={<DragonTigerPage />} />
+                            <Route path="color-match" element={<ColorMatchPage />} />
+                        </Route>
 
-                    {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
-                    <Route path="/admin" element={<AdminPage />} />
-                </Routes>
-            </Suspense>
+                        {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
+                        <Route path="/admin" element={<AdminPage />} />
+                    </Routes>
+                </Suspense>
+            </ErrorBoundary>
         </AntApp>
     )
 }

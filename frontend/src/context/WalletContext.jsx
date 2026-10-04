@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
 const WalletContext = createContext(null)
 
@@ -76,11 +77,30 @@ function getStoredBalance(currencyId) {
 }
 
 export function WalletProvider({ children }) {
+    const authContext = useAuth()
+    const user = authContext?.user
+    const token = authContext?.token
+
     const [currency, setCurrencyState] = useState(getStoredCurrency)
     const [balance, setBalance] = useState(() => getStoredBalance(getStoredCurrency()))
     const balanceRef = useRef(balance)
     const currencyRef = useRef(currency)
     const [transactions, setTransactions] = useState([])
+
+    // Synchronize balance from authenticated user record
+    useEffect(() => {
+        if (user && user.balances) {
+            const userBal = user.balances[currencyRef.current]
+            if (userBal !== undefined && typeof userBal === 'number') {
+                const rounded = parseFloat(userBal.toFixed(2))
+                balanceRef.current = rounded
+                setBalance(rounded)
+                try {
+                    localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyRef.current}`, rounded.toString())
+                } catch { /* ignore */ }
+            }
+        }
+    }, [user, currency])
 
     // Toast system
     const [toasts, setToasts] = useState([])
@@ -95,11 +115,14 @@ export function WalletProvider({ children }) {
         setCurrencyState(newCurr)
         try { localStorage.setItem(STORAGE_KEY_CURRENCY, newCurr) } catch (e) { /* ignore */ }
 
-        // Load balance for that currency
-        const curBal = getStoredBalance(newCurr)
+        // Load balance for that currency (prefer user balance if logged in)
+        let curBal = getStoredBalance(newCurr)
+        if (user && user.balances && user.balances[newCurr] !== undefined) {
+            curBal = parseFloat(user.balances[newCurr].toFixed(2))
+        }
         balanceRef.current = curBal
         setBalance(curBal)
-    }, [])
+    }, [user])
 
     const showToast = useCallback((type, title, description, duration = 3000) => {
         const id = ++toastIdRef.current
@@ -160,8 +183,40 @@ export function WalletProvider({ children }) {
         }, ...txs].slice(0, 100))
     }, [setStoredBalance])
 
+    // Record game round with backend (if user is authenticated)
+    const recordGameRound = useCallback(async ({ game, gameName, betAmount, multiplier = 0, won = false }) => {
+        if (!token) return null
+        try {
+            const res = await fetch('/api/games/bet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    game,
+                    gameName,
+                    currency: currencyRef.current,
+                    betAmount,
+                    multiplier,
+                    won
+                })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') {
+                    setStoredBalance(updatedBal)
+                }
+            }
+            return data
+        } catch {
+            return null
+        }
+    }, [token, setStoredBalance])
+
     // Deposit funds
-    const deposit = useCallback((amount) => {
+    const deposit = useCallback(async (amount, method = 'UPI') => {
         const amt = parseFloat(amount)
         if (isNaN(amt) || amt <= 0) return
 
@@ -175,7 +230,26 @@ export function WalletProvider({ children }) {
             balance: newBal,
             timestamp: new Date(),
         }, ...txs].slice(0, 100))
-    }, [setStoredBalance])
+
+        if (token) {
+            try {
+                await fetch('/api/wallet/deposit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        currency: currencyRef.current,
+                        amount: amt,
+                        paymentMethod: method
+                    })
+                })
+            } catch {
+                // local fallback maintained
+            }
+        }
+    }, [setStoredBalance, token])
 
     // Reset balance to initial
     const resetBalance = useCallback(() => {
@@ -192,6 +266,15 @@ export function WalletProvider({ children }) {
         }, ...txs].slice(0, 100))
     }, [updateBalance])
 
+    const notifyWin = useCallback((amount, mult) => {
+        const multText = mult ? ` (${Number(mult).toFixed(2)}x)` : ''
+        showToast('success', 'You Won!', `+${currencySymbol}${Number(amount || 0).toFixed(2)}${multText}`)
+    }, [showToast, currencySymbol])
+
+    const notifyLoss = useCallback((amount) => {
+        showToast('error', 'Round Over', `-${currencySymbol}${Number(amount || 0).toFixed(2)}`)
+    }, [showToast, currencySymbol])
+
     const value = {
         balance,
         currency,
@@ -205,6 +288,9 @@ export function WalletProvider({ children }) {
         deposit,
         resetBalance,
         updateBalance,
+        recordGameRound,
+        notifyWin,
+        notifyLoss,
         toasts,
         showToast,
     }

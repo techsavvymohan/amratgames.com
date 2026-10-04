@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useWallet, CURRENCIES } from '../context/WalletContext'
 import { useThemeSettings } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
-import { isGamePath } from '../games'
+import { isGamePath, GAMES } from '../games'
 
 // Dynamic currency icon component for INR, BTC, and USDT
 export const CurrencyIcon = ({ symbol = '₹', size = 20, fontSize = 12, currency = 'INR' }) => {
@@ -43,11 +43,18 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
     const [showWalletDropdown, setShowWalletDropdown] = useState(false)
     const [showUserDropdown, setShowUserDropdown] = useState(false)
     const [depositAmount, setDepositAmount] = useState('')
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchOpen, setSearchOpen] = useState(false)
     const dropdownRef = useRef(null)
     const userDropdownRef = useRef(null)
+    const searchRef = useRef(null)
 
     const isGamePage = isGamePath(location.pathname)
     const isHomePage = location.pathname === '/'
+
+    const searchResults = searchQuery.trim()
+        ? GAMES.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+        : []
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -57,6 +64,9 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
             }
             if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
                 setShowUserDropdown(false)
+            }
+            if (searchRef.current && !searchRef.current.contains(e.target)) {
+                setSearchOpen(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -279,9 +289,58 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                     )}
                 </div>
                 {!isGamePage && (
-                    <div className="search-input-wrapper">
+                    <div className="search-input-wrapper" ref={searchRef} style={{ position: 'relative' }}>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text-secondary)" className="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                        <input type="text" placeholder="Search games..." className="search-input" />
+                        <input
+                            type="text"
+                            placeholder="Search games..."
+                            className="search-input"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value)
+                                setSearchOpen(true)
+                            }}
+                            onFocus={() => setSearchOpen(true)}
+                        />
+                        {searchOpen && searchResults.length > 0 && (
+                            <div style={{
+                                position: 'absolute',
+                                top: 'calc(100% + 6px)',
+                                left: 0,
+                                right: 0,
+                                minWidth: '220px',
+                                background: '#131b2e',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '8px',
+                                boxShadow: '0 10px 25px rgba(0,0,0,0.6)',
+                                zIndex: 999,
+                                overflow: 'hidden'
+                            }}>
+                                {searchResults.map((game) => (
+                                    <Link
+                                        key={game.id}
+                                        to={game.path}
+                                        onClick={() => {
+                                            setSearchOpen(false)
+                                            setSearchQuery('')
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '10px 14px',
+                                            color: '#f8fafc',
+                                            textDecoration: 'none',
+                                            fontSize: '13px',
+                                            borderBottom: '1px solid rgba(255,255,255,0.06)'
+                                        }}
+                                    >
+                                        <span style={{ fontWeight: 600 }}>{game.name}</span>
+                                        <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>{game.rtp}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

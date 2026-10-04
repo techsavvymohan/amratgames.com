@@ -97,6 +97,7 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
     const { user, logout, openAuthModal } = useAuth()
+    const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => onClose(), [location.pathname, onClose])
 
@@ -193,8 +194,41 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
 
                 <label className="mobile-drawer-field">
                     <span>Search</span>
-                    <input type="search" placeholder="Search games..." />
+                    <input
+                        type="search"
+                        placeholder="Search games..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </label>
+                {searchQuery.trim() && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+                        {GAMES.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase().trim())).map(game => (
+                            <NavLink
+                                key={game.id}
+                                to={game.path}
+                                onClick={() => {
+                                    onClose()
+                                    setSearchQuery('')
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 12px',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    borderRadius: '8px',
+                                    color: '#f8fafc',
+                                    textDecoration: 'none',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <span style={{ fontWeight: 600 }}>{game.name}</span>
+                                <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 600 }}>{game.rtp}</span>
+                            </NavLink>
+                        ))}
+                    </div>
+                )}
                 <label className="mobile-drawer-field">
                     <span>Palette</span>
                     <select value={paletteId} onChange={event => setPaletteId(event.target.value)}>

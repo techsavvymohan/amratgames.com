@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { createServer } from 'vite'
 
 const root = new URL('.', import.meta.url)
+const rootPath = fileURLToPath(root)
 
 test('Vercel serves browser routes through the SPA entry point', () => {
     const configUrl = new URL('vercel.json', root)
@@ -17,7 +19,7 @@ test('Vercel serves browser routes through the SPA entry point', () => {
 
 test('Plinko engine refuses more than 20 active balls', async () => {
     globalThis.window = { devicePixelRatio: 1 }
-    const server = await createServer({ configFile: false, server: { middlewareMode: true } })
+    const server = await createServer({ root: rootPath, configFile: false, server: { middlewareMode: true } })
 
     try {
         const { default: PlinkoEngine } = await server.ssrLoadModule('/src/components/PlinkoGame/PlinkoEngine.js')
@@ -40,7 +42,7 @@ test('Plinko engine refuses more than 20 active balls', async () => {
 })
 
 test('Plinko reserves pending fairness work before accepting another drop', async () => {
-    const server = await createServer({ configFile: false, server: { middlewareMode: true } })
+    const server = await createServer({ root: rootPath, configFile: false, server: { middlewareMode: true } })
     const resolvers = []
 
     try {
@@ -78,7 +80,7 @@ test('Plinko reserves pending fairness work before accepting another drop', asyn
 })
 
 test('Plinko does not charge when capacity fills during fairness work', async () => {
-    const server = await createServer({ configFile: false, server: { middlewareMode: true } })
+    const server = await createServer({ root: rootPath, configFile: false, server: { middlewareMode: true } })
 
     try {
         const { dropPlinkoBall } = await server.ssrLoadModule('/src/components/PlinkoGame/dropPlinkoBall.js')
@@ -112,7 +114,7 @@ test('Plinko does not charge when capacity fills during fairness work', async ()
 })
 
 test('stopping Auto Bet cancels pending fairness before charging', async () => {
-    const server = await createServer({ configFile: false, server: { middlewareMode: true } })
+    const server = await createServer({ root: rootPath, configFile: false, server: { middlewareMode: true } })
 
     try {
         const { dropPlinkoBall } = await server.ssrLoadModule('/src/components/PlinkoGame/dropPlinkoBall.js')
