@@ -73,7 +73,7 @@ export async function testSupabaseConnection() {
 
         if (error) {
             // Check if error is because tables don't exist yet
-            if (error.code === '42P01') {
+            if (error.code === '42P01' || error.code === 'PGRST205' || error.message?.includes('schema cache')) {
                 return {
                     ok: true,
                     configured: true,

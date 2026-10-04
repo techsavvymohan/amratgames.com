@@ -57,9 +57,9 @@ export const CONFIG = {
 
     // Supabase PostgreSQL Integration
     SUPABASE_URL: process.env.SUPABASE_URL || '',
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
-    USE_SUPABASE: process.env.USE_SUPABASE === 'true' || Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY)),
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '',
+    USE_SUPABASE: process.env.USE_SUPABASE === 'true' || Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY)),
 
     // 5. SMS & OTP Verification Gateway
     SMS_GATEWAY_PROVIDER: process.env.SMS_GATEWAY_PROVIDER || 'mock',
