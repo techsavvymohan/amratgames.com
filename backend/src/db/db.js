@@ -618,6 +618,7 @@ class Database {
                 .select('*')
                 .limit(1000)
 
+            if (!uErr && cloudUsers && cloudUsers.length > 0) {
                 const mappedUsers = cloudUsers.map(u => {
                     const balances = u.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
                     const totalDeposited = typeof balances.totalDeposited === 'number'
