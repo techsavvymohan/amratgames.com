@@ -637,34 +637,35 @@ function MinesGame() {
                             </div>
 
 
-                            {/* Mines Selection */}
-                            <div className="form-group mobile-sheet-secondary">
-                                <label className="form-label">Mines</label>
-                                <div className="mines-select-wrapper">
-                                    <select
-                                        className="mines-select"
-                                        value={minesCount}
-                                        onChange={handleMinesChange}
-                                        disabled={isPlaying}
-                                    >
-                                        {[...Array(24)].map((_, i) => (
-                                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                                        ))}
-                                    </select>
+                            {/* Mines & Gems Compact Row */}
+                            <div className="mines-gems-compact-row">
+                                <div className="form-group flex-1">
+                                    <label className="form-label">Mines</label>
+                                    <div className="mines-select-wrapper">
+                                        <select
+                                            className="mines-select"
+                                            value={minesCount}
+                                            onChange={handleMinesChange}
+                                            disabled={isPlaying}
+                                        >
+                                            {[...Array(24)].map((_, i) => (
+                                                <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Gems Display */}
-                            <div className="form-group mobile-sheet-secondary">
-                                <label className="form-label">Gems</label>
-                                <div className="input-with-controls">
-                                    <input
-                                        type="text"
-                                        className="mines-input"
-                                        value={25 - minesCount}
-                                        readOnly
-                                        disabled={isPlaying}
-                                    />
+                                <div className="form-group flex-1">
+                                    <label className="form-label">Gems</label>
+                                    <div className="input-with-controls">
+                                        <input
+                                            type="text"
+                                            className="mines-input"
+                                            value={25 - minesCount}
+                                            readOnly
+                                            disabled={isPlaying}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -752,50 +753,6 @@ function MinesGame() {
                         </div>
                     </div>
 
-                    {/* Debug Overlay */}
-                    {isDebugMode && debugData && (
-                        <div className="fixed-widget debug-widget fade-in-scale" ref={debugWidgetRef}>
-                            <div className="widget-header debug-widget-header" onMouseDown={handleDebugDragStart}>
-                                <div className="widget-title">
-                                    <BugOutlined style={{ color: 'var(--primary)', fontSize: 18 }} />
-                                    <span style={{ color: 'var(--primary)' }}>FAIRNESS DEBUG</span>
-                                </div>
-                                <div className="widget-actions">
-                                    <button className="widget-btn-icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => setIsDebugMode(false)}>
-                                        <CloseOutlined />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="widget-content debug-widget-content">
-                                <div className="debug-row">
-                                    <span className="debug-label">Next Hash:</span>
-                                    <span className="debug-value">{debugData.hash.substring(0, 16)}...</span>
-                                </div>
-                                <div className="debug-row">
-                                    <span className="debug-label">Client Seed:</span>
-                                    <span className="debug-value">{fairnessData.clientSeed?.substring(0, 10)}...</span>
-                                </div>
-                                <div className="debug-row">
-                                    <span className="debug-label">Next Nonce:</span>
-                                    <span className="debug-value">{debugData.nonce}</span>
-                                </div>
-                                <div className="debug-target">
-                                    MINES: <span className="target-bin">{minesCount}</span>
-                                    <div style={{ fontSize: 13, color: '#fff', marginTop: 4, textShadow: 'none' }}>
-                                        Positions: <span style={{ color: '#ff4d4f' }}>[{debugData.minePositions.join(', ')}]</span>
-                                    </div>
-                                </div>
-                                <div className="mines-debug-grid">
-                                    {Array.from({ length: 25 }, (_, i) => (
-                                        <div key={i} className={`mines-debug-cell ${debugData.minePositions.includes(i) ? 'is-mine' : 'is-gem'}`}>
-                                            {debugData.minePositions.includes(i) ? '💣' : '💎'}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Bottom Controls */}
                     <div className="game-controls">
                         <Space>
@@ -811,15 +768,6 @@ function MinesGame() {
                                     setSoundEnabled(next);
                                     casinoAudio.setMuted(!next);
                                 }} />
-                            </Tooltip>
-                            <Tooltip title={isDebugMode ? "Disable Debug" : "Enable Debug (Peek Fairness)"}>
-                                <Button
-                                    type="text"
-                                    icon={<BugOutlined />}
-                                    className={`control-btn ${isDebugMode ? 'active-debug' : ''}`}
-                                    style={{ color: isDebugMode ? 'var(--primary)' : undefined }}
-                                    onClick={() => setIsDebugMode(!isDebugMode)}
-                                />
                             </Tooltip>
                         </Space>
                         <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>

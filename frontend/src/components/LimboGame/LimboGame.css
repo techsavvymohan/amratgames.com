@@ -40,8 +40,52 @@
 }
 
 @media (max-width: 900px) {
+    .limbo-page {
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+
     .limbo-container {
-        grid-template-columns: 1fr;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+        padding: 4px !important;
+    }
+
+    .limbo-arena {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        max-height: 44vh !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .limbo-controls {
+        flex-shrink: 0 !important;
+        padding: 6px 12px 10px !important;
+        background: #0f131c !important;
+        border-radius: 14px 14px 0 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .limbo-control-group {
+        margin-bottom: 2px !important;
+    }
+
+    .limbo-bet-btn {
+        min-height: 44px !important;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        margin-top: 4px !important;
     }
 }
 

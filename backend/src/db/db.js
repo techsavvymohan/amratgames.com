@@ -67,11 +67,21 @@ class Database {
             this.persist()
         }
 
-        // Ensure phone numbers for master admin
+        // Ensure phone numbers and clean balance for master admin
         const masterAdmin = this.data.users.find(u => u.id === 'usr_admin_001')
-        if (masterAdmin && !masterAdmin.phone) {
-            masterAdmin.phone = '9876500001'
-            masterAdmin.phoneVerified = true
+        if (masterAdmin) {
+            if (!masterAdmin.phone) {
+                masterAdmin.phone = '9876500001'
+                masterAdmin.phoneVerified = true
+            }
+            if (masterAdmin.balances?.INR === 500000 || masterAdmin.balances?.INR > 50000) {
+                masterAdmin.balances = {
+                    INR: 100.00,
+                    BTC: 0.0000,
+                    USDT: 0.00,
+                    AMRAT: 0.00,
+                }
+            }
             this.persist()
         }
 
@@ -111,10 +121,10 @@ class Database {
             role: 'admin',
             status: 'active',
             balances: {
-                INR: 500000.00,
-                BTC: 5.5000,
-                USDT: 50000.00,
-                AMRAT: 1000000.00,
+                INR: 100.00, // Standard ₹100 Welcome Bonus (No demo 500000)
+                BTC: 0.0000,
+                USDT: 0.00,
+                AMRAT: 0.00,
             },
             isBanned: false,
             kycStatus: 'verified',

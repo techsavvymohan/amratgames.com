@@ -1092,31 +1092,75 @@
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .plinko-page {
-        height: auto;
-        min-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space) + 196px);
-        padding-bottom: 196px;
-        overflow: visible;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .plinko-page .plinko-main,
     .plinko-page .plinko-container {
-        overflow: visible;
-    }
-
-    .plinko-page .plinko-container {
-        display: block;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        justify-content: space-between !important;
     }
 
     .plinko-page .plinko-game-wrapper {
-        width: 100%;
-        min-height: 0;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+        padding: 4px 6px !important;
+    }
+
+    /* Remove unnecessary mobile clutter */
+    .plinko-page .plinko-controls {
+        display: none !important;
+    }
+
+    .plinko-page .recent-plays {
+        display: none !important;
+    }
+
+    .plinko-page .hot-streak-banner {
+        display: none !important;
     }
 
     .plinko-bet-sheet .plinko-sidebar-wrapper,
     .plinko-bet-sheet .sidebar {
-        width: 100%;
-        min-width: 0;
-        max-height: none;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-height: none !important;
+        padding: 6px 12px 10px !important;
+        background: #0f131c !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .plinko-bet-sheet .sidebar .ball-selector-card,
+    .plinko-bet-sheet .sidebar .sidebar-footer {
+        display: none !important;
+    }
+
+    .plinko-bet-sheet .sidebar .bet-button {
+        min-height: 44px !important;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 6px !important;
     }
 
     .plinko-page .recent-plays-list {
@@ -1129,13 +1173,6 @@
 
     .plinko-page .recent-plays-list > * {
         flex: 0 0 auto;
-    }
-
-    .plinko-page .debug-path-row {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        overflow-x: auto;
-        overscroll-behavior-inline: contain;
     }
 
     .mobile-game-modal .ant-modal {

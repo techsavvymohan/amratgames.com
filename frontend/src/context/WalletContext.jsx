@@ -70,7 +70,13 @@ function getStoredBalance(currencyId) {
         const stored = localStorage.getItem(`${STORAGE_KEY_BALANCE}_${currencyId}`)
         if (stored !== null) {
             const parsed = parseFloat(stored)
-            return isNaN(parsed) ? (CURRENCIES[currencyId]?.initial ?? 100.00) : parsed
+            if (isNaN(parsed) || parsed >= 50000) {
+                // Wipe legacy demo balances
+                const clean = CURRENCIES[currencyId]?.initial ?? 100.00
+                localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyId}`, clean.toString())
+                return clean
+            }
+            return parsed
         }
     } catch (e) { /* ignore */ }
     return CURRENCIES[currencyId]?.initial ?? 100.00
@@ -93,7 +99,8 @@ export function WalletProvider({ children }) {
         if (user && user.balances) {
             const userBal = user.balances[currencyRef.current]
             if (userBal !== undefined && typeof userBal === 'number') {
-                const rounded = parseFloat(userBal.toFixed(2))
+                let rounded = parseFloat(userBal.toFixed(2))
+                if (rounded >= 50000) rounded = 100.00
                 balanceRef.current = rounded
                 setBalance(rounded)
                 try {
@@ -122,7 +129,9 @@ export function WalletProvider({ children }) {
         // Load balance for that currency (prefer user balance if logged in)
         let curBal = getStoredBalance(newCurr)
         if (user && user.balances && user.balances[newCurr] !== undefined) {
-            curBal = parseFloat(user.balances[newCurr].toFixed(2))
+            let uBal = parseFloat(user.balances[newCurr].toFixed(2))
+            if (uBal >= 50000) uBal = 100.00
+            curBal = uBal
         }
         balanceRef.current = curBal
         setBalance(curBal)

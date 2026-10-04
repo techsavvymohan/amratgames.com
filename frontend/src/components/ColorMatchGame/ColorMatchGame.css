@@ -1308,55 +1308,93 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .color-match-page {
-        padding: 10px 8px 90px;
-        gap: 10px;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        padding: 4px 6px !important;
+        gap: 4px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
     }
     .cm-top-bar {
-        padding: 8px 12px;
+        padding: 4px 8px !important;
     }
     .cm-brand-title {
-        font-size: 14px;
+        font-size: 13px !important;
+    }
+    .cm-brand-subtitle {
+        display: none !important;
+    }
+    .cm-vip-crown {
+        font-size: 16px !important;
     }
     .cm-speed-tabs {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 4px;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 4px !important;
     }
     .cm-speed-tab {
-        padding: 6px 4px;
-        font-size: 11px;
+        padding: 4px 2px !important;
+        font-size: 10px !important;
     }
     .cm-countdown-card {
-        padding: 12px 14px;
+        padding: 6px 10px !important;
+        border-radius: 10px !important;
     }
     .cm-period-id {
-        font-size: 16px;
+        font-size: 13px !important;
     }
-    .cm-numbers-sphere-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 6px;
-    }
-    .cm-num-sphere {
-        padding: 12px 0;
-    }
-    .cm-sphere-text {
-        font-size: 20px;
+    .cm-crystal-colors-row {
+        gap: 6px !important;
+        margin: 2px 0 !important;
     }
     .cm-crystal-btn {
-        padding: 14px 6px 12px;
+        padding: 6px 4px !important;
     }
     .cm-gem-frame {
-        width: 36px;
-        height: 36px;
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 14px !important;
     }
     .cm-crystal-title {
-        font-size: 13px;
+        font-size: 11px !important;
+    }
+    .cm-numbers-sphere-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 3px !important;
+    }
+    .cm-num-sphere {
+        padding: 4px 0 !important;
+        border-radius: 6px !important;
+    }
+    .cm-sphere-text {
+        font-size: 14px !important;
+    }
+    .cm-sphere-payout {
+        font-size: 9px !important;
     }
     .casino-chip {
-        width: 40px;
-        height: 40px;
-        font-size: 11px;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        font-size: 10px !important;
+    }
+    .cm-history-panel {
+        display: none !important;
+    }
+    .cm-footer-action-bar {
+        padding: 4px 8px !important;
+        background: #0f131c !important;
+        border-radius: 10px 10px 0 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    .cm-deal-button {
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
     }
 }

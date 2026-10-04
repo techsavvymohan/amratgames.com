@@ -122,7 +122,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                     </div>
 
                     {/* Cashout At */}
-                    <div className="form-group mobile-sheet-secondary">
+                    <div className="form-group crash-cashout-group">
                         <div className="form-header">
                             <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
                                 Auto Cashout

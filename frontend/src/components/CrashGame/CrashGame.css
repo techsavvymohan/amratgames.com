@@ -1078,45 +1078,97 @@
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .crash-game {
-        height: auto;
-        min-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space) + 232px);
-        padding-bottom: 232px;
-        overflow: visible;
-    }
-
-    .crash-bet-sheet {
-        --mobile-sheet-collapsed-height: 232px;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .crash-game .game-container {
-        display: block;
-        overflow: visible;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        justify-content: space-between !important;
     }
 
     .crash-game .game-display {
-        width: 100%;
-        min-height: 420px;
-        overflow: visible;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        max-height: 48vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+        padding: 4px 6px !important;
+    }
+
+    .crash-game .game-chart {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 38vh !important;
+    }
+
+    /* Remove unnecessary mobile clutter */
+    .crash-game .game-controls {
+        display: none !important;
     }
 
     .crash-bet-sheet .crash-sidebar {
-        width: 100%;
-        min-width: 0;
-        padding: 10px 12px 0;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 6px 12px 10px !important;
+        background: #0f131c !important;
         border: 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
     }
 
-    .crash-bet-sheet[data-state='collapsed'] .betting-panel-3d,
-    .crash-bet-sheet[data-state='collapsed'] .bet-form {
-        gap: 8px;
+    .crash-bet-sheet .sidebar-footer {
+        display: none !important;
     }
 
-    .crash-bet-sheet[data-state='collapsed'] .form-group {
-        margin-bottom: 0;
+    .crash-bet-sheet .betting-panel-3d {
+        gap: 6px !important;
+    }
+
+    .crash-bet-sheet .bet-form {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
+
+    .crash-bet-sheet .bet-form > .form-group {
+        grid-column: span 1 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .crash-bet-sheet .bet-form > .bet-button {
+        grid-column: span 2 !important;
+    }
+
+    .crash-bet-sheet .bet-mode-tabs {
+        display: none !important;
+    }
+
+    .crash-bet-sheet .form-group {
+        margin-bottom: 0 !important;
     }
 
     .crash-bet-sheet .bet-button {
-        min-height: 48px;
+        min-height: 44px !important;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        margin-top: 4px !important;
     }
 
     .crash-mobile-tabs {

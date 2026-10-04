@@ -535,46 +535,7 @@ function PlinkoGame() {
                             ballColor={currentBall.color}
                         />
 
-                        {/* Debug Overlay */}
-                        {isDebugMode && debugData && (
-                            <div className="fixed-widget debug-widget fade-in-scale" ref={debugWidgetRef}>
-                                <div className="widget-header debug-widget-header" onMouseDown={handleDebugDragStart}>
-                                    <div className="widget-title">
-                                        <BugOutlined style={{ color: 'var(--primary)', fontSize: 18 }} />
-                                        <span style={{ color: 'var(--primary)' }}>FAIRNESS DEBUG</span>
-                                    </div>
-                                    <div className="widget-actions">
-                                        <button className="widget-btn-icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => setIsDebugMode(false)}>
-                                            <CloseOutlined />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="widget-content debug-widget-content">
-                                    <div className="debug-row">
-                                        <span className="debug-label">Next Hash:</span>
-                                        <span className="debug-value">{debugData.hash.substring(0, 16)}...</span>
-                                    </div>
-                                    <div className="debug-row">
-                                        <span className="debug-label">Next Nonce:</span>
-                                        <span className="debug-value">{debugData.nonce}</span>
-                                    </div>
-                                    <div className="debug-target">
-                                        TARGET BIN: <span className="target-bin">#{debugData.binIndex}</span>
-                                        {' → '}
-                                        <span className="target-payout">
-                                            {BIN_PAYOUTS[rowCount]?.[riskLevel]?.[debugData.binIndex] ?? '?'}×
-                                        </span>
-                                    </div>
-                                    <div className="debug-path-row">
-                                        {debugData.path.map((dir, i) => (
-                                            <span key={i} className={`debug-path-dot ${dir === 0 ? 'left' : 'right'}`}>
-                                                {dir === 0 ? 'L' : 'R'}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Bottom Controls */}
                         <div className="plinko-controls">
@@ -613,15 +574,6 @@ function PlinkoGame() {
                                             setSoundEnabled(next);
                                             casinoAudio.setMuted(!next);
                                         }}
-                                    />
-                                </Tooltip>
-                                <Tooltip title={isDebugMode ? "Disable Debug" : "Enable Debug (Peek Fairness)"}>
-                                    <Button
-                                        type="text"
-                                        icon={<BugOutlined />}
-                                        className={`control-btn ${isDebugMode ? 'active-debug' : ''}`}
-                                        style={{ color: isDebugMode ? 'var(--primary)' : undefined }}
-                                        onClick={() => setIsDebugMode(!isDebugMode)}
                                     />
                                 </Tooltip>
                             </Space>

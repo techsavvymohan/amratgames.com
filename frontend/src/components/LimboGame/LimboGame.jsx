@@ -293,46 +293,6 @@ function LimboGame() {
                 </div>
             </div>
 
-            {/* Mobile Slide-Up Bet Sheet */}
-            <MobileBetSheet
-                title="Limbo Quick Bet"
-                actionButton={
-                    <Button
-                        type="primary"
-                        size="large"
-                        block
-                        onClick={executeRoll}
-                        disabled={isRolling || betAmount > balance || betAmount <= 0}
-                        className="limbo-bet-btn"
-                    >
-                        {isRolling ? 'Rolling…' : `Bet ${currencySymbol}${betAmount}`}
-                    </Button>
-                }
-            >
-                <div className="limbo-mobile-sheet-content">
-                    <div className="limbo-grid-two">
-                        <div>
-                            <label className="limbo-label">Amount</label>
-                            <Input
-                                type="number"
-                                value={betAmount}
-                                onChange={(e) => setBetAmount(Math.max(0, parseFloat(e.target.value) || 0))}
-                                prefix={currencySymbol}
-                            />
-                        </div>
-                        <div>
-                            <label className="limbo-label">Target</label>
-                            <Input
-                                type="number"
-                                value={targetMultiplier}
-                                onChange={(e) => handleTargetChange(e.target.value)}
-                                suffix="×"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </MobileBetSheet>
-
             {/* Provably Fair Modal */}
             <Modal
                 title="🛡️ Limbo Provably Fair Verification"

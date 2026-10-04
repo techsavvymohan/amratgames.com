@@ -959,9 +959,6 @@ function DinoGame() {
                                 <Tooltip title={soundEnabled ? "Mute" : "Unmute"}>
                                     <Button type="text" icon={<SoundOutlined />} className={`control-btn ${!soundEnabled ? 'muted' : ''}`} onClick={() => setSoundEnabled(!soundEnabled)} />
                                 </Tooltip>
-                                <Tooltip title="Fairness Debug">
-                                    <Button type="text" icon={<BugOutlined style={{ color: isDebugMode ? 'var(--primary)' : undefined }} />} className={`control-btn ${isDebugMode ? 'active' : ''}`} onClick={() => setIsDebugMode(!isDebugMode)} />
-                                </Tooltip>
                             </Space>
                             <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>
                             <Button type="text" icon={<SafetyCertificateOutlined />} className="fairness-btn" onClick={() => setFairnessModalOpen(true)}>

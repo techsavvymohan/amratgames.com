@@ -178,15 +178,56 @@
 }
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
-    .plinko-page .plinko-board-wrapper,
+    .plinko-page .plinko {
+        height: 100% !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow: hidden !important;
+    }
+
+    .plinko-page .plinko-content {
+        padding: 2px !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    .plinko-page .plinko-board-wrapper {
+        width: min(96vw, 360px) !important;
+        max-height: 46vh !important;
+        aspect-ratio: 760 / 570 !important;
+        margin: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+    }
+
     .plinko-page .plinko-canvas-container {
-        width: 100%;
-        aspect-ratio: 760 / 570;
+        width: 100% !important;
+        height: 100% !important;
+        aspect-ratio: 760 / 570 !important;
     }
 
     .plinko-page .plinko-canvas {
-        display: block;
+        display: block !important;
         width: 100% !important;
         height: 100% !important;
+        object-fit: contain !important;
+    }
+
+    .plinko-page .bins-row {
+        height: 18px !important;
+        margin-top: 2px !important;
+        gap: 1.5px !important;
+    }
+
+    .plinko-page .bin {
+        font-size: 7px !important;
+        border-radius: 2px !important;
     }
 }

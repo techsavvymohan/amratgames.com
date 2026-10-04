@@ -170,36 +170,37 @@ function Sidebar({
                 )}
             </div>
 
-            {/* Risk Level */}
-            <div className="form-group mobile-sheet-secondary">
-                <label htmlFor="riskLevel" className="form-label">Risk</label>
-                <select
-                    id="riskLevel"
-                    value={riskLevel}
-                    onChange={(e) => setRiskLevel(e.target.value)}
-                    disabled={hasOutstandingBalls || isAutoBetting}
-                    className="form-select"
-                >
-                    {riskLevels.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                    ))}
-                </select>
-            </div>
+            {/* Risk & Rows Compact Row */}
+            <div className="risk-rows-compact-row">
+                <div className="form-group flex-1">
+                    <label htmlFor="riskLevel" className="form-label">Risk</label>
+                    <select
+                        id="riskLevel"
+                        value={riskLevel}
+                        onChange={(e) => setRiskLevel(e.target.value)}
+                        disabled={hasOutstandingBalls || isAutoBetting}
+                        className="form-select"
+                    >
+                        {riskLevels.map(({ value, label }) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+                </div>
 
-            {/* Row Count */}
-            <div className="form-group mobile-sheet-secondary">
-                <label htmlFor="rowCount" className="form-label">Rows</label>
-                <select
-                    id="rowCount"
-                    value={rowCount}
-                    onChange={(e) => setRowCount(parseInt(e.target.value))}
-                    disabled={hasOutstandingBalls || isAutoBetting}
-                    className="form-select"
-                >
-                    {ROW_COUNT_OPTIONS.map((value) => (
-                        <option key={value} value={value}>{value}</option>
-                    ))}
-                </select>
+                <div className="form-group flex-1">
+                    <label htmlFor="rowCount" className="form-label">Rows</label>
+                    <select
+                        id="rowCount"
+                        value={rowCount}
+                        onChange={(e) => setRowCount(parseInt(e.target.value))}
+                        disabled={hasOutstandingBalls || isAutoBetting}
+                        className="form-select"
+                    >
+                        {ROW_COUNT_OPTIONS.map((value) => (
+                            <option key={value} value={value}>{value}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {/* Auto Bet Input */}

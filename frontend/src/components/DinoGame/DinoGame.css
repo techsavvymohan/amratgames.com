@@ -1161,69 +1161,81 @@
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .dino-game-page {
-        height: auto;
-        min-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space) + 196px);
-        padding-bottom: 196px;
-        overflow: visible;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     .dino-game-page .dino-container {
-        display: block;
-        overflow: visible;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        justify-content: space-between !important;
     }
 
     .dino-game-page .dino-game-area {
-        width: 100%;
-        min-height: 0;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        max-height: 48vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        padding: 4px 6px !important;
     }
 
     .dino-game-page .phaser-container {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        overflow: hidden;
+        width: 100% !important;
+        max-height: 42vh !important;
+        aspect-ratio: 16 / 9 !important;
+        overflow: hidden !important;
+        margin: auto !important;
     }
 
     .dino-game-page .phaser-container canvas {
-        display: block;
-        max-width: 100%;
-        height: auto !important;
-        margin: auto;
+        display: block !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        margin: auto !important;
+        object-fit: contain !important;
+    }
+
+    /* Remove unnecessary mobile clutter */
+    .dino-game-page .game-controls {
+        display: none !important;
+    }
+
+    .dino-game-page .bet-mode-tabs {
+        display: none !important;
     }
 
     .dino-bet-sheet .dino-sidebar {
-        width: 100%;
-        min-width: 0;
-        max-height: none;
-        border: 0;
-        overflow: visible;
-    }
-
-    .dino-bet-sheet[data-state='collapsed'] .dino-sidebar > .bet-button,
-    .dino-bet-sheet[data-state='collapsed'] .jump-decision {
-        position: sticky;
-        z-index: 1;
-        bottom: 0;
-    }
-
-    .dino-bet-sheet[data-state='collapsed'] .jump-btn {
-        margin-bottom: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-height: none !important;
+        border: 0 !important;
+        padding: 6px 12px 10px !important;
+        background: #0f131c !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
     }
 
     .dino-bet-sheet .jump-btn,
     .dino-bet-sheet .bet-button {
-        min-height: 48px;
-    }
-
-    .mobile-game-modal .ant-modal {
-        width: calc(100vw - 24px) !important;
-        max-width: none;
-        margin: 12px auto;
-        padding-bottom: 0;
-    }
-
-    .mobile-game-modal .ant-modal-content {
-        max-height: calc(100dvh - 24px);
-        overflow: auto;
+        min-height: 44px !important;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        margin-top: 4px !important;
     }
 }
 

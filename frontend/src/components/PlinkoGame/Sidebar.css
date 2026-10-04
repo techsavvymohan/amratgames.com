@@ -725,54 +725,44 @@
    ================================================================= */
 
 @media (max-width: 768px) {
+    .risk-rows-compact-row {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .risk-rows-compact-row .flex-1 {
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0 !important;
+    }
+
     .plinko-page .sidebar {
         width: 100%;
         min-width: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--sidebar-border);
-        padding: 12px;
-        gap: 12px;
-    }
-
-    .plinko-page .sidebar-card {
-        margin: 0 0 12px 0;
-        padding: 10px;
-    }
-
-    .plinko-page .bet-amount-row {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .plinko-page .bet-amount-input input {
-        border-radius: 8px;
-        border-right: 1px solid var(--card-border);
-        padding-left: 32px;
-    }
-
-    .plinko-page .bet-adjust-btn {
-        border-left: none;
-        border-top: 1px solid var(--card-border);
-        border-radius: 0 0 8px 8px;
-        justify-content: space-between;
-    }
-
-    .plinko-page .bet-adjust-btn.last {
-        border-radius: 0;
-    }
-
-    .plinko-page .ball-types-grid {
-        grid-template-columns: 1fr;
+        border: none;
+        padding: 6px 10px;
         gap: 6px;
     }
 
-    .plinko-page .streak-stats {
-        flex-direction: column;
-        gap: 8px;
+    .plinko-page .bet-amount-row {
+        flex-direction: row !important;
+        gap: 6px !important;
+        align-items: center !important;
     }
 
-    .plinko-page .footer-buttons {
-        justify-content: center;
+    .plinko-page .form-group {
+        margin-bottom: 4px !important;
+    }
+
+    .plinko-page .form-label {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .plinko-page .bet-mode-tabs {
+        display: none !important;
     }
 }
 

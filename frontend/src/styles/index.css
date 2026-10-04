@@ -1673,6 +1673,20 @@ body {
         overflow-y: auto;
     }
 
+    /* Zero-Scroll Single Page Viewport for All Casino Games on Mobile */
+    .main-content:has(.plinko-page),
+    .main-content:has(.mines-game),
+    .main-content:has(.crash-game),
+    .main-content:has(.limbo-page),
+    .main-content:has(.dragon-tiger-page),
+    .main-content:has(.color-match-page),
+    .main-content:has(.dino-game-page) {
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;
+        max-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;
+    }
+
     .app-sidebar {
         display: none;
     }
