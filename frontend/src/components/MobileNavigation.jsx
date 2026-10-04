@@ -3,6 +3,7 @@ import { Drawer } from 'antd'
 import { NavLink, useLocation } from 'react-router-dom'
 import { GAMES } from '../games'
 import { useThemeSettings } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import './MobileNavigation.css'
 
 const HomeIcon = () => (
@@ -95,6 +96,7 @@ const comingSoon = ['Favourites', 'Recent', 'Challenges', 'My Bets']
 function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
+    const { user, logout, openAuthModal } = useAuth()
 
     useEffect(() => onClose(), [location.pathname, onClose])
 
@@ -111,6 +113,84 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                 }}
                 rootClassName="mobile-navigation-drawer"
             >
+                {/* User Status / Auth CTA in Drawer */}
+                <div style={{ marginBottom: '16px' }}>
+                    {user ? (
+                        <div style={{
+                            padding: '12px',
+                            background: 'rgba(245, 175, 25, 0.1)',
+                            border: '1px solid rgba(245, 175, 25, 0.35)',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #f5af19, #d49110)',
+                                    color: '#0b0f19',
+                                    fontWeight: 800,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px'
+                                }}>
+                                    {user.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 700, color: '#fbbf24', fontSize: '0.85rem' }}>{user.username}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                        {user.phone ? `📱 +91 ${user.phone}` : (user.email || 'Verified Player')}
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => { logout(); onClose(); }}
+                                style={{
+                                    background: 'rgba(239, 68, 68, 0.2)',
+                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    color: '#f87171',
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '0.72rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 600
+                                }}
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => { onClose(); openAuthModal('otp'); }}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                background: 'linear-gradient(135deg, #f5af19, #d49110)',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: '#0b0f19',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                boxShadow: '0 4px 12px rgba(245, 175, 25, 0.25)'
+                            }}
+                        >
+                            <span>⚡</span>
+                            <span>Sign In / Fast OTP Login</span>
+                        </button>
+                    )}
+                </div>
+
                 <label className="mobile-drawer-field">
                     <span>Search</span>
                     <input type="search" placeholder="Search your game" />
@@ -125,8 +205,44 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                 </label>
                 <div className="mobile-drawer-actions" aria-label="Account shortcuts">
                     {['Profile', 'Notifications', 'Chat'].map(label => (
-                        <button key={label} type="button">{label}</button>
+                        <button
+                            key={label}
+                            type="button"
+                            onClick={() => {
+                                if (label === 'Profile' && !user) {
+                                    onClose()
+                                    openAuthModal('login')
+                                }
+                            }}
+                        >
+                            {label}
+                        </button>
                     ))}
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                    <NavLink
+                        to="/admin"
+                        onClick={onClose}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '12px 14px',
+                            background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(212, 145, 16, 0.12))',
+                            border: '1px solid rgba(245, 175, 25, 0.45)',
+                            borderRadius: '10px',
+                            color: '#fbbf24',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            textDecoration: 'none',
+                            boxShadow: '0 4px 14px rgba(245, 175, 25, 0.15)',
+                            minHeight: '44px'
+                        }}
+                    >
+                        <span>👑</span>
+                        <span>Admin & Treasury Hub</span>
+                    </NavLink>
                 </div>
                 <div className="mobile-coming-soon" aria-label="Coming soon">
                     {comingSoon.map(label => (

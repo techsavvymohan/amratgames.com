@@ -2,13 +2,20 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useWallet, CURRENCIES } from '../context/WalletContext'
 import { useThemeSettings } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { isGamePath } from '../games'
 
 // Dynamic currency icon component for INR, BTC, and USDT
 export const CurrencyIcon = ({ symbol = '₹', size = 20, fontSize = 12, currency = 'INR' }) => {
     const isINR = currency === 'INR' || symbol === '₹'
     const isBTC = currency === 'BTC' || symbol === '₿'
+    const isAMRAT = currency === 'AMRAT' || symbol === '👑'
     
+    let bg = 'linear-gradient(135deg, #26a17b, #137554)'
+    if (isINR) bg = 'linear-gradient(135deg, #f5af19, #d49110)'
+    else if (isBTC) bg = 'linear-gradient(135deg, #f7931a, #ffb347)'
+    else if (isAMRAT) bg = 'linear-gradient(135deg, #ffd700, #ff8c00)'
+
     return (
         <div style={{
             width: size,
@@ -18,9 +25,7 @@ export const CurrencyIcon = ({ symbol = '₹', size = 20, fontSize = 12, currenc
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: '50%',
-            background: isINR 
-                ? 'linear-gradient(135deg, #f5af19, #d49110)' 
-                : (isBTC ? 'linear-gradient(135deg, #f7931a, #ffb347)' : 'linear-gradient(135deg, #26a17b, #137554)'),
+            background: bg,
             color: '#fff',
             fontWeight: 800,
             fontSize: fontSize,
@@ -34,18 +39,24 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
     const location = useLocation()
     const { balance, currency, currencySymbol, currencyConfig, setCurrency, deposit, resetBalance, transactions, toasts } = useWallet()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
+    const { user, logout, openAuthModal } = useAuth()
     const [showWalletDropdown, setShowWalletDropdown] = useState(false)
+    const [showUserDropdown, setShowUserDropdown] = useState(false)
     const [depositAmount, setDepositAmount] = useState('')
     const dropdownRef = useRef(null)
+    const userDropdownRef = useRef(null)
 
     const isGamePage = isGamePath(location.pathname)
     const isHomePage = location.pathname === '/'
 
-    // Close dropdown when clicking outside
+    // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setShowWalletDropdown(false)
+            }
+            if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+                setShowUserDropdown(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -138,30 +149,36 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                             </div>
 
                             {/* Currency Selection inside Wallet */}
-                            <div style={{ padding: '0 16px 12px', display: 'flex', gap: '8px' }}>
+                            <div style={{
+                                padding: '0 16px 12px',
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                                gap: '6px'
+                            }}>
                                 {Object.values(CURRENCIES).map((curr) => (
                                     <button
                                         key={curr.id}
                                         type="button"
                                         onClick={() => setCurrency(curr.id)}
                                         style={{
-                                            flex: 1,
-                                            padding: '6px 8px',
+                                            padding: '6px 4px',
                                             borderRadius: '6px',
                                             border: currency === curr.id ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
                                             background: currency === curr.id ? 'rgba(245, 175, 25, 0.15)' : 'rgba(255, 255, 255, 0.04)',
                                             color: currency === curr.id ? 'var(--primary)' : 'var(--text-secondary)',
                                             fontWeight: 700,
-                                            fontSize: '12px',
+                                            fontSize: '11px',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            gap: '4px'
+                                            gap: '3px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden'
                                         }}
                                     >
                                         <span>{curr.flag}</span>
-                                        <span>{curr.id}</span>
+                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{curr.id}</span>
                                     </button>
                                 ))}
                             </div>
@@ -282,8 +299,33 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                         <option value="INR">🇮🇳 INR (₹)</option>
                         <option value="BTC">₿ Bitcoin</option>
                         <option value="USDT">₮ USDT</option>
+                        <option value="AMRAT">👑 $AMRAT</option>
                     </select>
                 </label>
+
+                {/* Admin Portal Button */}
+                <Link
+                    to="/admin"
+                    title="Platform Admin Dashboard"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '5px 11px',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.18), rgba(212, 145, 16, 0.08))',
+                        border: '1px solid rgba(245, 175, 25, 0.45)',
+                        color: '#fbbf24',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        textDecoration: 'none',
+                        boxShadow: '0 0 10px rgba(245, 175, 25, 0.2)',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <span>👑</span>
+                    <span className="admin-btn-label">Admin</span>
+                </Link>
 
                 {/* Theme Palette Switcher */}
                 <label className="palette-select-label">
@@ -301,21 +343,123 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                 </label>
 
                 {isGamePage ? (
-                    <>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }} ref={userDropdownRef}>
                         <button className="header-icon-btn" title="Search">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
                         </button>
-                        <button className="header-icon-btn" title="Profile">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                        <button
+                            className="header-icon-btn"
+                            title={user ? `Logged in as ${user.username}` : "Sign In"}
+                            onClick={user ? () => setShowUserDropdown(!showUserDropdown) : () => openAuthModal('login')}
+                        >
+                            {user ? (
+                                <span style={{ fontWeight: 800, color: '#fbbf24', fontSize: '13px' }}>
+                                    {user.username.charAt(0).toUpperCase()}
+                                </span>
+                            ) : (
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+                            )}
                         </button>
                         <button className="header-icon-btn" title="Notifications">
                             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path></svg>
                         </button>
-                    </>
+
+                        {user && showUserDropdown && (
+                            <div className="amrat-user-dropdown">
+                                <div className="amrat-user-dropdown-header">
+                                    <div className="amrat-user-dropdown-name">{user.username}</div>
+                                    <div className="amrat-user-dropdown-role">
+                                        {user.role === 'admin' ? '👑 Master Administrator' : '⭐ Verified VIP Player'}
+                                    </div>
+                                    {user.phone && (
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                                            📱 +91 {user.phone}
+                                        </div>
+                                    )}
+                                    {user.email && (
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', wordBreak: 'break-all' }}>
+                                            ✉️ {user.email}
+                                        </div>
+                                    )}
+                                </div>
+                                {user.role === 'admin' && (
+                                    <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
+                                        <span>👑</span>
+                                        <span>Admin Dashboard</span>
+                                    </Link>
+                                )}
+                                <button
+                                    type="button"
+                                    className="amrat-user-dropdown-action logout"
+                                    onClick={() => {
+                                        logout()
+                                        setShowUserDropdown(false)
+                                    }}
+                                >
+                                    <span>🚪</span>
+                                    <span>Sign Out</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ) : user ? (
+                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={userDropdownRef}>
+                        <button
+                            type="button"
+                            className="amrat-user-badge-btn"
+                            onClick={() => setShowUserDropdown(!showUserDropdown)}
+                            title={`Account: ${user.username}`}
+                        >
+                            <div className="amrat-user-avatar">
+                                {user.username ? user.username.charAt(0).toUpperCase() : '👤'}
+                            </div>
+                            <span style={{ maxWidth: '85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {user.username}
+                            </span>
+                            <span style={{ fontSize: '9px', color: '#94a3b8' }}>▼</span>
+                        </button>
+                        {showUserDropdown && (
+                            <div className="amrat-user-dropdown">
+                                <div className="amrat-user-dropdown-header">
+                                    <div className="amrat-user-dropdown-name">{user.username}</div>
+                                    <div className="amrat-user-dropdown-role">
+                                        {user.role === 'admin' ? '👑 Master Administrator' : '⭐ Verified VIP Player'}
+                                    </div>
+                                    {user.phone && (
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                                            📱 +91 {user.phone}
+                                        </div>
+                                    )}
+                                    {user.email && (
+                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', wordBreak: 'break-all' }}>
+                                            ✉️ {user.email}
+                                        </div>
+                                    )}
+                                </div>
+                                {user.role === 'admin' && (
+                                    <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
+                                        <span>👑</span>
+                                        <span>Admin Dashboard</span>
+                                    </Link>
+                                )}
+                                <button
+                                    type="button"
+                                    className="amrat-user-dropdown-action logout"
+                                    onClick={() => {
+                                        logout()
+                                        setShowUserDropdown(false)
+                                    }}
+                                >
+                                    <span>🚪</span>
+                                    <span>Sign Out</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 ) : (
                     <>
-                        <button className="btn btn-login">Sign In</button>
-                        <button className="btn btn-register">Register</button>
+                        <button className="btn btn-login" onClick={() => openAuthModal('login')}>Sign In</button>
+                        <button className="btn btn-register" onClick={() => openAuthModal('register')}>Register</button>
                     </>
                 )}
                 <button

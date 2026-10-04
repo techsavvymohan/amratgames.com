@@ -38,3 +38,7 @@ Thumbs.db
 # Archives & Temporary
 *.zip
 *.tar.gz
+
+# Runtime database & local state
+backend/data/*.json
+!backend/data/.gitkeep

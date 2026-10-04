@@ -12,4 +12,9 @@ dist-ssr
 __unconfig*
 todos.json
 
+# Runtime database
+data/*.json
+!data/.gitkeep
+
 .vercel
+

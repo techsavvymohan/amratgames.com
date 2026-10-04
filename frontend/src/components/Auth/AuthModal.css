@@ -1,0 +1,502 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AmratGames — Universal Authentication Modal Styles
+   Royal Gold & Dark Luxury Theme
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.amrat-auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(10, 14, 23, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: authFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes authFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.amrat-auth-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    max-height: 92vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #151d2f 0%, #0d121f 100%);
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(245, 175, 25, 0.15);
+    padding: 24px;
+    color: #f8fafc;
+    animation: authSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes authSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Close button */
+.amrat-auth-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.amrat-auth-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+/* Header */
+.amrat-auth-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.amrat-auth-crown {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(212, 145, 16, 0.08));
+    border: 1px solid rgba(245, 175, 25, 0.5);
+    font-size: 26px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 20px rgba(245, 175, 25, 0.25);
+}
+
+.amrat-auth-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff3cc 0%, #f5af19 50%, #d49110 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.amrat-auth-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+/* Mode Tabs */
+.amrat-auth-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    background: rgba(10, 14, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.amrat-auth-tab-btn {
+    padding: 9px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.amrat-auth-tab-btn.active {
+    background: linear-gradient(135deg, #f5af19, #d49110);
+    color: #0b0f19;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(245, 175, 25, 0.3);
+}
+
+/* Bonus Badge */
+.amrat-bonus-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(90deg, rgba(245, 175, 25, 0.15), rgba(16, 185, 129, 0.1));
+    border: 1px dashed rgba(245, 175, 25, 0.5);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 0.78rem;
+    color: #fef08a;
+}
+
+.amrat-bonus-banner span.gift-icon {
+    font-size: 20px;
+}
+
+/* Form Styles */
+.amrat-auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.amrat-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.amrat-form-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.amrat-form-label small {
+    color: #64748b;
+    font-weight: normal;
+}
+
+.amrat-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.amrat-input-prefix {
+    position: absolute;
+    left: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fbbf24;
+    user-select: none;
+    pointer-events: none;
+}
+
+.amrat-input {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(10, 14, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.amrat-input:focus {
+    border-color: #f5af19;
+    box-shadow: 0 0 0 3px rgba(245, 175, 25, 0.2);
+    background: rgba(10, 14, 23, 0.9);
+}
+
+.amrat-input.has-prefix {
+    padding-left: 48px;
+}
+
+.amrat-input-toggle-pwd {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+}
+
+.amrat-input-toggle-pwd:hover {
+    color: #fff;
+}
+
+/* OTP Digits Input */
+.amrat-otp-box {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(10, 14, 23, 0.9);
+    border: 2px solid #f5af19;
+    border-radius: 10px;
+    color: #fbbf24;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 12px;
+    text-align: center;
+    outline: none;
+    box-shadow: 0 0 15px rgba(245, 175, 25, 0.2);
+}
+
+/* Buttons */
+.amrat-submit-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #f5af19 0%, #d49110 100%);
+    border: none;
+    border-radius: 10px;
+    color: #0d121f;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.35);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+}
+
+.amrat-submit-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffd700 0%, #f5af19 100%);
+    box-shadow: 0 6px 20px rgba(245, 175, 25, 0.5);
+    transform: translateY(-1px);
+}
+
+.amrat-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.amrat-secondary-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.amrat-secondary-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(245, 175, 25, 0.4);
+}
+
+.amrat-secondary-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Alert Boxes */
+.amrat-alert-error {
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.amrat-alert-info {
+    padding: 10px 14px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 8px;
+    color: #93c5fd;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.amrat-alert-success {
+    padding: 10px 14px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 8px;
+    color: #6ee7b7;
+    font-size: 0.82rem;
+}
+
+/* Demo QA Section */
+.amrat-demo-shortcuts {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.amrat-demo-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.amrat-demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.amrat-demo-btn {
+    padding: 8px 10px;
+    background: rgba(245, 175, 25, 0.08);
+    border: 1px solid rgba(245, 175, 25, 0.25);
+    border-radius: 8px;
+    color: #fbbf24;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.amrat-demo-btn:hover {
+    background: rgba(245, 175, 25, 0.18);
+    border-color: #fbbf24;
+    transform: translateY(-1px);
+}
+
+/* User Profile Header Trigger */
+.amrat-user-badge-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(245, 175, 25, 0.3);
+    border-radius: 20px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.amrat-user-badge-btn:hover {
+    background: rgba(245, 175, 25, 0.12);
+    border-color: #fbbf24;
+}
+
+.amrat-user-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5af19, #d49110);
+    color: #0b0f19;
+    font-weight: 900;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.amrat-user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 230px;
+    background: #111726;
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    text-align: left;
+    animation: authFadeIn 0.15s ease;
+}
+
+.amrat-user-dropdown-header {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.amrat-user-dropdown-name {
+    font-weight: 800;
+    color: #ffd700;
+    font-size: 0.9rem;
+}
+
+.amrat-user-dropdown-role {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+.amrat-user-dropdown-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.amrat-user-dropdown-action:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.amrat-user-dropdown-action.logout {
+    color: #f87171;
+    margin-top: 4px;
+}
+
+.amrat-user-dropdown-action.logout:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+@media (max-width: 480px) {
+    .amrat-auth-card {
+        padding: 20px 16px;
+        border-radius: 14px;
+    }
+    .amrat-auth-tabs {
+        font-size: 0.74rem;
+    }
+    .amrat-auth-tab-btn {
+        padding: 8px 4px;
+    }
+}

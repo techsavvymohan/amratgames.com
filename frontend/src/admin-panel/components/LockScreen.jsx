@@ -1,0 +1,105 @@
+import { Link } from 'react-router-dom'
+
+export default function LockScreen({
+    loginEmail,
+    setLoginEmail,
+    loginPassword,
+    setLoginPassword,
+    loginError,
+    onSubmit,
+    onQuickAdmin
+}) {
+    return (
+        <div className="admin-lock-screen">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <Link
+                    to="/"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: '#fbbf24',
+                        textDecoration: 'none',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: 'rgba(245, 175, 25, 0.1)'
+                    }}
+                >
+                    <span>←</span>
+                    <span>Exit to Casino</span>
+                </Link>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>AmratGames.com</span>
+            </div>
+
+            <div className="admin-lock-icon">👑</div>
+            <h2 style={{ margin: '0 0 6px', color: '#ffd700', fontSize: '1.4rem' }}>
+                Owner & Admin Login
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '22px', lineHeight: 1.4 }}>
+                Enter your registered Mobile Number or Email to open the Master Control Room.
+            </p>
+
+            {loginError && (
+                <div style={{
+                    padding: '10px 14px',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '8px',
+                    color: '#f87171',
+                    fontSize: '0.82rem',
+                    marginBottom: '16px',
+                    textAlign: 'left'
+                }}>
+                    ⚠️ {loginError}
+                </div>
+            )}
+
+            <form onSubmit={onSubmit} style={{ textAlign: 'left' }}>
+                <div className="form-group">
+                    <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Mobile Number, Email, or Username</span>
+                    </label>
+                    <input
+                        type="text"
+                        className="form-input"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        placeholder="e.g. 9876500001 or admin@amratgames.com"
+                        required
+                        autoFocus
+                    />
+                </div>
+                <div className="form-group">
+                    <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Password</span>
+                    </label>
+                    <input
+                        type="password"
+                        className="form-input"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        required
+                    />
+                </div>
+                <button type="submit" className="btn-airdrop-launch" style={{ marginTop: '10px', fontSize: '0.95rem' }}>
+                    🔐 Open Master Control Room
+                </button>
+            </form>
+
+            <div style={{ margin: '20px 0 10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
+                <div style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '8px' }}>
+                    QUICK DEMO ACCESS:
+                </div>
+                <button type="button" className="btn-quick-admin" onClick={onQuickAdmin}>
+                    ⚡ One-Click Master Login (Demo)
+                </button>
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '8px' }}>
+                    Demo Credentials: <strong>9876500001</strong> / <strong>AdminPassword123!</strong>
+                </div>
+            </div>
+        </div>
+    )
+}

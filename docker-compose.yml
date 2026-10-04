@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # ── 1. Backend Engine (Node.js API & WebSocket) ────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: amratgames_backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - JWT_SECRET=${JWT_SECRET:-amrat-games-super-secret-jwt-key-2025-crypto-inr}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@amratgames.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-AmratAdmin2025!}
+    volumes:
+      - ./data/backend:/app/data
+    networks:
+      - amrat_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── 2. Frontend & Reverse Proxy (Nginx + React 18) ────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: amratgames_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - amrat_network
+
+networks:
+  amrat_network:
+    driver: bridge

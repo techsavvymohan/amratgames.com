@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNavigation from './MobileNavigation'
+import AuthModal from './Auth/AuthModal'
 
 function Layout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -31,6 +32,7 @@ function Layout() {
                 onClose={closeMobileMenu}
                 returnFocusRef={mobileMenuButtonRef}
             />
+            <AuthModal />
         </div>
     )
 }

@@ -38,6 +38,18 @@ export const CURRENCIES = {
         maxBet: 10000,
         step: 10,
         paymentMethods: 'TRC20 · ERC20 · Polygon',
+    },
+    AMRAT: {
+        id: 'AMRAT',
+        symbol: '👑',
+        name: 'Amrat Royal Token ($AMRAT)',
+        flag: '👑',
+        initial: 500.00,
+        presets: [100, 250, 500, 1000, 2500],
+        minBet: 10,
+        maxBet: 50000,
+        step: 50,
+        paymentMethods: 'Royal Staking · Loyalty Airdrops · VIP Yield',
     }
 }
 

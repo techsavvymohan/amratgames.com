@@ -1,11 +1,18 @@
 {
   "name": "amratgames-workspace",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
+  "type": "module",
   "description": "AmratGames.com - Premier Provably Fair Crypto & INR Casino",
   "scripts": {
+    "start": "node backend/src/server.js",
+    "start:backend": "node backend/src/server.js",
     "dev": "pnpm --filter ./frontend dev",
+    "dev:backend": "pnpm --filter ./backend dev",
+    "dev:frontend": "pnpm --filter ./frontend dev",
     "build": "pnpm --filter ./frontend build",
-    "preview": "pnpm --filter ./frontend preview"
+    "build:frontend": "pnpm --filter ./frontend build",
+    "preview": "pnpm --filter ./frontend preview",
+    "setup:env": "node scripts/setup-env.js"
   }
 }

@@ -85,6 +85,18 @@ function Sidebar({ isOpen, toggleSidebar }) {
                         </NavLink>
                     ))}
                 </div>
+
+                <div className="nav-section" style={{ marginTop: '12px', borderTop: '1px solid rgba(245, 175, 25, 0.2)', paddingTop: '10px' }}>
+                    <h3 className="nav-title" style={{ color: '#f5af19' }}>Management</h3>
+                    <NavLink
+                        to="/admin"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={{ color: '#fbbf24', fontWeight: 600 }}
+                    >
+                        <span className="nav-icon" style={{ fontSize: '16px', lineHeight: 1 }}>👑</span>
+                        <span>Admin Panel</span>
+                    </NavLink>
+                </div>
             </nav>
         </aside>
     )

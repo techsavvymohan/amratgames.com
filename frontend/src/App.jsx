@@ -11,6 +11,7 @@ const loadMines = () => import('./pages/MinesPage')
 const loadLimbo = () => import('./pages/LimboPage')
 const loadDragonTiger = () => import('./pages/DragonTigerPage')
 const loadColorMatch = () => import('./pages/ColorMatchPage')
+const loadAdmin = () => import('./admin-panel')
 
 const CrashPage = lazy(loadCrash)
 const PlinkoPage = lazy(loadPlinko)
@@ -19,6 +20,7 @@ const MinesPage = lazy(loadMines)
 const LimboPage = lazy(loadLimbo)
 const DragonTigerPage = lazy(loadDragonTiger)
 const ColorMatchPage = lazy(loadColorMatch)
+const AdminPage = lazy(loadAdmin)
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -60,6 +62,7 @@ function App() {
                 }
             >
                 <Routes>
+                    {/* Casino Games & Player Portal (Wrapped in Casino Layout) */}
                     <Route path="/" element={<Layout />}>
                         <Route index element={<HomePage />} />
                         <Route path="crash" element={<CrashPage />} />
@@ -70,6 +73,9 @@ function App() {
                         <Route path="dragon-tiger" element={<DragonTigerPage />} />
                         <Route path="color-match" element={<ColorMatchPage />} />
                     </Route>
+
+                    {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
+                    <Route path="/admin" element={<AdminPage />} />
                 </Routes>
             </Suspense>
         </AntApp>
