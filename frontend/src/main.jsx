@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider, useThemeSettings } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { WalletProvider } from './context/WalletContext'
@@ -30,6 +29,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ThemeProvider>
             <ThemedApp />
         </ThemeProvider>
-        {import.meta.env.PROD && <Analytics />}
     </React.StrictMode>
 )

@@ -54,11 +54,11 @@ router.post('/bet', authenticate, (req, res) => {
 
         // Enforce game-specific max multiplier ceilings
         const GAME_MAX_MULTIPLIERS = {
-            'limbo': 1000.00,
-            'crash': 1000.00,
-            'plinko': 1000.00,
-            'dino': 1000.00,
-            'mines': 25.00,
+            'limbo': 5000.00,
+            'crash': 5000.00,
+            'plinko': 5000.00,
+            'dino': 5000.00,
+            'mines': 50000.00,
             'dragon-tiger': 9.00,
             'color-match': 9.00
         }

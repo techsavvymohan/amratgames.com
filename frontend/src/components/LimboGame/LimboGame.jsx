@@ -96,6 +96,36 @@ function LimboGame() {
         }
     }
 
+    // Synchronize activeBetRef with betAmount
+    useEffect(() => {
+        activeBetRef.current = betAmount
+    }, [betAmount])
+
+    // Quick bet modifier functions
+    const halveBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))
+    }
+
+    const doubleBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(prev => Math.min(balance || 100000, parseFloat((Number(prev || 1) * 2).toFixed(2))))
+    }
+
+    const minBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(10)
+    }
+
+    const maxBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(Math.max(10, Math.floor(balance || 100)))
+    }
+
     // Quick multiplier preset selection
     const applyTargetPreset = (preset) => {
         if (isRolling || isAutoRunning) return
@@ -265,23 +295,7 @@ function LimboGame() {
         setAutoBetsRemaining(0)
     }
 
-    // Quick bet modifiers
-    const halveBet = () => {
-        casinoAudio.playChip()
-        setBetAmount(prev => Math.max(1, Math.floor(prev / 2)))
-    }
-    const doubleBet = () => {
-        casinoAudio.playChip()
-        setBetAmount(prev => Math.min(balance, prev * 2))
-    }
-    const minBet = () => {
-        casinoAudio.playChip()
-        setBetAmount(10)
-    }
-    const maxBet = () => {
-        casinoAudio.playChip()
-        setBetAmount(Math.max(10, Math.floor(balance)))
-    }
+
 
     const potentialProfit = ((betAmount * (parseFloat(targetMultiplier) || 2)) - betAmount)
 

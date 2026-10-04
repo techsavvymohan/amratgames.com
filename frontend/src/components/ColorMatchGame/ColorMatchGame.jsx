@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Typography, Modal, Tabs, message } from 'antd'
+import { Button, InputNumber, Typography, Modal, Tabs, message } from 'antd'
 import {
     SafetyCertificateOutlined,
     ClockCircleOutlined,
@@ -554,6 +554,26 @@ function ColorMatchGame() {
                                         {val >= 1000 ? `${val / 1000}k` : val}
                                     </button>
                                 ))}
+                            </div>
+                            {/* Custom Chip Input */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <InputNumber
+                                        value={selectedChip}
+                                        onChange={(val) => setSelectedChip(Math.max(1, isNaN(Number(val)) ? 1 : Number(val)))}
+                                        min={1}
+                                        step={10}
+                                        style={{ width: '100%' }}
+                                        addonBefore={<span style={{ fontWeight: 700, color: '#fbbf24' }}>{currencySymbol}</span>}
+                                        placeholder="Custom Amount"
+                                    />
+                                </div>
+                                <Button.Group>
+                                    <Button onClick={() => setSelectedChip(prev => Math.max(1, Math.floor(prev / 2)))}>½</Button>
+                                    <Button onClick={() => setSelectedChip(prev => prev * 2)}>2×</Button>
+                                    <Button onClick={() => setSelectedChip(10)}>Min</Button>
+                                    <Button onClick={() => setSelectedChip(Math.max(10, Math.floor(balance || 100)))}>Max</Button>
+                                </Button.Group>
                             </div>
                         </div>
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Input, Typography, Modal, Statistic, Row, Col } from 'antd'
+import { Button, Input, InputNumber, Typography, Modal, Statistic, Row, Col } from 'antd'
 import {
     SafetyCertificateOutlined,
     ReloadOutlined,
@@ -324,6 +324,27 @@ function DragonTigerGame() {
                                     <span>{val >= 1000 ? `${val / 1000}k` : val}</span>
                                 </button>
                             ))}
+                        </div>
+                        {/* Custom Bet Amount Input */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+                            <div style={{ flex: 1 }}>
+                                <InputNumber
+                                    value={selectedChip}
+                                    onChange={(val) => setSelectedChip(Math.max(1, isNaN(Number(val)) ? 1 : Number(val)))}
+                                    min={1}
+                                    step={10}
+                                    disabled={isDealing}
+                                    style={{ width: '100%' }}
+                                    addonBefore={<span style={{ fontWeight: 700, color: '#fbbf24' }}>{currencySymbol}</span>}
+                                    placeholder="Custom Bet Amount"
+                                />
+                            </div>
+                            <Button.Group>
+                                <Button onClick={() => setSelectedChip(prev => Math.max(1, Math.floor(prev / 2)))} disabled={isDealing}>½</Button>
+                                <Button onClick={() => setSelectedChip(prev => prev * 2)} disabled={isDealing}>2×</Button>
+                                <Button onClick={() => setSelectedChip(10)} disabled={isDealing}>Min</Button>
+                                <Button onClick={() => setSelectedChip(Math.max(10, Math.floor(balance || 100)))} disabled={isDealing}>Max</Button>
+                            </Button.Group>
                         </div>
                     </div>
 

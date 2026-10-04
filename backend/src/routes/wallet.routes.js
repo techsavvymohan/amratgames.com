@@ -24,7 +24,7 @@ router.get('/balance', requireAuth, (req, res) => {
 // POST /api/wallet/deposit
 router.post('/deposit', requireAuth, (req, res) => {
     try {
-        const { currency = 'INR', amount, paymentMethod = 'UPI' } = req.body
+        const { currency = 'INR', amount, paymentMethod = 'UPI', utrNumber = '' } = req.body
         const parsedAmount = parseFloat(amount)
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -34,12 +34,22 @@ router.post('/deposit', requireAuth, (req, res) => {
         const user = db.findUserById(req.user.id)
         if (!user) return res.status(404).json({ success: false, error: 'User not found' })
 
+        const depositNote = utrNumber 
+            ? `Deposit via ${paymentMethod} (UTR: ${utrNumber})`
+            : `Deposit via ${paymentMethod}`
+
         const result = db.updateUserBalance(
             req.user.id,
             currency,
             parsedAmount,
-            `Deposit via ${paymentMethod}`
+            depositNote
         )
+
+        // Attach UTR to transaction record if provided
+        if (utrNumber && result?.transaction) {
+            result.transaction.utrNumber = utrNumber
+            db.persist()
+        }
 
         // Accumulate user's total deposits
         const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + parsedAmount).toFixed(2))
@@ -61,7 +71,7 @@ router.post('/deposit', requireAuth, (req, res) => {
 // POST /api/wallet/withdraw
 router.post('/withdraw', requireAuth, (req, res) => {
     try {
-        const { currency = 'INR', amount, payoutDestination } = req.body
+        const { currency = 'INR', amount, payoutDestination, payoutMethod = 'UPI', bankDetails = null } = req.body
         const parsedAmount = parseFloat(amount)
 
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -93,12 +103,23 @@ router.post('/withdraw', requireAuth, (req, res) => {
             })
         }
 
+        const destNote = payoutMethod === 'BANK' && bankDetails
+            ? `Bank A/C: ${bankDetails.accountNumber || ''} (${bankDetails.ifsc || ''})`
+            : (payoutDestination || 'Registered UPI')
+
         const result = db.updateUserBalance(
             req.user.id,
             currency,
             -parsedAmount,
-            `Withdrawal to ${payoutDestination || 'Registered UPI / Bank'}`
+            `Withdrawal to ${destNote}`
         )
+
+        if (result?.transaction) {
+            result.transaction.payoutMethod = payoutMethod
+            result.transaction.payoutDestination = payoutDestination
+            if (bankDetails) result.transaction.bankDetails = bankDetails
+            db.persist()
+        }
 
         res.json({
             success: true,

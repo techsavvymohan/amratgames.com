@@ -4,6 +4,7 @@ import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNavigation from './MobileNavigation'
 import AuthModal from './Auth/AuthModal'
+import WalletModal from './Wallet/WalletModal'
 
 function Layout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -33,6 +34,7 @@ function Layout() {
                 returnFocusRef={mobileMenuButtonRef}
             />
             <AuthModal />
+            <WalletModal />
         </div>
     )
 }

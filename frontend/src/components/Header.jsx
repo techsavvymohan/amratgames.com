@@ -37,19 +37,12 @@ export const CurrencyIcon = ({ symbol = '₹', size = 20, fontSize = 12, currenc
 
 function Header({ menuOpen, menuButtonRef, onMenuClick }) {
     const location = useLocation()
-    const { balance, currency, currencySymbol, currencyConfig, setCurrency, deposit, withdraw, totalDeposited, canWithdraw, transactions, toasts } = useWallet()
+    const { balance, currency, currencySymbol, currencyConfig, setCurrency, deposit, withdraw, totalDeposited, canWithdraw, transactions, toasts, openWalletModal } = useWallet()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
     const { user, logout, openAuthModal } = useAuth()
-    const [showWalletDropdown, setShowWalletDropdown] = useState(false)
     const [showUserDropdown, setShowUserDropdown] = useState(false)
-    const [walletTab, setWalletTab] = useState('deposit') // 'deposit' | 'withdraw'
-    const [depositAmount, setDepositAmount] = useState('')
-    const [withdrawAmount, setWithdrawAmount] = useState('')
-    const [payoutDestination, setPayoutDestination] = useState('')
-    const [withdrawSubmitting, setWithdrawSubmitting] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchOpen, setSearchOpen] = useState(false)
-    const dropdownRef = useRef(null)
     const userDropdownRef = useRef(null)
     const searchRef = useRef(null)
 
@@ -63,9 +56,6 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
     // Close dropdowns when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-                setShowWalletDropdown(false)
-            }
             if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
                 setShowUserDropdown(false)
             }
@@ -76,30 +66,6 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-
-    const handleDeposit = () => {
-        const amt = parseFloat(depositAmount)
-        if (!isNaN(amt) && amt > 0) {
-            deposit(amt)
-            setDepositAmount('')
-        }
-    }
-
-    const handleWithdraw = async (e) => {
-        e?.preventDefault()
-        const amt = parseFloat(withdrawAmount)
-        if (isNaN(amt) || amt <= 0) return
-        try {
-            setWithdrawSubmitting(true)
-            await withdraw(amt, payoutDestination)
-            setWithdrawAmount('')
-            setPayoutDestination('')
-        } catch {
-            // Toast notification triggered in WalletContext
-        } finally {
-            setWithdrawSubmitting(false)
-        }
-    }
 
     const formattedBalance = balance.toLocaleString('en-IN', {
         minimumFractionDigits: 2,
@@ -131,316 +97,43 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                         type="button"
                         className="mobile-wallet-balance"
                         aria-label={`Open wallet, balance ${currencySymbol}${formattedBalance}`}
-                        aria-expanded={showWalletDropdown}
-                        onClick={() => setShowWalletDropdown(!showWalletDropdown)}
+                        onClick={() => openWalletModal('deposit')}
                     >
                         <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
                         <span>{formattedBalance}</span>
                     </button>
                     {isGamePage && (
                         <>
-                            <div className="wallet-balance-display">
+                            <div
+                                className="wallet-balance-display"
+                                onClick={() => openWalletModal('deposit')}
+                                style={{ cursor: 'pointer' }}
+                                title="Click to Open Wallet / Cashier"
+                            >
                                 <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
                                 <span className="wallet-balance-amount">{formattedBalance}</span>
                                 <button
                                     className="wallet-dropdown-toggle"
-                                    onClick={() => setShowWalletDropdown(!showWalletDropdown)}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        openWalletModal('deposit')
+                                    }}
+                                    title="Open Cashier"
                                 >
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                                         <path d="M7 10l5 5 5-5z" />
                                     </svg>
                                 </button>
                             </div>
-                            <button className="wallet-btn" onClick={() => setShowWalletDropdown(!showWalletDropdown)}>
+                            <button
+                                className="wallet-btn"
+                                onClick={() => openWalletModal('deposit')}
+                            >
                                 Wallet
                             </button>
                         </>
                     )}
-
-                    {/* Wallet Dropdown */}
-                    {showWalletDropdown && (
-                        <div className="wallet-dropdown" ref={dropdownRef}>
-                            <div className="wallet-dropdown-header">
-                                <div>
-                                    <h4 style={{ margin: 0 }}>Wallet ({currency})</h4>
-                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>UPI · NetBanking · Crypto</span>
-                                </div>
-                                <button className="wallet-close-btn" onClick={() => setShowWalletDropdown(false)}>
-                                    ✕
-                                </button>
-                            </div>
-
-                            <div className="wallet-balance-section">
-                                <div className="wallet-balance-label">Active Balance</div>
-                                <div className="wallet-balance-big">
-                                    <CurrencyIcon symbol={currencySymbol} currency={currency} size={28} fontSize={16} />
-                                    {formattedBalance}
-                                </div>
-                            </div>
-
-                            {/* Currency Selection inside Wallet */}
-                            <div style={{
-                                padding: '0 16px 12px',
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                                gap: '6px'
-                            }}>
-                                {Object.values(CURRENCIES).map((curr) => (
-                                    <button
-                                        key={curr.id}
-                                        type="button"
-                                        onClick={() => setCurrency(curr.id)}
-                                        style={{
-                                            padding: '6px 4px',
-                                            borderRadius: '6px',
-                                            border: currency === curr.id ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                            background: currency === curr.id ? 'rgba(245, 175, 25, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                                            color: currency === curr.id ? 'var(--primary)' : 'var(--text-secondary)',
-                                            fontWeight: 700,
-                                            fontSize: '11px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '3px',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden'
-                                        }}
-                                    >
-                                        <span>{curr.flag}</span>
-                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{curr.id}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Wallet Action Tabs: Deposit vs Withdraw */}
-                            <div style={{
-                                display: 'flex',
-                                gap: '6px',
-                                background: 'rgba(0,0,0,0.3)',
-                                padding: '4px',
-                                borderRadius: '8px',
-                                margin: '8px 0 12px'
-                            }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setWalletTab('deposit')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '7px 0',
-                                        fontSize: '0.82rem',
-                                        fontWeight: 600,
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        background: walletTab === 'deposit' ? '#10b981' : 'transparent',
-                                        color: walletTab === 'deposit' ? '#000' : '#94a3b8',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    💰 Deposit
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setWalletTab('withdraw')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '7px 0',
-                                        fontSize: '0.82rem',
-                                        fontWeight: 600,
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        background: walletTab === 'withdraw' ? '#f59e0b' : 'transparent',
-                                        color: walletTab === 'withdraw' ? '#000' : '#94a3b8',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    🏧 Withdraw
-                                </button>
-                            </div>
-
-                            {/* DEPOSIT VIEW */}
-                            {walletTab === 'deposit' && (
-                                <div className="wallet-actions">
-                                    <div className="wallet-deposit-row">
-                                        <input
-                                            type="number"
-                                            value={depositAmount}
-                                            onChange={(e) => setDepositAmount(e.target.value)}
-                                            placeholder="Amount"
-                                            className="wallet-deposit-input"
-                                            min="1"
-                                            step="1"
-                                        />
-                                        <button className="wallet-deposit-btn" onClick={handleDeposit}>
-                                            Add Funds
-                                        </button>
-                                    </div>
-                                    <div className="wallet-quick-amounts">
-                                        {currencyConfig.presets.map(amt => (
-                                            <button key={amt} className="wallet-quick-btn" onClick={() => deposit(amt)}>
-                                                +{currencySymbol}{amt.toLocaleString('en-IN')}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px', textAlign: 'center' }}>
-                                        Instant UPI · NetBanking · IMPS with 0% Fee
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* WITHDRAW VIEW */}
-                            {walletTab === 'withdraw' && (
-                                <div className="wallet-actions" style={{ textAlign: 'left' }}>
-                                    {!canWithdraw ? (
-                                        <div style={{
-                                            background: 'rgba(239, 68, 68, 0.12)',
-                                            border: '1px solid rgba(239, 68, 68, 0.35)',
-                                            borderRadius: '8px',
-                                            padding: '10px 12px',
-                                            marginBottom: '8px'
-                                        }}>
-                                            <div style={{ color: '#f87171', fontWeight: 600, fontSize: '0.82rem', marginBottom: '4px' }}>
-                                                🔒 Minimum ₹300 Deposit Required
-                                            </div>
-                                            <div style={{ color: '#cbd5e1', fontSize: '0.75rem', lineHeight: 1.4 }}>
-                                                To withdraw your winnings, you must make a minimum deposit of <strong>₹300</strong> to verify your payout account.
-                                            </div>
-                                            <div style={{
-                                                margin: '8px 0 4px',
-                                                background: 'rgba(0,0,0,0.4)',
-                                                borderRadius: '6px',
-                                                height: '6px',
-                                                overflow: 'hidden'
-                                            }}>
-                                                <div style={{
-                                                    height: '100%',
-                                                    width: `${Math.min(100, ((totalDeposited || 0) / 300) * 100)}%`,
-                                                    background: '#10b981'
-                                                }} />
-                                            </div>
-                                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: '10px' }}>
-                                                Deposited so far: <strong>₹{totalDeposited || 0}</strong> / ₹300
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setWalletTab('deposit')
-                                                    setDepositAmount(String(Math.max(300, 300 - (totalDeposited || 0))))
-                                                }}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '8px',
-                                                    borderRadius: '6px',
-                                                    border: 'none',
-                                                    background: '#10b981',
-                                                    color: '#000',
-                                                    fontWeight: 600,
-                                                    fontSize: '0.8rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                Deposit ₹{Math.max(300, 300 - (totalDeposited || 0))} Now
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <form onSubmit={handleWithdraw}>
-                                            <div style={{
-                                                background: 'rgba(16, 185, 129, 0.12)',
-                                                border: '1px solid rgba(16, 185, 129, 0.35)',
-                                                borderRadius: '8px',
-                                                padding: '6px 10px',
-                                                marginBottom: '8px',
-                                                fontSize: '0.75rem',
-                                                color: '#34d399'
-                                            }}>
-                                                ✓ Payouts Unlocked (Deposited: ₹{totalDeposited})
-                                            </div>
-                                            <div style={{ marginBottom: '8px' }}>
-                                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
-                                                    Withdraw Amount ({currencySymbol})
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={withdrawAmount}
-                                                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                                                    placeholder={`Max: ${currencySymbol}${balance.toFixed(2)}`}
-                                                    className="wallet-deposit-input"
-                                                    style={{ width: '100%' }}
-                                                    min="1"
-                                                    max={balance}
-                                                    step="1"
-                                                    required
-                                                />
-                                            </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
-                                                    UPI ID or Bank Details
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={payoutDestination}
-                                                    onChange={(e) => setPayoutDestination(e.target.value)}
-                                                    placeholder="e.g. mobile@upi or A/C + IFSC"
-                                                    className="wallet-deposit-input"
-                                                    style={{ width: '100%' }}
-                                                    required
-                                                />
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                disabled={withdrawSubmitting || balance <= 0}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '9px',
-                                                    borderRadius: '6px',
-                                                    border: 'none',
-                                                    background: '#f59e0b',
-                                                    color: '#000',
-                                                    fontWeight: 700,
-                                                    fontSize: '0.85rem',
-                                                    cursor: balance > 0 ? 'pointer' : 'not-allowed',
-                                                    opacity: balance > 0 ? 1 : 0.6
-                                                }}
-                                            >
-                                                {withdrawSubmitting ? 'Submitting...' : 'Request Payout'}
-                                            </button>
-                                        </form>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Recent Transactions */}
-                            <div className="wallet-transactions">
-                                <h5>Recent Activity</h5>
-                                {transactions.length === 0 ? (
-                                    <div className="wallet-no-tx">No transactions yet</div>
-                                ) : (
-                                    <div className="wallet-tx-list">
-                                        {transactions.slice(0, 8).map(tx => (
-                                            <div key={tx.id} className={`wallet-tx-item ${tx.type}`}>
-                                                <div className="wallet-tx-info">
-                                                    <span className="wallet-tx-type">
-                                                        {tx.type === 'bet' && '🎲 Bet'}
-                                                        {tx.type === 'win' && '🏆 Win'}
-                                                        {tx.type === 'deposit' && '💰 Deposit'}
-                                                        {tx.type === 'reset' && '🔄 Reset'}
-                                                    </span>
-                                                    <span className="wallet-tx-time">
-                                                        {(tx.timestamp instanceof Date ? tx.timestamp : new Date(tx.timestamp)).toLocaleTimeString()}
-                                                    </span>
-                                                </div>
-                                                <span className={`wallet-tx-amount ${tx.amount >= 0 ? 'positive' : 'negative'}`}>
-                                                    {tx.amount >= 0 ? '+' : ''}{tx.symbol || currencySymbol}{Math.abs(tx.amount).toFixed(2)}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                </div>
 
                     {/* Game Toasts */}
                     {isGamePage && toasts.length > 0 && (
@@ -478,7 +171,6 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                             ))}
                         </div>
                     )}
-                </div>
                 {!isGamePage && (
                     <div className="search-input-wrapper" ref={searchRef} style={{ position: 'relative' }}>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text-secondary)" className="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>

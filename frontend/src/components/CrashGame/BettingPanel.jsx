@@ -120,12 +120,12 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                             />
                             <Button.Group>
                                 <Button onClick={() => {
-                                    casinoAudio.playChip()
-                                    setBetAmount(prev => Math.max(0, prev / 2))
+                                    casinoAudio.playChip?.()
+                                    setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))
                                 }}>½</Button>
                                 <Button onClick={() => {
-                                    casinoAudio.playChip()
-                                    setBetAmount(prev => prev * 2)
+                                    casinoAudio.playChip?.()
+                                    setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)))
                                 }}>2×</Button>
                             </Button.Group>
                         </div>

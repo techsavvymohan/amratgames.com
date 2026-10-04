@@ -228,21 +228,27 @@ export function WalletProvider({ children }) {
         }
     }, [token, setStoredBalance])
 
-    // Deposit funds
-    const deposit = useCallback(async (amount, method = 'UPI') => {
+    const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
+    const [walletModalTab, setWalletModalTab] = useState('deposit')
+
+    const openWalletModal = useCallback((tab = 'deposit') => {
+        setWalletModalTab(tab)
+        setIsWalletModalOpen(true)
+    }, [])
+
+    const closeWalletModal = useCallback(() => {
+        setIsWalletModalOpen(false)
+    }, [])
+
+    // Deposit funds (Supports custom INR amount, UPI, and 12-digit UTR)
+    const deposit = useCallback(async (amount, options = {}) => {
         const amt = parseFloat(amount)
         if (isNaN(amt) || amt <= 0) return
 
-        const newBal = setStoredBalance(balanceRef.current + amt)
-        setTransactions(txs => [{
-            id: Date.now(),
-            type: 'deposit',
-            currency: currencyRef.current,
-            symbol: CURRENCIES[currencyRef.current].symbol,
-            amount: amt,
-            balance: newBal,
-            timestamp: new Date(),
-        }, ...txs].slice(0, 100))
+        const method = typeof options === 'string' ? options : (options.method || 'UPI')
+        const utrNumber = typeof options === 'object' && options.utrNumber ? options.utrNumber : ''
+
+        let newBal = balanceRef.current + amt
 
         if (token) {
             try {
@@ -255,24 +261,47 @@ export function WalletProvider({ children }) {
                     body: JSON.stringify({
                         currency: currencyRef.current,
                         amount: amt,
-                        paymentMethod: method
+                        paymentMethod: method,
+                        utrNumber
                     })
                 })
                 const data = await res.json()
-                if (data.success && typeof data.totalDeposited === 'number') {
-                    setTotalDeposited(data.totalDeposited)
+                if (data.success) {
+                    if (data.balances?.[currencyRef.current] !== undefined) {
+                        newBal = setStoredBalance(data.balances[currencyRef.current])
+                    } else {
+                        newBal = setStoredBalance(balanceRef.current + amt)
+                    }
+                    if (typeof data.totalDeposited === 'number') {
+                        setTotalDeposited(data.totalDeposited)
+                    }
                 }
             } catch {
-                // local fallback maintained
+                newBal = setStoredBalance(balanceRef.current + amt)
+                setTotalDeposited(prev => prev + amt)
             }
         } else {
+            newBal = setStoredBalance(balanceRef.current + amt)
             setTotalDeposited(prev => prev + amt)
         }
-        showToast('success', 'Deposit Successful', `+${currencySymbol}${amt.toLocaleString('en-IN')} added to wallet`)
+
+        setTransactions(txs => [{
+            id: Date.now(),
+            type: 'deposit',
+            currency: currencyRef.current,
+            symbol: CURRENCIES[currencyRef.current].symbol,
+            amount: amt,
+            balance: newBal,
+            utrNumber,
+            timestamp: new Date(),
+        }, ...txs].slice(0, 100))
+
+        showToast('success', 'Deposit Submitted', `+${currencySymbol}${amt.toLocaleString('en-IN')} added to wallet`)
+        return { success: true, balance: newBal }
     }, [setStoredBalance, token, currencySymbol, showToast])
 
     // Withdraw funds (Enforces ₹300 minimum deposit condition)
-    const withdraw = useCallback(async (amount, payoutDestination) => {
+    const withdraw = useCallback(async (amount, payoutDestination, options = {}) => {
         const amt = parseFloat(amount)
         if (isNaN(amt) || amt <= 0) {
             showToast('error', 'Invalid Amount', 'Please enter a valid amount to withdraw')
@@ -291,6 +320,8 @@ export function WalletProvider({ children }) {
             throw new Error('Insufficient wallet balance')
         }
 
+        let newBal = balanceRef.current - amt
+
         if (token) {
             const res = await fetch('/api/wallet/withdraw', {
                 method: 'POST',
@@ -301,7 +332,9 @@ export function WalletProvider({ children }) {
                 body: JSON.stringify({
                     currency: currencyRef.current,
                     amount: amt,
-                    payoutDestination: payoutDestination || 'Registered UPI / Bank'
+                    payoutDestination: payoutDestination || 'Registered UPI / Bank',
+                    payoutMethod: options.payoutMethod || 'UPI',
+                    bankDetails: options.bankDetails || null
                 })
             })
             const data = await res.json()
@@ -310,9 +343,15 @@ export function WalletProvider({ children }) {
                 showToast('error', 'Withdrawal Rejected', err)
                 throw new Error(err)
             }
+            if (data.balances?.[currencyRef.current] !== undefined) {
+                newBal = setStoredBalance(data.balances[currencyRef.current])
+            } else {
+                newBal = setStoredBalance(balanceRef.current - amt)
+            }
+        } else {
+            newBal = setStoredBalance(balanceRef.current - amt)
         }
 
-        const newBal = setStoredBalance(balanceRef.current - amt)
         setTransactions(txs => [{
             id: Date.now(),
             type: 'withdrawal',
@@ -320,6 +359,7 @@ export function WalletProvider({ children }) {
             symbol: CURRENCIES[currencyRef.current].symbol,
             amount: -amt,
             balance: newBal,
+            payoutDestination,
             timestamp: new Date(),
         }, ...txs].slice(0, 100))
 
@@ -357,6 +397,10 @@ export function WalletProvider({ children }) {
         notifyLoss,
         toasts,
         showToast,
+        isWalletModalOpen,
+        walletModalTab,
+        openWalletModal,
+        closeWalletModal,
     }
 
     return (

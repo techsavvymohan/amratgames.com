@@ -378,11 +378,11 @@ function MinesGame() {
 
     const handleBetAmountHalf = () => {
         playSound('chip');
-        setBetAmount(prev => Math.max(0, prev / 2));
+        setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))));
     };
     const handleBetAmountDouble = () => {
         playSound('chip');
-        setBetAmount(prev => prev * 2);
+        setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)));
     };
 
     const handleMinesChange = (e) => {

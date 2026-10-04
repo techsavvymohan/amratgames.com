@@ -1,0 +1,650 @@
+/* ==========================================================================
+   AmratGames — Luxury High-Performance Wallet & Cashier Modal Styles
+   ========================================================================== */
+
+.amrat-wallet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(4, 8, 16, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: amratWalletFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+@keyframes amratWalletFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.amrat-wallet-modal {
+    background: linear-gradient(180deg, #131a26 0%, #0c111a 100%);
+    border: 1px solid rgba(245, 175, 25, 0.22);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 32px rgba(245, 175, 25, 0.12);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    color: #f1f5f9;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: amratWalletPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes amratWalletPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Header */
+.amrat-wallet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: rgba(18, 26, 38, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.amrat-wallet-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+.amrat-wallet-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.amrat-wallet-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+/* Active Balance Banner */
+.amrat-wallet-balance-card {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.12) 0%, rgba(212, 145, 16, 0.04) 100%);
+    border-bottom: 1px solid rgba(245, 175, 25, 0.15);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.amrat-wallet-balance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.amrat-wallet-balance-lbl {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fbbf24;
+    font-weight: 700;
+}
+
+.amrat-wallet-balance-val {
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.amrat-wallet-balance-val span {
+    color: #fbbf24;
+    font-size: 1.25rem;
+}
+
+.amrat-wallet-badge {
+    background: rgba(245, 175, 25, 0.18);
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    color: #fbbf24;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+}
+
+/* Navigation Tabs */
+.amrat-wallet-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px 14px;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.amrat-wallet-tab-btn {
+    flex: 1;
+    padding: 9px 8px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+}
+
+.amrat-wallet-tab-btn.active.tab-deposit {
+    background: #10b981;
+    color: #042f2e;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.amrat-wallet-tab-btn.active.tab-withdraw {
+    background: #f59e0b;
+    color: #451a03;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.amrat-wallet-tab-btn.active.tab-history {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* Modal Body (Scrollable) */
+.amrat-wallet-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    max-height: calc(92vh - 170px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Custom Scrollbar */
+.amrat-wallet-body::-webkit-scrollbar {
+    width: 6px;
+}
+.amrat-wallet-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+/* UPI ID Box */
+.amrat-upi-box {
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.amrat-upi-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.amrat-upi-lbl {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #34d399;
+    font-weight: 700;
+}
+
+.amrat-upi-val {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: all;
+}
+
+.amrat-copy-btn {
+    background: #10b981;
+    color: #042f2e;
+    border: none;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.amrat-copy-btn:hover {
+    background: #34d399;
+    transform: translateY(-1px);
+}
+
+.amrat-copy-btn.copied {
+    background: #059669;
+    color: #fff;
+}
+
+/* QR Code Display Container */
+.amrat-qr-container {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border: 3px solid rgba(245, 175, 25, 0.4);
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.amrat-qr-img {
+    width: 180px;
+    height: 180px;
+    max-width: 60vw;
+    max-height: 60vw;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+}
+
+.amrat-qr-caption {
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Amount Selector Grid */
+.amrat-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.amrat-preset-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 8px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.amrat-preset-btn:hover {
+    background: rgba(245, 175, 25, 0.12);
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+.amrat-preset-btn.active {
+    background: rgba(245, 175, 25, 0.22);
+    border-color: #fbbf24;
+    color: #fbbf24;
+    box-shadow: 0 0 10px rgba(245, 175, 25, 0.3);
+}
+
+/* Inputs and Forms */
+.amrat-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.amrat-field-lbl {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.amrat-field-lbl span.accent {
+    color: #fbbf24;
+}
+
+.amrat-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.amrat-input-prefix {
+    position: absolute;
+    left: 14px;
+    color: #fbbf24;
+    font-weight: 800;
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.amrat-field-input {
+    width: 100%;
+    background: rgba(7, 11, 18, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 9px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    box-sizing: border-box;
+    transition: all 0.18s ease;
+}
+
+.amrat-field-input.has-prefix {
+    padding-left: 32px;
+}
+
+.amrat-field-input:focus {
+    outline: none;
+    border-color: #fbbf24;
+    box-shadow: 0 0 0 2px rgba(245, 175, 25, 0.2);
+    background: rgba(11, 17, 28, 0.95);
+}
+
+.amrat-field-input::placeholder {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.amrat-field-hint {
+    font-size: 0.7rem;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+/* Action Buttons */
+.amrat-submit-deposit-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #022c22;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.amrat-submit-deposit-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+
+.amrat-submit-deposit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Withdrawal Specific Cards */
+.amrat-lock-card {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.amrat-lock-title {
+    color: #f87171;
+    font-size: 0.88rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.amrat-lock-desc {
+    color: #cbd5e1;
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+.amrat-progress-track {
+    background: rgba(0, 0, 0, 0.4);
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.amrat-progress-fill {
+    background: linear-gradient(90deg, #10b981, #34d399);
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.amrat-unlocked-card {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: #34d399;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.amrat-payout-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+}
+
+.amrat-payout-toggle-btn {
+    flex: 1;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.amrat-payout-toggle-btn.active {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.amrat-submit-withdraw-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #451a03;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.amrat-submit-withdraw-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    transform: translateY(-1px);
+}
+
+.amrat-submit-withdraw-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Success Card */
+.amrat-success-card {
+    text-align: center;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.amrat-success-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.2);
+    border: 2px solid #10b981;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+/* Transactions History List */
+.amrat-tx-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.amrat-tx-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.amrat-tx-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.amrat-tx-type {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.amrat-tx-time {
+    font-size: 0.68rem;
+    color: #64748b;
+}
+
+.amrat-tx-amount {
+    font-size: 0.92rem;
+    font-weight: 800;
+}
+
+.amrat-tx-amount.positive {
+    color: #34d399;
+}
+
+.amrat-tx-amount.negative {
+    color: #f87171;
+}
+
+/* Mobile specific styling */
+@media (max-width: 480px) {
+    .amrat-wallet-modal {
+        max-width: 100%;
+        max-height: 96vh;
+        border-radius: 14px;
+    }
+    .amrat-wallet-header {
+        padding: 12px 14px;
+    }
+    .amrat-wallet-body {
+        padding: 14px;
+        gap: 12px;
+    }
+    .amrat-qr-img {
+        width: 160px;
+        height: 160px;
+    }
+    .amrat-presets-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+    }
+    .amrat-preset-btn {
+        padding: 6px 2px;
+        font-size: 0.72rem;
+    }
+}

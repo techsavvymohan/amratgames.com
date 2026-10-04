@@ -149,13 +149,13 @@ function Sidebar({
                     />
                     <Button.Group>
                         <Button
-                            onClick={() => setBetAmount(prev => parseFloat((Number(prev || 0) / 2).toFixed(2)))}
+                            onClick={() => setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))}
                             disabled={isAutoBetting}
                         >
                             ½
                         </Button>
                         <Button
-                            onClick={() => setBetAmount(prev => parseFloat((Number(prev || 0) * 2).toFixed(2)))}
+                            onClick={() => setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)))}
                             disabled={isAutoBetting}
                         >
                             2×
