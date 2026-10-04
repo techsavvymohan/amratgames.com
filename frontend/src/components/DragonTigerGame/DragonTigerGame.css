@@ -715,11 +715,12 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .dt-page,
     .dragon-tiger-page {
         height: 100% !important;
         max-height: 100% !important;
         overflow: hidden !important;
-        padding: 4px 6px !important;
+        padding: 2px 4px !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;

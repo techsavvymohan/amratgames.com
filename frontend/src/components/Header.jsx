@@ -428,7 +428,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                                         {tx.type === 'reset' && '🔄 Reset'}
                                                     </span>
                                                     <span className="wallet-tx-time">
-                                                        {tx.timestamp.toLocaleTimeString()}
+                                                        {(tx.timestamp instanceof Date ? tx.timestamp : new Date(tx.timestamp)).toLocaleTimeString()}
                                                     </span>
                                                 </div>
                                                 <span className={`wallet-tx-amount ${tx.amount >= 0 ? 'positive' : 'negative'}`}>

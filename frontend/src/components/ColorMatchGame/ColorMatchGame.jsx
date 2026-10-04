@@ -56,26 +56,10 @@ function ColorMatchGame() {
 
     // Current draw display
     const [displayNum, setDisplayNum] = useState(null)
-    const [lastDraw, setLastDraw] = useState({
-        period: 202609220057,
-        num: 7,
-        colors: ['green'],
-        bigSmall: 'big'
-    })
+    const [lastDraw, setLastDraw] = useState(null)
 
-    // History roadmap
-    const [history, setHistory] = useState([
-        { period: 202609220057, num: 7, colors: ['green'], bigSmall: 'big' },
-        { period: 202609220056, num: 2, colors: ['red'], bigSmall: 'small' },
-        { period: 202609220055, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
-        { period: 202609220054, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
-        { period: 202609220053, num: 9, colors: ['green'], bigSmall: 'big' },
-        { period: 202609220052, num: 4, colors: ['red'], bigSmall: 'small' },
-        { period: 202609220051, num: 8, colors: ['red'], bigSmall: 'big' },
-        { period: 202609220050, num: 3, colors: ['green'], bigSmall: 'small' },
-        { period: 202609220049, num: 1, colors: ['green'], bigSmall: 'small' },
-        { period: 202609220048, num: 6, colors: ['red'], bigSmall: 'big' },
-    ])
+    // Real-time dynamic history roadmap (No demo data)
+    const [history, setHistory] = useState([])
 
     // Player personal bets record
     const [myBets, setMyBets] = useState([])

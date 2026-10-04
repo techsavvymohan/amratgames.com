@@ -80,52 +80,7 @@ app.use((err, req, res, next) => {
     })
 })
 
-// Background Live Community Activity Simulator (Realistic real-time casino feel)
-const SIMULATED_PLAYERS = ['rohit_777', 'priya_crypto', 'vikram_dice', 'neha_lucky', 'kabir_whale']
-const GAMES = [
-    { game: 'crash', gameName: 'Crash 1000x', minMult: 1.1, maxMult: 15.0 },
-    { game: 'plinko', gameName: 'Plinko 16-Pin', minMult: 0.2, maxMult: 29.0 },
-    { game: 'mines', gameName: 'Mines 5x5', minMult: 1.2, maxMult: 8.5 },
-    { game: 'limbo', gameName: 'Limbo Turbo', minMult: 1.05, maxMult: 50.0 },
-    { game: 'dragon-tiger', gameName: 'Dragon Tiger Live', minMult: 1.95, maxMult: 11.0 }
-]
 
-setInterval(() => {
-    try {
-        const randomPlayer = SIMULATED_PLAYERS[Math.floor(Math.random() * SIMULATED_PLAYERS.length)]
-        const randomGame = GAMES[Math.floor(Math.random() * GAMES.length)]
-        const isWin = Math.random() < 0.52
-        const multiplier = isWin
-            ? parseFloat((randomGame.minMult + Math.random() * (randomGame.maxMult - randomGame.minMult)).toFixed(2))
-            : 0.00
-        const betAmount = [100, 250, 500, 1000, 2500, 5000][Math.floor(Math.random() * 6)]
-        const currency = Math.random() > 0.4 ? 'INR' : (Math.random() > 0.5 ? 'USDT' : 'AMRAT')
-        const payout = isWin ? Math.round(betAmount * multiplier) : 0
-
-        const bet = {
-            id: 'bet_' + Date.now().toString(36),
-            userId: 'sim_' + randomPlayer,
-            username: randomPlayer,
-            game: randomGame.game,
-            gameName: randomGame.gameName,
-            currency,
-            betAmount,
-            multiplier,
-            payout,
-            profit: payout - betAmount,
-            won: isWin,
-            timestamp: new Date().toISOString()
-        }
-
-        db.data.bets.unshift(bet)
-        if (db.data.bets.length > 500) db.data.bets = db.data.bets.slice(0, 500)
-
-        // Broadcast to WebSocket clients
-        broadcastEvent('NEW_BET', bet)
-    } catch (e) {
-        // quiet catch
-    }
-}, 8000)
 
 // Start Server
 const PORT = CONFIG.PORT

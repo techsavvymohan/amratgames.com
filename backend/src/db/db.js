@@ -618,24 +618,31 @@ class Database {
                 .select('*')
                 .limit(1000)
 
-            if (!uErr && cloudUsers && cloudUsers.length > 0) {
-                const mappedUsers = cloudUsers.map(u => ({
-                    id: u.id,
-                    username: u.username,
-                    email: u.email || '',
-                    phone: u.phone || '',
-                    passwordHash: u.password_hash,
-                    role: u.role || 'player',
-                    status: u.status || 'active',
-                    isBanned: Boolean(u.is_banned),
-                    kycStatus: u.kyc_status || 'unverified',
-                    phoneVerified: Boolean(u.phone_verified),
-                    emailVerified: Boolean(u.email_verified),
-                    avatar: u.avatar || '👤',
-                    balances: u.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 },
-                    createdAt: u.created_at,
-                    lastLoginAt: u.last_login_at
-                }))
+                const mappedUsers = cloudUsers.map(u => {
+                    const balances = u.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+                    const totalDeposited = typeof balances.totalDeposited === 'number'
+                        ? balances.totalDeposited
+                        : (parseFloat(balances.totalDeposited) || parseFloat(u.total_deposited) || 0)
+
+                    return {
+                        id: u.id,
+                        username: u.username,
+                        email: u.email || '',
+                        phone: u.phone || '',
+                        passwordHash: u.password_hash,
+                        role: u.role || 'player',
+                        status: u.status || 'active',
+                        isBanned: Boolean(u.is_banned),
+                        kycStatus: u.kyc_status || 'unverified',
+                        phoneVerified: Boolean(u.phone_verified),
+                        emailVerified: Boolean(u.email_verified),
+                        avatar: u.avatar || '👤',
+                        balances,
+                        totalDeposited,
+                        createdAt: u.created_at,
+                        lastLoginAt: u.last_login_at
+                    }
+                })
 
                 const userMap = new Map()
                 for (const lu of this.data.users) userMap.set(lu.id, lu)

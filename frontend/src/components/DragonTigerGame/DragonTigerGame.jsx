@@ -52,16 +52,8 @@ function DragonTigerGame() {
     const [revealed, setRevealed] = useState(false)
     const [roundResult, setRoundResult] = useState(null) // 'dragon' | 'tiger' | 'tie'
 
-    // History roadmap
-    const [history, setHistory] = useState([
-        { winner: 'dragon', dVal: 'K', tVal: '4' },
-        { winner: 'tiger', dVal: '3', tVal: '9' },
-        { winner: 'dragon', dVal: 'J', tVal: '8' },
-        { winner: 'tiger', dVal: '7', tVal: 'A' },
-        { winner: 'tie', dVal: '10', tVal: '10' },
-        { winner: 'dragon', dVal: 'Q', tVal: '2' },
-        { winner: 'tiger', dVal: '5', tVal: 'K' }
-    ])
+    // Real-time dynamic history roadmap (No demo data)
+    const [history, setHistory] = useState([])
 
     // Fairness
     const [fairnessOpen, setFairnessOpen] = useState(false)

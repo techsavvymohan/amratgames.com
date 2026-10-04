@@ -48,8 +48,32 @@ router.post('/bet', authenticate, (req, res) => {
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             return res.status(400).json({ success: false, error: 'Valid bet amount is required' })
         }
+        if (parsedAmount > 50000) {
+            return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000 per round' })
+        }
 
-        const numMultiplier = Math.max(0, parseFloat(multiplier) || 0)
+        // Enforce game-specific max multiplier ceilings
+        const GAME_MAX_MULTIPLIERS = {
+            'limbo': 1000.00,
+            'crash': 1000.00,
+            'plinko': 1000.00,
+            'dino': 1000.00,
+            'mines': 25.00,
+            'dragon-tiger': 9.00,
+            'color-match': 9.00
+        }
+        const maxMult = GAME_MAX_MULTIPLIERS[game] || 1000.00
+
+        let numMultiplier = Math.max(0, parseFloat(multiplier) || 0)
+        if (!won) {
+            numMultiplier = 0
+        } else if (numMultiplier > maxMult) {
+            return res.status(400).json({
+                success: false,
+                error: `Multiplier ${numMultiplier}x exceeds ceiling (${maxMult}x) for ${game}`
+            })
+        }
+
         const payout = won ? parseFloat((parsedAmount * numMultiplier).toFixed(2)) : 0
         const profit = payout - parsedAmount
 

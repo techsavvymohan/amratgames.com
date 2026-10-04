@@ -125,6 +125,38 @@ class ProvablyFair {
     }
 
     /**
+     * Generate Provably Fair Limbo roll outcome
+     * Industry standard HMAC-SHA256 formula with 99% RTP (1% house edge)
+     * @returns {Promise<{roll: number, hash: string, nonce: number, serverSeedHash: string, clientSeed: string}>}
+     */
+    async generateLimboRoll() {
+        await this._hashReady;
+        const currentNonce = this.nonce;
+        const message = `${this.clientSeed}:${currentNonce}`;
+        const hash = await hmacSHA256(this.serverSeed, message);
+
+        const int = parseInt(hash.substr(0, 8), 16);
+        const float = int / 0x100000000;
+
+        // 1% instant bust house edge
+        let roll = 1.00;
+        if (float >= 0.01) {
+            roll = Math.floor((99 / (1 - float))) / 100;
+        }
+
+        roll = Math.max(1.00, Math.min(roll, 1000000.00));
+
+        this.nonce++;
+        return {
+            roll: parseFloat(roll.toFixed(2)),
+            hash,
+            nonce: currentNonce,
+            serverSeedHash: this.serverSeedHash,
+            clientSeed: this.clientSeed
+        };
+    }
+
+    /**
      * Generate survival result for Dino Game step
      * @param {number} survivalChance - probability of surviving (0-1)
      * @returns {Promise<{survived: boolean, roll: number}>}

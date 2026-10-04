@@ -33,8 +33,10 @@ export class SupabaseSyncService {
                 kyc_status: user.kycStatus || 'unverified',
                 phone_verified: Boolean(user.phoneVerified),
                 email_verified: Boolean(user.emailVerified),
-                avatar: user.avatar || '👤',
-                balances: user.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 },
+                balances: {
+                    ...(user.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }),
+                    totalDeposited: typeof user.totalDeposited === 'number' ? user.totalDeposited : (parseFloat(user.totalDeposited) || 0)
+                },
                 last_login_at: user.lastLoginAt || new Date().toISOString()
             }
 

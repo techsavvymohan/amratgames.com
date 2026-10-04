@@ -118,6 +118,7 @@ router.get('/transactions', requireAuth, (req, res) => {
     try {
         const userTxs = db.data.transactions
             .filter(t => t.userId === req.user.id)
+            .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
             .slice(0, 50)
 
         res.json({
