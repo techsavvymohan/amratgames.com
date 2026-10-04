@@ -34,10 +34,10 @@ export default function TokenDistributionTab({
                     <div>
                         <h2>
                             <span>🎁</span>
-                            <span>Send Free Bonuses & Rewards</span>
+                            <span>Bonus &amp; Token Distribution</span>
                         </h2>
                         <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: '4px 0 0' }}>
-                            Send real cash (₹ INR) or $AMRAT coins directly to players' wallets in 1 click.
+                            Distribute tokens or INR to player wallets.
                         </p>
                     </div>
                 </div>
@@ -61,25 +61,24 @@ export default function TokenDistributionTab({
                     {/* Currency / Reward Type */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>What to Gift?</span>
-                            <small style={{ color: '#94a3b8' }}>Currency or Token</small>
+                            <span>Asset</span>
                         </label>
                         <select
                             className="form-input"
                             value={airdropToken}
                             onChange={(e) => setAirdropToken(e.target.value)}
                         >
-                            <option value="AMRAT">👑 $AMRAT VIP Coins (Game Coins)</option>
-                            <option value="INR">🇮🇳 Real Cash ₹ INR</option>
-                            <option value="USDT">₮ USDT (Crypto Dollar)</option>
-                            <option value="BTC">₿ Bitcoin (BTC)</option>
+                            <option value="AMRAT">👑 $AMRAT (Platform Token)</option>
+                            <option value="INR">🇮🇳 INR (₹)</option>
+                            <option value="USDT">₮ USDT (₮)</option>
+                            <option value="BTC">₿ Bitcoin (₿)</option>
                         </select>
                     </div>
 
                     {/* Target Group */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Whom to Send?</span>
+                            <span>Recipients</span>
                             <small style={{ color: '#fbbf24', fontWeight: 600 }}>Total: {targetRecipientCount} players</small>
                         </label>
                         <select
@@ -87,16 +86,16 @@ export default function TokenDistributionTab({
                             value={airdropTarget}
                             onChange={(e) => setAirdropTarget(e.target.value)}
                         >
-                            <option value="all_players">All Registered Players ({eligiblePlayersCount} players)</option>
-                            <option value="vip">VIP High Rollers Only ({vipCount} players)</option>
-                            <option value="active_24h">Active in Last 24 Hours</option>
+                            <option value="all_players">All Players ({eligiblePlayersCount})</option>
+                            <option value="vip">VIP Players ({vipCount})</option>
+                            <option value="active_24h">Active (24h)</option>
                         </select>
                     </div>
 
                     {/* Amount Per Player */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Amount to Give Each Player</span>
+                            <span>Amount per Player</span>
                             <small style={{ color: '#94a3b8' }}>{airdropToken}</small>
                         </label>
                         <input
@@ -136,15 +135,14 @@ export default function TokenDistributionTab({
                     {/* Campaign Name */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Offer / Occasion Name</span>
-                            <small style={{ color: '#94a3b8' }}>e.g. Weekend Bonus, Special Drop</small>
+                            <span>Campaign Name</span>
                         </label>
                         <input
                             type="text"
                             className="form-input"
                             value={airdropCampaign}
                             onChange={(e) => setAirdropCampaign(e.target.value)}
-                            placeholder="e.g. Royal Weekend Free Bonus / Festival Special"
+                            placeholder="e.g. Weekend Drop"
                             required
                         />
                     </div>
@@ -152,22 +150,21 @@ export default function TokenDistributionTab({
                     {/* Message for Players */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Message for Players</span>
-                            <small style={{ color: '#94a3b8' }}>Optional</small>
+                            <span>Message (Optional)</span>
                         </label>
                         <textarea
                             className="form-textarea"
                             rows="2"
                             value={airdropNote}
                             onChange={(e) => setAirdropNote(e.target.value)}
-                            placeholder="e.g. Enjoy free bonus to play Crash, Plinko and Mines today!"
+                            placeholder="e.g. Bonus credited to your account"
                         />
                     </div>
 
                     {/* Launch Button */}
                     <button type="submit" className="btn-airdrop-launch" style={{ marginTop: '12px', fontSize: '0.95rem' }}>
                         <span>🚀</span>
-                        <span>Send Free Bonus to {targetRecipientCount} Players Now</span>
+                        <span>Distribute to {targetRecipientCount} Players</span>
                     </button>
                 </form>
             </div>
@@ -178,25 +175,23 @@ export default function TokenDistributionTab({
                     <div className="section-header">
                         <h2>
                             <span>💎</span>
-                            <span>Bonus Coins Vault</span>
+                            <span>Treasury Reserve</span>
                         </h2>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div style={{ background: 'rgba(0,0,0,0.4)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Coins in Vault</div>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Treasury Balance</div>
                             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffd700', marginTop: '4px' }}>
                                 {(treasury?.treasuryBalance || 98809300).toLocaleString('en-IN')}
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>$AMRAT ready to distribute</div>
                         </div>
 
                         <div style={{ background: 'rgba(0,0,0,0.4)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Distributed to Players</div>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Circulating Supply</div>
                             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', marginTop: '4px' }}>
                                 {(treasury?.circulatingSupply || 1190700).toLocaleString('en-IN')}
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>Currently in player hands</div>
                         </div>
                     </div>
                 </div>
@@ -206,13 +201,13 @@ export default function TokenDistributionTab({
                     <div className="section-header">
                         <h2>
                             <span>📜</span>
-                            <span>Previous Bonus Distributions</span>
+                            <span>Distribution History</span>
                         </h2>
                     </div>
 
                     {airdrops.length === 0 ? (
                         <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-                            No previous campaigns yet. Send your first bonus using the form!
+                            No previous distributions
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

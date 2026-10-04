@@ -41,10 +41,10 @@ export default function BalanceModal({
                 <div className="modal-header">
                     <div>
                         <h3 style={{ margin: 0, color: '#ffd700', fontSize: '1.2rem' }}>
-                            Update Player Wallet
+                            Adjust Balance
                         </h3>
                         <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                            Player: <strong>{user.username}</strong> {user.phone && `(📱 +91 ${user.phone})`}
+                            Player: <strong>{user.username}</strong>
                         </div>
                     </div>
                     <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
@@ -82,7 +82,7 @@ export default function BalanceModal({
                                 gap: '6px'
                             }}
                         >
-                            <span>➕ Add Money</span>
+                            <span>Credit (+)</span>
                         </button>
                         <button
                             type="button"
@@ -103,16 +103,16 @@ export default function BalanceModal({
                                 gap: '6px'
                             }}
                         >
-                            <span>➖ Deduct Money</span>
+                            <span>Debit (-)</span>
                         </button>
                     </div>
 
                     {/* Currency Selector */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Select Currency</span>
+                            <span>Currency</span>
                             <span style={{ color: '#fbbf24', fontWeight: 600 }}>
-                                Current Balance: {currentBal.toLocaleString()} {adjustCurrency}
+                                Balance: {currentBal.toLocaleString()} {adjustCurrency}
                             </span>
                         </label>
                         <select
@@ -120,17 +120,17 @@ export default function BalanceModal({
                             value={adjustCurrency}
                             onChange={(e) => setAdjustCurrency(e.target.value)}
                         >
-                            <option value="INR">🇮🇳 INR — Indian Rupee (₹)</option>
-                            <option value="AMRAT">👑 $AMRAT — Platform VIP Coins</option>
-                            <option value="USDT">₮ USDT — Tether Dollar</option>
-                            <option value="BTC">₿ BTC — Bitcoin</option>
+                            <option value="INR">🇮🇳 INR (₹)</option>
+                            <option value="AMRAT">👑 $AMRAT (Token)</option>
+                            <option value="USDT">₮ USDT (₮)</option>
+                            <option value="BTC">₿ BTC (₿)</option>
                         </select>
                     </div>
 
                     {/* Amount Input */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Enter Amount ({adjustCurrency})</span>
+                            <span>Amount</span>
                         </label>
                         <input
                             type="number"
@@ -172,16 +172,14 @@ export default function BalanceModal({
                     {/* Reason / Note */}
                     <div className="form-group">
                         <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Reason / Note</span>
-                            <small style={{ color: '#94a3b8' }}>e.g. UPI Deposit, Manual Adjustment, Bonus</small>
+                            <span>Note (Optional)</span>
                         </label>
                         <input
                             type="text"
                             className="form-input"
-                            placeholder="e.g. Received UPI Deposit / Manual Settlement"
+                            placeholder="e.g. Deposit correction"
                             value={adjustNote}
                             onChange={(e) => setAdjustNote(e.target.value)}
-                            required
                         />
                     </div>
 
@@ -212,7 +210,7 @@ export default function BalanceModal({
                                 boxShadow: '0 4px 14px rgba(0,0,0,0.35)'
                             }}
                         >
-                            {actionType === 'add' ? '✓ Confirm Add Money' : '⚠️ Confirm Deduct Money'}
+                            {actionType === 'add' ? 'Confirm Credit' : 'Confirm Debit'}
                         </button>
                     </div>
                 </form>

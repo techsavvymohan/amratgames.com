@@ -78,7 +78,7 @@ router.post('/send-otp', (req, res) => {
         const normalizedPhone = normalizePhone(cleanId)
 
         if (!isEmail && (!normalizedPhone || normalizedPhone.length < 10)) {
-            return res.status(400).json({ success: false, error: 'Please enter a valid 10-digit mobile number or email address' })
+            return res.status(400).json({ success: false, error: 'Invalid mobile number or email' })
         }
 
         const target = isEmail ? cleanId.toLowerCase() : normalizedPhone
@@ -86,7 +86,7 @@ router.post('/send-otp', (req, res) => {
 
         res.json({
             success: true,
-            message: `Verification OTP dispatched to ${isEmail ? cleanId : '+91 ' + normalizedPhone}`,
+            message: `OTP sent to ${isEmail ? cleanId : '+91 ' + normalizedPhone}`,
             target,
             expiresAt,
             // Exposed for automated QA & local demo testing without paid SMS gateway
@@ -104,7 +104,7 @@ router.post('/verify-otp', (req, res) => {
     try {
         const { identifier, otp, username } = req.body
         if (!identifier || !otp) {
-            return res.status(400).json({ success: false, error: 'Phone/Email and OTP code are required' })
+            return res.status(400).json({ success: false, error: 'Phone/email and OTP are required' })
         }
 
         const cleanId = String(identifier).trim()
@@ -113,7 +113,7 @@ router.post('/verify-otp', (req, res) => {
 
         const isValid = db.verifyOtp(target, otp)
         if (!isValid) {
-            return res.status(400).json({ success: false, error: 'Invalid or expired OTP. Please try again or use 777777.' })
+            return res.status(400).json({ success: false, error: 'Invalid or expired OTP' })
         }
 
         // Check if user already exists
@@ -122,7 +122,7 @@ router.post('/verify-otp', (req, res) => {
 
         if (user) {
             if (user.isBanned) {
-                return res.status(403).json({ success: false, error: 'Account has been suspended. Please contact support.' })
+                return res.status(403).json({ success: false, error: 'Account suspended. Contact support.' })
             }
 
             // Mark verified
@@ -166,7 +166,7 @@ router.post('/verify-otp', (req, res) => {
             user: sanitizeUser(user),
             isNewUser,
             message: isNewUser
-                ? `Welcome to AmratGames, ${user.username}! ₹10,000 + 500 $AMRAT welcome bonus credited!`
+                ? `Welcome, ${user.username}!`
                 : `Welcome back, ${user.username}!`
         })
     } catch (err) {

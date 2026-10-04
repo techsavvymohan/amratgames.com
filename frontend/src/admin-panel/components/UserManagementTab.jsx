@@ -24,14 +24,14 @@ export default function UserManagementTab({
                 <div>
                     <h2>
                         <span>👥</span>
-                        <span>Player Accounts & Wallets ({users.length} Players)</span>
+                        <span>Players ({users.length})</span>
                     </h2>
                     <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0' }}>
-                        View all registered player accounts, search by mobile number, adjust wallet balances, and manage access.
+                        Manage accounts, balances, and access.
                     </p>
                 </div>
                 <button className="btn-action gold" onClick={onRefresh} title="Reload latest player balances">
-                    ↻ Refresh Accounts
+                    ↻ Refresh
                 </button>
             </div>
 
@@ -40,7 +40,7 @@ export default function UserManagementTab({
                 <input
                     type="text"
                     className="admin-search-input"
-                    placeholder="🔍 Search by Mobile Number, Username or Email..."
+                    placeholder="Search players..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -50,9 +50,9 @@ export default function UserManagementTab({
                     onChange={(e) => setStatusFilter(e.target.value)}
                 >
                     <option value="all">All Players</option>
-                    <option value="active">Active Players</option>
-                    <option value="vip">VIP High Rollers</option>
-                    <option value="banned">Blocked / Suspended</option>
+                    <option value="active">Active</option>
+                    <option value="vip">VIP</option>
+                    <option value="banned">Suspended</option>
                 </select>
             </div>
 
@@ -62,11 +62,11 @@ export default function UserManagementTab({
                         <tr>
                             <th>Player</th>
                             <th>Status</th>
-                            <th>Cash Balance (₹ INR)</th>
-                            <th>Bitcoin (₿)</th>
+                            <th>INR (₹)</th>
+                            <th>BTC (₿)</th>
                             <th>USDT (₮)</th>
-                            <th>Bonus Coins ($AMRAT)</th>
-                            <th>KYC Status</th>
+                            <th>AMRAT</th>
+                            <th>KYC</th>
                             <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                     </thead>
@@ -75,7 +75,7 @@ export default function UserManagementTab({
                             <tr>
                                 <td colSpan="8" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
                                     <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔍</div>
-                                    <div>No player found matching your search. Try searching by 10-digit mobile number or username.</div>
+                                    <div>No players found matching your search.</div>
                                 </td>
                             </tr>
                         ) : (
@@ -88,7 +88,7 @@ export default function UserManagementTab({
                                                 <div className="user-info-name">
                                                     {u.username} {u.isAdmin() && <span style={{ color: '#ffd700', fontSize: '11px', fontWeight: 800 }}>[ADMIN]</span>}
                                                 </div>
-                                                {/* Mobile Number Prominently Displayed */}
+                                                {/* Mobile Number */}
                                                 {u.phone && (
                                                     <div style={{ color: '#fbbf24', fontSize: '0.78rem', fontWeight: 700, marginTop: '2px' }}>
                                                         📱 +91 {u.phone}
@@ -100,11 +100,11 @@ export default function UserManagementTab({
                                     </td>
                                     <td>
                                         {u.isSuspended() ? (
-                                            <span className="badge badge-banned">🚫 Blocked</span>
+                                            <span className="badge badge-banned">Suspended</span>
                                         ) : u.isVip() ? (
-                                            <span className="badge badge-vip">👑 VIP Whale</span>
+                                            <span className="badge badge-vip">VIP</span>
                                         ) : (
-                                            <span className="badge badge-active">✓ Active</span>
+                                            <span className="badge badge-active">Active</span>
                                         )}
                                     </td>
                                     <td style={{ fontWeight: 800, color: '#f5af19', fontSize: '0.95rem' }}>
@@ -128,7 +128,7 @@ export default function UserManagementTab({
                                             alignItems: 'center',
                                             gap: '4px'
                                         }}>
-                                            {u.kycStatus === 'verified' ? '✓ Verified' : '○ Pending'}
+                                            {u.kycStatus === 'verified' ? 'Verified' : 'Pending'}
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
@@ -136,17 +136,17 @@ export default function UserManagementTab({
                                             <button
                                                 className="btn-action gold"
                                                 onClick={() => onSelectUserForBalance(u)}
-                                                title="Add or cut balance from this player's wallet"
+                                                title="Adjust player wallet balance"
                                             >
-                                                💰 Adjust Balance
+                                                Edit Balance
                                             </button>
                                             {!u.isAdmin() && (
                                                 <button
                                                     className={`btn-action ${u.isSuspended() ? 'gold' : 'danger'}`}
                                                     onClick={() => onToggleBan(u)}
-                                                    title={u.isSuspended() ? "Unblock this account" : "Suspend this account to prevent playing"}
+                                                    title={u.isSuspended() ? "Unblock account" : "Suspend account"}
                                                 >
-                                                    {u.isSuspended() ? '✓ Unblock' : '🚫 Block'}
+                                                    {u.isSuspended() ? 'Unblock' : 'Suspend'}
                                                 </button>
                                             )}
                                         </div>

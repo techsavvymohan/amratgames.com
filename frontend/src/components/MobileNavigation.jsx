@@ -186,14 +186,14 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                             }}
                         >
                             <span>⚡</span>
-                            <span>Sign In / Fast OTP Login</span>
+                            <span>Sign In</span>
                         </button>
                     )}
                 </div>
 
                 <label className="mobile-drawer-field">
                     <span>Search</span>
-                    <input type="search" placeholder="Search your game" />
+                    <input type="search" placeholder="Search games..." />
                 </label>
                 <label className="mobile-drawer-field">
                     <span>Palette</span>
@@ -241,7 +241,7 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                         }}
                     >
                         <span>👑</span>
-                        <span>Admin & Treasury Hub</span>
+                        <span>Admin Panel</span>
                     </NavLink>
                 </div>
                 <div className="mobile-coming-soon" aria-label="Coming soon">

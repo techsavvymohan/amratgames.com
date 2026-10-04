@@ -33,7 +33,7 @@ export default function AdminPanel() {
         rtp: 99.00,
         houseEdge: 1.00,
         maintenanceMode: false,
-        activeAnnouncements: '👑 Welcome to AmratGames.com — India\'s Premier Provably Fair Gaming Platform!'
+        activeAnnouncements: '👑 Welcome to AmratGames!'
     })
 
     // Auth Form State
@@ -282,20 +282,20 @@ export default function AdminPanel() {
                 <div className="admin-title-area">
                     <div className="admin-crown-badge">👑</div>
                     <div>
-                        <h1>AmratGames Master Control Room</h1>
-                        <p className="admin-subtitle">Player Accounts · Wallet Balances · Free Bonus Grants · Game Profit & Winning Rate Control</p>
+                        <h1>Admin Dashboard</h1>
+                        <p className="admin-subtitle">Platform Controls &amp; Operations</p>
                     </div>
                 </div>
 
                 <div className="admin-status-indicators">
                     <div className="status-pill">
                         <span className={`status-dot ${backendOnline ? 'online' : 'offline'}`} />
-                        <span>{backendOnline ? '🟢 System Operational' : '🟡 Offline Demo Mode'}</span>
+                        <span>{backendOnline ? 'Online' : 'Demo Mode'}</span>
                     </div>
 
                     <div className="admin-user-pill">
                         <span>🛡️</span>
-                        <span>Owner: {user?.username || 'amrat_master'}</span>
+                        <span>Admin: {user?.username || 'admin'}</span>
                     </div>
 
                     <Link
@@ -314,7 +314,7 @@ export default function AdminPanel() {
                             textDecoration: 'none',
                             cursor: 'pointer'
                         }}
-                        title="Exit to AmratGames Casino"
+                        title="Back to Casino"
                     >
                         <span>🎰</span>
                         <span>Back to Casino</span>
@@ -323,7 +323,7 @@ export default function AdminPanel() {
                     <button
                         className="btn-action danger"
                         onClick={logout}
-                        title="Sign Out of Admin"
+                        title="Sign Out"
                     >
                         Sign Out
                     </button>
@@ -344,21 +344,21 @@ export default function AdminPanel() {
                     onClick={() => setCurrentTab('users')}
                 >
                     <span>👥</span>
-                    <span>Player Accounts ({users.length})</span>
+                    <span>Players ({users.length})</span>
                 </button>
                 <button
                     className={`admin-tab-btn ${currentTab === 'tokens' ? 'active' : ''}`}
                     onClick={() => setCurrentTab('tokens')}
                 >
                     <span>🎁</span>
-                    <span>Send Free Bonus</span>
+                    <span>Bonus &amp; Tokens</span>
                 </button>
                 <button
                     className={`admin-tab-btn ${currentTab === 'settings' ? 'active' : ''}`}
                     onClick={() => setCurrentTab('settings')}
                 >
                     <span>⚙️</span>
-                    <span>Profit & Game Settings</span>
+                    <span>Settings</span>
                 </button>
             </div>
 

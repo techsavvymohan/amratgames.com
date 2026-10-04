@@ -210,7 +210,7 @@ export default function AuthModal() {
                     <div className="amrat-auth-crown">👑</div>
                     <h2 className="amrat-auth-title">AmratGames.com</h2>
                     <p className="amrat-auth-subtitle">
-                        India's Premier Provably Fair Web3 Casino & Gaming Platform
+                        Sign in or register to play
                     </p>
                 </div>
 
@@ -230,7 +230,7 @@ export default function AuthModal() {
                         onClick={() => setAuthModalMode('otp')}
                     >
                         <span>⚡</span>
-                        <span>Fast OTP</span>
+                        <span>OTP</span>
                     </button>
                     <button
                         type="button"
@@ -246,7 +246,7 @@ export default function AuthModal() {
                 <div className="amrat-bonus-banner">
                     <span className="gift-icon">🎁</span>
                     <div>
-                        <strong>Instant Welcome Bonus:</strong> ₹10,000 Free Credits + 500 $AMRAT VIP Tokens credited to every verified player!
+                        <strong>₹10,000 Free Bonus</strong> on registration
                     </div>
                 </div>
 
@@ -271,14 +271,13 @@ export default function AuthModal() {
                     <form onSubmit={handlePasswordLogin} className="amrat-auth-form">
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Mobile Number, Email, or Username</span>
-                                <small>India / Global</small>
+                                <span>Phone, Email or Username</span>
                             </label>
                             <div className="amrat-input-wrapper">
                                 <input
                                     type="text"
                                     className="amrat-input"
-                                    placeholder="e.g. 9876510101 or player@gmail.com"
+                                    placeholder="Phone, email or username"
                                     value={loginId}
                                     onChange={(e) => setLoginId(e.target.value)}
                                     autoFocus
@@ -316,7 +315,7 @@ export default function AuthModal() {
                             className="amrat-submit-btn"
                             disabled={loading}
                         >
-                            {loading ? 'Authenticating...' : 'Sign In with Password'}
+                            {loading ? 'Signing in...' : 'Sign In'}
                         </button>
 
                         <div style={{ textAlign: 'center', marginTop: '4px' }}>
@@ -325,7 +324,7 @@ export default function AuthModal() {
                                 onClick={() => setAuthModalMode('otp')}
                                 style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                             >
-                                Forgot password? Login with Fast OTP instead →
+                                Sign in with OTP →
                             </button>
                         </div>
                     </form>
@@ -338,8 +337,7 @@ export default function AuthModal() {
                     <form onSubmit={handleVerifyOtp} className="amrat-auth-form">
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>10-Digit Mobile Number or Email</span>
-                                <small>No password needed</small>
+                                <span>Mobile or Email</span>
                             </label>
                             <div className="amrat-input-wrapper">
                                 {!otpIdentifier.includes('@') && otpIdentifier.length > 0 && (
@@ -348,7 +346,7 @@ export default function AuthModal() {
                                 <input
                                     type="text"
                                     className={`amrat-input ${!otpIdentifier.includes('@') && otpIdentifier.length > 0 ? 'has-prefix' : ''}`}
-                                    placeholder="e.g. 9898989898 or user@gmail.com"
+                                    placeholder="Mobile number or email"
                                     value={otpIdentifier}
                                     onChange={(e) => setOtpIdentifier(e.target.value)}
                                     autoFocus
@@ -364,24 +362,20 @@ export default function AuthModal() {
                                 onClick={() => handleSendOtp(otpIdentifier)}
                                 disabled={loading || !otpIdentifier.trim()}
                             >
-                                {loading ? 'Sending OTP...' : 'Send 6-Digit Verification OTP'}
+                                {loading ? 'Sending...' : 'Send OTP'}
                             </button>
                         ) : (
                             <>
                                 {/* QA Demo OTP Hint Banner */}
                                 {otpNotice && (
                                     <div className="amrat-alert-info">
-                                        <strong>📲 OTP Dispatched:</strong> Check your SMS/email.
-                                        <br />
-                                        <span style={{ color: '#ffd700', fontWeight: 'bold' }}>
-                                            Demo / QA Bypass Code: {otpNotice}
-                                        </span>
+                                        <span>Demo Code: <strong>{otpNotice}</strong></span>
                                     </div>
                                 )}
 
                                 <div className="amrat-form-group">
                                     <label className="amrat-form-label">
-                                        <span>Enter 6-Digit OTP</span>
+                                        <span>Enter OTP</span>
                                         {resendCountdown > 0 ? (
                                             <small>Resend in {resendCountdown}s</small>
                                         ) : (
@@ -391,7 +385,7 @@ export default function AuthModal() {
                                                 className="amrat-secondary-btn"
                                                 style={{ padding: '2px 8px', fontSize: '0.72rem' }}
                                             >
-                                                Resend OTP
+                                                Resend
                                             </button>
                                         )}
                                     </label>
@@ -409,12 +403,12 @@ export default function AuthModal() {
 
                                 <div className="amrat-form-group">
                                     <label className="amrat-form-label">
-                                        <span>Player Username <small>(Optional for new players)</small></span>
+                                        <span>Username (Optional)</span>
                                     </label>
                                     <input
                                         type="text"
                                         className="amrat-input"
-                                        placeholder="e.g. lucky_raja (auto-assigned if blank)"
+                                        placeholder="Choose a username"
                                         value={otpUsername}
                                         onChange={(e) => setOtpUsername(e.target.value)}
                                     />
@@ -425,7 +419,7 @@ export default function AuthModal() {
                                     className="amrat-submit-btn"
                                     disabled={loading || otpCode.length < 6}
                                 >
-                                    {loading ? 'Verifying...' : 'Verify OTP & Start Playing 👑'}
+                                    {loading ? 'Verifying...' : 'Verify & Play'}
                                 </button>
                             </>
                         )}
@@ -439,13 +433,12 @@ export default function AuthModal() {
                     <form onSubmit={handleRegister} className="amrat-auth-form">
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Choose Username</span>
-                                <small>3+ characters</small>
+                                <span>Username</span>
                             </label>
                             <input
                                 type="text"
                                 className="amrat-input"
-                                placeholder="e.g. dragon_master"
+                                placeholder="Username"
                                 value={regUsername}
                                 onChange={(e) => setRegUsername(e.target.value)}
                                 required
@@ -455,14 +448,13 @@ export default function AuthModal() {
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
                                 <span>Mobile Number</span>
-                                <small>India (+91)</small>
                             </label>
                             <div className="amrat-input-wrapper">
                                 <span className="amrat-input-prefix">+91</span>
                                 <input
                                     type="tel"
                                     className="amrat-input has-prefix"
-                                    placeholder="10-digit mobile number"
+                                    placeholder="10-digit number"
                                     value={regPhone}
                                     onChange={(e) => setRegPhone(e.target.value)}
                                 />
@@ -471,12 +463,12 @@ export default function AuthModal() {
 
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Email Address <small>(Optional if phone provided)</small></span>
+                                <span>Email (Optional)</span>
                             </label>
                             <input
                                 type="email"
                                 className="amrat-input"
-                                placeholder="player@example.com"
+                                placeholder="Email address"
                                 value={regEmail}
                                 onChange={(e) => setRegEmail(e.target.value)}
                             />
@@ -484,13 +476,12 @@ export default function AuthModal() {
 
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Create Password</span>
-                                <small>6+ characters</small>
+                                <span>Password</span>
                             </label>
                             <input
                                 type="password"
                                 className="amrat-input"
-                                placeholder="••••••••••••"
+                                placeholder="Password (6+ characters)"
                                 value={regPassword}
                                 onChange={(e) => setRegPassword(e.target.value)}
                                 required
@@ -501,7 +492,7 @@ export default function AuthModal() {
                         {regPhone.length >= 10 && (
                             <div className="amrat-form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600 }}>Verify Mobile via OTP</span>
+                                    <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600 }}>Verify Phone (OTP)</span>
                                     <button
                                         type="button"
                                         className="amrat-secondary-btn"
@@ -509,7 +500,7 @@ export default function AuthModal() {
                                         onClick={() => handleSendOtp(regPhone, true)}
                                         disabled={loading}
                                     >
-                                        {regOtpSent ? 'Resend OTP' : 'Send OTP'}
+                                        {regOtpSent ? 'Resend' : 'Send OTP'}
                                     </button>
                                 </div>
                                 {regOtpSent && (
@@ -525,7 +516,7 @@ export default function AuthModal() {
                                         />
                                         {regOtpNotice && (
                                             <small style={{ color: '#93c5fd', marginTop: '4px', display: 'block' }}>
-                                                QA Code: <strong>{regOtpNotice}</strong>
+                                                Demo Code: <strong>{regOtpNotice}</strong>
                                             </small>
                                         )}
                                     </>
@@ -538,7 +529,7 @@ export default function AuthModal() {
                             className="amrat-submit-btn"
                             disabled={loading}
                         >
-                            {loading ? 'Creating Account...' : 'Claim ₹10,000 Bonus & Register 🎁'}
+                            {loading ? 'Creating...' : 'Create Account'}
                         </button>
                     </form>
                 )}
@@ -547,14 +538,14 @@ export default function AuthModal() {
                     INSTANT QA / DEMO LOGIN SHORTCUTS
                    ══════════════════════════════════════════════════════════ */}
                 <div className="amrat-demo-shortcuts">
-                    <div className="amrat-demo-title">⚡ Instant Demo / QA Quick Logins</div>
+                    <div className="amrat-demo-title">Quick Demo Logins</div>
                     <div className="amrat-demo-grid">
                         <button
                             type="button"
                             className="amrat-demo-btn"
                             onClick={() => quickPlayerLogin('aarav_king')}
                         >
-                            👤 VIP Player (Aarav)
+                            👤 VIP Player
                         </button>
                         <button
                             type="button"

@@ -189,13 +189,13 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                         type="number"
                                         value={depositAmount}
                                         onChange={(e) => setDepositAmount(e.target.value)}
-                                        placeholder={`Enter ${currency} amount...`}
+                                        placeholder="Amount"
                                         className="wallet-deposit-input"
                                         min="1"
                                         step="1"
                                     />
                                     <button className="wallet-deposit-btn" onClick={handleDeposit}>
-                                        Add {currencySymbol}
+                                        Add
                                     </button>
                                 </div>
                                 <div className="wallet-quick-amounts">
@@ -206,7 +206,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                     ))}
                                 </div>
                                 <button className="wallet-reset-btn" onClick={resetBalance}>
-                                    Reset to {currencySymbol}{currencyConfig.initial.toLocaleString('en-IN')}
+                                    Reset Balance
                                 </button>
                             </div>
 
@@ -281,7 +281,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                 {!isGamePage && (
                     <div className="search-input-wrapper">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text-secondary)" className="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                        <input type="text" placeholder="Search your game..." className="search-input" />
+                        <input type="text" placeholder="Search games..." className="search-input" />
                     </div>
                 )}
             </div>
@@ -369,7 +369,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                 <div className="amrat-user-dropdown-header">
                                     <div className="amrat-user-dropdown-name">{user.username}</div>
                                     <div className="amrat-user-dropdown-role">
-                                        {user.role === 'admin' ? '👑 Master Administrator' : '⭐ Verified VIP Player'}
+                                        {user.role === 'admin' ? 'Admin' : 'VIP Player'}
                                     </div>
                                     {user.phone && (
                                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
@@ -385,7 +385,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                 {user.role === 'admin' && (
                                     <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
                                         <span>👑</span>
-                                        <span>Admin Dashboard</span>
+                                        <span>Admin Panel</span>
                                     </Link>
                                 )}
                                 <button
@@ -423,7 +423,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                 <div className="amrat-user-dropdown-header">
                                     <div className="amrat-user-dropdown-name">{user.username}</div>
                                     <div className="amrat-user-dropdown-role">
-                                        {user.role === 'admin' ? '👑 Master Administrator' : '⭐ Verified VIP Player'}
+                                        {user.role === 'admin' ? 'Admin' : 'VIP Player'}
                                     </div>
                                     {user.phone && (
                                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
@@ -439,7 +439,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                 {user.role === 'admin' && (
                                     <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
                                         <span>👑</span>
-                                        <span>Admin Dashboard</span>
+                                        <span>Admin Panel</span>
                                     </Link>
                                 )}
                                 <button

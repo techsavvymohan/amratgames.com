@@ -28,17 +28,17 @@ export default function LockScreen({
                     }}
                 >
                     <span>←</span>
-                    <span>Exit to Casino</span>
+                    <span>Back to Casino</span>
                 </Link>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>AmratGames.com</span>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>AmratGames</span>
             </div>
 
             <div className="admin-lock-icon">👑</div>
             <h2 style={{ margin: '0 0 6px', color: '#ffd700', fontSize: '1.4rem' }}>
-                Owner & Admin Login
+                Admin Login
             </h2>
             <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '22px', lineHeight: 1.4 }}>
-                Enter your registered Mobile Number or Email to open the Master Control Room.
+                Sign in to manage the platform.
             </p>
 
             {loginError && (
@@ -59,14 +59,14 @@ export default function LockScreen({
             <form onSubmit={onSubmit} style={{ textAlign: 'left' }}>
                 <div className="form-group">
                     <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Mobile Number, Email, or Username</span>
+                        <span>Username, Email, or Phone</span>
                     </label>
                     <input
                         type="text"
                         className="form-input"
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
-                        placeholder="e.g. 9876500001 or admin@amratgames.com"
+                        placeholder="Username, email, or phone"
                         required
                         autoFocus
                     />
@@ -85,19 +85,19 @@ export default function LockScreen({
                     />
                 </div>
                 <button type="submit" className="btn-airdrop-launch" style={{ marginTop: '10px', fontSize: '0.95rem' }}>
-                    🔐 Open Master Control Room
+                    Sign In
                 </button>
             </form>
 
             <div style={{ margin: '20px 0 10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
                 <div style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '8px' }}>
-                    QUICK DEMO ACCESS:
+                    DEMO ACCESS
                 </div>
                 <button type="button" className="btn-quick-admin" onClick={onQuickAdmin}>
-                    ⚡ One-Click Master Login (Demo)
+                    Quick Demo Login
                 </button>
                 <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '8px' }}>
-                    Demo Credentials: <strong>9876500001</strong> / <strong>AdminPassword123!</strong>
+                    Demo: <strong>9876500001</strong> / <strong>AdminPassword123!</strong>
                 </div>
             </div>
         </div>
