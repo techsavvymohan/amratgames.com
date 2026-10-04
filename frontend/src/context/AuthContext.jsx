@@ -108,23 +108,6 @@ export function AuthProvider({ children }) {
             setIsAuthModalOpen(false)
             return data.user
         } catch (err) {
-            // Standalone Fallback: If backend is offline, support master admin demo login
-            if (!backendOnline && (loginId === 'admin' || loginId === 'admin@amratgames.com')) {
-                const demoAdmin = {
-                    id: 'usr_admin_demo',
-                    username: 'amrat_master',
-                    email: 'admin@amratgames.com',
-                    phone: '9876500001',
-                    role: 'admin',
-                    status: 'active',
-                    balances: { INR: 500000, BTC: 5.5, USDT: 50000, AMRAT: 1000000 },
-                    isBanned: false,
-                    kycStatus: 'verified'
-                }
-                saveAuth('demo-admin-jwt-token', demoAdmin)
-                setIsAuthModalOpen(false)
-                return demoAdmin
-            }
             throw err
         }
     }
@@ -143,15 +126,6 @@ export function AuthProvider({ children }) {
             }
             return data
         } catch (err) {
-            if (!backendOnline) {
-                // Offline QA demo fallback
-                return {
-                    success: true,
-                    message: `Offline mode: Use verification OTP 777777`,
-                    devOtp: '777777',
-                    demoBypassCode: '777777'
-                }
-            }
             throw err
         }
     }
@@ -176,22 +150,6 @@ export function AuthProvider({ children }) {
             setIsAuthModalOpen(false)
             return data
         } catch (err) {
-            if (!backendOnline && otp === '777777') {
-                const demoUser = {
-                    id: 'usr_otp_demo',
-                    username: username || 'Player_' + String(identifier).slice(-4),
-                    email: identifier.includes('@') ? identifier : undefined,
-                    phone: !identifier.includes('@') ? identifier : undefined,
-                    role: 'player',
-                    status: 'active',
-                    balances: { INR: 10000, BTC: 0.1, USDT: 100, AMRAT: 500 },
-                    isBanned: false,
-                    kycStatus: 'verified'
-                }
-                saveAuth('demo-otp-token', demoUser)
-                setIsAuthModalOpen(false)
-                return { success: true, user: demoUser, isNewUser: true }
-            }
             throw err
         }
     }
@@ -220,69 +178,6 @@ export function AuthProvider({ children }) {
         return data.user
     }
 
-    // Quick Admin Sign In
-    const quickAdminLogin = async () => {
-        try {
-            const res = await fetch('/api/auth/quick-admin-login', { method: 'POST' })
-            const data = await res.json()
-            if (res.ok && data.success) {
-                saveAuth(data.token, data.user)
-                setIsAuthModalOpen(false)
-                return data.user
-            }
-            throw new Error(data.error || 'Failed to authenticate')
-        } catch {
-            const demoAdmin = {
-                id: 'usr_admin_demo',
-                username: 'amrat_master',
-                email: 'admin@amratgames.com',
-                phone: '9876500001',
-                role: 'admin',
-                status: 'active',
-                balances: { INR: 500000, BTC: 5.5, USDT: 50000, AMRAT: 1000000 },
-                isBanned: false,
-                kycStatus: 'verified'
-            }
-            saveAuth('demo-admin-jwt-token', demoAdmin)
-            setIsAuthModalOpen(false)
-            return demoAdmin
-        }
-    }
-
-    // Quick VIP Player Demo Login
-    const quickPlayerLogin = async (username = 'aarav_king') => {
-        try {
-            const res = await fetch('/api/auth/quick-demo-login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            })
-            const data = await res.json()
-            if (res.ok && data.success) {
-                saveAuth(data.token, data.user)
-                setIsAuthModalOpen(false)
-                return data.user
-            }
-            throw new Error(data.error || 'Failed demo login')
-        } catch {
-            // Standalone fallback
-            const demoPlayer = {
-                id: 'usr_play_101',
-                username: 'aarav_king',
-                email: 'aarav.royal@gmail.com',
-                phone: '9876510101',
-                role: 'player',
-                status: 'active',
-                balances: { INR: 85400, BTC: 0.12, USDT: 1250, AMRAT: 45000 },
-                isBanned: false,
-                kycStatus: 'verified'
-            }
-            saveAuth('demo-player-token', demoPlayer)
-            setIsAuthModalOpen(false)
-            return demoPlayer
-        }
-    }
-
     // Logout
     const logout = () => {
         saveAuth(null, null)
@@ -303,8 +198,6 @@ export function AuthProvider({ children }) {
         sendOtp,
         verifyOtp,
         register,
-        quickAdminLogin,
-        quickPlayerLogin,
         logout,
         checkAuthStatus,
         saveAuth

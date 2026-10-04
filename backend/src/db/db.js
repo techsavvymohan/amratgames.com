@@ -67,23 +67,13 @@ class Database {
             this.persist()
         }
 
-        // Migrate and ensure phone numbers for seeded users
-        const phoneMap = {
-            'usr_admin_001': '9876500001',
-            'usr_play_101': '9876510101',
-            'usr_play_102': '9876510202',
-            'usr_play_103': '9876510303',
-            'usr_play_104': '9876510404',
-            'usr_play_105': '9876510505',
-            'usr_play_106': '9876510606',
+        // Ensure phone numbers for master admin
+        const masterAdmin = this.data.users.find(u => u.id === 'usr_admin_001')
+        if (masterAdmin && !masterAdmin.phone) {
+            masterAdmin.phone = '9876500001'
+            masterAdmin.phoneVerified = true
+            this.persist()
         }
-        for (const u of this.data.users) {
-            if (!u.phone && phoneMap[u.id]) {
-                u.phone = phoneMap[u.id]
-                u.phoneVerified = true
-            }
-        }
-        this.persist()
 
         // Compute current server seed hash
         if (this.data.settings?.currentServerSeed) {
@@ -133,236 +123,20 @@ class Database {
             avatar: '👑'
         }
 
-        // 2. Realistic Players for Platform Atmosphere
-        const initialPlayers = [
-            {
-                id: 'usr_play_101',
-                username: 'aarav_king',
-                email: 'aarav.royal@gmail.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'vip',
-                balances: { INR: 84250.00, BTC: 0.1250, USDT: 2450.00, AMRAT: 12500.00 },
-                isBanned: false,
-                kycStatus: 'verified',
-                createdAt: '2025-01-10T12:00:00.000Z',
-                lastLoginAt: now,
-                avatar: '🦁'
-            },
-            {
-                id: 'usr_play_102',
-                username: 'priya_crypto',
-                email: 'priya.trader@yahoo.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'active',
-                balances: { INR: 32400.00, BTC: 0.4500, USDT: 5120.00, AMRAT: 8200.00 },
-                isBanned: false,
-                kycStatus: 'verified',
-                createdAt: '2025-01-14T14:30:00.000Z',
-                lastLoginAt: now,
-                avatar: '💎'
-            },
-            {
-                id: 'usr_play_103',
-                username: 'vikram_dice',
-                email: 'vikram.dice@gmail.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'active',
-                balances: { INR: 15800.00, BTC: 0.0400, USDT: 800.00, AMRAT: 3500.00 },
-                isBanned: false,
-                kycStatus: 'pending',
-                createdAt: '2025-01-20T08:15:00.000Z',
-                lastLoginAt: now,
-                avatar: '🎲'
-            },
-            {
-                id: 'usr_play_104',
-                username: 'rohit_777',
-                email: 'rohit777@hotmail.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'vip',
-                balances: { INR: 124500.00, BTC: 1.2000, USDT: 14200.00, AMRAT: 45000.00 },
-                isBanned: false,
-                kycStatus: 'verified',
-                createdAt: '2025-01-22T19:40:00.000Z',
-                lastLoginAt: now,
-                avatar: '⚡'
-            },
-            {
-                id: 'usr_play_105',
-                username: 'neha_lucky',
-                email: 'neha.luck@outlook.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'active',
-                balances: { INR: 9800.00, BTC: 0.0150, USDT: 320.00, AMRAT: 1500.00 },
-                isBanned: false,
-                kycStatus: 'verified',
-                createdAt: '2025-02-01T11:20:00.000Z',
-                lastLoginAt: now,
-                avatar: '🍀'
-            },
-            {
-                id: 'usr_play_106',
-                username: 'kabir_whale',
-                email: 'kabir.whale@proton.me',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'vip',
-                balances: { INR: 350000.00, BTC: 3.8500, USDT: 48900.00, AMRAT: 120000.00 },
-                isBanned: false,
-                kycStatus: 'verified',
-                createdAt: '2025-02-05T16:00:00.000Z',
-                lastLoginAt: now,
-                avatar: '🐋'
-            },
-            {
-                id: 'usr_play_107',
-                username: 'suspect_bot99',
-                email: 'bot99@trashmail.com',
-                passwordHash: playerPasswordHash,
-                role: 'player',
-                status: 'banned',
-                balances: { INR: 120.00, BTC: 0.0001, USDT: 5.00, AMRAT: 0.00 },
-                isBanned: true,
-                kycStatus: 'rejected',
-                createdAt: '2025-02-10T02:00:00.000Z',
-                lastLoginAt: '2025-02-10T03:10:00.000Z',
-                avatar: '🤖'
-            }
-        ]
+        // Production User Pool — Clean Start (Only Master Administrator)
+        this.data.users = [adminUser]
 
-        this.data.users = [adminUser, ...initialPlayers]
-
-        // 3. Seeded Initial Airdrop History
-        this.data.airdrops = [
-            {
-                id: 'airdrop_init_001',
-                campaign: 'Genesis Community Welcome Airdrop',
-                adminId: 'usr_admin_001',
-                adminUsername: 'amrat_master',
-                token: 'AMRAT',
-                amountPerUser: 1000,
-                recipientCount: 6,
-                totalAmount: 6000,
-                targetGroup: 'all_players',
-                note: 'Initial $AMRAT loyalty bonus grant to registered Indian high rollers',
-                timestamp: '2025-02-15T10:00:00.000Z'
-            },
-            {
-                id: 'airdrop_init_002',
-                campaign: 'VIP Whale Staking Bonus',
-                adminId: 'usr_admin_001',
-                adminUsername: 'amrat_master',
-                token: 'AMRAT',
-                amountPerUser: 15000,
-                recipientCount: 3,
-                totalAmount: 45000,
-                targetGroup: 'vip',
-                note: 'Special VIP staking dividend reward for top wagerers',
-                timestamp: '2025-02-28T18:30:00.000Z'
-            }
-        ]
-
-        // Calculate circulating supply from seed
-        const totalAirdropped = this.data.airdrops.reduce((acc, a) => acc + a.totalAmount, 0)
-        const totalUserAmrat = this.data.users.reduce((acc, u) => acc + (u.balances?.AMRAT || 0), 0)
+        // Clean Platform History (100% Dynamic Player Driven)
+        this.data.airdrops = []
+        this.data.bets = []
+        this.data.transactions = []
 
         this.data.settings.tokenTreasury = {
             totalSupply: CONFIG.TOKEN_INITIAL_TREASURY,
-            circulatingSupply: totalUserAmrat,
-            treasuryBalance: CONFIG.TOKEN_INITIAL_TREASURY - totalUserAmrat,
-            totalAirdropped: totalAirdropped
+            circulatingSupply: 0,
+            treasuryBalance: CONFIG.TOKEN_INITIAL_TREASURY,
+            totalAirdropped: 0
         }
-
-        // 4. Seeded Recent Bets Feed
-        this.data.bets = [
-            {
-                id: 'bet_101',
-                userId: 'usr_play_101',
-                username: 'aarav_king',
-                game: 'crash',
-                gameName: 'Crash 1000x',
-                currency: 'INR',
-                betAmount: 2500,
-                multiplier: 3.45,
-                payout: 8625,
-                profit: 6125,
-                won: true,
-                timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-                hash: crypto.randomBytes(16).toString('hex')
-            },
-            {
-                id: 'bet_102',
-                userId: 'usr_play_106',
-                username: 'kabir_whale',
-                game: 'plinko',
-                gameName: 'Plinko 16-Pin',
-                currency: 'USDT',
-                betAmount: 100,
-                multiplier: 29.00,
-                payout: 2900,
-                profit: 2800,
-                won: true,
-                timestamp: new Date(Date.now() - 1000 * 60 * 9).toISOString(),
-                hash: crypto.randomBytes(16).toString('hex')
-            },
-            {
-                id: 'bet_103',
-                userId: 'usr_play_104',
-                username: 'rohit_777',
-                game: 'mines',
-                gameName: 'Mines 5x5',
-                currency: 'INR',
-                betAmount: 5000,
-                multiplier: 0.00,
-                payout: 0,
-                profit: -5000,
-                won: false,
-                timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-                hash: crypto.randomBytes(16).toString('hex')
-            },
-            {
-                id: 'bet_104',
-                userId: 'usr_play_102',
-                username: 'priya_crypto',
-                game: 'limbo',
-                gameName: 'Limbo Turbo',
-                currency: 'BTC',
-                betAmount: 0.005,
-                multiplier: 12.50,
-                payout: 0.0625,
-                profit: 0.0575,
-                won: true,
-                timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-                hash: crypto.randomBytes(16).toString('hex')
-            }
-        ]
-
-        // 5. Seeded Transaction records
-        this.data.transactions = [
-            {
-                id: 'tx_001',
-                userId: 'usr_play_101',
-                type: 'deposit',
-                currency: 'INR',
-                amount: 50000,
-                note: 'UPI Instant Settlement (GPay)',
-                timestamp: '2025-02-20T10:14:00.000Z'
-            },
-            {
-                id: 'tx_002',
-                userId: 'usr_play_106',
-                type: 'deposit',
-                currency: 'USDT',
-                amount: 50000,
-                note: 'TRC20 Blockchain Transfer',
-                timestamp: '2025-02-21T14:22:00.000Z'
-            }
-        ]
     }
 
     // ── User Methods ──────────────────────────────────────────
@@ -501,11 +275,12 @@ class Database {
             role: 'player',
             status: 'active',
             balances: {
-                INR: 10000.00, // Free 10,000 INR practice wallet
+                INR: 100.00, // ₹100 Welcome Bonus to start playing!
                 BTC: 0.0000,
                 USDT: 0.00,
-                AMRAT: 500.00, // 500 Welcome AMRAT Tokens
+                AMRAT: 0.00,
             },
+            totalDeposited: 0, // Enforces ₹300 minimum deposit before withdrawal
             isBanned: false,
             kycStatus: 'unverified',
             phone: userData.phone ? normalizePhone(userData.phone) : '',
@@ -514,14 +289,31 @@ class Database {
             createdAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString(),
             avatar: '👤',
+            passwordHash: userData.passwordHash || bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10),
             ...userData
         }
+
+        // Automatic ₹100 Welcome Bonus Transaction record
+        const bonusTx = {
+            id: 'tx_bonus_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            userId: id,
+            username: newUser.username,
+            type: 'credit',
+            currency: 'INR',
+            amount: 100.00,
+            balanceAfter: 100.00,
+            note: '🎁 Welcome Bonus: ₹100 Free Sign-Up Reward',
+            timestamp: new Date().toISOString()
+        }
+
         this.data.users.push(newUser)
+        this.data.transactions.unshift(bonusTx)
         this.updateTreasurySupply()
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
             supabaseSync.syncUser(newUser).catch(() => {})
+            supabaseSync.syncTransaction(bonusTx).catch(() => {})
         }
 
         return newUser

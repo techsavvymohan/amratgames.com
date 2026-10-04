@@ -88,18 +88,6 @@ export default function LockScreen({
                     Sign In
                 </button>
             </form>
-
-            <div style={{ margin: '20px 0 10px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
-                <div style={{ fontSize: '0.74rem', color: '#64748b', marginBottom: '8px' }}>
-                    DEMO ACCESS
-                </div>
-                <button type="button" className="btn-quick-admin" onClick={onQuickAdmin}>
-                    Quick Demo Login
-                </button>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '8px' }}>
-                    Demo: <strong>9876500001</strong> / <strong>AdminPassword123!</strong>
-                </div>
-            </div>
         </div>
     )
 }

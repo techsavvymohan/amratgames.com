@@ -8,9 +8,13 @@ const router = express.Router()
 router.get('/balance', requireAuth, (req, res) => {
     try {
         const user = db.findUserById(req.user.id)
+        const totalDeposited = user?.totalDeposited || 0
         res.json({
             success: true,
-            balances: user.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+            balances: user?.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 },
+            totalDeposited,
+            minDepositRequired: 300,
+            canWithdraw: totalDeposited >= 300
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -27,6 +31,9 @@ router.post('/deposit', requireAuth, (req, res) => {
             return res.status(400).json({ success: false, error: 'Valid deposit amount required' })
         }
 
+        const user = db.findUserById(req.user.id)
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' })
+
         const result = db.updateUserBalance(
             req.user.id,
             currency,
@@ -34,10 +41,16 @@ router.post('/deposit', requireAuth, (req, res) => {
             `Deposit via ${paymentMethod}`
         )
 
+        // Accumulate user's total deposits
+        const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + parsedAmount).toFixed(2))
+        db.updateUser(user.id, { totalDeposited: newTotalDeposit })
+
         res.json({
             success: true,
-            message: `Deposited ${currency} ${parsedAmount.toLocaleString()} successfully!`,
+            message: `Deposited ${currency} ${parsedAmount.toLocaleString('en-IN')} successfully!`,
             balances: result.user.balances,
+            totalDeposited: newTotalDeposit,
+            canWithdraw: newTotalDeposit >= 300,
             transaction: result.transaction
         })
     } catch (err) {
@@ -56,23 +69,43 @@ router.post('/withdraw', requireAuth, (req, res) => {
         }
 
         const user = db.findUserById(req.user.id)
-        const currentBal = user.balances?.[currency] || 0
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' })
 
+        // ── Rule: User must deposit minimum ₹300 before requesting any withdrawal ──
+        const totalDeposited = user.totalDeposited || 0
+        if (totalDeposited < 300) {
+            const needed = 300 - totalDeposited
+            return res.status(400).json({
+                success: false,
+                error: `Minimum deposit of ₹300 is required before making a withdrawal. You have currently deposited ₹${totalDeposited}. Please deposit at least ₹${needed} more to activate withdrawals.`,
+                code: 'MINIMUM_DEPOSIT_REQUIRED',
+                requiredDeposit: 300,
+                currentDeposited: totalDeposited,
+                remainingNeeded: needed
+            })
+        }
+
+        const currentBal = user.balances?.[currency] || 0
         if (parsedAmount > currentBal) {
-            return res.status(400).json({ success: false, error: `Insufficient ${currency} balance` })
+            return res.status(400).json({
+                success: false,
+                error: `Insufficient ${currency} balance (Available: ${currency} ${currentBal.toLocaleString('en-IN')})`
+            })
         }
 
         const result = db.updateUserBalance(
             req.user.id,
             currency,
             -parsedAmount,
-            `Withdrawal to ${payoutDestination || 'Registered UPI / Address'}`
+            `Withdrawal to ${payoutDestination || 'Registered UPI / Bank'}`
         )
 
         res.json({
             success: true,
-            message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString()} submitted successfully!`,
+            message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully!`,
             balances: result.user.balances,
+            totalDeposited,
+            canWithdraw: true,
             transaction: result.transaction
         })
     } catch (err) {

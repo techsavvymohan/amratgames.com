@@ -101,10 +101,7 @@ router.post('/send-otp', (req, res) => {
             success: true,
             message: `OTP sent to ${isEmail ? cleanId : '+91 ' + normalizedPhone}`,
             target,
-            expiresAt,
-            // Exposed for automated QA & local demo testing without paid SMS gateway
-            devOtp: otp,
-            demoBypassCode: '777777'
+            expiresAt
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -179,7 +176,7 @@ router.post('/verify-otp', (req, res) => {
             user: sanitizeUser(user),
             isNewUser,
             message: isNewUser
-                ? `Welcome, ${user.username}!`
+                ? `🎉 Welcome, ${user.username}! ₹100 Welcome Bonus has been credited to your wallet!`
                 : `Welcome back, ${user.username}!`
         })
     } catch (err) {
@@ -256,7 +253,7 @@ router.post('/register', (req, res) => {
             success: true,
             token,
             user: sanitizeUser(newUser),
-            message: 'Registration successful! ₹10,000 + 500 $AMRAT welcome bonus credited.'
+            message: '🎉 Registration successful! ₹100 Welcome Bonus has been credited to your wallet!'
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -270,37 +267,6 @@ router.get('/me', requireAuth, (req, res) => {
         success: true,
         user: sanitizeUser(req.user)
     })
-})
-
-// ── 6. Instant Demo / Test Sign-In ─────────────────────────
-// POST /api/auth/quick-demo-login
-router.post('/quick-demo-login', (req, res) => {
-    try {
-        const { role = 'player', username = 'aarav_king' } = req.body
-
-        let targetUser = null
-        if (role === 'admin') {
-            targetUser = db.data.users.find(u => u.role === 'admin')
-        } else {
-            targetUser = db.findUserByUsername(username) || db.data.users.find(u => u.role === 'player' && !u.isBanned)
-        }
-
-        if (!targetUser) {
-            return res.status(404).json({ success: false, error: 'Target demo account not found' })
-        }
-
-        db.updateUser(targetUser.id, { lastLoginAt: new Date().toISOString() })
-        const token = generateToken(targetUser)
-
-        res.json({
-            success: true,
-            token,
-            user: sanitizeUser(targetUser),
-            message: `Authenticated as ${targetUser.username} (${targetUser.role})`
-        })
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message })
-    }
 })
 
 // ── 6. Contact & Support Inquiry Route ────────────────────

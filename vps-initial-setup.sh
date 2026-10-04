@@ -24,15 +24,16 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-# 4. Clone AmratGames Repository
+# 4. Extract or Clone AmratGames Repository
 mkdir -p /var/www/amratgames.com
-if [ ! -d "/var/www/amratgames.com/.git" ]; then
-    git clone https://github.com/techsavvymohan/amratgames.com.git /var/www/amratgames.com
+if [ -f "/tmp/amratgames-deploy.tar.gz" ]; then
+    echo "▶ Extracting direct deployment bundle to /var/www/amratgames.com..."
+    tar -xzf /tmp/amratgames-deploy.tar.gz -C /var/www/amratgames.com
+elif [ ! -d "/var/www/amratgames.com/.git" ]; then
+    git clone https://github.com/techsavvymohan/amratgames.com.git /var/www/amratgames.com 2>/dev/null || true
 fi
 
 cd /var/www/amratgames.com
-git fetch origin main
-git reset --hard origin/main
 
 # 5. Install & Build
 pnpm install

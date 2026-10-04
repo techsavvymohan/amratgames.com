@@ -11,9 +11,7 @@ export default function AuthModal() {
         login,
         sendOtp,
         verifyOtp,
-        register,
-        quickAdminLogin,
-        quickPlayerLogin
+        register
     } = useAuth()
 
     // ── Mode Switch & Reset ──
@@ -116,13 +114,11 @@ export default function AuthModal() {
             const res = await sendOtp(targetId.trim())
             if (isForRegister) {
                 setRegOtpSent(true)
-                setRegOtpNotice(res.devOtp || res.demoBypassCode || '777777')
             } else {
                 setOtpSent(true)
-                setOtpNotice(res.devOtp || res.demoBypassCode || '777777')
                 setResendCountdown(30)
             }
-            setSuccessMsg(res.message || 'Verification OTP dispatched!')
+            setSuccessMsg(res.message || 'Verification OTP sent!')
         } catch (err) {
             setErrorMsg(err.message || 'Failed to dispatch verification OTP')
         } finally {
@@ -366,13 +362,6 @@ export default function AuthModal() {
                             </button>
                         ) : (
                             <>
-                                {/* QA Demo OTP Hint Banner */}
-                                {otpNotice && (
-                                    <div className="amrat-alert-info">
-                                        <span>Demo Code: <strong>{otpNotice}</strong></span>
-                                    </div>
-                                )}
-
                                 <div className="amrat-form-group">
                                     <label className="amrat-form-label">
                                         <span>Enter OTP</span>
@@ -514,11 +503,6 @@ export default function AuthModal() {
                                             value={regOtp}
                                             onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ''))}
                                         />
-                                        {regOtpNotice && (
-                                            <small style={{ color: '#93c5fd', marginTop: '4px', display: 'block' }}>
-                                                Demo Code: <strong>{regOtpNotice}</strong>
-                                            </small>
-                                        )}
                                     </>
                                 )}
                             </div>
@@ -533,29 +517,6 @@ export default function AuthModal() {
                         </button>
                     </form>
                 )}
-
-                {/* ══════════════════════════════════════════════════════════
-                    INSTANT QA / DEMO LOGIN SHORTCUTS
-                   ══════════════════════════════════════════════════════════ */}
-                <div className="amrat-demo-shortcuts">
-                    <div className="amrat-demo-title">Quick Demo Logins</div>
-                    <div className="amrat-demo-grid">
-                        <button
-                            type="button"
-                            className="amrat-demo-btn"
-                            onClick={() => quickPlayerLogin('aarav_king')}
-                        >
-                            👤 VIP Player
-                        </button>
-                        <button
-                            type="button"
-                            className="amrat-demo-btn"
-                            onClick={() => quickAdminLogin()}
-                        >
-                            👑 Master Admin
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     )

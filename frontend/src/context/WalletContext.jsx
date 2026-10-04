@@ -9,8 +9,8 @@ export const CURRENCIES = {
         symbol: '₹',
         name: 'Indian Rupee',
         flag: '🇮🇳',
-        initial: 10000.00,
-        presets: [500, 1000, 2500, 5000, 10000],
+        initial: 100.00, // ₹100 Free Welcome Bonus for every new player
+        presets: [300, 500, 1000, 2500, 5000],
         minBet: 10,
         maxBet: 100000,
         step: 50,
@@ -21,7 +21,7 @@ export const CURRENCIES = {
         symbol: '₿',
         name: 'Bitcoin Crypto',
         flag: '₿',
-        initial: 1000.00,
+        initial: 0.00,
         presets: [100, 500, 1000, 5000],
         minBet: 1,
         maxBet: 10000,
@@ -33,7 +33,7 @@ export const CURRENCIES = {
         symbol: '₮',
         name: 'USDT Tether',
         flag: '₮',
-        initial: 1000.00,
+        initial: 0.00,
         presets: [100, 500, 1000, 5000],
         minBet: 1,
         maxBet: 10000,
@@ -45,7 +45,7 @@ export const CURRENCIES = {
         symbol: '👑',
         name: 'Amrat Royal Token ($AMRAT)',
         flag: '👑',
-        initial: 500.00,
+        initial: 0.00,
         presets: [100, 250, 500, 1000, 2500],
         minBet: 10,
         maxBet: 50000,
@@ -70,10 +70,10 @@ function getStoredBalance(currencyId) {
         const stored = localStorage.getItem(`${STORAGE_KEY_BALANCE}_${currencyId}`)
         if (stored !== null) {
             const parsed = parseFloat(stored)
-            return isNaN(parsed) ? (CURRENCIES[currencyId]?.initial || 10000.00) : parsed
+            return isNaN(parsed) ? (CURRENCIES[currencyId]?.initial ?? 100.00) : parsed
         }
     } catch (e) { /* ignore */ }
-    return CURRENCIES[currencyId]?.initial || 10000.00
+    return CURRENCIES[currencyId]?.initial ?? 100.00
 }
 
 export function WalletProvider({ children }) {
@@ -83,11 +83,12 @@ export function WalletProvider({ children }) {
 
     const [currency, setCurrencyState] = useState(getStoredCurrency)
     const [balance, setBalance] = useState(() => getStoredBalance(getStoredCurrency()))
+    const [totalDeposited, setTotalDeposited] = useState(0)
     const balanceRef = useRef(balance)
     const currencyRef = useRef(currency)
     const [transactions, setTransactions] = useState([])
 
-    // Synchronize balance from authenticated user record
+    // Synchronize balance and deposit stats from authenticated user record
     useEffect(() => {
         if (user && user.balances) {
             const userBal = user.balances[currencyRef.current]
@@ -98,6 +99,9 @@ export function WalletProvider({ children }) {
                 try {
                     localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyRef.current}`, rounded.toString())
                 } catch { /* ignore */ }
+            }
+            if (typeof user.totalDeposited === 'number') {
+                setTotalDeposited(user.totalDeposited)
             }
         }
     }, [user, currency])
@@ -233,7 +237,7 @@ export function WalletProvider({ children }) {
 
         if (token) {
             try {
-                await fetch('/api/wallet/deposit', {
+                const res = await fetch('/api/wallet/deposit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -245,26 +249,74 @@ export function WalletProvider({ children }) {
                         paymentMethod: method
                     })
                 })
+                const data = await res.json()
+                if (data.success && typeof data.totalDeposited === 'number') {
+                    setTotalDeposited(data.totalDeposited)
+                }
             } catch {
                 // local fallback maintained
             }
+        } else {
+            setTotalDeposited(prev => prev + amt)
         }
-    }, [setStoredBalance, token])
+        showToast('success', 'Deposit Successful', `+${currencySymbol}${amt.toLocaleString('en-IN')} added to wallet`)
+    }, [setStoredBalance, token, currencySymbol, showToast])
 
-    // Reset balance to initial
-    const resetBalance = useCallback(() => {
-        const initial = CURRENCIES[currencyRef.current]?.initial || 10000.00
-        updateBalance(initial)
+    // Withdraw funds (Enforces ₹300 minimum deposit condition)
+    const withdraw = useCallback(async (amount, payoutDestination) => {
+        const amt = parseFloat(amount)
+        if (isNaN(amt) || amt <= 0) {
+            showToast('error', 'Invalid Amount', 'Please enter a valid amount to withdraw')
+            throw new Error('Please enter a valid withdrawal amount')
+        }
+
+        if (totalDeposited < 300) {
+            const needed = 300 - totalDeposited
+            const msg = `Minimum deposit of ₹300 required before requesting withdrawal. You have deposited ₹${totalDeposited}. Please deposit ₹${needed} more to activate withdrawals.`
+            showToast('error', 'Deposit Required', msg)
+            throw new Error(msg)
+        }
+
+        if (amt > balanceRef.current) {
+            showToast('error', 'Insufficient Balance', `Your current balance is ${currencySymbol}${balanceRef.current.toFixed(2)}`)
+            throw new Error('Insufficient wallet balance')
+        }
+
+        if (token) {
+            const res = await fetch('/api/wallet/withdraw', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currency: currencyRef.current,
+                    amount: amt,
+                    payoutDestination: payoutDestination || 'Registered UPI / Bank'
+                })
+            })
+            const data = await res.json()
+            if (!res.ok || !data.success) {
+                const err = data.error || 'Failed to submit withdrawal request'
+                showToast('error', 'Withdrawal Rejected', err)
+                throw new Error(err)
+            }
+        }
+
+        const newBal = setStoredBalance(balanceRef.current - amt)
         setTransactions(txs => [{
             id: Date.now(),
-            type: 'reset',
+            type: 'withdrawal',
             currency: currencyRef.current,
             symbol: CURRENCIES[currencyRef.current].symbol,
-            amount: initial,
-            balance: initial,
+            amount: -amt,
+            balance: newBal,
             timestamp: new Date(),
         }, ...txs].slice(0, 100))
-    }, [updateBalance])
+
+        showToast('success', 'Withdrawal Requested', `Withdrawal for ${currencySymbol}${amt.toLocaleString('en-IN')} has been submitted!`)
+        return { success: true, balance: newBal }
+    }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 
     const notifyWin = useCallback((amount, mult) => {
         const multText = mult ? ` (${Number(mult).toFixed(2)}x)` : ''
@@ -286,7 +338,10 @@ export function WalletProvider({ children }) {
         placeBet,
         addWinnings,
         deposit,
-        resetBalance,
+        withdraw,
+        totalDeposited,
+        minDepositRequired: 300,
+        canWithdraw: totalDeposited >= 300,
         updateBalance,
         recordGameRound,
         notifyWin,
