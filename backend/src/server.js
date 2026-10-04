@@ -6,6 +6,7 @@ import { authenticate } from './middleware/auth.js'
 import { initWebSocketServer, broadcastEvent } from './websocket.js'
 import { db } from './db/db.js'
 import { testSupabaseConnection } from './db/SupabaseClient.js'
+import { emailService } from './services/EmailService.js'
 
 import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
@@ -44,6 +45,15 @@ app.get('/api/health', (req, res) => {
 // Supabase Connection Health Check
 app.get('/api/health/supabase', async (req, res) => {
     const status = await testSupabaseConnection()
+    res.json({
+        success: status.ok,
+        ...status
+    })
+})
+
+// Spacemail SMTP Connection Health Check
+app.get('/api/health/smtp', async (req, res) => {
+    const status = await emailService.verifyConnection()
     res.json({
         success: status.ok,
         ...status

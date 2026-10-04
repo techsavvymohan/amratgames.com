@@ -20,9 +20,12 @@ class EmailService {
                     auth: {
                         user: CONFIG.SMTP_USER,
                         pass: CONFIG.SMTP_PASS
+                    },
+                    tls: {
+                        rejectUnauthorized: false
                     }
                 })
-                console.log(`[EMAIL] SMTP transporter initialized for ${CONFIG.SUPPORT_EMAIL} via ${CONFIG.SMTP_HOST}`)
+                console.log(`[EMAIL] SMTP transporter initialized for ${CONFIG.SUPPORT_EMAIL} via ${CONFIG.SMTP_HOST}:${CONFIG.SMTP_PORT}`)
             } catch (err) {
                 console.error('[EMAIL] Failed to initialize SMTP transporter:', err.message)
                 this.transporter = null
@@ -34,6 +37,41 @@ class EmailService {
 
     isSmtpConfigured() {
         return Boolean(this.transporter)
+    }
+
+    /**
+     * Test SMTP connectivity and verify credentials with the mail server
+     */
+    async verifyConnection() {
+        if (!this.transporter) {
+            return {
+                ok: false,
+                configured: false,
+                message: `SMTP not configured in .env (SMTP_HOST=${CONFIG.SMTP_HOST || 'not set'}, SMTP_PASS=${CONFIG.SMTP_PASS ? 'set' : 'not set'})`
+            }
+        }
+
+        const start = Date.now()
+        try {
+            await this.transporter.verify()
+            const latencyMs = Date.now() - start
+            return {
+                ok: true,
+                configured: true,
+                latencyMs,
+                host: CONFIG.SMTP_HOST,
+                port: CONFIG.SMTP_PORT,
+                user: CONFIG.SMTP_USER,
+                message: `Connected successfully to Spacemail SMTP (${CONFIG.SMTP_HOST}:${CONFIG.SMTP_PORT}) in ${latencyMs}ms!`
+            }
+        } catch (err) {
+            return {
+                ok: false,
+                configured: true,
+                error: err.message,
+                message: `SMTP verification failed: ${err.message}`
+            }
+        }
     }
 
     /**
