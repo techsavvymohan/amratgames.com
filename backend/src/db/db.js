@@ -155,7 +155,8 @@ class Database {
     }
 
     findUserByEmail(email) {
-        return this.data.users.find(u => u.email.toLowerCase() === email.toLowerCase())
+        if (!email) return null
+        return this.data.users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase())
     }
 
     findUserByUsername(username) {
@@ -261,9 +262,9 @@ class Database {
         if (filters.search) {
             const s = filters.search.toLowerCase()
             users = users.filter(u =>
-                u.username.toLowerCase().includes(s) ||
-                u.email.toLowerCase().includes(s) ||
-                u.id.toLowerCase().includes(s)
+                (u.username && u.username.toLowerCase().includes(s)) ||
+                (u.email && u.email.toLowerCase().includes(s)) ||
+                (u.id && u.id.toLowerCase().includes(s))
             )
         }
         if (filters.role) {
