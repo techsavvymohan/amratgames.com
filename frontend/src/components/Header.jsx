@@ -362,29 +362,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                     </select>
                 </label>
 
-                {/* Admin Portal Button */}
-                <Link
-                    to="/admin"
-                    title="Platform Admin Dashboard"
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '5px 11px',
-                        borderRadius: '6px',
-                        background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.18), rgba(212, 145, 16, 0.08))',
-                        border: '1px solid rgba(245, 175, 25, 0.45)',
-                        color: '#fbbf24',
-                        fontWeight: 700,
-                        fontSize: '12px',
-                        textDecoration: 'none',
-                        boxShadow: '0 0 10px rgba(245, 175, 25, 0.2)',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <span>👑</span>
-                    <span className="admin-btn-label">Admin</span>
-                </Link>
+
 
                 {/* Theme Palette Switcher */}
                 <label className="palette-select-label">
@@ -441,12 +419,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                         </div>
                                     )}
                                 </div>
-                                {user.role === 'admin' && (
-                                    <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
-                                        <span>👑</span>
-                                        <span>Admin Panel</span>
-                                    </Link>
-                                )}
+
                                 <button
                                     type="button"
                                     className="amrat-user-dropdown-action logout"
@@ -495,12 +468,7 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                         </div>
                                     )}
                                 </div>
-                                {user.role === 'admin' && (
-                                    <Link to="/admin" className="amrat-user-dropdown-action" onClick={() => setShowUserDropdown(false)}>
-                                        <span>👑</span>
-                                        <span>Admin Panel</span>
-                                    </Link>
-                                )}
+
                                 <button
                                     type="button"
                                     className="amrat-user-dropdown-action logout"

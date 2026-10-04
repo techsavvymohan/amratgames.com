@@ -254,29 +254,7 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                     ))}
                 </div>
                 <div style={{ marginBottom: '20px' }}>
-                    <NavLink
-                        to="/admin"
-                        onClick={onClose}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            padding: '12px 14px',
-                            background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(212, 145, 16, 0.12))',
-                            border: '1px solid rgba(245, 175, 25, 0.45)',
-                            borderRadius: '10px',
-                            color: '#fbbf24',
-                            fontWeight: 700,
-                            fontSize: '0.9rem',
-                            textDecoration: 'none',
-                            boxShadow: '0 4px 14px rgba(245, 175, 25, 0.15)',
-                            minHeight: '44px'
-                        }}
-                    >
-                        <span>👑</span>
-                        <span>Admin Panel</span>
-                    </NavLink>
+
                     <a
                         href="mailto:support@amratgames.com"
                         style={{
