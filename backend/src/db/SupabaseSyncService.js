@@ -59,7 +59,11 @@ export class SupabaseSyncService {
                 }))
 
                 if (balanceEntries.length > 0) {
-                    await client.from('user_balances').upsert(balanceEntries, { onConflict: 'user_id,currency' }).catch(() => {})
+                    try {
+                        await client.from('user_balances').upsert(balanceEntries, { onConflict: 'user_id,currency' })
+                    } catch {
+                        // non-fatal
+                    }
                 }
             }
 
@@ -123,11 +127,11 @@ export class SupabaseSyncService {
             const payload = {
                 id: tx.id,
                 user_id: tx.userId,
-                username: tx.username,
+                username: tx.username || 'Player',
                 type: tx.type,
                 currency: tx.currency,
                 amount: tx.amount,
-                balance_after: tx.balanceAfter,
+                balance_after: typeof tx.balanceAfter === 'number' ? tx.balanceAfter : (parseFloat(tx.balanceAfter) || tx.amount || 0),
                 note: tx.note || null,
                 payment_method: tx.paymentMethod || null,
                 status: tx.status || 'completed',
@@ -136,7 +140,7 @@ export class SupabaseSyncService {
 
             const { data, error } = await client
                 .from('transactions')
-                .insert([payload])
+                .upsert(payload, { onConflict: 'id' })
                 .select()
                 .single()
 
@@ -175,7 +179,7 @@ export class SupabaseSyncService {
 
             const { data, error } = await client
                 .from('airdrops')
-                .insert([payload])
+                .upsert(payload, { onConflict: 'id' })
                 .select()
                 .single()
 
@@ -315,11 +319,11 @@ export class SupabaseSyncService {
             const validTxs = localData.transactions.map(tx => ({
                 id: tx.id,
                 user_id: tx.userId,
-                username: tx.username,
+                username: tx.username || (localData.users?.find(u => u.id === tx.userId)?.username) || 'Player',
                 type: tx.type,
                 currency: tx.currency,
                 amount: tx.amount,
-                balance_after: tx.balanceAfter,
+                balance_after: typeof tx.balanceAfter === 'number' ? tx.balanceAfter : (parseFloat(tx.balanceAfter) || tx.amount || 0),
                 note: tx.note || null,
                 payment_method: tx.paymentMethod || null,
                 status: tx.status || 'completed',
