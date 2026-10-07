@@ -27,10 +27,8 @@ test('mobile shell exposes drawer, compact header, and five-route bottom navigat
     assert.match(header, /ref=\{menuButtonRef\}/)
     assert.match(navigation, /afterOpenChange=/)
     assert.match(header, /className="mobile-wallet-balance"/)
-    assert.match(header, /aria-expanded=\{showWalletDropdown\}/)
-    assert.match(header, /setShowWalletDropdown\(!showWalletDropdown\)/)
+    assert.match(header, /openWalletModal\('deposit'\)/)
     assert.match(header, /!isGamePage &&/)
-    assert.equal((header.match(/className="wallet-dropdown"/g) || []).length, 1)
     assert.match(navigation, /aria-label="Primary navigation"/)
     assert.match(navigation, /const primaryRoutes = \[/)
     assert.match(navigation, /path: '\/'/)
@@ -40,6 +38,7 @@ test('mobile shell exposes drawer, compact header, and five-route bottom navigat
     assert.match(globalCss, /height:\s*100dvh/)
     assert.match(globalCss, /padding-bottom:\s*var\(--mobile-nav-space\)/)
 })
+
 
 test('Home uses compact mobile hero, category rail, and adaptive card grid', async () => {
     const css = await source('./src/styles/home.css')
@@ -60,9 +59,10 @@ test('Mines keeps the square board ahead of a collapsible betting sheet', async 
     assert.match(component, /rootClassName="mines-fairness-modal-portal mobile-game-modal"/)
     assert.match(component, /rootClassName="mines-history-modal-portal mobile-game-modal"/)
     assert.match(css, /\.mines-display\s*\{[^}]*aspect-ratio:\s*1/s)
-    assert.match(css, /\.mines-bet-sheet\[data-state='collapsed'\]/)
+    assert.match(css, /\.mines-bet-sheet .mines-sidebar/)
     assert.match(css, /@media\s*\(max-width:\s*768px\)/)
 })
+
 
 test('Crash prioritizes chart, cashout, and mobile player tabs', async () => {
     const [game, panel, history, css] = await sources([
@@ -126,7 +126,8 @@ test('mobile bet sheet owns collapse, escape, focus, and scroll-lock behavior', 
     assert.match(component, /backgroundNode\.inert = true/)
     assert.match(component, /aria-modal=/)
     assert.match(component, /mobile-overlay-open/)
-    assert.match(css, /position:\s*fixed/)
-    assert.match(css, /bottom:\s*var\(--mobile-nav-space\)/)
+    assert.match(css, /position:\s*static/)
+    assert.match(css, /\.mobile-bet-sheet\[data-state='collapsed'\]/)
     assert.match(css, /prefers-reduced-motion/)
 })
+

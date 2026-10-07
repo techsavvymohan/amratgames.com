@@ -269,6 +269,128 @@ router.get('/me', requireAuth, (req, res) => {
     })
 })
 
+// ── 5B. Player Profile & KYC Verification ─────────────────
+// GET /api/auth/profile
+router.get('/profile', requireAuth, (req, res) => {
+    res.json({
+        success: true,
+        profile: sanitizeUser(req.user)
+    })
+})
+
+// PUT /api/auth/profile
+router.put('/profile', requireAuth, (req, res) => {
+    try {
+        const { firstName, lastName, dob, gender, country, city, newsletter } = req.body
+        const updates = {}
+        if (firstName !== undefined) updates.firstName = String(firstName).trim()
+        if (lastName !== undefined) updates.lastName = String(lastName).trim()
+        if (dob !== undefined) updates.dob = dob
+        if (gender !== undefined) updates.gender = String(gender).trim()
+        if (country !== undefined) updates.country = String(country).trim()
+        if (city !== undefined) updates.city = String(city).trim()
+        if (newsletter !== undefined) updates.newsletter = Boolean(newsletter)
+
+        const updated = db.updateUser(req.user.id, updates)
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            message: 'Profile data updated successfully!'
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/auth/change-password
+router.post('/change-password', requireAuth, (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ success: false, error: 'Current password and new password are required' })
+        }
+        if (String(newPassword).length < 6) {
+            return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' })
+        }
+
+        const valid = bcrypt.compareSync(oldPassword, req.user.passwordHash)
+        if (!valid) {
+            return res.status(401).json({ success: false, error: 'Current password is incorrect' })
+        }
+
+        const salt = bcrypt.genSaltSync(10)
+        const passwordHash = bcrypt.hashSync(newPassword, salt)
+        db.updateUser(req.user.id, { passwordHash })
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully!'
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/auth/verify-profile (KYC Verification)
+router.post('/verify-profile', requireAuth, (req, res) => {
+    try {
+        const { documentType, documentNumber, fullName } = req.body
+        if (!documentType || !documentNumber) {
+            return res.status(400).json({ success: false, error: 'Document type and document number are required' })
+        }
+
+        const updates = {
+            kycStatus: 'verified',
+            kycDocumentType: String(documentType).toUpperCase(),
+            kycDocumentNumber: String(documentNumber).trim(),
+            kycSubmittedAt: new Date().toISOString(),
+            kycVerifiedAt: new Date().toISOString()
+        }
+        if (fullName) {
+            const parts = fullName.trim().split(' ')
+            updates.firstName = parts[0] || req.user.firstName || ''
+            if (parts.length > 1) updates.lastName = parts.slice(1).join(' ')
+        }
+
+        const updated = db.updateUser(req.user.id, updates)
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            message: '🎉 Account Verified! Level 2 KYC unlocked for fast payouts.'
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// GET /api/auth/bets-history
+router.get('/bets-history', requireAuth, (req, res) => {
+    try {
+        const bets = db.getUserBets(req.user.id, 50)
+        res.json({
+            success: true,
+            bets
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// GET /api/auth/payments-history
+router.get('/payments-history', requireAuth, (req, res) => {
+    try {
+        const transactions = db.getUserTransactions(req.user.id, 50)
+        const withdrawals = db.getAllWithdrawals({ userId: req.user.id })
+        res.json({
+            success: true,
+            transactions,
+            withdrawals
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
 // ── 6. Contact & Support Inquiry Route ────────────────────
 // POST /api/auth/contact
 router.post('/contact', async (req, res) => {

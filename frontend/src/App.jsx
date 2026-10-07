@@ -22,6 +22,7 @@ const LimboPage = lazy(loadLimbo)
 const DragonTigerPage = lazy(loadDragonTiger)
 const ColorMatchPage = lazy(loadColorMatch)
 const AdminPage = lazy(loadAdmin)
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -74,6 +75,7 @@ function App() {
                             <Route path="limbo" element={<LimboPage />} />
                             <Route path="dragon-tiger" element={<DragonTigerPage />} />
                             <Route path="color-match" element={<ColorMatchPage />} />
+                            <Route path="profile" element={<ProfilePage />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}

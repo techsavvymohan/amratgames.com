@@ -1,4 +1,4 @@
-import { UserModel, AirdropModel, TreasuryModel } from '../models/AdminModels.js'
+import { UserModel, AirdropModel, TreasuryModel, WithdrawalModel } from '../models/AdminModels.js'
 
 /**
  * AdminApiClient — OOP Service for interacting with AmratGames Admin API
@@ -72,6 +72,47 @@ export class AdminApiClient {
         const data = await res.json()
         if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update status')
         return new UserModel(data.user)
+    }
+
+    async getWithdrawals(filters = {}) {
+        const queryParams = new URLSearchParams()
+        if (filters.status && filters.status !== 'all') queryParams.set('status', filters.status)
+        if (filters.search) queryParams.set('search', filters.search)
+        if (filters.userId) queryParams.set('userId', filters.userId)
+
+        const res = await fetch(`${this.baseUrl}/withdrawals?${queryParams.toString()}`, { headers: this._getHeaders() })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to fetch withdrawals')
+        return (data.withdrawals || []).map(w => new WithdrawalModel(w))
+    }
+
+    async getWithdrawalStats() {
+        const res = await fetch(`${this.baseUrl}/withdrawals/stats`, { headers: this._getHeaders() })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to fetch withdrawal stats')
+        return data.stats
+    }
+
+    async approveWithdrawal(id, { transactionRef, adminNote } = {}) {
+        const res = await fetch(`${this.baseUrl}/withdrawals/${id}/approve`, {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({ transactionRef, adminNote })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to approve withdrawal')
+        return new WithdrawalModel(data.withdrawal)
+    }
+
+    async rejectWithdrawal(id, { rejectionReason, adminNote } = {}) {
+        const res = await fetch(`${this.baseUrl}/withdrawals/${id}/reject`, {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({ rejectionReason, adminNote })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to reject withdrawal')
+        return new WithdrawalModel(data.withdrawal)
     }
 
     async distributeTokens(payload) {

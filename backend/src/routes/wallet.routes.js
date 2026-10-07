@@ -104,30 +104,39 @@ router.post('/withdraw', requireAuth, (req, res) => {
         }
 
         const destNote = payoutMethod === 'BANK' && bankDetails
-            ? `Bank A/C: ${bankDetails.accountNumber || ''} (${bankDetails.ifsc || ''})`
+            ? `Bank A/C: ${bankDetails.accountNumber || ''} (${bankDetails.ifsc || ''}) - ${bankDetails.holder || ''}`
             : (payoutDestination || 'Registered UPI')
 
-        const result = db.updateUserBalance(
-            req.user.id,
+        const result = db.requestWithdrawal({
+            userId: req.user.id,
             currency,
-            -parsedAmount,
-            `Withdrawal to ${destNote}`
-        )
-
-        if (result?.transaction) {
-            result.transaction.payoutMethod = payoutMethod
-            result.transaction.payoutDestination = payoutDestination
-            if (bankDetails) result.transaction.bankDetails = bankDetails
-            db.persist()
-        }
+            amount: parsedAmount,
+            payoutMethod,
+            payoutDestination: destNote,
+            bankDetails
+        })
 
         res.json({
             success: true,
-            message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully!`,
+            message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! Your request is pending admin cashier review.`,
             balances: result.user.balances,
             totalDeposited,
             canWithdraw: true,
+            withdrawal: result.withdrawal,
             transaction: result.transaction
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// GET /api/wallet/withdrawals
+router.get('/withdrawals', requireAuth, (req, res) => {
+    try {
+        const userWithdrawals = db.getAllWithdrawals({ userId: req.user.id })
+        res.json({
+            success: true,
+            withdrawals: userWithdrawals
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })

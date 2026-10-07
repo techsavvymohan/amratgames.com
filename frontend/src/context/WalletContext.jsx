@@ -93,6 +93,39 @@ export function WalletProvider({ children }) {
     const balanceRef = useRef(balance)
     const currencyRef = useRef(currency)
     const [transactions, setTransactions] = useState([])
+    const [userWithdrawals, setUserWithdrawals] = useState([])
+
+    // Fetch user's submitted withdrawal requests
+    const refreshWithdrawals = useCallback(async () => {
+        if (!token) return
+        try {
+            const res = await fetch('/api/wallet/withdrawals', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (data.success && Array.isArray(data.withdrawals)) {
+                setUserWithdrawals(data.withdrawals)
+            }
+        } catch {
+            // non-fatal
+        }
+    }, [token])
+
+    // Fetch user's transaction history from server
+    const refreshTransactions = useCallback(async () => {
+        if (!token) return
+        try {
+            const res = await fetch('/api/wallet/transactions', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (data.success && Array.isArray(data.transactions)) {
+                setTransactions(data.transactions)
+            }
+        } catch {
+            // non-fatal
+        }
+    }, [token])
 
     // Synchronize balance and deposit stats from authenticated user record
     useEffect(() => {
@@ -111,7 +144,11 @@ export function WalletProvider({ children }) {
                 setTotalDeposited(user.totalDeposited)
             }
         }
-    }, [user, currency])
+        if (token) {
+            refreshWithdrawals()
+            refreshTransactions()
+        }
+    }, [user, currency, token, refreshWithdrawals, refreshTransactions])
 
     // Toast system
     const [toasts, setToasts] = useState([])
@@ -137,9 +174,13 @@ export function WalletProvider({ children }) {
         setBalance(curBal)
     }, [user])
 
-    const showToast = useCallback((type, title, description, duration = 3000) => {
+    const showToast = useCallback((type, title, description, duration = 1800) => {
         const id = ++toastIdRef.current
-        setToasts(prev => [...prev, { id, type, title, description }])
+        setToasts(prev => {
+            // Keep at most 1 active toast so notifications never stack into a wall
+            const trimmed = prev.slice(-1)
+            return [...trimmed, { id, type, title, description }]
+        })
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id))
         }, duration)
@@ -343,6 +384,9 @@ export function WalletProvider({ children }) {
                 showToast('error', 'Withdrawal Rejected', err)
                 throw new Error(err)
             }
+            if (data.withdrawal) {
+                setUserWithdrawals(prev => [data.withdrawal, ...prev.filter(w => w.id !== data.withdrawal.id)])
+            }
             if (data.balances?.[currencyRef.current] !== undefined) {
                 newBal = setStoredBalance(data.balances[currencyRef.current])
             } else {
@@ -360,20 +404,21 @@ export function WalletProvider({ children }) {
             amount: -amt,
             balance: newBal,
             payoutDestination,
+            status: 'pending',
             timestamp: new Date(),
         }, ...txs].slice(0, 100))
 
         showToast('success', 'Withdrawal Requested', `Withdrawal for ${currencySymbol}${amt.toLocaleString('en-IN')} has been submitted!`)
-        return { success: true, balance: newBal }
+        return { success: true, balance: newBal, withdrawal: data?.withdrawal }
     }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 
     const notifyWin = useCallback((amount, mult) => {
         const multText = mult ? ` (${Number(mult).toFixed(2)}x)` : ''
-        showToast('success', 'You Won!', `+${currencySymbol}${Number(amount || 0).toFixed(2)}${multText}`)
+        showToast('win', 'Won', `+${currencySymbol}${Number(amount || 0).toFixed(2)}${multText}`, 2000)
     }, [showToast, currencySymbol])
 
     const notifyLoss = useCallback((amount) => {
-        showToast('error', 'Round Over', `-${currencySymbol}${Number(amount || 0).toFixed(2)}`)
+        showToast('loss', 'Loss', `-${currencySymbol}${Number(amount || 0).toFixed(2)}`, 1400)
     }, [showToast, currencySymbol])
 
     const value = {
@@ -384,6 +429,9 @@ export function WalletProvider({ children }) {
         depositPresets: currencyConfig.presets,
         setCurrency,
         transactions,
+        withdrawals: userWithdrawals,
+        refreshWithdrawals,
+        refreshTransactions,
         placeBet,
         addWinnings,
         deposit,

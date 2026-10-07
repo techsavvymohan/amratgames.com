@@ -17,10 +17,13 @@ export default function WalletModal() {
         deposit,
         withdraw,
         transactions,
+        withdrawals = [],
+        refreshWithdrawals,
         showToast,
     } = useWallet()
 
     const [activeTab, setActiveTab] = useState('deposit')
+    const [historySubTab, setHistorySubTab] = useState('withdrawals') // 'withdrawals' | 'all'
     const [copied, setCopied] = useState(false)
 
     // Deposit State
@@ -40,12 +43,15 @@ export default function WalletModal() {
     const [isWithdrawing, setIsWithdrawing] = useState(false)
     const [withdrawSuccess, setWithdrawSuccess] = useState(null)
 
-    // Sync tab when opened
+    // Sync tab and refresh withdrawals when opened
     useEffect(() => {
         if (walletModalTab) {
             setActiveTab(walletModalTab)
         }
-    }, [walletModalTab])
+        if (isWalletModalOpen) {
+            refreshWithdrawals?.()
+        }
+    }, [walletModalTab, isWalletModalOpen, refreshWithdrawals])
 
     // Close on Escape key
     useEffect(() => {
@@ -150,15 +156,18 @@ export default function WalletModal() {
 
         try {
             setIsWithdrawing(true)
-            await withdraw(amt, destination, {
+            const res = await withdraw(amt, destination, {
                 payoutMethod,
                 bankDetails
             })
             setWithdrawSuccess({
                 amount: amt,
-                destination
+                destination,
+                id: res?.withdrawal?.id || null,
+                status: 'pending'
             })
             setWithdrawAmount('')
+            refreshWithdrawals?.()
         } catch (err) {
             showToast?.('error', 'Withdrawal Error', err?.message || 'Could not process payout')
         } finally {
@@ -367,27 +376,39 @@ export default function WalletModal() {
                         withdrawSuccess ? (
                             <div className="amrat-success-card">
                                 <div className="amrat-success-icon" style={{ borderColor: '#f59e0b', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.2)' }}>
-                                    ✓
+                                    ⏳
                                 </div>
-                                <h3 style={{ margin: 0, color: '#f59e0b', fontSize: '1.25rem' }}>Payout Requested!</h3>
+                                <h3 style={{ margin: 0, color: '#f59e0b', fontSize: '1.25rem' }}>Withdrawal Request Submitted!</h3>
                                 <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                                    Withdrawal request for ₹{withdrawSuccess.amount.toLocaleString('en-IN')} has been submitted.
+                                    Your request for ₹{withdrawSuccess.amount.toLocaleString('en-IN')} has been sent to our cashier team.
                                     <br />
                                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                                         Destination: <strong>{withdrawSuccess.destination}</strong>
                                     </span>
+                                    {withdrawSuccess.id && (
+                                        <>
+                                            <br />
+                                            <span style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'monospace' }}>
+                                                Request ID: <strong>#{withdrawSuccess.id}</strong>
+                                            </span>
+                                        </>
+                                    )}
                                     <br />
-                                    <span style={{ fontSize: '0.72rem', color: '#34d399', marginTop: '6px', display: 'inline-block' }}>
-                                        Processing time: 5 to 15 minutes
+                                    <span style={{ fontSize: '0.74rem', color: '#fbbf24', marginTop: '6px', display: 'inline-block' }}>
+                                        Status: <strong>Pending Admin Review &amp; Transfer</strong> (5 to 15 mins)
                                     </span>
                                 </p>
                                 <button
                                     type="button"
                                     className="amrat-submit-withdraw-btn"
                                     style={{ marginTop: '12px' }}
-                                    onClick={() => setWithdrawSuccess(null)}
+                                    onClick={() => {
+                                        setWithdrawSuccess(null)
+                                        setActiveTab('history')
+                                        setHistorySubTab('withdrawals')
+                                    }}
                                 >
-                                    New Withdrawal
+                                    Track Payout Status
                                 </button>
                                 <button
                                     type="button"
@@ -594,37 +615,182 @@ export default function WalletModal() {
                     {/* ══════════════════════════════════════════════════════════
                         TAB 3: TRANSACTION HISTORY
                        ══════════════════════════════════════════════════════════ */}
+                    {/* ══════════════════════════════════════════════════════════
+                        TAB 3: TRANSACTION & WITHDRAWAL HISTORY
+                       ══════════════════════════════════════════════════════════ */}
                     {activeTab === 'history' && (
-                        <div className="amrat-tx-list">
-                            {transactions.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b', fontSize: '0.85rem' }}>
-                                    No transaction activity recorded yet.
-                                </div>
-                            ) : (
-                                transactions.slice(0, 30).map((tx) => {
-                                    const isPos = tx.amount >= 0
-                                    const timeStr = tx.timestamp instanceof Date
-                                        ? tx.timestamp.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
-                                        : new Date(tx.timestamp || 0).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {/* History Sub-Tabs */}
+                            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px' }}>
+                                <button
+                                    type="button"
+                                    className={`amrat-preset-btn ${historySubTab === 'withdrawals' ? 'active' : ''}`}
+                                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700 }}
+                                    onClick={() => setHistorySubTab('withdrawals')}
+                                >
+                                    🏧 Payout Requests ({withdrawals.length})
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`amrat-preset-btn ${historySubTab === 'all' ? 'active' : ''}`}
+                                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700 }}
+                                    onClick={() => setHistorySubTab('all')}
+                                >
+                                    📜 All Transactions ({transactions.length})
+                                </button>
+                            </div>
 
-                                    return (
-                                        <div key={tx.id} className="amrat-tx-card">
-                                            <div className="amrat-tx-meta">
-                                                <span className="amrat-tx-type">
-                                                    {tx.type === 'deposit' && '💰 Deposit'}
-                                                    {tx.type === 'withdrawal' && '🏧 Withdrawal'}
-                                                    {tx.type === 'bet' && '🎲 Game Bet'}
-                                                    {tx.type === 'win' && '🏆 Game Win'}
-                                                    {tx.utrNumber ? ` (UTR: ${tx.utrNumber})` : ''}
-                                                </span>
-                                                <span className="amrat-tx-time">{timeStr}</span>
-                                            </div>
-                                            <span className={`amrat-tx-amount ${isPos ? 'positive' : 'negative'}`}>
-                                                {isPos ? '+' : ''}₹{Math.abs(tx.amount).toFixed(2)}
-                                            </span>
+                            {historySubTab === 'withdrawals' ? (
+                                withdrawals.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '36px 10px', color: '#64748b', fontSize: '0.85rem' }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '6px' }}>📭</div>
+                                        <div>No withdrawal requests submitted yet.</div>
+                                        <div style={{ fontSize: '0.75rem', marginTop: '4px', color: '#475569' }}>
+                                            When you request a payout, its status will be tracked here.
                                         </div>
-                                    )
-                                })
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '340px', overflowY: 'auto' }}>
+                                        {withdrawals.map((w) => {
+                                            const isPending = w.status === 'pending'
+                                            const isApproved = w.status === 'approved'
+                                            const isRejected = w.status === 'rejected'
+                                            const timeStr = new Date(w.createdAt || 0).toLocaleString('en-IN', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })
+
+                                            return (
+                                                <div
+                                                    key={w.id}
+                                                    style={{
+                                                        background: 'rgba(255, 255, 255, 0.03)',
+                                                        border: `1px solid ${
+                                                            isPending ? 'rgba(245, 158, 11, 0.35)' :
+                                                            isApproved ? 'rgba(16, 185, 129, 0.3)' :
+                                                            'rgba(239, 68, 68, 0.3)'
+                                                        }`,
+                                                        borderRadius: '10px',
+                                                        padding: '12px 14px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '6px'
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', color: '#94a3b8' }}>
+                                                                #{w.id}
+                                                            </span>
+                                                            {isPending && (
+                                                                <span style={{
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 700,
+                                                                    color: '#f59e0b',
+                                                                    background: 'rgba(245, 158, 11, 0.15)',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '12px',
+                                                                    border: '1px solid rgba(245, 158, 11, 0.3)'
+                                                                }}>
+                                                                    ⏳ Pending Review
+                                                                </span>
+                                                            )}
+                                                            {isApproved && (
+                                                                <span style={{
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 700,
+                                                                    color: '#10b981',
+                                                                    background: 'rgba(16, 185, 129, 0.15)',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '12px',
+                                                                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                                                                }}>
+                                                                    ✓ Transferred &amp; Paid
+                                                                </span>
+                                                            )}
+                                                            {isRejected && (
+                                                                <span style={{
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: 700,
+                                                                    color: '#ef4444',
+                                                                    background: 'rgba(239, 68, 68, 0.15)',
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '12px',
+                                                                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                                                                }}>
+                                                                    ✕ Rejected (Refunded)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <strong style={{
+                                                            fontSize: '0.98rem',
+                                                            color: isPending ? '#fbbf24' : isApproved ? '#34d399' : '#94a3b8'
+                                                        }}>
+                                                            ₹{Number(w.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+                                                        <span style={{ color: '#94a3b8' }}>To: </span>
+                                                        <strong>{w.payoutDestination}</strong>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                                                        <span>{timeStr}</span>
+                                                        {isApproved && w.transactionRef && (
+                                                            <span style={{ color: '#34d399', fontFamily: 'monospace' }}>
+                                                                Ref: {w.transactionRef}
+                                                            </span>
+                                                        )}
+                                                        {isRejected && w.rejectionReason && (
+                                                            <span style={{ color: '#f87171' }}>
+                                                                Reason: {w.rejectionReason}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )
+                            ) : (
+                                /* All Transactions List */
+                                <div className="amrat-tx-list">
+                                    {transactions.length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b', fontSize: '0.85rem' }}>
+                                            No transaction activity recorded yet.
+                                        </div>
+                                    ) : (
+                                        transactions.slice(0, 30).map((tx) => {
+                                            const isPos = tx.amount >= 0
+                                            const timeStr = tx.timestamp instanceof Date
+                                                ? tx.timestamp.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+                                                : new Date(tx.timestamp || 0).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
+
+                                            return (
+                                                <div key={tx.id} className="amrat-tx-card">
+                                                    <div className="amrat-tx-meta">
+                                                        <span className="amrat-tx-type">
+                                                            {tx.type === 'deposit' && '💰 Deposit'}
+                                                            {tx.type === 'withdrawal' && '🏧 Withdrawal'}
+                                                            {tx.type === 'refund' && '↩️ Refund'}
+                                                            {tx.type === 'bet' && '🎲 Game Bet'}
+                                                            {tx.type === 'win' && '🏆 Game Win'}
+                                                            {tx.status === 'pending' && ' ⏳ (Pending)'}
+                                                            {tx.utrNumber ? ` (UTR: ${tx.utrNumber})` : ''}
+                                                        </span>
+                                                        <span className="amrat-tx-time">{timeStr}</span>
+                                                    </div>
+                                                    <span className={`amrat-tx-amount ${isPos ? 'positive' : 'negative'}`}>
+                                                        {isPos ? '+' : ''}₹{Math.abs(tx.amount).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            )
+                                        })
+                                    )}
+                                </div>
                             )}
                         </div>
                     )}

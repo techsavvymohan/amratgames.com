@@ -183,6 +183,92 @@ export function AuthProvider({ children }) {
         saveAuth(null, null)
     }
 
+    // Profile Management
+    const updateProfile = async (profileData) => {
+        if (!token) throw new Error('Not authenticated')
+        const res = await fetch('/api/auth/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(profileData)
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to update profile')
+        }
+        setUser(data.user)
+        try { localStorage.setItem(USER_KEY, JSON.stringify(data.user)) } catch (e) {}
+        return data.user
+    }
+
+    // Change Password
+    const changePassword = async (oldPassword, newPassword) => {
+        if (!token) throw new Error('Not authenticated')
+        const res = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ oldPassword, newPassword })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to change password')
+        }
+        return data
+    }
+
+    // Submit KYC Verification
+    const submitKycVerification = async (kycData) => {
+        if (!token) throw new Error('Not authenticated')
+        const res = await fetch('/api/auth/verify-profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(kycData)
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to verify profile')
+        }
+        setUser(data.user)
+        try { localStorage.setItem(USER_KEY, JSON.stringify(data.user)) } catch (e) {}
+        return data.user
+    }
+
+    // Get Bets History
+    const getBetsHistory = async () => {
+        if (!token) return []
+        try {
+            const res = await fetch('/api/auth/bets-history', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            return data.success && Array.isArray(data.bets) ? data.bets : []
+        } catch {
+            return []
+        }
+    }
+
+    // Get Payments History (Transactions & Cashier Withdrawals)
+    const getPaymentsHistory = async () => {
+        if (!token) return { transactions: [], withdrawals: [] }
+        try {
+            const res = await fetch('/api/auth/payments-history', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            return data.success ? data : { transactions: [], withdrawals: [] }
+        } catch {
+            return { transactions: [], withdrawals: [] }
+        }
+    }
+
     const value = {
         user,
         token,
@@ -199,6 +285,11 @@ export function AuthProvider({ children }) {
         verifyOtp,
         register,
         logout,
+        updateProfile,
+        changePassword,
+        submitKycVerification,
+        getBetsHistory,
+        getPaymentsHistory,
         checkAuthStatus,
         saveAuth
     }

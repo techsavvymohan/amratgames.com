@@ -212,7 +212,10 @@ function LimboGame() {
                         multiplier: 0,
                         won: false
                     }).catch(() => {})
-                    notifyLoss(currentBet)
+                    // Suppress loss toast spam during auto-bet so multiplier remains clearly visible
+                    if (!autoRunningRef.current) {
+                        notifyLoss(currentBet)
+                    }
                     casinoAudio.playLoss()
                 }
 

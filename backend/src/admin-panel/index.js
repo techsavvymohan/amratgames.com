@@ -1,6 +1,7 @@
 import { createAdminRouter } from './routes/admin.routes.js'
 import { AdminController } from './controllers/AdminController.js'
 import { AdminUserManager } from './services/AdminUserManager.js'
+import { AdminWithdrawalManager } from './services/AdminWithdrawalManager.js'
 import { TokenDistributionEngine } from './services/TokenDistributionEngine.js'
 import { PlatformAnalyticsService } from './services/PlatformAnalyticsService.js'
 import { GameEngineManager } from './services/GameEngineManager.js'
@@ -33,6 +34,7 @@ export default adminPanelModule
 export {
     AdminController,
     AdminUserManager,
+    AdminWithdrawalManager,
     TokenDistributionEngine,
     PlatformAnalyticsService,
     GameEngineManager,

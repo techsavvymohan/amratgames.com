@@ -96,3 +96,69 @@ export class TreasuryModel {
         return ((this.treasuryBalance / this.totalSupply) * 100).toFixed(2)
     }
 }
+
+export class WithdrawalModel {
+    constructor(data = {}) {
+        this.id = data.id || ''
+        this.userId = data.userId || ''
+        this.username = data.username || 'Anonymous'
+        this.userEmail = data.userEmail || ''
+        this.userPhone = data.userPhone || ''
+        this.currency = data.currency || 'INR'
+        this.amount = typeof data.amount === 'number' ? data.amount : (parseFloat(data.amount) || 0)
+        this.payoutMethod = data.payoutMethod || 'UPI'
+        this.payoutDestination = data.payoutDestination || ''
+        this.bankDetails = data.bankDetails || null
+        this.status = data.status || 'pending'
+        this.createdAt = data.createdAt || new Date().toISOString()
+        this.processedAt = data.processedAt || null
+        this.processedBy = data.processedBy || null
+        this.adminNote = data.adminNote || ''
+        this.transactionRef = data.transactionRef || ''
+        this.rejectionReason = data.rejectionReason || ''
+        this.transactionId = data.transactionId || ''
+    }
+
+    isPending() {
+        return this.status === 'pending'
+    }
+
+    isApproved() {
+        return this.status === 'approved'
+    }
+
+    isRejected() {
+        return this.status === 'rejected'
+    }
+
+    getFormattedAmount() {
+        return `₹${this.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+
+    getFormattedDate() {
+        try {
+            return new Date(this.createdAt).toLocaleString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        } catch {
+            return this.createdAt
+        }
+    }
+
+    getFormattedProcessedDate() {
+        if (!this.processedAt) return '—'
+        try {
+            return new Date(this.processedAt).toLocaleString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        } catch {
+            return this.processedAt
+        }
+    }
+}

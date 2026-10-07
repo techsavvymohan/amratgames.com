@@ -12,8 +12,19 @@ export class UserEntity {
         this.role = userData.role || 'player'
         this.status = userData.status || 'active'
         this.balances = userData.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+        this.totalDeposited = userData.totalDeposited || 0
         this.isBanned = Boolean(userData.isBanned)
         this.kycStatus = userData.kycStatus || 'unverified'
+        this.firstName = userData.firstName || ''
+        this.lastName = userData.lastName || ''
+        this.dob = userData.dob || { day: '21', month: '4', year: '2005' }
+        this.gender = userData.gender || 'Male'
+        this.country = userData.country || 'India'
+        this.city = userData.city || ''
+        this.newsletter = Boolean(userData.newsletter !== false)
+        this.kycSubmittedAt = userData.kycSubmittedAt || null
+        this.kycDocumentType = userData.kycDocumentType || ''
+        this.kycDocumentNumber = userData.kycDocumentNumber || ''
         this.createdAt = userData.createdAt || new Date().toISOString()
         this.lastLoginAt = userData.lastLoginAt || new Date().toISOString()
         this.avatar = userData.avatar || '👤'
@@ -54,11 +65,21 @@ export class UserEntity {
             phone: this.phone,
             phoneVerified: this.phoneVerified,
             emailVerified: this.emailVerified,
+            firstName: this.firstName,
+            lastName: this.lastName,
+            dob: this.dob,
+            gender: this.gender,
+            country: this.country,
+            city: this.city,
+            newsletter: this.newsletter,
             role: this.role,
             status: this.status,
             balances: this.balances,
+            totalDeposited: this.totalDeposited,
             isBanned: this.isBanned,
             kycStatus: this.kycStatus,
+            kycSubmittedAt: this.kycSubmittedAt,
+            kycDocumentType: this.kycDocumentType,
             createdAt: this.createdAt,
             lastLoginAt: this.lastLoginAt,
             avatar: this.avatar,

@@ -1,4 +1,5 @@
 import { AdminUserManager } from '../services/AdminUserManager.js'
+import { AdminWithdrawalManager } from '../services/AdminWithdrawalManager.js'
 import { TokenDistributionEngine } from '../services/TokenDistributionEngine.js'
 import { PlatformAnalyticsService } from '../services/PlatformAnalyticsService.js'
 import { GameEngineManager } from '../services/GameEngineManager.js'
@@ -11,6 +12,7 @@ import { testSupabaseConnection } from '../../db/SupabaseClient.js'
 export class AdminController {
     constructor() {
         this.userManager = new AdminUserManager()
+        this.withdrawalManager = new AdminWithdrawalManager()
         this.tokenEngine = new TokenDistributionEngine()
         this.analyticsService = new PlatformAnalyticsService()
         this.gameManager = new GameEngineManager()
@@ -21,6 +23,10 @@ export class AdminController {
         this.getUserDetails = this.getUserDetails.bind(this)
         this.adjustBalance = this.adjustBalance.bind(this)
         this.updateUserStatus = this.updateUserStatus.bind(this)
+        this.listWithdrawals = this.listWithdrawals.bind(this)
+        this.getWithdrawalStats = this.getWithdrawalStats.bind(this)
+        this.approveWithdrawal = this.approveWithdrawal.bind(this)
+        this.rejectWithdrawal = this.rejectWithdrawal.bind(this)
         this.getTokenStats = this.getTokenStats.bind(this)
         this.distributeTokens = this.distributeTokens.bind(this)
         this.getTokenHistory = this.getTokenHistory.bind(this)
@@ -92,6 +98,63 @@ export class AdminController {
                 success: true,
                 user,
                 message: `Updated status for user ${user.username}`
+            })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async listWithdrawals(req, res) {
+        try {
+            const { status, search, userId } = req.query
+            const withdrawals = this.withdrawalManager.listWithdrawals({ status, search, userId })
+            res.json({ success: true, total: withdrawals.length, withdrawals })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async getWithdrawalStats(req, res) {
+        try {
+            const stats = this.withdrawalManager.getStats()
+            res.json({ success: true, stats })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async approveWithdrawal(req, res) {
+        try {
+            const { transactionRef, adminNote } = req.body
+            const adminUsername = req.user?.username || 'admin'
+            const withdrawal = this.withdrawalManager.approveWithdrawal(req.params.id, {
+                adminUsername,
+                transactionRef,
+                adminNote
+            })
+            res.json({
+                success: true,
+                withdrawal,
+                message: `Withdrawal #${req.params.id} approved successfully! Manual transfer confirmed.`
+            })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async rejectWithdrawal(req, res) {
+        try {
+            const { rejectionReason, adminNote } = req.body
+            const adminUsername = req.user?.username || 'admin'
+            const result = this.withdrawalManager.rejectWithdrawal(req.params.id, {
+                adminUsername,
+                rejectionReason,
+                adminNote
+            })
+            res.json({
+                success: true,
+                withdrawal: result.withdrawal,
+                message: `Withdrawal #${req.params.id} rejected. Balance refunded back to player wallet.`
             })
         } catch (err) {
             res.status(400).json({ success: false, error: err.message })

@@ -8,6 +8,7 @@ import OverviewTab from './components/OverviewTab'
 import UserManagementTab from './components/UserManagementTab'
 import TokenDistributionTab from './components/TokenDistributionTab'
 import SettingsTab from './components/SettingsTab'
+import WithdrawalsTab from './components/WithdrawalsTab'
 import BalanceModal from './components/BalanceModal'
 import LockScreen from './components/LockScreen'
 
@@ -20,10 +21,11 @@ export default function AdminPanel() {
     const apiClient = useMemo(() => new AdminApiClient(() => token), [token])
 
     // Tabs & View State
-    const [currentTab, setCurrentTab] = useState('overview') // 'overview' | 'users' | 'tokens' | 'settings'
+    const [currentTab, setCurrentTab] = useState('overview') // 'overview' | 'withdrawals' | 'users' | 'tokens' | 'settings'
     const [loading, setLoading] = useState(false)
     const [stats, setStats] = useState(null)
     const [users, setUsers] = useState([])
+    const [withdrawals, setWithdrawals] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [liveBets, setLiveBets] = useState([])
@@ -87,6 +89,13 @@ export default function AdminPanel() {
                         if (data.type === 'NEW_BET' && data.payload) {
                             setLiveBets((prev) => [data.payload, ...prev].slice(0, 30))
                         }
+                        if (data.type === 'NEW_WITHDRAWAL_REQUEST' && data.payload) {
+                            triggerToast(`🔔 New Withdrawal: ₹${data.payload.amount} requested by ${data.payload.username}!`)
+                            loadData()
+                        }
+                        if (data.type === 'WITHDRAWAL_STATUS_UPDATED') {
+                            loadData()
+                        }
                     } catch {
                         // ignore
                     }
@@ -134,6 +143,10 @@ export default function AdminPanel() {
             // 4. Recent Bets
             const bets = await apiClient.getRecentBets(25).catch(() => [])
             if (bets && bets.length > 0) setLiveBets(bets)
+
+            // 5. Withdrawals
+            const withdrawalModels = await apiClient.getWithdrawals().catch(() => [])
+            setWithdrawals(withdrawalModels)
         } catch (err) {
             console.warn('Admin data load notice:', err)
         } finally {
@@ -251,6 +264,30 @@ export default function AdminPanel() {
         }
     }
 
+    const handleApproveWithdrawal = async (id, { transactionRef, adminNote }) => {
+        try {
+            const result = await apiClient.approveWithdrawal(id, { transactionRef, adminNote })
+            triggerToast(`✓ Withdrawal #${id} approved! Payout confirmed.`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error approving payout: ' + err.message)
+            throw err
+        }
+    }
+
+    const handleRejectWithdrawal = async (id, { rejectionReason, adminNote }) => {
+        try {
+            const result = await apiClient.rejectWithdrawal(id, { rejectionReason, adminNote })
+            triggerToast(`✕ Withdrawal #${id} rejected. Balance refunded to player.`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error rejecting withdrawal: ' + err.message)
+            throw err
+        }
+    }
+
     // If NOT logged in as Admin, show Modular Lock Screen
     if (!isAdmin) {
         return (
@@ -270,6 +307,7 @@ export default function AdminPanel() {
 
     const eligiblePlayersCount = users.filter((u) => !u.isAdmin() && !u.isSuspended()).length
     const vipCount = users.filter((u) => u.isVip()).length
+    const pendingWithdrawalsCount = withdrawals.filter((w) => w.status === 'pending').length
 
     return (
         <div className="admin-container">
@@ -354,6 +392,27 @@ export default function AdminPanel() {
                     <span>Overview</span>
                 </button>
                 <button
+                    className={`admin-tab-btn ${currentTab === 'withdrawals' ? 'active' : ''}`}
+                    onClick={() => setCurrentTab('withdrawals')}
+                    style={pendingWithdrawalsCount > 0 ? { position: 'relative' } : {}}
+                >
+                    <span>🏧</span>
+                    <span>Withdrawals</span>
+                    {pendingWithdrawalsCount > 0 && (
+                        <span style={{
+                            background: '#f59e0b',
+                            color: '#000',
+                            borderRadius: '10px',
+                            padding: '1px 7px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            marginLeft: '6px'
+                        }}>
+                            {pendingWithdrawalsCount}
+                        </span>
+                    )}
+                </button>
+                <button
                     className={`admin-tab-btn ${currentTab === 'users' ? 'active' : ''}`}
                     onClick={() => setCurrentTab('users')}
                 >
@@ -383,8 +442,21 @@ export default function AdminPanel() {
                     treasury={treasury}
                     users={users}
                     liveBets={liveBets}
+                    withdrawals={withdrawals}
                     onSwitchTab={setCurrentTab}
                     onRotateSeed={handleRotateSeed}
+                />
+            )}
+
+            {currentTab === 'withdrawals' && (
+                <WithdrawalsTab
+                    withdrawals={withdrawals}
+                    stats={stats}
+                    loading={loading}
+                    onApprove={handleApproveWithdrawal}
+                    onReject={handleRejectWithdrawal}
+                    onRefresh={loadData}
+                    triggerToast={triggerToast}
                 />
             )}
 

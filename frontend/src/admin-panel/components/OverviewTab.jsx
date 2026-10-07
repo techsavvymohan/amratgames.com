@@ -1,11 +1,51 @@
-export default function OverviewTab({ stats, treasury, users, liveBets, onSwitchTab, onRotateSeed }) {
+export default function OverviewTab({ stats, treasury, users, liveBets, withdrawals = [], onSwitchTab, onRotateSeed }) {
     const totalWagered = stats?.totalWageredApproxINR || 685000
     const netProfit = stats?.netHouseProfitINR || 24800
     const totalUsersCount = stats?.totalUsers || users.length || 8
     const activeUsersCount = stats?.activeUsers || 7
 
+    const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending')
+    const pendingCount = stats?.withdrawalStats?.pendingCount ?? pendingWithdrawals.length
+    const pendingAmount = stats?.withdrawalStats?.pendingAmount ?? pendingWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0)
+
     return (
         <div className="admin-tab-content">
+            {/* Urgent Pending Withdrawals Banner */}
+            {pendingCount > 0 && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(180, 83, 9, 0.25))',
+                    border: '1px solid rgba(245, 158, 11, 0.5)',
+                    borderRadius: '12px',
+                    padding: '14px 20px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    boxShadow: '0 4px 20px rgba(245, 158, 11, 0.15)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '26px' }}>⚠️</span>
+                        <div>
+                            <div style={{ fontWeight: 800, color: '#fbbf24', fontSize: '0.95rem' }}>
+                                {pendingCount} Pending Withdrawal Request{pendingCount > 1 ? 's' : ''} Awaiting Cashier Transfer (₹{pendingAmount.toLocaleString('en-IN')})
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '2px' }}>
+                                Players have requested cashouts. Transfer money from your account and confirm approval.
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        className="btn-airdrop-launch"
+                        style={{ padding: '9px 20px', fontSize: '0.84rem', fontWeight: 800 }}
+                        onClick={() => onSwitchTab('withdrawals')}
+                    >
+                        Review Payouts &rarr;
+                    </button>
+                </div>
+            )}
+
             {/* KPI Cards */}
             <div className="admin-kpi-grid">
                 {/* 1. Total Registered Players */}
@@ -120,6 +160,34 @@ export default function OverviewTab({ stats, treasury, users, liveBets, onSwitch
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <button
+                            className="btn-action gold"
+                            onClick={() => onSwitchTab('withdrawals')}
+                            style={{ padding: '13px 16px', fontSize: '0.88rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px' }}
+                        >
+                            <span style={{ fontSize: '20px' }}>🏧</span>
+                            <div>
+                                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>Player Withdrawals</span>
+                                    {pendingCount > 0 && (
+                                        <span style={{
+                                            background: '#f59e0b',
+                                            color: '#000',
+                                            fontSize: '0.68rem',
+                                            fontWeight: 800,
+                                            padding: '1px 7px',
+                                            borderRadius: '10px'
+                                        }}>
+                                            {pendingCount} Pending
+                                        </span>
+                                    )}
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#ffd700', opacity: 0.9 }}>
+                                    Review, send money, and approve payouts
+                                </div>
+                            </div>
+                        </button>
+
                         <button
                             className="btn-airdrop-launch"
                             onClick={() => onSwitchTab('tokens')}

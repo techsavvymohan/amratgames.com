@@ -834,3 +834,46 @@
         justify-content: center;
     }
 }
+
+/* Filter Pills & Withdrawal Console Additions */
+.filter-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-pill:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+}
+
+.filter-pill.active {
+    background: rgba(245, 175, 25, 0.2);
+    border-color: #f5af19;
+    color: #fbbf24;
+}
+
+.filter-pill.active.warning {
+    background: rgba(245, 158, 11, 0.25);
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.filter-pill.active.danger {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #f87171;
+    color: #f87171;
+}
+
+.kpi-card.highlight-amber {
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.25);
+}

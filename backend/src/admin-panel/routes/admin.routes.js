@@ -18,6 +18,12 @@ export function createAdminRouter() {
     router.patch('/users/:id/balance', controller.adjustBalance)
     router.patch('/users/:id/status', controller.updateUserStatus)
 
+    // Withdrawal Management & Manual Payout Controls
+    router.get('/withdrawals', controller.listWithdrawals)
+    router.get('/withdrawals/stats', controller.getWithdrawalStats)
+    router.post('/withdrawals/:id/approve', controller.approveWithdrawal)
+    router.post('/withdrawals/:id/reject', controller.rejectWithdrawal)
+
     // Token Distribution & Treasury
     router.get('/tokens/stats', controller.getTokenStats)
     router.post('/tokens/distribute', controller.distributeTokens)

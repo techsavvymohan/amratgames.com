@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Drawer } from 'antd'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { GAMES } from '../games'
 import { useThemeSettings } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -95,11 +95,86 @@ const comingSoon = ['Favourites', 'Recent', 'Challenges', 'My Bets']
 
 function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
+    const navigate = useNavigate()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
     const { user, logout, openAuthModal } = useAuth()
     const [searchQuery, setSearchQuery] = useState('')
 
-    useEffect(() => onClose(), [location.pathname, onClose])
+    // Carousel refs & scroll state
+    const carouselRef = useRef(null)
+    const itemRefs = useRef({})
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(true)
+
+    // Touch/Mouse drag state
+    const isDragging = useRef(false)
+    const startX = useRef(0)
+    const scrollStartX = useRef(0)
+    const hasDragged = useRef(false)
+
+    const checkScrollLimits = useCallback(() => {
+        const el = carouselRef.current
+        if (!el) return
+        const left = el.scrollLeft
+        const maxScroll = el.scrollWidth - el.clientWidth
+        setCanScrollLeft(left > 4)
+        setCanScrollRight(left < maxScroll - 4)
+    }, [])
+
+    useEffect(() => {
+        onClose()
+        const activeEl = itemRefs.current[location.pathname]
+        if (activeEl && carouselRef.current) {
+            activeEl.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            })
+            const timer = setTimeout(checkScrollLimits, 350)
+            return () => clearTimeout(timer)
+        }
+    }, [location.pathname, onClose, checkScrollLimits])
+
+    useEffect(() => {
+        const el = carouselRef.current
+        if (!el) return
+        checkScrollLimits()
+        el.addEventListener('scroll', checkScrollLimits, { passive: true })
+        window.addEventListener('resize', checkScrollLimits)
+        return () => {
+            el.removeEventListener('scroll', checkScrollLimits)
+            window.removeEventListener('resize', checkScrollLimits)
+        }
+    }, [checkScrollLimits])
+
+    // Desktop click-and-drag smooth scroll support
+    const handleMouseDown = (e) => {
+        isDragging.current = true
+        hasDragged.current = false
+        startX.current = e.pageX
+        scrollStartX.current = carouselRef.current?.scrollLeft || 0
+    }
+
+    const handleMouseMove = (e) => {
+        if (!isDragging.current || !carouselRef.current) return
+        const delta = e.pageX - startX.current
+        if (Math.abs(delta) > 5) {
+            hasDragged.current = true
+        }
+        carouselRef.current.scrollLeft = scrollStartX.current - delta
+    }
+
+    const handleMouseUpOrLeave = () => {
+        isDragging.current = false
+    }
+
+    const handleClickCapture = (e) => {
+        if (hasDragged.current) {
+            e.preventDefault()
+            e.stopPropagation()
+            hasDragged.current = false
+        }
+    }
 
     return (
         <>
@@ -126,7 +201,11 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                             alignItems: 'center',
                             justifyContent: 'space-between'
                         }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div 
+                                onClick={() => { onClose(); navigate('/profile'); }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                                title="Open Verified Profile"
+                            >
                                 <div style={{
                                     width: '30px',
                                     height: '30px',
@@ -243,9 +322,10 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                             key={label}
                             type="button"
                             onClick={() => {
-                                if (label === 'Profile' && !user) {
+                                if (label === 'Profile') {
                                     onClose()
-                                    openAuthModal('login')
+                                    if (!user) openAuthModal('login')
+                                    else navigate('/profile')
                                 }
                             }}
                         >
@@ -289,22 +369,51 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
             </Drawer>
 
             <nav className="mobile-bottom-nav" aria-label="Primary navigation">
-                {primaryRoutes.map(route => {
-                    const IconComponent = route.Icon
-                    return (
-                        <NavLink
-                            key={route.path}
-                            to={route.path}
-                            end={route.path === '/'}
-                            className={({ isActive }) => isActive ? 'active' : ''}
-                        >
-                            <span className="nav-icon-wrap" aria-hidden="true">
-                                <IconComponent />
-                            </span>
-                            <span>{route.label}</span>
-                        </NavLink>
-                    )
-                })}
+                {/* Pinned Home button for instant 1-tap lobby access */}
+                <NavLink
+                    to="/"
+                    end
+                    className={({ isActive }) => `mobile-nav-home-btn ${isActive ? 'active' : ''}`}
+                    title="Home"
+                >
+                    <span className="nav-icon-wrap" aria-hidden="true">
+                        <HomeIcon />
+                    </span>
+                    <span>Home</span>
+                </NavLink>
+
+                <div className="mobile-nav-divider" aria-hidden="true" />
+
+                {/* Horizontal Slidable Games Carousel */}
+                <div className={`mobile-nav-carousel-wrapper ${canScrollLeft ? 'has-scroll-left' : ''} ${canScrollRight ? 'has-scroll-right' : ''}`}>
+                    <div 
+                        className="mobile-nav-carousel-track" 
+                        ref={carouselRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUpOrLeave}
+                        onMouseLeave={handleMouseUpOrLeave}
+                        onClickCapture={handleClickCapture}
+                    >
+                        {GAMES.map(game => {
+                            const GameIcon = GAME_ICONS[game.id] || HomeIcon
+                            return (
+                                <NavLink
+                                    key={game.path}
+                                    to={game.path}
+                                    ref={el => { itemRefs.current[game.path] = el }}
+                                    className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+                                    title={game.name}
+                                >
+                                    <span className="nav-icon-wrap" aria-hidden="true">
+                                        <GameIcon />
+                                    </span>
+                                    <span>{game.navLabel || game.name}</span>
+                                </NavLink>
+                            )
+                        })}
+                    </div>
+                </div>
             </nav>
         </>
     )

@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import { CONFIG } from '../config.js'
 import { supabaseSync } from './SupabaseSyncService.js'
 import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.js'
+import { broadcastEvent } from '../websocket.js'
 
 export function normalizePhone(phone) {
     if (!phone) return ''
@@ -30,6 +31,7 @@ class Database {
             transactions: [],
             bets: [],
             airdrops: [],
+            withdrawals: [],
             settings: {
                 rtp: CONFIG.DEFAULT_RTP,
                 houseEdge: CONFIG.HOUSE_EDGE,
@@ -65,6 +67,11 @@ class Database {
         } else {
             this.seedInitialData()
             this.persist()
+        }
+
+        // Ensure withdrawals array exists in runtime state
+        if (!this.data.withdrawals) {
+            this.data.withdrawals = []
         }
 
         // Ensure phone numbers and clean balance for master admin
@@ -140,6 +147,7 @@ class Database {
         this.data.airdrops = []
         this.data.bets = []
         this.data.transactions = []
+        this.data.withdrawals = []
 
         this.data.settings.tokenTreasury = {
             totalSupply: CONFIG.TOKEN_INITIAL_TREASURY,
@@ -377,6 +385,212 @@ class Database {
         return { user, transaction: tx }
     }
 
+    // ── Withdrawal Methods ────────────────────────────────────
+    requestWithdrawal({ userId, currency = 'INR', amount, payoutMethod = 'UPI', payoutDestination, bankDetails = null }) {
+        const user = this.findUserById(userId)
+        if (!user) throw new Error('User not found')
+        if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+
+        const currentBal = user.balances[currency] || 0
+        if (amount > currentBal) {
+            throw new Error(`Insufficient ${currency} balance (Available: ₹${currentBal.toLocaleString('en-IN')})`)
+        }
+
+        // Deduct balance from user
+        const newBal = Math.max(0, parseFloat((currentBal - amount).toFixed(4)))
+        user.balances[currency] = newBal
+
+        const withdrawalId = 'wd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+        const txId = 'tx_wd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+
+        const tx = {
+            id: txId,
+            userId: user.id,
+            username: user.username,
+            type: 'withdrawal',
+            status: 'pending',
+            currency,
+            amount: -amount,
+            balanceAfter: newBal,
+            note: `Withdrawal to ${payoutDestination} [Pending Admin Approval]`,
+            payoutMethod,
+            payoutDestination,
+            withdrawalId,
+            timestamp: new Date().toISOString()
+        }
+        if (bankDetails) tx.bankDetails = bankDetails
+        this.data.transactions.unshift(tx)
+
+        if (!this.data.withdrawals) this.data.withdrawals = []
+
+        const withdrawal = {
+            id: withdrawalId,
+            userId: user.id,
+            username: user.username,
+            userEmail: user.email || '',
+            userPhone: user.phone || '',
+            currency,
+            amount,
+            payoutMethod,
+            payoutDestination,
+            bankDetails: bankDetails || null,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            processedAt: null,
+            processedBy: null,
+            adminNote: '',
+            transactionRef: '',
+            rejectionReason: '',
+            transactionId: txId
+        }
+        this.data.withdrawals.unshift(withdrawal)
+
+        this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncUser(user).catch(() => {})
+            supabaseSync.syncTransaction(tx).catch(() => {})
+        }
+
+        broadcastEvent('NEW_WITHDRAWAL_REQUEST', withdrawal)
+
+        return { user, withdrawal, transaction: tx }
+    }
+
+    getAllWithdrawals(filters = {}) {
+        if (!this.data.withdrawals) this.data.withdrawals = []
+        let list = [...this.data.withdrawals]
+
+        if (filters.userId) {
+            list = list.filter(w => w.userId === filters.userId)
+        }
+        if (filters.status && filters.status !== 'all') {
+            list = list.filter(w => w.status === filters.status)
+        }
+        if (filters.search) {
+            const s = filters.search.toLowerCase().trim()
+            list = list.filter(w =>
+                (w.username && w.username.toLowerCase().includes(s)) ||
+                (w.id && w.id.toLowerCase().includes(s)) ||
+                (w.payoutDestination && w.payoutDestination.toLowerCase().includes(s)) ||
+                (w.userPhone && w.userPhone.includes(s)) ||
+                (w.userEmail && w.userEmail.toLowerCase().includes(s))
+            )
+        }
+
+        return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    }
+
+    findWithdrawalById(id) {
+        if (!this.data.withdrawals) this.data.withdrawals = []
+        return this.data.withdrawals.find(w => w.id === id)
+    }
+
+    approveWithdrawal(id, { adminUsername = 'admin', transactionRef = '', adminNote = '' } = {}) {
+        const w = this.findWithdrawalById(id)
+        if (!w) throw new Error('Withdrawal request not found')
+        if (w.status !== 'pending') throw new Error(`Withdrawal has already been ${w.status}`)
+
+        w.status = 'approved'
+        w.processedAt = new Date().toISOString()
+        w.processedBy = adminUsername
+        w.transactionRef = transactionRef || ''
+        w.adminNote = adminNote || (transactionRef ? `Sent via Admin Transfer (Ref: ${transactionRef})` : 'Payout Approved & Sent')
+
+        // Update corresponding transaction in transactions history
+        const tx = (this.data.transactions || []).find(t => t.id === w.transactionId || t.withdrawalId === w.id)
+        if (tx) {
+            tx.status = 'approved'
+            tx.note = `Withdrawal Approved to ${w.payoutDestination}${transactionRef ? ` (Ref: ${transactionRef})` : ''}`
+        }
+
+        this.persist()
+
+        if (CONFIG.USE_SUPABASE && tx) {
+            supabaseSync.syncTransaction(tx).catch(() => {})
+        }
+
+        broadcastEvent('WITHDRAWAL_STATUS_UPDATED', w)
+
+        return w
+    }
+
+    rejectWithdrawal(id, { adminUsername = 'admin', rejectionReason = 'Rejected by Admin', adminNote = '' } = {}) {
+        const w = this.findWithdrawalById(id)
+        if (!w) throw new Error('Withdrawal request not found')
+        if (w.status !== 'pending') throw new Error(`Withdrawal has already been ${w.status}`)
+
+        w.status = 'rejected'
+        w.processedAt = new Date().toISOString()
+        w.processedBy = adminUsername
+        w.rejectionReason = rejectionReason || 'Rejected by cashier'
+        w.adminNote = adminNote || ''
+
+        // Refund player balance
+        const user = this.findUserById(w.userId)
+        let refundTx = null
+        if (user) {
+            if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+            const currentBal = user.balances[w.currency] || 0
+            const refundedBal = parseFloat((currentBal + w.amount).toFixed(4))
+            user.balances[w.currency] = refundedBal
+
+            refundTx = {
+                id: 'tx_refund_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                userId: user.id,
+                username: user.username,
+                type: 'credit',
+                status: 'completed',
+                currency: w.currency,
+                amount: w.amount,
+                balanceAfter: refundedBal,
+                note: `Refund: Withdrawal #${w.id} rejected (${w.rejectionReason})`,
+                withdrawalId: w.id,
+                timestamp: new Date().toISOString()
+            }
+            this.data.transactions.unshift(refundTx)
+
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.syncUser(user).catch(() => {})
+                supabaseSync.syncTransaction(refundTx).catch(() => {})
+            }
+        }
+
+        // Update original transaction
+        const tx = (this.data.transactions || []).find(t => t.id === w.transactionId || t.withdrawalId === w.id)
+        if (tx) {
+            tx.status = 'rejected'
+            tx.note = `Withdrawal Rejected (${w.rejectionReason}) [Balance Refunded]`
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.syncTransaction(tx).catch(() => {})
+            }
+        }
+
+        this.persist()
+
+        broadcastEvent('WITHDRAWAL_STATUS_UPDATED', w)
+
+        return { withdrawal: w, user, refundTransaction: refundTx }
+    }
+
+    getWithdrawalStats() {
+        if (!this.data.withdrawals) this.data.withdrawals = []
+        const list = this.data.withdrawals
+        const pending = list.filter(w => w.status === 'pending')
+        const approved = list.filter(w => w.status === 'approved')
+        const rejected = list.filter(w => w.status === 'rejected')
+
+        return {
+            totalCount: list.length,
+            pendingCount: pending.length,
+            pendingAmount: pending.reduce((sum, w) => sum + (w.amount || 0), 0),
+            approvedCount: approved.length,
+            approvedAmount: approved.reduce((sum, w) => sum + (w.amount || 0), 0),
+            rejectedCount: rejected.length,
+            rejectedAmount: rejected.reduce((sum, w) => sum + (w.amount || 0), 0)
+        }
+    }
+
     // ── Token Distribution / Airdrop Methods ──────────────────
     distributeTokens({ adminId, adminUsername, token = 'AMRAT', amount, targetGroup = 'all_players', targetUserId = null, campaign = '', note = '' }) {
         const parsedAmount = parseFloat(amount)
@@ -507,6 +721,11 @@ class Database {
         return this.data.bets.filter(b => b.userId === userId).slice(0, limit)
     }
 
+    getUserTransactions(userId, limit = 50) {
+        if (!this.data.transactions) this.data.transactions = []
+        return this.data.transactions.filter(t => t.userId === userId).slice(0, limit)
+    }
+
     // ── Platform Analytics ────────────────────────────────────
     getPlatformStats() {
         const totalUsers = this.data.users.length
@@ -540,7 +759,8 @@ class Database {
             ggrPercentage: ggr,
             settings: this.data.settings,
             treasury: this.data.settings.tokenTreasury,
-            recentAirdropsCount: this.data.airdrops.length
+            recentAirdropsCount: this.data.airdrops.length,
+            withdrawalStats: this.getWithdrawalStats()
         }
     }
 
