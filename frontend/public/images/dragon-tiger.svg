@@ -1,94 +1,114 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 600" width="100%" height="100%">
   <defs>
+    <!-- Dark luxury casino felt background -->
     <radialGradient id="feltBg" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="#0c3822"/>
-      <stop offset="60%" stop-color="#062314"/>
-      <stop offset="100%" stop-color="#020d07"/>
+      <stop offset="0%" stop-color="#0f291e"/>
+      <stop offset="60%" stop-color="#071912"/>
+      <stop offset="100%" stop-color="#030c08"/>
     </radialGradient>
-    <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffe259"/>
-      <stop offset="100%" stop-color="#ffa751"/>
+
+    <!-- Gold metallic gradient -->
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff2b2"/>
+      <stop offset="40%" stop-color="#f5af19"/>
+      <stop offset="80%" stop-color="#d49110"/>
+      <stop offset="100%" stop-color="#ffeaa7"/>
     </linearGradient>
-    <linearGradient id="dragonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff1744"/>
-      <stop offset="100%" stop-color="#b71c1c"/>
+
+    <!-- Red Dragon Card Gradient -->
+    <linearGradient id="dragonCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
     </linearGradient>
-    <linearGradient id="tigerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffb300"/>
-      <stop offset="100%" stop-color="#f57c00"/>
-    </linearGradient>
-    <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="125%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.6"/>
+
+    <!-- Drop shadows -->
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+    <filter id="emblemGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#f5af19" flood-opacity="0.4"/>
     </filter>
   </defs>
 
-  <!-- Table Felt Background -->
+  <!-- Casino Felt Background -->
   <rect width="450" height="600" fill="url(#feltBg)"/>
 
-  <!-- Ornate Border -->
-  <rect x="15" y="15" width="420" height="570" rx="20" fill="none" stroke="rgba(255, 215, 0, 0.25)" stroke-width="2"/>
-  <rect x="22" y="22" width="406" height="556" rx="15" fill="none" stroke="rgba(255, 215, 0, 0.1)" stroke-width="1"/>
+  <!-- Elegant Gold Pinstripe Border -->
+  <rect x="18" y="18" width="414" height="564" rx="18" fill="none" stroke="rgba(245, 175, 25, 0.25)" stroke-width="2"/>
+  <rect x="26" y="26" width="398" height="548" rx="12" fill="none" stroke="rgba(245, 175, 25, 0.1)" stroke-width="1"/>
 
-  <!-- Header Branding -->
-  <g transform="translate(225, 75)">
-    <rect x="-85" y="-26" width="170" height="30" rx="15" fill="rgba(255, 215, 0, 0.15)" stroke="#ffd700" stroke-width="1.2"/>
-    <text x="0" y="-6" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="13" font-weight="800" letter-spacing="2">
-      VIP TABLE GAME
-    </text>
-    <text x="0" y="44" text-anchor="middle" fill="url(#goldText)" font-family="'Impact', sans-serif" font-size="44" font-weight="900" letter-spacing="2">
-      DRAGON TIGER
-    </text>
+  <!-- Left: DRAGON SIDE (Red Ambient Light) -->
+  <circle cx="120" cy="270" r="140" fill="#ff1744" opacity="0.12"/>
+  <!-- Right: TIGER SIDE (Amber Ambient Light) -->
+  <circle cx="330" cy="270" r="140" fill="#f5af19" opacity="0.12"/>
+
+  <!-- Dragon Crest/Emblem Silhouette (Top Left) -->
+  <g transform="translate(120, 110)">
+    <circle cx="0" cy="0" r="46" fill="#1e0508" stroke="#ff1744" stroke-width="2.5"/>
+    <!-- Stylized Dragon head icon -->
+    <path d="M -18 12 Q -22 -14 0 -24 Q 22 -14 18 12 Q 10 24 0 16 Q -10 24 -18 12 Z" fill="#ff1744"/>
+    <circle cx="-6" cy="-6" r="3" fill="#ffebee"/>
+    <circle cx="6" cy="-6" r="3" fill="#ffebee"/>
+    <text x="0" y="34" text-anchor="middle" fill="#ff5252" font-family="'Impact', sans-serif" font-size="14" letter-spacing="2">DRAGON</text>
   </g>
 
-  <!-- VS Emblem in Center -->
-  <g transform="translate(225, 285)">
-    <circle cx="0" cy="0" r="28" fill="#111" stroke="#ffd700" stroke-width="2.5"/>
-    <text x="0" y="8" text-anchor="middle" fill="#ffd700" font-family="'Impact', sans-serif" font-size="22" font-weight="900">
+  <!-- Tiger Crest/Emblem Silhouette (Top Right) -->
+  <g transform="translate(330, 110)">
+    <circle cx="0" cy="0" r="46" fill="#201103" stroke="#f5af19" stroke-width="2.5"/>
+    <!-- Stylized Tiger face icon -->
+    <path d="M -20 -10 L -26 -24 L -10 -18 Q 0 -22 10 -18 L 26 -24 L 20 -10 Q 24 10 0 22 Q -24 10 -20 -10 Z" fill="#f5af19"/>
+    <circle cx="-8" cy="-2" r="3" fill="#fff8e1"/>
+    <circle cx="8" cy="-2" r="3" fill="#fff8e1"/>
+    <text x="0" y="34" text-anchor="middle" fill="#fbbf24" font-family="'Impact', sans-serif" font-size="14" letter-spacing="2">TIGER</text>
+  </g>
+
+  <!-- TWO CRISP CASINO CARDS DUELING IN CENTER -->
+  <!-- 1. LEFT CARD: DRAGON KING (K OF DIAMONDS) -->
+  <g transform="translate(145, 330) rotate(-10)" filter="url(#cardShadow)">
+    <rect x="-65" y="-105" width="130" height="210" rx="12" fill="url(#dragonCard)" stroke="#e2e8f0" stroke-width="2.5"/>
+    <rect x="-57" y="-97" width="114" height="194" rx="8" fill="none" stroke="#ff1744" stroke-width="1.2" opacity="0.3"/>
+    <!-- Top-left rank -->
+    <text x="-48" y="-70" fill="#ff1744" font-family="'Georgia', serif" font-size="28" font-weight="900">K</text>
+    <text x="-48" y="-46" fill="#ff1744" font-family="'Georgia', serif" font-size="22">♦</text>
+    <!-- Center Big Diamond -->
+    <text x="0" y="24" text-anchor="middle" fill="#ff1744" font-family="'Georgia', serif" font-size="70">♦</text>
+    <!-- Bottom Badge -->
+    <rect x="-42" y="68" width="84" height="22" rx="11" fill="#ffebee"/>
+    <text x="0" y="83" text-anchor="middle" fill="#b71c1c" font-family="sans-serif" font-size="11" font-weight="900" letter-spacing="1">DRAGON</text>
+  </g>
+
+  <!-- 2. RIGHT CARD: TIGER QUEEN (Q OF SPADES) -->
+  <g transform="translate(305, 330) rotate(10)" filter="url(#cardShadow)">
+    <rect x="-65" y="-105" width="130" height="210" rx="12" fill="url(#dragonCard)" stroke="#e2e8f0" stroke-width="2.5"/>
+    <rect x="-57" y="-97" width="114" height="194" rx="8" fill="none" stroke="#0f172a" stroke-width="1.2" opacity="0.3"/>
+    <!-- Top-left rank -->
+    <text x="-48" y="-70" fill="#0f172a" font-family="'Georgia', serif" font-size="28" font-weight="900">Q</text>
+    <text x="-48" y="-46" fill="#0f172a" font-family="'Georgia', serif" font-size="22">♠</text>
+    <!-- Center Big Spade -->
+    <text x="0" y="24" text-anchor="middle" fill="#0f172a" font-family="'Georgia', serif" font-size="70">♠</text>
+    <!-- Bottom Badge -->
+    <rect x="-38" y="68" width="76" height="22" rx="11" fill="#fef3c7"/>
+    <text x="0" y="83" text-anchor="middle" fill="#b45309" font-family="sans-serif" font-size="11" font-weight="900" letter-spacing="1">TIGER</text>
+  </g>
+
+  <!-- CENTER VS BADGE -->
+  <g transform="translate(225, 330)" filter="url(#emblemGlow)">
+    <circle cx="0" cy="0" r="32" fill="#0b0f19" stroke="url(#gold)" stroke-width="3.5"/>
+    <circle cx="0" cy="0" r="26" fill="#182234"/>
+    <text x="0" y="8" text-anchor="middle" fill="url(#gold)" font-family="'Impact', sans-serif" font-size="24" font-weight="900" letter-spacing="1">
       VS
     </text>
   </g>
 
-  <!-- Dragon Card (Left) -->
-  <g transform="translate(130, 285) rotate(-8)" filter="url(#cardShadow)">
-    <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
-    <rect x="-58" y="-88" width="116" height="176" rx="6" fill="none" stroke="#ff1744" stroke-width="1" opacity="0.4"/>
-    <!-- Rank & Suit -->
-    <text x="-48" y="-60" fill="#ff1744" font-family="'Georgia', serif" font-size="28" font-weight="900">K</text>
-    <text x="-48" y="-36" fill="#ff1744" font-family="'Georgia', serif" font-size="24">♦</text>
-    <text x="0" y="25" text-anchor="middle" fill="#ff1744" font-family="'Georgia', serif" font-size="64">♦</text>
-    <text x="0" y="80" text-anchor="middle" fill="#b71c1c" font-family="sans-serif" font-size="14" font-weight="800" letter-spacing="1">DRAGON</text>
-  </g>
+  <!-- SUBTLE BOTTOM CASINO BETTING SLOTS -->
+  <g transform="translate(225, 500)">
+    <rect x="-160" y="0" width="95" height="36" rx="8" fill="rgba(255, 23, 68, 0.15)" stroke="#ff1744" stroke-width="1.5"/>
+    <text x="-112" y="23" text-anchor="middle" fill="#ff5252" font-family="sans-serif" font-size="12" font-weight="800">DRAGON</text>
 
-  <!-- Tiger Card (Right) -->
-  <g transform="translate(320, 285) rotate(8)" filter="url(#cardShadow)">
-    <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
-    <rect x="-58" y="-88" width="116" height="176" rx="6" fill="none" stroke="#0f172a" stroke-width="1" opacity="0.4"/>
-    <!-- Rank & Suit -->
-    <text x="-48" y="-60" fill="#0f172a" font-family="'Georgia', serif" font-size="28" font-weight="900">Q</text>
-    <text x="-48" y="-36" fill="#0f172a" font-family="'Georgia', serif" font-size="24">♠</text>
-    <text x="0" y="25" text-anchor="middle" fill="#0f172a" font-family="'Georgia', serif" font-size="64">♠</text>
-    <text x="0" y="80" text-anchor="middle" fill="#f57c00" font-family="sans-serif" font-size="14" font-weight="800" letter-spacing="1">TIGER</text>
-  </g>
+    <rect x="-45" y="0" width="90" height="36" rx="8" fill="rgba(34, 197, 94, 0.15)" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="0" y="23" text-anchor="middle" fill="#4ade80" font-family="sans-serif" font-size="12" font-weight="800">TIE</text>
 
-  <!-- Betting Spots Graphic (Dragon 1:1 · Tie 8:1 · Tiger 1:1) -->
-  <g transform="translate(225, 450)">
-    <rect x="-180" y="0" width="105" height="50" rx="8" fill="rgba(255, 23, 68, 0.2)" stroke="#ff1744" stroke-width="1.5"/>
-    <text x="-127" y="24" text-anchor="middle" fill="#ff5252" font-family="sans-serif" font-size="14" font-weight="800">DRAGON</text>
-    <text x="-127" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">1 : 1</text>
-
-    <rect x="-55" y="0" width="110" height="50" rx="8" fill="rgba(0, 230, 118, 0.2)" stroke="#00e676" stroke-width="1.5"/>
-    <text x="0" y="24" text-anchor="middle" fill="#00e676" font-family="sans-serif" font-size="14" font-weight="800">TIE</text>
-    <text x="0" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">8 : 1</text>
-
-    <rect x="75" y="0" width="105" height="50" rx="8" fill="rgba(255, 179, 0, 0.2)" stroke="#ffb300" stroke-width="1.5"/>
-    <text x="127" y="24" text-anchor="middle" fill="#ffb300" font-family="sans-serif" font-size="14" font-weight="800">TIGER</text>
-    <text x="127" y="42" text-anchor="middle" fill="#ffd700" font-family="sans-serif" font-size="12" font-weight="700">1 : 1</text>
-  </g>
-
-  <!-- Footer -->
-  <g transform="translate(225, 545)">
-    <text x="0" y="0" text-anchor="middle" fill="#a7f3d0" font-family="sans-serif" font-size="14" font-weight="700" letter-spacing="1">
-      HIGH ROLLER CASINO · FAST TWO-CARD BACCARAT
-    </text>
+    <rect x="65" y="0" width="95" height="36" rx="8" fill="rgba(245, 175, 25, 0.15)" stroke="#f5af19" stroke-width="1.5"/>
+    <text x="112" y="23" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="12" font-weight="800">TIGER</text>
   </g>
 </svg>

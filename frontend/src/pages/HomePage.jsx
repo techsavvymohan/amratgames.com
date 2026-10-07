@@ -12,10 +12,10 @@ const ALL_GAMES = [
 
 const CATEGORIES = [
     { id: 'all', label: 'All Games', icon: '🎮' },
-    { id: 'originals', label: 'Originals', icon: '👑' },
-    { id: 'fast', label: 'Fast & Crash', icon: '⚡' },
-    { id: 'table', label: 'Table & Cards', icon: '🃏' },
-    { id: 'popular', label: 'Popular', icon: '🔥' },
+    { id: 'popular', label: 'Hot & Popular', icon: '🔥' },
+    { id: 'fast', label: 'Rocket & Fast', icon: '⚡' },
+    { id: 'table', label: 'Cards & Table', icon: '🃏' },
+    { id: 'originals', label: 'Simple Games', icon: '👑' },
 ]
 
 function GameCard({ game }) {
@@ -23,11 +23,11 @@ function GameCard({ game }) {
         <>
             <div className="amrat-card-image">
                 {game.image ? (
-                    <img 
-                        src={game.image} 
-                        alt={`${game.name} game banner`} 
-                        className="game-art-image" 
-                        loading="lazy" 
+                    <img
+                        src={game.image}
+                        alt={`${game.name} game banner`}
+                        className="game-art-image"
+                        loading="lazy"
                     />
                 ) : (
                     <div className="game-art-placeholder" aria-hidden="true">
@@ -36,7 +36,7 @@ function GameCard({ game }) {
                         </svg>
                     </div>
                 )}
-                
+
                 {/* Visual badges */}
                 <div className="card-top-badges">
                     {game.badge && (
@@ -62,7 +62,7 @@ function GameCard({ game }) {
                     </div>
                 )}
             </div>
-            
+
             <div className="amrat-card-footer">
                 <div className="card-info">
                     <span className="game-name">{game.name}</span>
@@ -76,7 +76,7 @@ function GameCard({ game }) {
                 ) : (
                     <span className="card-play-arrow" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
                         </svg>
                     </span>
                 )}
@@ -96,80 +96,80 @@ function GameCard({ game }) {
 const HERO_SLIDES = [
     {
         id: 'royal-welcome',
-        badge: '👑 ROYAL VIP ORIGINALS',
-        titlePrefix: 'Play & Win in ',
-        titleHighlight: '₹ INR & Crypto.',
-        description: 'Instant deposits via UPI (Google Pay, PhonePe, Paytm, BHIM) with 0% conversion fees. 24/7 fast payouts directly to your bank account with 99.00% transparent RTP.',
-        primaryCta: { label: 'Play Crash Now', icon: '🚀', to: '/crash' },
-        secondaryCta: { label: 'Deposit via UPI', icon: '⚡', action: 'deposit' },
-        navLabel: 'UPI Deposit 0% Fee',
+        badge: '⚡ FAST UPI & 24/7 BANK WITHDRAWAL',
+        titlePrefix: 'Deposit in 5 Seconds. ',
+        titleHighlight: 'Withdraw Directly to Bank.',
+        description: 'Add money using Google Pay, PhonePe, or Paytm with zero extra fees. When you win, get your cash directly in your bank account within minutes.',
+        primaryCta: { label: 'Play Rocket Game', icon: '🚀', to: '/crash' },
+        secondaryCta: { label: 'Add Money via UPI', icon: '⚡', action: 'deposit' },
+        navLabel: 'UPI & Fast Withdrawals',
         stats: [
-            { label: 'UPI & NetBanking', value: 'Instant ₹0 Fee', icon: '🇮🇳' },
-            { label: 'Provably Fair', value: '99% RTP', icon: '🛡️' },
-            { label: 'Settlements', value: '24/7 Payouts', icon: '💸' },
-            { label: 'Practice Mode', value: '₹10,000 Free', icon: '🎁' },
+            { label: 'Google Pay, PhonePe, Paytm', value: 'Instant UPI', icon: '🇮🇳' },
+            { label: 'Direct to Bank 24/7', value: 'Fast Payouts', icon: '💸' },
+            { label: 'Genuine & Honest Games', value: '100% Safe', icon: '🛡️' },
+            { label: 'Free Demo Money', value: '₹10,000 Cash', icon: '🎁' },
         ],
         showcase: {
             type: 'deposit',
-            tag: 'LIVE UPI CASHIER',
-            title: 'Instant 0% Fee Deposit',
-            subtitle: 'Direct INR deposits via your favorite apps',
-            gateways: ['GPay', 'PhonePe', 'Paytm', 'BHIM', 'UPI'],
-            quickAmounts: [500, 1000, 2500],
-            cta: 'Deposit via UPI',
+            tag: 'EASY UPI DEPOSIT',
+            title: 'Deposit ₹100 & Start Playing',
+            subtitle: 'Pay directly from your phone in 5 seconds',
+            gateways: ['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI'],
+            quickAmounts: [100, 500, 1000],
+            cta: 'Add Money via UPI',
             action: 'deposit'
         }
     },
     {
         id: 'crash-multipliers',
-        badge: '🚀 #1 MULTIPLIER GAME',
-        titlePrefix: 'Soar High with ',
-        titleHighlight: 'Up to 100,000x.',
-        description: 'Watch the rocket trajectory soar into space with provably fair SHA-256 odds. Set your target multiplier and cash out before the blast to win massive payouts!',
-        primaryCta: { label: 'Launch Rocket', icon: '🚀', to: '/crash' },
-        secondaryCta: { label: 'Try Practice Demo', icon: '🎮', to: '/crash' },
-        navLabel: 'Crash 100,000x',
+        badge: '🚀 INDIA’S #1 ROCKET GAME',
+        titlePrefix: 'Watch Rocket Fly & ',
+        titleHighlight: 'Cash Out Before It Crashes!',
+        description: 'Watch the rocket fly higher and multiply your money: 2x, 5x, 10x, 100x! Click Cash Out anytime to collect your profit before it blasts. Quick rounds and big wins!',
+        primaryCta: { label: 'Play Rocket Now', icon: '🚀', to: '/crash' },
+        secondaryCta: { label: 'Free Practice Game', icon: '🎮', to: '/crash' },
+        navLabel: 'Rocket Crash Game',
         stats: [
-            { label: 'Max Multiplier', value: '100,000x', icon: '⚡' },
-            { label: 'House Edge', value: 'Only 1.0%', icon: '📊' },
-            { label: 'Auto Cashout', value: 'Instant', icon: '🎯' },
-            { label: 'Live Bets', value: '24/7 Active', icon: '🔥' },
+            { label: 'Big Win Multipliers', value: 'Up to 1,000x', icon: '⚡' },
+            { label: 'Fast 10-Second Rounds', value: 'Quick Rounds', icon: '⏱️' },
+            { label: 'Take Profit Anytime', value: '1-Tap Cashout', icon: '🎯' },
+            { label: 'Real Indian Players Live', value: 'Live Players', icon: '🔥' },
         ],
         showcase: {
             type: 'crash',
-            tag: 'LIVE MULTIPLIER RADAR',
-            title: 'Crash Space Flight',
-            multiplier: '84.60x',
-            status: 'Soaring Now',
-            players: '1,842 Active',
-            topWin: '₹3,40,000',
-            cta: 'Launch Rocket',
+            tag: 'LIVE ROCKET ROUND',
+            title: 'Rocket Flying High',
+            multiplier: '24.50x',
+            status: 'Flying High Now',
+            players: '2,400+ Playing Now',
+            topWin: '₹3,40,000 Won Today',
+            cta: 'Launch Rocket Now',
             to: '/crash'
         }
     },
     {
         id: 'provably-fair',
-        badge: '🛡️ 100% CRYPTOGRAPHIC FAIRNESS',
-        titlePrefix: 'Tamper-Proof Odds with ',
-        titleHighlight: 'SHA-256 Hashing.',
-        description: 'Every single roll, card, and multiplier is predetermined by cryptographic seeds and verifiable on-chain before and after each round begins.',
-        primaryCta: { label: 'Explore 7 Games', icon: '🎲', hash: '#amrat-originals' },
-        secondaryCta: { label: 'Play Mines & Gems', icon: '💎', to: '/mines' },
-        navLabel: '99% RTP Verified',
+        badge: '💯 100% HONEST & GENUINE GAMING',
+        titlePrefix: 'No Cheating, No Tricks. ',
+        titleHighlight: '100% Fair Winning Chances.',
+        description: 'Every round outcome is decided by automatic computer math with zero human interference. The casino cannot change your result. Play with complete trust and peace of mind.',
+        primaryCta: { label: 'See All 7 Games', icon: '🎲', hash: '#amrat-originals' },
+        secondaryCta: { label: 'Play Mines & Diamonds', icon: '💎', to: '/mines' },
+        navLabel: '100% Honest & Fair',
         stats: [
-            { label: 'Verification', value: '100% Verifiable', icon: '🔒' },
-            { label: 'Randomness', value: 'SHA-256 Seed', icon: '🔑' },
-            { label: 'Games Available', value: '7 Originals', icon: '👑' },
-            { label: 'Player Odds', value: '99.00% Verified', icon: '⭐' },
+            { label: 'Zero Cheating or Tricks', value: '100% Genuine', icon: '🔒' },
+            { label: 'Highest Player Return', value: '99% Win Rate', icon: '⭐' },
+            { label: 'Rocket, Mines, Plinko...', value: '7 Fun Games', icon: '👑' },
+            { label: 'Hindi & English Help', value: '24/7 Support', icon: '💬' },
         ],
         showcase: {
             type: 'fair',
-            tag: 'CRYPTOGRAPHIC AUDIT',
-            title: 'Provably Fair Guarantee',
-            hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4...',
-            houseEdge: '1.0% Edge (99% RTP)',
-            seedType: 'Dual Seed Verification',
-            cta: 'Play Mines & Gems',
+            tag: 'OUR HONESTY PROMISE',
+            title: 'Fair Games For Everyone',
+            hash: 'Verified Honest Game System',
+            houseEdge: 'Highest Player Return (99%)',
+            seedType: 'Tamper-Proof Guarantee',
+            cta: 'Play Mines & Diamonds',
             to: '/mines'
         }
     }
@@ -391,25 +391,25 @@ function HomePage() {
                             <div className="showcase-card showcase-fair">
                                 <div className="showcase-header">
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
-                                    <span className="showcase-live-pill">🛡️ SHA-256 Active</span>
+                                    <span className="showcase-live-pill">🛡️ 100% Honest</span>
                                 </div>
                                 <h3 className="showcase-title">{currentSlide.showcase.title}</h3>
                                 <div className="fairness-hash-preview">
-                                    <span className="hash-label">Cryptographic Hash</span>
-                                    <code className="hash-code">{currentSlide.showcase.hash}</code>
+                                    <span className="hash-label">Our Fair Play Guarantee</span>
+                                    <code className="hash-code">Every round result is verified & honest</code>
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">
-                                        <span className="stat-label">Math Return</span>
-                                        <span className="stat-val">{currentSlide.showcase.houseEdge}</span>
+                                        <span className="stat-label">Winning Return</span>
+                                        <span className="stat-val">99% Return Rate</span>
                                     </div>
                                     <div className="showcase-stat">
-                                        <span className="stat-label">Seed Security</span>
-                                        <span className="stat-val">{currentSlide.showcase.seedType}</span>
+                                        <span className="stat-label">Security</span>
+                                        <span className="stat-val">100% Safe Games</span>
                                     </div>
                                 </div>
                                 <Link to={currentSlide.showcase.to} className="showcase-cta-btn">
-                                    <span>💎</span> <span>Play Provably Fair Games</span>
+                                    <span>💎</span> <span>Play Mines Game Now</span>
                                 </Link>
                             </div>
                         )}
@@ -463,9 +463,9 @@ function HomePage() {
 
             <section id="amrat-originals" className="home-section" tabIndex="-1">
                 <div className="section-header-copy">
-                    <p className="section-kicker">Live Games</p>
-                    <h2>Amrat Casino Originals</h2>
-                    <p>Seven fast games with 99.00% Return to Player (RTP) and transparent cryptographic seed hashes.</p>
+                    <p className="section-kicker">Play &amp; Win</p>
+                    <h2>Popular Games to Play</h2>
+                    <p>Choose any game below. Simple rules, instant fun, and real money payouts.</p>
                 </div>
                 <div className="amrat-games-grid">
                     {filteredGames.length > 0 ? (
@@ -525,7 +525,7 @@ function HomePage() {
                 <div className="faq-list">
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" /></svg>
                             Can I play directly in Indian Rupees (₹ INR)?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
@@ -537,7 +537,7 @@ function HomePage() {
 
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" /></svg>
                             How do I get free ₹10,000 INR practice balance?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
@@ -549,7 +549,7 @@ function HomePage() {
 
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" /></svg>
                             What makes the platform provably fair?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
@@ -561,7 +561,7 @@ function HomePage() {
 
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" /></svg>
                             What are the Return to Player (RTP) rates?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
@@ -573,7 +573,7 @@ function HomePage() {
 
                     <article className="faq-item" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                         <h3 className="faq-question" itemProp="name">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" /></svg>
                             Can I play on mobile devices?
                         </h3>
                         <div className="faq-answer" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
