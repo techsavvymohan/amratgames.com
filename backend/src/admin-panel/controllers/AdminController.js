@@ -6,6 +6,7 @@ import { GameEngineManager } from '../services/GameEngineManager.js'
 import { db } from '../../db/db.js'
 import { testSupabaseConnection } from '../../db/SupabaseClient.js'
 import { broadcastEvent } from '../../websocket.js'
+import { antiFraudService } from '../../services/AntiFraudService.js'
 
 /**
  * AdminController — OOP Controller orchestrating admin API requests
@@ -71,7 +72,8 @@ export class AdminController {
         try {
             const details = this.userManager.getUserDetails(req.params.id)
             if (!details) return res.status(404).json({ success: false, error: 'User not found' })
-            res.json({ success: true, ...details })
+            const riskAnalysis = antiFraudService.calculateRiskScore(req.params.id)
+            res.json({ success: true, ...details, riskAnalysis })
         } catch (err) {
             res.status(500).json({ success: false, error: err.message })
         }
@@ -115,7 +117,16 @@ export class AdminController {
     async listWithdrawals(req, res) {
         try {
             const { status, search, userId } = req.query
-            const withdrawals = this.withdrawalManager.listWithdrawals({ status, search, userId })
+            const rawWithdrawals = this.withdrawalManager.listWithdrawals({ status, search, userId })
+            const withdrawals = rawWithdrawals.map(w => {
+                const risk = antiFraudService.calculateRiskScore(w.userId)
+                return {
+                    ...w,
+                    riskScore: risk.score,
+                    riskLevel: risk.level,
+                    riskFlags: risk.flags
+                }
+            })
             res.json({ success: true, total: withdrawals.length, withdrawals })
         } catch (err) {
             res.status(500).json({ success: false, error: err.message })

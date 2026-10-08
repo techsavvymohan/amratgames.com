@@ -605,6 +605,10 @@ class Database {
         }
     }
 
+    getVipTier(totalWagered) {
+        return getVipTier(totalWagered)
+    }
+
     getVipStatus(userId) {
         const user = this.findUserById(userId)
         if (!user) return null

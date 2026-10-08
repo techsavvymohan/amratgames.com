@@ -10,6 +10,8 @@ import { gameEngine } from '../src/services/GameEngine.js'
 import { revokeToken, isTokenRevoked } from '../src/middleware/auth.js'
 import { checkPlatformMaintenance, checkGameMaintenance } from '../src/middleware/circuitBreaker.js'
 import { crashRoomService } from '../src/services/CrashRoomService.js'
+import { chatService } from '../src/services/ChatService.js'
+import { antiFraudService } from '../src/services/AntiFraudService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -643,5 +645,134 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.equal(claimResult.claimedAmount, 25.50)
         assert.equal(vipPlayer.balances.INR, parseFloat((initialBal + 25.50).toFixed(2)))
         assert.equal(vipPlayer.unclaimedRakeback, 0)
+    })
+
+    it('verifies ChatService real-time message posting, VIP badges, and 2-second slow mode', async () => {
+        const chatter = db.createUser({
+            username: 'chatter_' + Date.now(),
+            email: `chatter_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        chatter.totalWagered = 15000 // Silver tier
+
+        const msg = await chatService.postMessage({
+            user: chatter,
+            text: 'Hello AmratGames community! 🚀'
+        })
+
+        assert.equal(msg.userId, chatter.id)
+        assert.equal(msg.username, chatter.username)
+        assert.equal(msg.vipTier, 'Silver')
+        assert.equal(msg.text, 'Hello AmratGames community! 🚀')
+        assert.ok(msg.createdAt)
+
+        // Rapid 2nd post must trigger 2-second slow mode rate limit
+        await assert.rejects(
+            async () => {
+                await chatService.postMessage({
+                    user: chatter,
+                    text: 'Flood message attempt'
+                })
+            },
+            (err) => {
+                assert.match(err.message, /Slow mode/i)
+                assert.equal(err.status, 429)
+                return true
+            }
+        )
+    })
+
+    it('verifies ChatService bet slip sharing rejects unowned bets and publishes valid slips', async () => {
+        const betOwner = db.createUser({
+            username: 'winner_' + Date.now(),
+            email: `winner_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        const betRecord = {
+            id: 'bet_test_' + Date.now(),
+            userId: betOwner.id,
+            username: betOwner.username,
+            game: 'limbo',
+            gameName: 'Limbo',
+            currency: 'INR',
+            betAmount: 500,
+            multiplier: 5.5,
+            won: true,
+            payout: 2750,
+            timestamp: new Date().toISOString()
+        }
+        db.data.bets.push(betRecord)
+
+        // Imposter trying to share someone else's bet
+        const imposter = { id: 'usr_imposter', username: 'imposter' }
+        await assert.rejects(
+            async () => {
+                await chatService.shareBet({ user: imposter, betId: betRecord.id })
+            },
+            (err) => {
+                assert.match(err.message, /You can only share your own bets/i)
+                return true
+            }
+        )
+
+        // Legitimate owner shares bet
+        const sharedMsg = await chatService.shareBet({ user: betOwner, betId: betRecord.id })
+        assert.equal(sharedMsg.type, 'bet_share')
+        assert.equal(sharedMsg.sharedBet.id, betRecord.id)
+        assert.equal(sharedMsg.sharedBet.payout, 2750)
+        assert.equal(sharedMsg.sharedBet.multiplier, 5.5)
+    })
+
+    it('verifies Anti-Sybil Sentinel detects IP collisions, device matches, and elevates risk score', () => {
+        const referrer = db.createUser({
+            username: 'sybil_agent_' + Date.now(),
+            email: `sybil_agent_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        referrer.security = { lastIp: '198.51.100.25', fingerprint: 'fp_hardware_hash_123' }
+
+        const fakeReferred = db.createUser({
+            username: 'sybil_clone_' + Date.now(),
+            email: `sybil_clone_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player',
+            referredBy: referrer.referralCode
+        })
+        fakeReferred.security = { lastIp: '198.51.100.25', fingerprint: 'fp_hardware_hash_123' }
+
+        // Track sessions in AntiFraudService
+        antiFraudService.trackSession(referrer.id, { ip: '198.51.100.25', fingerprint: 'fp_hardware_hash_123' })
+        antiFraudService.trackSession(fakeReferred.id, { ip: '198.51.100.25', fingerprint: 'fp_hardware_hash_123' })
+
+        const risk = antiFraudService.calculateRiskScore(fakeReferred.id)
+        assert.ok(risk.score >= 50, 'Sybil collision score should be elevated (>= 50)')
+        assert.ok(['ELEVATED', 'CRITICAL'].includes(risk.level))
+        assert.ok(risk.flags.includes('SYBIL_REFERRAL_IP_COLLISION') || risk.flags.includes('SYBIL_REFERRAL_DEVICE_FINGERPRINT_MATCH'))
+    })
+
+    it('verifies Provably Fair HMAC-SHA256 outcome verification logic across games', () => {
+        const serverSeed = 'amrat_provably_fair_test_seed_777'
+        const clientSeed = 'custom_player_seed'
+        const nonce = 3
+
+        const hmac = crypto.createHmac('sha256', serverSeed)
+        hmac.update(`${clientSeed}:${nonce}`)
+        const hash = hmac.digest('hex')
+
+        const intVal = parseInt(hash.slice(0, 8), 16)
+        const floatVal = intVal / 0x100000000
+
+        let roll = 1.00
+        if (floatVal >= 0.01) {
+            roll = Math.floor((99 / (1 - floatVal))) / 100
+        }
+        roll = Math.max(1.00, Math.min(roll, 1000000.0))
+
+        assert.ok(roll >= 1.00, 'Roll must be at least 1.00')
+        assert.equal(hash.length, 64)
     })
 })

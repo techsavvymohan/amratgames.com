@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 import { db } from '../db/db.js'
 import { authenticate } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
-import { gameEngine } from '../services/GameEngine.js'
+import { gameEngine, PLINKO_PAYOUTS } from '../services/GameEngine.js'
 import { checkGameMaintenance } from '../middleware/circuitBreaker.js'
 import { crashRoomService } from '../services/CrashRoomService.js'
 
@@ -33,6 +33,124 @@ router.get('/provably-fair/seed', (req, res) => {
             rtp: db.data.settings?.rtp || 99.0,
             houseEdge: db.data.settings?.houseEdge || 1.0,
             announcement: db.data.settings?.activeAnnouncements
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/games/provably-fair/verify
+router.post('/provably-fair/verify', (req, res) => {
+    try {
+        const { serverSeed, clientSeed = 'amrat-player', nonce = 1, game = 'limbo', rows = 16, risk = 'medium', minesCount = 3 } = req.body
+        if (!serverSeed) {
+            return res.status(400).json({ success: false, error: 'serverSeed is required for provably fair verification' })
+        }
+
+        const cleanClientSeed = String(clientSeed).trim()
+        const cleanNonce = parseInt(nonce, 10) || 1
+        const serverSeedSha256 = crypto.createHash('sha256').update(serverSeed).digest('hex')
+
+        const message = `${cleanClientSeed}:${cleanNonce}`
+        const hmac = crypto.createHmac('sha256', serverSeed)
+        hmac.update(message)
+        const hash = hmac.digest('hex')
+
+        const intVal = parseInt(hash.slice(0, 8), 16)
+        const floatVal = intVal / 0x100000000
+
+        let result = {}
+        const gameType = String(game).toLowerCase()
+
+        if (gameType === 'limbo') {
+            let roll = 1.00
+            if (floatVal >= 0.01) {
+                roll = Math.floor((99 / (1 - floatVal))) / 100
+            }
+            roll = Math.max(1.00, Math.min(roll, 1000000.0))
+            result = { game: 'limbo', roll, floatVal }
+        } else if (gameType === 'crash') {
+            let crashPoint = 1.00
+            if (floatVal >= 0.01) {
+                crashPoint = Math.floor((99 / (1 - floatVal))) / 100
+            }
+            crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
+            result = { game: 'crash', crashPoint, floatVal }
+        } else if (gameType === 'plinko') {
+            const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))
+            const riskLevel = ['low', 'medium', 'high'].includes(risk) ? risk : 'medium'
+            const path = []
+            let rightBounces = 0
+            for (let i = 0; i < numRows; i++) {
+                const chunk = hash.substr(i * 4, 4) || '7fff'
+                const direction = (parseInt(chunk, 16) % 2 === 1) ? 1 : 0
+                path.push(direction)
+                if (direction === 1) rightBounces++
+            }
+            const matrix = PLINKO_PAYOUTS[numRows]?.[riskLevel] || PLINKO_PAYOUTS[16].medium
+            result = {
+                game: 'plinko',
+                rows: numRows,
+                risk: riskLevel,
+                binIndex: rightBounces,
+                multiplier: matrix[rightBounces] || 0.5,
+                path
+            }
+        } else if (gameType === 'dragon-tiger') {
+            const dVal = (parseInt(hash.slice(0, 4), 16) % 13) + 1
+            const tVal = (parseInt(hash.slice(4, 8), 16) % 13) + 1
+            const suits = ['♠', '♥', '♦', '♣']
+            const dSuit = suits[parseInt(hash.slice(8, 9), 16) % 4]
+            const tSuit = suits[parseInt(hash.slice(9, 10), 16) % 4]
+            let winner = 'tie'
+            if (dVal > tVal) winner = 'dragon'
+            else if (tVal > dVal) winner = 'tiger'
+            result = {
+                game: 'dragon-tiger',
+                dragon: { value: dVal, suit: dSuit },
+                tiger: { value: tVal, suit: tSuit },
+                winner
+            }
+        } else if (gameType === 'color-match') {
+            const luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
+            const colors = []
+            if (luckyNumber === 0) colors.push('red', 'violet')
+            else if (luckyNumber === 5) colors.push('green', 'violet')
+            else if ([1, 3, 7, 9].includes(luckyNumber)) colors.push('green')
+            else colors.push('red')
+            result = {
+                game: 'color-match',
+                luckyNumber,
+                winningColors: colors,
+                bigSmall: luckyNumber >= 5 ? 'big' : 'small'
+            }
+        } else if (gameType === 'mines') {
+            const tiles = Array.from({ length: 25 }, (_, i) => i)
+            for (let i = 24; i > 0; i--) {
+                const byteOffset = (24 - i) % 32
+                const randByte = parseInt(hash.slice(byteOffset * 2, byteOffset * 2 + 2), 16)
+                const j = randByte % (i + 1);
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]]
+            }
+            const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
+            result = {
+                game: 'mines',
+                minesCount: count,
+                mineIndices: tiles.slice(0, count)
+            }
+        } else {
+            result = { game: gameType, floatVal, hash }
+        }
+
+        res.json({
+            success: true,
+            serverSeed,
+            serverSeedSha256,
+            clientSeed: cleanClientSeed,
+            nonce: cleanNonce,
+            hmacMessage: message,
+            hmacHash: hash,
+            outcome: result
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })

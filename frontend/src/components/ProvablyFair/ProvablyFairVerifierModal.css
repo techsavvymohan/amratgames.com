@@ -1,0 +1,337 @@
+/* 👑 AmratGames.com — Provably Fair Verifier Modal Styles */
+
+.verifier-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.verifier-modal-container {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    width: 740px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+    display: flex;
+    flex-direction: column;
+}
+
+.verifier-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.6), transparent);
+}
+
+.verifier-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.verifier-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 4px;
+}
+
+.verifier-subtitle {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.verifier-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.35rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.verifier-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.verifier-modal-body {
+    padding: 22px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Tabs */
+.verifier-game-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.verifier-tab-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.verifier-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+}
+
+.verifier-tab-btn.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.25));
+    border-color: #10b981;
+    color: #34d399;
+}
+
+/* Form */
+.verifier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.verifier-inputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.verifier-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.verifier-label.full-width {
+    grid-column: span 2;
+}
+
+.verifier-input {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #f8fafc;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.verifier-input:focus {
+    border-color: #10b981;
+}
+
+.verifier-input-hint {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: normal;
+}
+
+.verifier-error-msg {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+}
+
+.verifier-submit-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.verifier-submit-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.verifier-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Results */
+.verifier-result-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.3s;
+}
+
+.verifier-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 10px;
+}
+
+.verifier-verified-tag {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #34d399;
+}
+
+.verifier-result-game {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.verifier-math-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.math-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.math-label {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.math-code {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    word-break: break-all;
+}
+
+.hash-highlight {
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.verifier-outcome-box {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+
+.outcome-title {
+    display: block;
+    font-size: 0.76rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.outcome-stat-highlight {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.outcome-main-number {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #facc15;
+    text-shadow: 0 0 16px rgba(250, 204, 21, 0.4);
+}
+
+.outcome-desc {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+}
+
+/* Mines Preview */
+.mines-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 36px);
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.mines-preview-tile {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border: 1px solid;
+}
+
+.mines-preview-tile.mine {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.mines-preview-tile.safe {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+@media (max-width: 640px) {
+    .verifier-inputs-grid {
+        grid-template-columns: 1fr;
+    }
+    .verifier-label.full-width {
+        grid-column: span 1;
+    }
+}

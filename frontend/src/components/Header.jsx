@@ -35,7 +35,15 @@ export const CurrencyIcon = ({ symbol = '₹', size = 20, fontSize = 12, currenc
     )
 }
 
-function Header({ menuOpen, menuButtonRef, onMenuClick }) {
+function Header({
+    menuOpen,
+    menuButtonRef,
+    onMenuClick,
+    onToggleChat,
+    isChatOpen,
+    onOpenRace,
+    onOpenVerifier
+}) {
     const location = useLocation()
     const { balance, currency, currencySymbol, currencyConfig, setCurrency, deposit, withdraw, totalDeposited, canWithdraw, transactions, toasts, openWalletModal } = useWallet()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
@@ -231,6 +239,84 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
             </div>
 
             <div className="header-right">
+                {/* 🏆 ₹50K Daily Race Button */}
+                <button
+                    type="button"
+                    className="header-action-pill-btn header-race-pill"
+                    onClick={onOpenRace}
+                    title="Daily ₹50,000 Turnover Sprint"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(202, 138, 4, 0.2))',
+                        border: '1px solid rgba(234, 179, 8, 0.4)',
+                        color: '#facc15',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        padding: '6px 12px',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    <span>🏆</span>
+                    <span className="desktop-only-text">₹50K Race</span>
+                </button>
+
+                {/* 💬 Community Live Chat Toggle */}
+                <button
+                    type="button"
+                    className={`header-icon-btn ${isChatOpen ? 'active' : ''}`}
+                    onClick={onToggleChat}
+                    title="Live Community Chat"
+                    style={{
+                        position: 'relative',
+                        background: isChatOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isChatOpen ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        width: '34px',
+                        height: '34px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <span style={{ fontSize: '15px' }}>💬</span>
+                    <span style={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '5px',
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        background: '#10b981',
+                        boxShadow: '0 0 6px #10b981'
+                    }} />
+                </button>
+
+                {/* ⚖️ Provably Fair Verifier Button */}
+                <button
+                    type="button"
+                    className="header-icon-btn desktop-only-control"
+                    onClick={() => onOpenVerifier && onOpenVerifier()}
+                    title="Provably Fair Verifier"
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '8px',
+                        width: '34px',
+                        height: '34px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <span style={{ fontSize: '15px' }}>⚖️</span>
+                </button>
+
                 {/* Currency Switcher */}
                 <label className="palette-select-label desktop-only-control" style={{ marginRight: '6px' }}>
                     <span className="palette-select-text">Currency</span>
@@ -392,6 +478,60 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
 
                                     <button
                                         type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            onOpenRace && onOpenRace()
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#facc15',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span>🏆</span>
+                                        <span>Daily ₹50K Race</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            onOpenVerifier && onOpenVerifier()
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#38bdf8',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span>⚖️</span>
+                                        <span>Provably Fair Verifier</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         className="amrat-user-dropdown-action logout"
                                         onClick={() => {
                                             logout()
@@ -498,6 +638,60 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                         <span>💸</span>
                                         <span>Affiliates (0.3% Share)</span>
                                     </Link>
+
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            onOpenRace && onOpenRace()
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#facc15',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span>🏆</span>
+                                        <span>Daily ₹50K Race</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            onOpenVerifier && onOpenVerifier()
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#38bdf8',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span>⚖️</span>
+                                        <span>Provably Fair Verifier</span>
+                                    </button>
 
                                     <button
                                         type="button"
