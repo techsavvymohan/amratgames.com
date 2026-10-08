@@ -5,6 +5,7 @@ import { CONFIG, validateConfig } from '../src/config.js'
 import authRoutes from '../src/routes/auth.routes.js'
 import gamesRoutes from '../src/routes/games.routes.js'
 import walletRoutes from '../src/routes/wallet.routes.js'
+import { gameEngine } from '../src/services/GameEngine.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -16,7 +17,6 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.equal(typeof CONFIG.DEMO_OTP_CODE, 'string')
         assert.equal(CONFIG.DEMO_OTP_CODE, '777777')
         
-        // validateConfig should run cleanly without throwing
         assert.doesNotThrow(() => validateConfig())
     })
 
@@ -33,10 +33,92 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         const outcomeHash = hmac.digest('hex')
         assert.equal(outcomeHash.length, 64, 'HMAC-SHA256 must be 64 hex characters')
 
-        // Verify deterministic reproducibility
         const hmac2 = crypto.createHmac('sha256', serverSeed)
         hmac2.update(`${clientSeed}:${nonce}`)
         assert.equal(outcomeHash, hmac2.digest('hex'), 'Outcome must be cryptographically deterministic')
+    })
+
+    it('verifies Server-Authoritative Limbo game evaluation', () => {
+        const result = gameEngine.evaluateLimbo({
+            betAmount: 100,
+            targetMultiplier: 2.0,
+            clientSeed: 'test-seed-1',
+            nonce: 1
+        })
+
+        assert.equal(result.game, 'limbo')
+        assert.ok(typeof result.won === 'boolean')
+        assert.ok(typeof result.roll === 'number')
+        assert.equal(result.targetMultiplier, 2.0)
+        assert.ok(result.won ? result.payout === 200 : result.payout === 0)
+        assert.equal(result.hash.length, 64)
+    })
+
+    it('verifies Server-Authoritative Plinko game evaluation', () => {
+        const result = gameEngine.evaluatePlinko({
+            betAmount: 50,
+            rows: 16,
+            risk: 'medium',
+            clientSeed: 'plinko-test',
+            nonce: 1
+        })
+
+        assert.equal(result.game, 'plinko')
+        assert.equal(result.rows, 16)
+        assert.equal(result.path.length, 16)
+        assert.ok(result.binIndex >= 0 && result.binIndex <= 16)
+        assert.ok(typeof result.multiplier === 'number')
+        assert.ok(result.payout >= 0)
+        assert.equal(result.hash.length, 64)
+    })
+
+    it('verifies Server-Authoritative Dragon Tiger game evaluation', () => {
+        const result = gameEngine.evaluateDragonTiger({
+            betAmount: 100,
+            choice: 'dragon',
+            clientSeed: 'dt-test',
+            nonce: 1
+        })
+
+        assert.equal(result.game, 'dragon-tiger')
+        assert.ok(result.dragon.value >= 1 && result.dragon.value <= 13)
+        assert.ok(result.tiger.value >= 1 && result.tiger.value <= 13)
+        assert.ok(['dragon', 'tiger', 'tie'].includes(result.winner))
+        assert.ok(typeof result.won === 'boolean')
+    })
+
+    it('verifies Server-Authoritative Crash evaluation rejects fraudulent multipliers', () => {
+        // Evaluate crash with a pre-set seed
+        const outcome = gameEngine.evaluateCrash({
+            claimedMultiplier: 999.0, // Fraudulent high claim
+            clientSeed: 'crash-test',
+            nonce: 5
+        })
+
+        assert.ok(typeof outcome.crashPoint === 'number')
+        // If the crash point was lower than 999, won MUST be false!
+        if (outcome.crashPoint < 999.0) {
+            assert.equal(outcome.won, false, 'Player cannot win if claimed multiplier exceeds crash point')
+            assert.equal(outcome.multiplier, 0)
+        }
+    })
+
+    it('verifies Server-Authoritative Mines round session lifecycle', () => {
+        const session = gameEngine.startMinesRound({
+            userId: 'usr_test_123',
+            currency: 'INR',
+            betAmount: 100,
+            minesCount: 3,
+            clientSeed: 'mines-seed'
+        })
+
+        assert.ok(session.roundId.startsWith('mines_'))
+        assert.equal(session.minesCount, 3)
+        assert.ok(session.nextMultiplier > 1.0)
+        assert.equal(session.active, true)
+
+        // Ensure mine locations are NOT leaked in round start response
+        assert.equal(session.mineIndices, undefined, 'Mines locations must never be leaked to the client at round start!')
     })
 
     it('verifies express route modules export valid router instances', () => {
