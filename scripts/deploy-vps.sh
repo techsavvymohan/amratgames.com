@@ -38,14 +38,11 @@ echo "      Node:  $(node -v 2>/dev/null || echo 'not found')"
 echo "      pnpm:  $(pnpm -v 2>/dev/null || echo 'not found')"
 echo "      PM2:   $(pm2 -v 2>/dev/null || echo 'not found')"
 
-# 3. Pull Latest Code from GitHub
-echo -e "\n${CYAN}[3/7] Fetching latest production commits from origin/main...${NC}"
-git fetch origin main
-git reset --hard origin/main
-
-COMMIT_HASH=$(git rev-parse --short HEAD)
-COMMIT_MSG=$(git log -1 --pretty=%B | head -n 1)
-echo -e "${GREEN}✓ Synced to commit: ${COMMIT_HASH} - \"${COMMIT_MSG}\"${NC}"
+# 3. Verify Active Commit
+echo -e "\n${CYAN}[3/7] Verifying production deployment commit...${NC}"
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -n 1 || echo 'latest')
+echo -e "${GREEN}✓ Active commit: ${COMMIT_HASH} - \"${COMMIT_MSG}\"${NC}"
 
 # 4. Install Dependencies
 echo -e "\n${CYAN}[4/7] Installing production dependencies with pnpm...${NC}"

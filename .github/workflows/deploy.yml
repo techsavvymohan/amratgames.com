@@ -17,6 +17,9 @@ concurrency:
   group: production-vps-deployment
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   # ── 1. Production CI Gate ──────────────────────────────────
   ci-gate:
@@ -78,15 +81,25 @@ jobs:
             echo "======================================================"
             echo "👑 Deploying AmratGames.com to Production VPS"
             echo "======================================================"
+            mkdir -p /var/www/amratgames.com
             cd /var/www/amratgames.com
 
-            # Ensure safe directory and fetch latest commit
+            # Ensure safe directory for git
             git config --global --add safe.directory /var/www/amratgames.com || true
-            echo "▶ Fetching latest codebase from origin/main..."
-            git fetch origin main
-            git reset --hard origin/main
 
-            # Make deploy script executable and execute
+            # Initialize git repository if missing
+            if [ ! -d "/var/www/amratgames.com/.git" ]; then
+              echo "▶ Initializing repository on VPS..."
+              git init
+              git remote add origin https://github.com/${{ github.repository }}.git 2>/dev/null || true
+            fi
+
+            # Sync exact verified commit using the ephemeral GitHub token (no credentials needed on VPS)
+            echo "▶ Syncing commit ${{ github.sha }} from GitHub..."
+            git fetch --depth=1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "${{ github.sha }}"
+            git checkout -f -B main FETCH_HEAD
+
+            # Execute production deployment runner
             chmod +x scripts/deploy-vps.sh
             bash scripts/deploy-vps.sh
 
