@@ -34,9 +34,111 @@ router.get('/provably-fair/seed', (req, res) => {
     }
 })
 
+// Helper for evaluating server-authoritative outcomes
+function evaluateGameRound({
+    game,
+    parsedAmount,
+    targetMultiplier,
+    rows,
+    risk,
+    choice,
+    claimedMultiplier,
+    minesCount,
+    hits,
+    clientSeed,
+    nonce,
+    reqBody
+}) {
+    let evaluation = null
+
+    switch (game.toLowerCase()) {
+        case 'limbo': {
+            evaluation = gameEngine.evaluateLimbo({
+                betAmount: parsedAmount,
+                targetMultiplier: targetMultiplier || reqBody.multiplier || 2.0,
+                clientSeed,
+                nonce
+            })
+            break
+        }
+
+        case 'plinko': {
+            evaluation = gameEngine.evaluatePlinko({
+                betAmount: parsedAmount,
+                rows: rows || 16,
+                risk: risk || 'medium',
+                clientSeed,
+                nonce
+            })
+            break
+        }
+
+        case 'dragon-tiger': {
+            evaluation = gameEngine.evaluateDragonTiger({
+                betAmount: parsedAmount,
+                choice: choice || reqBody.betType || 'dragon',
+                clientSeed,
+                nonce
+            })
+            break
+        }
+
+        case 'color-match': {
+            evaluation = gameEngine.evaluateColorMatch({
+                betAmount: parsedAmount,
+                choice: choice || reqBody.selectedColor || 'green',
+                clientSeed,
+                nonce
+            })
+            break
+        }
+
+        case 'crash':
+        case 'dino': {
+            evaluation = gameEngine.evaluateCrash({
+                claimedMultiplier: claimedMultiplier || reqBody.multiplier,
+                clientSeed,
+                nonce,
+                autoCashout: reqBody.autoCashout
+            })
+            evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
+            break
+        }
+
+        case 'mines': {
+            const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
+            const numHits = Math.max(0, Math.min(parseInt(hits, 10) || 1, 25 - count))
+            const verifiedMult = gameEngine.calculateMinesMultiplier(count, numHits)
+            const clientWon = Boolean(reqBody.won)
+            const safeWon = clientWon && numHits > 0
+            const safeMult = safeWon ? verifiedMult : 0
+            const payout = safeWon ? parseFloat((parsedAmount * safeMult).toFixed(2)) : 0
+
+            evaluation = {
+                won: safeWon,
+                multiplier: safeMult,
+                payout,
+                hash: crypto.randomBytes(16).toString('hex')
+            }
+            break
+        }
+
+        default: {
+            const { floatVal, hash } = gameEngine.generateHmacFloat(clientSeed, nonce)
+            const won = floatVal < 0.495
+            const multiplier = won ? 2.0 : 0
+            const payout = won ? parseFloat((parsedAmount * 2.0).toFixed(2)) : 0
+            evaluation = { won, multiplier, payout, hash }
+            break
+        }
+    }
+
+    return evaluation
+}
+
 // ── 2. Server-Authoritative Mines Game Routes ───────────────
 // POST /api/games/mines/start
-router.post('/mines/start', authenticate, (req, res) => {
+router.post('/mines/start', authenticate, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required' })
@@ -52,25 +154,28 @@ router.post('/mines/start', authenticate, (req, res) => {
             return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000' })
         }
 
-        const user = db.findUserById(req.user.id)
-        const currentBal = user.balances?.[currency] || 0
-        if (parsedAmount > currentBal) {
-            return res.status(400).json({ success: false, error: `Insufficient ${currency} balance` })
-        }
+        const session = await db.withUserLock(req.user.id, async () => {
+            const user = db.findUserById(req.user.id)
+            const currentBal = user.balances?.[currency] || 0
+            if (parsedAmount > currentBal + 0.0001) {
+                const err = new Error(`Insufficient ${currency} balance`)
+                err.status = 400
+                throw err
+            }
 
-        // Deduct bet amount immediately upon round start
-        db.updateUserBalance(user.id, currency, -parsedAmount, `Mines Bet (${minesCount} mines)`)
+            // Deduct bet amount immediately upon round start under lock
+            db.updateUserBalance(user.id, currency, -parsedAmount, `Mines Bet (${minesCount} mines)`)
 
-        // Start server round
-        const session = gameEngine.startMinesRound({
-            userId: user.id,
-            currency,
-            betAmount: parsedAmount,
-            minesCount,
-            clientSeed: clientSeed || user.id
+            return gameEngine.startMinesRound({
+                userId: user.id,
+                currency,
+                betAmount: parsedAmount,
+                minesCount,
+                clientSeed: clientSeed || user.id
+            })
         })
 
-        const updatedUser = db.findUserById(user.id)
+        const updatedUser = db.findUserById(req.user.id)
 
         res.json({
             success: true,
@@ -78,12 +183,12 @@ router.post('/mines/start', authenticate, (req, res) => {
             balances: updatedUser.balances
         })
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message })
+        res.status(err.status || 400).json({ success: false, error: err.message })
     }
 })
 
 // POST /api/games/mines/reveal
-router.post('/mines/reveal', authenticate, (req, res) => {
+router.post('/mines/reveal', authenticate, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required' })
@@ -94,43 +199,48 @@ router.post('/mines/reveal', authenticate, (req, res) => {
             return res.status(400).json({ success: false, error: 'roundId and tileIndex are required' })
         }
 
-        const result = gameEngine.revealMinesTile({
-            userId: req.user.id,
-            roundId,
-            tileIndex
-        })
+        const result = await db.withUserLock(req.user.id, async () => {
+            const revealResult = gameEngine.revealMinesTile({
+                userId: req.user.id,
+                roundId,
+                tileIndex
+            })
 
-        // If player hit a mine or auto-won, log the round in DB
-        if (result.hitMine) {
-            db.recordBet({
-                userId: req.user.id,
-                username: req.user.username,
-                game: 'mines',
-                gameName: 'Mines',
-                currency: 'INR',
-                betAmount: 0, // already deducted at start
-                multiplier: 0,
-                payout: 0,
-                profit: 0,
-                won: false,
-                hash: crypto.randomBytes(16).toString('hex')
-            })
-        } else if (result.autoWin) {
-            db.updateUserBalance(req.user.id, 'INR', result.payout, `Mines Auto Win (${result.currentMultiplier}x)`)
-            db.recordBet({
-                userId: req.user.id,
-                username: req.user.username,
-                game: 'mines',
-                gameName: 'Mines',
-                currency: 'INR',
-                betAmount: 0,
-                multiplier: result.currentMultiplier,
-                payout: result.payout,
-                profit: result.payout,
-                won: true,
-                hash: crypto.randomBytes(16).toString('hex')
-            })
-        }
+            // If player hit a mine or auto-won, log the round in DB
+            if (revealResult.hitMine) {
+                db.recordBet({
+                    userId: req.user.id,
+                    username: req.user.username,
+                    game: 'mines',
+                    gameName: 'Mines',
+                    currency: 'INR',
+                    betAmount: 0,
+                    multiplier: 0,
+                    payout: 0,
+                    profit: 0,
+                    won: false,
+                    hash: crypto.randomBytes(16).toString('hex')
+                })
+            } else if (revealResult.autoWin && revealResult.payout > 0) {
+                db.updateUserBalance(req.user.id, 'INR', revealResult.payout, `Mines Auto Win (${revealResult.currentMultiplier}x)`)
+                const betRecord = db.recordBet({
+                    userId: req.user.id,
+                    username: req.user.username,
+                    game: 'mines',
+                    gameName: 'Mines',
+                    currency: 'INR',
+                    betAmount: 0,
+                    multiplier: revealResult.currentMultiplier,
+                    payout: revealResult.payout,
+                    profit: revealResult.payout,
+                    won: true,
+                    hash: crypto.randomBytes(16).toString('hex')
+                })
+                broadcastEvent('NEW_BET', betRecord)
+            }
+
+            return revealResult
+        })
 
         const user = db.findUserById(req.user.id)
 
@@ -145,7 +255,7 @@ router.post('/mines/reveal', authenticate, (req, res) => {
 })
 
 // POST /api/games/mines/cashout
-router.post('/mines/cashout', authenticate, (req, res) => {
+router.post('/mines/cashout', authenticate, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required' })
@@ -156,29 +266,32 @@ router.post('/mines/cashout', authenticate, (req, res) => {
             return res.status(400).json({ success: false, error: 'roundId is required' })
         }
 
-        const result = gameEngine.cashoutMines({
-            userId: req.user.id,
-            roundId
+        const result = await db.withUserLock(req.user.id, async () => {
+            const cashoutResult = gameEngine.cashoutMines({
+                userId: req.user.id,
+                roundId
+            })
+
+            // Credit legitimate winnings
+            db.updateUserBalance(req.user.id, 'INR', cashoutResult.payout, `Mines Cashout (${cashoutResult.multiplier}x)`)
+
+            const betRecord = db.recordBet({
+                userId: req.user.id,
+                username: req.user.username,
+                game: 'mines',
+                gameName: 'Mines',
+                currency: 'INR',
+                betAmount: 0,
+                multiplier: cashoutResult.multiplier,
+                payout: cashoutResult.payout,
+                profit: cashoutResult.payout,
+                won: true,
+                hash: crypto.randomBytes(16).toString('hex')
+            })
+
+            broadcastEvent('NEW_BET', betRecord)
+            return cashoutResult
         })
-
-        // Credit legitimate winnings
-        db.updateUserBalance(req.user.id, 'INR', result.payout, `Mines Cashout (${result.multiplier}x)`)
-
-        const betRecord = db.recordBet({
-            userId: req.user.id,
-            username: req.user.username,
-            game: 'mines',
-            gameName: 'Mines',
-            currency: 'INR',
-            betAmount: 0,
-            multiplier: result.multiplier,
-            payout: result.payout,
-            profit: result.payout,
-            won: true,
-            hash: crypto.randomBytes(16).toString('hex')
-        })
-
-        broadcastEvent('NEW_BET', betRecord)
 
         const user = db.findUserById(req.user.id)
 
@@ -194,7 +307,7 @@ router.post('/mines/cashout', authenticate, (req, res) => {
 
 // ── 3. Universal Server-Authoritative Bet Processor ─────────
 // POST /api/games/bet
-router.post('/bet', authenticate, (req, res) => {
+router.post('/bet', authenticate, async (req, res) => {
     try {
         const {
             game = 'crash',
@@ -219,148 +332,68 @@ router.post('/bet', authenticate, (req, res) => {
             return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000 per round' })
         }
 
-        // Authenticated user balance check
-        let user = null
         if (req.user) {
-            user = db.findUserById(req.user.id)
-            if (!user) return res.status(401).json({ success: false, error: 'User not found' })
-
-            const currentBal = user.balances?.[currency] || 0
-            if (parsedAmount > currentBal + 0.001) {
-                return res.status(400).json({ success: false, error: `Insufficient ${currency} balance to place bet` })
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════
-        // SERVER-AUTHORITATIVE OUTCOME EVALUATION
-        // The server computes outcomes using HMAC-SHA256.
-        // Client-supplied `won` and `multiplier` flags are IGNORED.
-        // ═══════════════════════════════════════════════════════════
-        const nonce = gameEngine.getNextNonce(user?.id || 'guest')
-        let evaluation = null
-
-        switch (game.toLowerCase()) {
-            case 'limbo': {
-                evaluation = gameEngine.evaluateLimbo({
-                    betAmount: parsedAmount,
-                    targetMultiplier: targetMultiplier || req.body.multiplier || 2.0,
-                    clientSeed,
-                    nonce
-                })
-                break
-            }
-
-            case 'plinko': {
-                evaluation = gameEngine.evaluatePlinko({
-                    betAmount: parsedAmount,
-                    rows: rows || 16,
-                    risk: risk || 'medium',
-                    clientSeed,
-                    nonce
-                })
-                break
-            }
-
-            case 'dragon-tiger': {
-                evaluation = gameEngine.evaluateDragonTiger({
-                    betAmount: parsedAmount,
-                    choice: choice || req.body.betType || 'dragon',
-                    clientSeed,
-                    nonce
-                })
-                break
-            }
-
-            case 'color-match': {
-                evaluation = gameEngine.evaluateColorMatch({
-                    betAmount: parsedAmount,
-                    choice: choice || req.body.selectedColor || 'green',
-                    clientSeed,
-                    nonce
-                })
-                break
-            }
-
-            case 'crash':
-            case 'dino': {
-                evaluation = gameEngine.evaluateCrash({
-                    claimedMultiplier: claimedMultiplier || req.body.multiplier,
-                    clientSeed,
-                    nonce,
-                    autoCashout: req.body.autoCashout
-                })
-                evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
-                break
-            }
-
-            case 'mines': {
-                // If called via universal bet handler, verify multiplier against exact math
-                const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
-                const numHits = Math.max(0, Math.min(parseInt(hits, 10) || 1, 25 - count))
-                const verifiedMult = gameEngine.calculateMinesMultiplier(count, numHits)
-                const clientWon = Boolean(req.body.won)
-
-                // Enforce mathematical ceiling
-                const safeWon = clientWon && numHits > 0
-                const safeMult = safeWon ? verifiedMult : 0
-                const payout = safeWon ? parseFloat((parsedAmount * safeMult).toFixed(2)) : 0
-
-                evaluation = {
-                    won: safeWon,
-                    multiplier: safeMult,
-                    payout,
-                    hash: crypto.randomBytes(16).toString('hex')
-                }
-                break
-            }
-
-            default: {
-                // Generic safety fallback: evaluate through HMAC float
-                const { floatVal, hash } = gameEngine.generateHmacFloat(clientSeed, nonce)
-                const won = floatVal < 0.495 // 49.5% win chance (~1% house edge)
-                const multiplier = won ? 2.0 : 0
-                const payout = won ? parseFloat((parsedAmount * 2.0).toFixed(2)) : 0
-                evaluation = { won, multiplier, payout, hash }
-                break
-            }
-        }
-
-        const payout = evaluation.payout || 0
-        const won = Boolean(evaluation.won)
-        const finalMultiplier = evaluation.multiplier || 0
-        const profit = payout - parsedAmount
-
-        let betRecord = null
-        let updatedBalances = null
-
-        if (user) {
-            // Apply net change atomically in DB
-            db.updateUserBalance(
-                user.id,
-                currency,
-                profit,
-                `Bet on ${gameName} (${won ? `Won ${finalMultiplier}x` : 'Lost'})`
-            )
-
-            betRecord = db.recordBet({
-                userId: user.id,
-                username: user.username,
-                game,
-                gameName,
+            // Atomic wager & settlement under exclusive user lock
+            const betResult = await db.executeAtomicBet({
+                userId: req.user.id,
                 currency,
                 betAmount: parsedAmount,
-                multiplier: finalMultiplier,
-                payout,
-                profit,
-                won,
-                hash: evaluation.hash || crypto.randomBytes(16).toString('hex')
+                game,
+                gameName,
+                evaluator: async () => {
+                    const nonce = gameEngine.getNextNonce(req.user.id)
+                    return evaluateGameRound({
+                        game,
+                        parsedAmount,
+                        targetMultiplier,
+                        rows,
+                        risk,
+                        choice,
+                        claimedMultiplier,
+                        minesCount,
+                        hits,
+                        clientSeed,
+                        nonce,
+                        reqBody: req.body
+                    })
+                }
             })
 
-            const updatedUser = db.findUserById(user.id)
-            updatedBalances = updatedUser.balances
+            broadcastEvent('NEW_BET', betResult.bet)
+
+            return res.json({
+                success: true,
+                bet: betResult.bet,
+                evaluation: betResult.evaluation,
+                won: betResult.won,
+                payout: betResult.payout,
+                multiplier: betResult.multiplier,
+                balances: betResult.balances
+            })
         } else {
             // Guest player demo simulation
-            betRecord = db.recordBet({
+            const nonce = gameEngine.getNextNonce('guest')
+            const evaluation = evaluateGameRound({
+                game,
+                parsedAmount,
+                targetMultiplier,
+                rows,
+                risk,
+                choice,
+                claimedMultiplier,
+                minesCount,
+                hits,
+                clientSeed,
+                nonce,
+                reqBody: req.body
+            })
+
+            const payout = evaluation.payout || 0
+            const won = Boolean(evaluation.won)
+            const finalMultiplier = evaluation.multiplier || 0
+            const profit = payout - parsedAmount
+
+            const betRecord = db.recordBet({
                 userId: null,
                 username: 'Player_' + crypto.randomBytes(2).toString('hex'),
                 game,
@@ -373,22 +406,22 @@ router.post('/bet', authenticate, (req, res) => {
                 won,
                 hash: evaluation.hash || crypto.randomBytes(16).toString('hex')
             })
+
+            broadcastEvent('NEW_BET', betRecord)
+
+            return res.json({
+                success: true,
+                bet: betRecord,
+                evaluation,
+                won,
+                payout,
+                multiplier: finalMultiplier,
+                balances: null
+            })
         }
-
-        // Broadcast bet event for live platform ticker
-        broadcastEvent('NEW_BET', betRecord)
-
-        res.json({
-            success: true,
-            bet: betRecord,
-            evaluation,
-            won,
-            payout,
-            multiplier: finalMultiplier,
-            balances: updatedBalances
-        })
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message })
+        const statusCode = err.status || (err.code === 'INSUFFICIENT_BALANCE' ? 400 : 500)
+        res.status(statusCode).json({ success: false, error: err.message })
     }
 })
 

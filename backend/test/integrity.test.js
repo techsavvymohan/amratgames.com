@@ -275,4 +275,110 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         const defaultHouseEdge = 1.0
         assert.equal(defaultRTP + defaultHouseEdge, 100.0, 'RTP and House Edge must sum to 100%')
     })
+
+    it('verifies concurrent parallel bets strictly eliminate double-spending via user lock', async () => {
+        // Create player with EXACTLY ₹100
+        const testUser = db.createUser({
+            username: 'concurrency_tester_' + Date.now().toString(36),
+            phone: '9876543214',
+            passwordHash: 'hash'
+        })
+
+        // Ensure balance is precisely ₹100
+        testUser.balances.INR = 100.00
+        db.updateUser(testUser.id, { balances: testUser.balances })
+
+        // Fire 10 simultaneous bet requests of ₹100 each in parallel!
+        const attempts = 10
+        const promises = Array.from({ length: attempts }, (_, i) => {
+            return db.executeAtomicBet({
+                userId: testUser.id,
+                currency: 'INR',
+                betAmount: 100.00,
+                game: 'limbo',
+                gameName: 'Limbo',
+                evaluator: async () => {
+                    // Force losing outcome (multiplier 0, won false, payout 0)
+                    return { won: false, multiplier: 0, payout: 0, hash: 'test-hash-' + i }
+                }
+            }).then(() => ({ success: true, index: i }))
+              .catch(err => ({ success: false, error: err.message, code: err.code, index: i }))
+        })
+
+        const results = await Promise.all(promises)
+        const successes = results.filter(r => r.success)
+        const failures = results.filter(r => !r.success)
+
+        // Exactly ONE bet must succeed (consuming the ₹100)
+        assert.equal(successes.length, 1, `Exactly 1 bet must succeed, got ${successes.length}`)
+        // Exactly 9 bets must fail due to insufficient balance
+        assert.equal(failures.length, 9, `Exactly 9 bets must be rejected, got ${failures.length}`)
+
+        // All failures must be insufficient funds
+        for (const f of failures) {
+            assert.match(f.error, /Insufficient/i, 'Failed bet must report insufficient balance')
+        }
+
+        // Final balance must be exactly ₹0, NEVER negative
+        const finalUser = db.findUserById(testUser.id)
+        assert.equal(finalUser.balances.INR, 0.00, 'Final balance must be exactly ₹0')
+    })
+
+    it('verifies concurrent withdrawals strictly prevent overdrafting player balance', async () => {
+        const testUser = db.createUser({
+            username: 'withdraw_concurrency_' + Date.now().toString(36),
+            phone: '9876543215',
+            passwordHash: 'hash',
+            totalDeposited: 1000 // Eligible for withdrawal
+        })
+
+        // Balance is ₹500
+        testUser.balances.INR = 500.00
+        db.updateUser(testUser.id, { balances: testUser.balances })
+
+        // Fire 5 simultaneous withdrawal requests of ₹500
+        const promises = Array.from({ length: 5 }, () => {
+            return db.withUserLock(testUser.id, async () => {
+                const refreshed = db.findUserById(testUser.id)
+                if ((refreshed.balances.INR || 0) < 500) {
+                    throw new Error('Insufficient balance')
+                }
+                return db.requestWithdrawal({
+                    userId: testUser.id,
+                    currency: 'INR',
+                    amount: 500,
+                    payoutMethod: 'UPI',
+                    payoutDestination: 'test@upi'
+                })
+            }).then(() => ({ success: true }))
+              .catch(err => ({ success: false, error: err.message }))
+        })
+
+        const results = await Promise.all(promises)
+        const successes = results.filter(r => r.success)
+        const failures = results.filter(r => !r.success)
+
+        assert.equal(successes.length, 1, 'Only 1 withdrawal must succeed')
+        assert.equal(failures.length, 4, 'Remaining 4 must fail')
+
+        const finalUser = db.findUserById(testUser.id)
+        assert.equal(finalUser.balances.INR, 0, 'Final balance must be 0')
+    })
+
+    it('verifies non-blocking async persistence queue handles high-throughput burst safely', async () => {
+        const startTime = Date.now()
+        // Trigger 50 rapid persist calls
+        for (let i = 0; i < 50; i++) {
+            db.persist()
+        }
+        const burstDuration = Date.now() - startTime
+
+        // In synchronous I/O 50 writes would block for 50-250ms+
+        // With debounced non-blocking async persistence it returns in < 10ms
+        assert.ok(burstDuration < 50, `Burst persists must not block event loop (took ${burstDuration}ms)`)
+
+        // Allow async flush to drain
+        await new Promise(r => setTimeout(r, 60))
+        assert.equal(db._isFlushing, false, 'Flush queue must cleanly drain')
+    })
 })

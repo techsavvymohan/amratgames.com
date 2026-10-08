@@ -57,7 +57,7 @@ router.post('/deposit', requireAuth, (req, res) => {
 })
 
 // POST /api/wallet/withdraw
-router.post('/withdraw', requireAuth, (req, res) => {
+router.post('/withdraw', requireAuth, async (req, res) => {
     try {
         const { currency = 'INR', amount, payoutDestination, payoutMethod = 'UPI', bankDetails = null } = req.body
         const parsedAmount = parseFloat(amount)
@@ -66,55 +66,71 @@ router.post('/withdraw', requireAuth, (req, res) => {
             return res.status(400).json({ success: false, error: 'Valid withdrawal amount required' })
         }
 
-        const user = db.findUserById(req.user.id)
-        if (!user) return res.status(404).json({ success: false, error: 'User not found' })
+        const result = await db.withUserLock(req.user.id, async () => {
+            const user = db.findUserById(req.user.id)
+            if (!user) {
+                const err = new Error('User not found')
+                err.status = 404
+                throw err
+            }
 
-        // ── Rule: User must deposit minimum ₹300 before requesting any withdrawal ──
-        const totalDeposited = user.totalDeposited || 0
-        if (totalDeposited < 300) {
-            const needed = 300 - totalDeposited
-            return res.status(400).json({
-                success: false,
-                error: `Minimum deposit of ₹300 is required before making a withdrawal. You have currently deposited ₹${totalDeposited}. Please deposit at least ₹${needed} more to activate withdrawals.`,
-                code: 'MINIMUM_DEPOSIT_REQUIRED',
-                requiredDeposit: 300,
-                currentDeposited: totalDeposited,
-                remainingNeeded: needed
+            // ── Rule: User must deposit minimum ₹300 before requesting any withdrawal ──
+            const totalDeposited = user.totalDeposited || 0
+            if (totalDeposited < 300) {
+                const needed = 300 - totalDeposited
+                const err = new Error(`Minimum deposit of ₹300 is required before making a withdrawal. You have currently deposited ₹${totalDeposited}. Please deposit at least ₹${needed} more to activate withdrawals.`)
+                err.code = 'MINIMUM_DEPOSIT_REQUIRED'
+                err.status = 400
+                err.requiredDeposit = 300
+                err.currentDeposited = totalDeposited
+                err.remainingNeeded = needed
+                throw err
+            }
+
+            const currentBal = user.balances?.[currency] || 0
+            if (parsedAmount > currentBal) {
+                const err = new Error(`Insufficient ${currency} balance (Available: ${currency} ${currentBal.toLocaleString('en-IN')})`)
+                err.status = 400
+                throw err
+            }
+
+            const destNote = payoutMethod === 'BANK' && bankDetails
+                ? `Bank A/C: ${bankDetails.accountNumber || ''} (${bankDetails.ifsc || ''}) - ${bankDetails.holder || ''}`
+                : (payoutDestination || 'Registered UPI')
+
+            const withdrawalResult = db.requestWithdrawal({
+                userId: req.user.id,
+                currency,
+                amount: parsedAmount,
+                payoutMethod,
+                payoutDestination: destNote,
+                bankDetails
             })
-        }
 
-        const currentBal = user.balances?.[currency] || 0
-        if (parsedAmount > currentBal) {
-            return res.status(400).json({
-                success: false,
-                error: `Insufficient ${currency} balance (Available: ${currency} ${currentBal.toLocaleString('en-IN')})`
-            })
-        }
-
-        const destNote = payoutMethod === 'BANK' && bankDetails
-            ? `Bank A/C: ${bankDetails.accountNumber || ''} (${bankDetails.ifsc || ''}) - ${bankDetails.holder || ''}`
-            : (payoutDestination || 'Registered UPI')
-
-        const result = db.requestWithdrawal({
-            userId: req.user.id,
-            currency,
-            amount: parsedAmount,
-            payoutMethod,
-            payoutDestination: destNote,
-            bankDetails
+            return {
+                ...withdrawalResult,
+                totalDeposited
+            }
         })
 
         res.json({
             success: true,
             message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! Your request is pending admin cashier review.`,
             balances: result.user.balances,
-            totalDeposited,
+            totalDeposited: result.totalDeposited,
             canWithdraw: true,
             withdrawal: result.withdrawal,
             transaction: result.transaction
         })
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message })
+        res.status(err.status || 400).json({
+            success: false,
+            error: err.message,
+            code: err.code,
+            requiredDeposit: err.requiredDeposit,
+            currentDeposited: err.currentDeposited,
+            remainingNeeded: err.remainingNeeded
+        })
     }
 })
 

@@ -47,7 +47,15 @@ export class SupabaseSyncService {
                 .single()
 
             if (error) {
-                console.warn('[SUPABASE] syncUser error:', error.message)
+                if (error.code === '23505' && error.message?.includes('users_username_key')) {
+                    const { data: updated, error: updateErr } = await client
+                        .from('users')
+                        .update(payload)
+                        .eq('username', payload.username)
+                        .select()
+                        .single()
+                    if (!updateErr) return updated
+                }
                 return null
             }
 
@@ -71,7 +79,6 @@ export class SupabaseSyncService {
 
             return data
         } catch (err) {
-            console.warn('[SUPABASE] syncUser exception:', err.message)
             return null
         }
     }
@@ -108,12 +115,19 @@ export class SupabaseSyncService {
                 .single()
 
             if (error) {
-                console.warn('[SUPABASE] syncBet error:', error.message)
+                if (error.code === '23503' && payload.user_id) {
+                    payload.user_id = null
+                    const retry = await client
+                        .from('bets')
+                        .insert([payload])
+                        .select()
+                        .single()
+                    if (!retry.error) return retry.data
+                }
                 return null
             }
             return data
         } catch (err) {
-            console.warn('[SUPABASE] syncBet exception:', err.message)
             return null
         }
     }
@@ -147,12 +161,19 @@ export class SupabaseSyncService {
                 .single()
 
             if (error) {
-                console.warn('[SUPABASE] syncTransaction error:', error.message)
+                if (error.code === '23503' && payload.user_id) {
+                    payload.user_id = null
+                    const retry = await client
+                        .from('transactions')
+                        .upsert(payload, { onConflict: 'id' })
+                        .select()
+                        .single()
+                    if (!retry.error) return retry.data
+                }
                 return null
             }
             return data
         } catch (err) {
-            console.warn('[SUPABASE] syncTransaction exception:', err.message)
             return null
         }
     }

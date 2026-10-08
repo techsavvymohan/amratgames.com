@@ -6,6 +6,7 @@ import { CONFIG } from '../config.js'
 import { supabaseSync } from './SupabaseSyncService.js'
 import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.js'
 import { broadcastEvent } from '../websocket.js'
+import { userLockManager } from './UserLockManager.js'
 
 export function normalizePhone(phone) {
     if (!phone) return ''
@@ -26,6 +27,9 @@ class Database {
         this.dir = CONFIG.DATA_DIR
         this.filePath = path.join(this.dir, 'amratgames_db.json')
         this.otps = new Map() // identifier -> { otp, expiresAt, attempts }
+        this._flushTimer = null
+        this._isFlushing = false
+        this._needsFlushAgain = false
         this.data = {
             users: [],
             transactions: [],
@@ -49,6 +53,19 @@ class Database {
             }
         }
         this.init()
+        this.attachShutdownHooks()
+    }
+
+    attachShutdownHooks() {
+        // Guarantee clean, synchronous flush on process termination to prevent data loss
+        if (typeof process !== 'undefined') {
+            const onExit = () => {
+                try { this.flushSync() } catch {}
+            }
+            process.once('beforeExit', onExit)
+            process.once('SIGINT', () => { onExit(); process.exit(0) })
+            process.once('SIGTERM', () => { onExit(); process.exit(0) })
+        }
     }
 
     init() {
@@ -63,11 +80,11 @@ class Database {
             } catch (err) {
                 console.error('[DB] Error loading existing db file, initializing fresh store:', err)
                 this.seedInitialData()
-                this.persist()
+                this.flushSync()
             }
         } else {
             this.seedInitialData()
-            this.persist()
+            this.flushSync()
         }
 
         // Ensure withdrawals array exists in runtime state
@@ -93,7 +110,7 @@ class Database {
                     AMRAT: 0.00,
                 }
             }
-            this.persist()
+            this.flushSync()
         }
 
         // Compute current server seed hash
@@ -105,14 +122,51 @@ class Database {
         }
     }
 
-    persist() {
+    scheduleFlush() {
+        if (this._flushTimer) return
+        this._flushTimer = setTimeout(() => {
+            this._flushTimer = null
+            this.flushAsync().catch(err => {
+                console.error('[DB] Flush error:', err)
+            })
+        }, 25)
+    }
+
+    async flushAsync() {
+        if (this._isFlushing) {
+            this._needsFlushAgain = true
+            return
+        }
+        this._isFlushing = true
+        this._needsFlushAgain = false
+
+        try {
+            const tempFile = `${this.filePath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`
+            const serialized = JSON.stringify(this.data, null, 2)
+            await fs.promises.writeFile(tempFile, serialized, 'utf-8')
+            await fs.promises.rename(tempFile, this.filePath)
+        } catch (err) {
+            console.error('[DB] Async persist error:', err)
+        } finally {
+            this._isFlushing = false
+            if (this._needsFlushAgain) {
+                this.scheduleFlush()
+            }
+        }
+    }
+
+    flushSync() {
         try {
             const tempFile = `${this.filePath}.tmp`
             fs.writeFileSync(tempFile, JSON.stringify(this.data, null, 2), 'utf-8')
             fs.renameSync(tempFile, this.filePath)
         } catch (err) {
-            console.error('[DB] Persist error:', err)
+            console.error('[DB] Synchronous flush error:', err)
         }
+    }
+
+    persist() {
+        this.scheduleFlush()
     }
 
     seedInitialData() {
@@ -393,6 +447,98 @@ class Database {
         }
 
         return { user, transaction: tx }
+    }
+
+    // ── Concurrency & Transactional Lock Engine ───────────────
+    async withUserLock(userId, task) {
+        return userLockManager.withLock(userId, task)
+    }
+
+    async executeAtomicBet({ userId, currency = 'INR', betAmount, game, gameName, evaluator }) {
+        return this.withUserLock(userId, async () => {
+            const user = this.findUserById(userId)
+            if (!user) throw new Error('User account not found')
+            if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+
+            const currentBal = user.balances[currency] || 0
+            if (betAmount > currentBal + 0.0001) {
+                const err = new Error(`Insufficient ${currency} balance to place bet`)
+                err.code = 'INSUFFICIENT_BALANCE'
+                err.status = 400
+                throw err
+            }
+
+            // 1. Deduct bet amount immediately under exclusive lock
+            const balanceAfterDeduct = Math.max(0, parseFloat((currentBal - betAmount).toFixed(4)))
+            user.balances[currency] = balanceAfterDeduct
+
+            // 2. Evaluate Provably Fair outcome
+            const evaluation = await evaluator()
+            const won = Boolean(evaluation.won)
+            const multiplier = evaluation.multiplier || 0
+            const payout = evaluation.payout || 0
+            const profit = payout - betAmount
+
+            // 3. Credit payout if won
+            if (won && payout > 0) {
+                user.balances[currency] = parseFloat((user.balances[currency] + payout).toFixed(4))
+            }
+            const finalBal = user.balances[currency]
+
+            // 4. Record transaction in atomic ledger
+            const tx = {
+                id: 'tx_bet_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
+                userId: user.id,
+                username: user.username,
+                type: won ? 'win' : 'bet',
+                currency,
+                amount: profit,
+                balanceAfter: finalBal,
+                note: `Bet on ${gameName} (${won ? `Won ${multiplier}x` : 'Lost'})`,
+                timestamp: new Date().toISOString()
+            }
+            this.data.transactions.unshift(tx)
+
+            // 5. Record bet in historical roll
+            const betRecord = {
+                id: 'bet_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
+                userId: user.id,
+                username: user.username,
+                game,
+                gameName,
+                currency,
+                betAmount,
+                multiplier,
+                payout,
+                profit,
+                won,
+                hash: evaluation.hash || crypto.randomBytes(16).toString('hex'),
+                timestamp: new Date().toISOString()
+            }
+            this.data.bets.unshift(betRecord)
+            if (this.data.bets.length > 500) {
+                this.data.bets = this.data.bets.slice(0, 500)
+            }
+
+            this.updateTreasurySupply()
+            this.persist()
+
+            if (CONFIG.USE_SUPABASE) {
+                supabaseSync.syncUser(user).catch(() => {})
+                supabaseSync.syncTransaction(tx).catch(() => {})
+                supabaseSync.syncBet(betRecord).catch(() => {})
+            }
+
+            return {
+                user,
+                bet: betRecord,
+                evaluation,
+                won,
+                multiplier,
+                payout,
+                balances: user.balances
+            }
+        })
     }
 
     // ── Withdrawal Methods ────────────────────────────────────
