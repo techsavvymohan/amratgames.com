@@ -13,6 +13,10 @@
     "build": "pnpm --filter ./frontend build",
     "build:frontend": "pnpm --filter ./frontend build",
     "preview": "pnpm --filter ./frontend preview",
+    "test": "pnpm --filter ./backend test && pnpm --filter ./frontend test",
+    "test:backend": "pnpm --filter ./backend test",
+    "test:frontend": "pnpm --filter ./frontend test",
+    "check": "node --check backend/src/server.js && node --check backend/src/config.js",
     "setup:env": "node scripts/setup-env.js"
   }
 }
