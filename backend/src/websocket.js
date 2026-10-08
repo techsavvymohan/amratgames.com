@@ -1,3 +1,4 @@
+import { WebSocketServer } from 'ws'
 import jwt from 'jsonwebtoken'
 import { CONFIG } from './config.js'
 import { db } from './db/db.js'
