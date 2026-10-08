@@ -381,4 +381,56 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         await new Promise(r => setTimeout(r, 60))
         assert.equal(db._isFlushing, false, 'Flush queue must cleanly drain')
     })
+
+    it('verifies Server-Authoritative Crash round session lifecycle and cashout validation', () => {
+        const session = gameEngine.startCrashRound({
+            userId: 'test_crash_player',
+            currency: 'INR',
+            betAmount: 100,
+            clientSeed: 'seed_abc_123'
+        })
+
+        assert.ok(session.roundId, 'Must generate unique roundId')
+        assert.ok(session.crashPoint >= 1.00, 'Crash point must be >= 1.00')
+        assert.ok(session.hash, 'Must commit outcome hash')
+
+        // Active round query must find the session
+        const active = gameEngine.getActiveCrashRound('test_crash_player')
+        assert.ok(active, 'Must find active crash session')
+        assert.equal(active.roundId, session.roundId)
+
+        // Cashout below crash point must win
+        const safeMultiplier = Math.max(1.01, parseFloat((session.crashPoint * 0.5).toFixed(2)))
+        const cashout = gameEngine.cashoutCrash({
+            userId: 'test_crash_player',
+            roundId: session.roundId,
+            multiplier: safeMultiplier
+        })
+
+        assert.equal(cashout.won, true, 'Cashout below crash point must win')
+        assert.equal(cashout.multiplier, safeMultiplier)
+        assert.equal(cashout.payout, parseFloat((100 * safeMultiplier).toFixed(2)))
+
+        // Session must be deleted after cashout
+        assert.equal(gameEngine.getActiveCrashRound('test_crash_player'), null, 'Session must close after cashout')
+    })
+
+    it('verifies active Mines session query and resumption state', () => {
+        const session = gameEngine.startMinesRound({
+            userId: 'test_mines_resumption',
+            currency: 'INR',
+            betAmount: 50,
+            minesCount: 5,
+            clientSeed: 'seed_mines_123'
+        })
+
+        const active = gameEngine.getActiveMinesRound('test_mines_resumption')
+        assert.ok(active, 'Must locate active mines round')
+        assert.equal(active.roundId, session.roundId)
+        assert.equal(active.minesCount, 5)
+        assert.equal(active.betAmount, 50)
+
+        // Cleanup
+        gameEngine.activeMinesRounds.delete(session.roundId)
+    })
 })

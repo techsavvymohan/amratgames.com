@@ -39,7 +39,7 @@ const CHIP_PRESETS = [10, 50, 100, 500, 1000, 5000]
 const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
 
 function ColorMatchGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
 
     // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
     const [gameMode, setGameMode] = useState('30s')
@@ -74,7 +74,7 @@ function ColorMatchGame() {
 
     // Modals
     const [fairnessOpen, setFairnessOpen] = useState(false)
-    const [serverSeedHash] = useState('d3b07384d113edec49eaa6238ad5ff00b1a0d7d8e8749a9040306c4599a0f4a7')
+    const [serverSeedHash, setServerSeedHash] = useState('d3b07384d113edec49eaa6238ad5ff00b1a0d7d8e8749a9040306c4599a0f4a7')
     const [clientSeed] = useState('amrat-cm-' + Math.floor(Math.random() * 100000))
 
     // Total active stake placed for this round
@@ -85,14 +85,10 @@ function ColorMatchGame() {
     const addBet = (spotKey) => {
         if (isLocked || isDrawing) return
 
-        if (balance < currentBetAmount) {
+        if (totalStaked + currentBetAmount > balance) {
             notifyLoss?.('Insufficient balance to place chip!')
             return
         }
-
-        // Deduct from wallet immediately
-        const success = placeBet(currentBetAmount)
-        if (!success) return
 
         casinoAudio.playChip()
         setBets(prev => ({
@@ -103,20 +99,16 @@ function ColorMatchGame() {
 
     const clearBets = () => {
         if (isLocked || isDrawing || totalStaked === 0) return
-        // Refund back to wallet
-        addWinnings(totalStaked)
         setBets({})
         casinoAudio.playChip()
     }
 
     const doubleBets = () => {
         if (isLocked || isDrawing || totalStaked === 0) return
-        if (balance < totalStaked) {
+        if (totalStaked * 2 > balance) {
             notifyLoss?.('Insufficient balance to double bets!')
             return
         }
-        const success = placeBet(totalStaked)
-        if (!success) return
 
         casinoAudio.playChip()
         setBets(prev => {
@@ -128,49 +120,18 @@ function ColorMatchGame() {
         })
     }
 
-    // Resolve round payout
-    const resolveRound = useCallback((winningNum) => {
+    // Resolve round payout (Visual and history updates)
+    const resolveRound = useCallback((winningNum, evalData = {}, betResponse = {}) => {
         const item = NUMBER_DATA[winningNum]
-        const colors = item.colors
-        const bigSmall = item.bigSmall
+        const colors = evalData.winningColors || item.colors
+        const bigSmall = evalData.bigSmall || item.bigSmall
 
-        let totalWin = 0
+        const totalWin = betResponse.payout ?? evalData.payout ?? 0
+        const isWin = Boolean(betResponse.won ?? evalData.won)
         const activeBets = { ...bets }
 
-        // 1. Color payouts:
-        if (activeBets.green && colors.includes('green')) {
-            const mult = colors.includes('violet') ? 1.5 : 2.0
-            totalWin += activeBets.green * mult
-        }
-        if (activeBets.red && colors.includes('red')) {
-            const mult = colors.includes('violet') ? 1.5 : 2.0
-            totalWin += activeBets.red * mult
-        }
-        if (activeBets.violet && colors.includes('violet')) {
-            totalWin += activeBets.violet * 4.5
-        }
-
-        // 2. Exact Number: 9x payout!
-        const numKey = `num_${winningNum}`
-        if (activeBets[numKey]) {
-            totalWin += activeBets[numKey] * 9.0
-        }
-
-        // 3. Big / Small: 2x payout!
-        if (activeBets[bigSmall]) {
-            totalWin += activeBets[bigSmall] * 2.0
-        }
-
-        // Apply winnings
-        if (totalWin > 0) {
-            addWinnings(totalWin)
-            recordGameRound({
-                game: 'color-match',
-                gameName: 'Color Match',
-                betAmount: totalStaked,
-                multiplier: totalWin / (totalStaked || 1),
-                won: true
-            }).catch(() => {})
+        // Apply visual/sound notifications
+        if (isWin && totalWin > 0) {
             notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match #${periodId}!`)
             if ((totalWin / (totalStaked || 1)) >= 3) {
                 casinoAudio.playBigWin()
@@ -178,13 +139,6 @@ function ColorMatchGame() {
                 casinoAudio.playWin()
             }
         } else if (Object.keys(activeBets).length > 0) {
-            recordGameRound({
-                game: 'color-match',
-                gameName: 'Color Match',
-                betAmount: totalStaked,
-                multiplier: 0,
-                won: false
-            }).catch(() => {})
             notifyLoss?.(`Round #${periodId} result: ${winningNum}. Better luck next round!`)
             casinoAudio.playLoss()
         }
@@ -197,7 +151,7 @@ function ColorMatchGame() {
                     stake: totalStaked,
                     win: totalWin,
                     resultNum: winningNum,
-                    winStatus: totalWin > 0
+                    winStatus: isWin && totalWin > 0
                 },
                 ...prev.slice(0, 19)
             ])
@@ -218,13 +172,17 @@ function ColorMatchGame() {
         setPeriodId(prev => prev + 1)
         setIsDrawing(false)
         setIsLocked(false)
-    }, [bets, periodId, currencySymbol, totalStaked, addWinnings, recordGameRound, notifyWin, notifyLoss])
+    }, [bets, periodId, currencySymbol, totalStaked, notifyWin, notifyLoss])
 
-    // Trigger Draw Sequence (User interaction only)
-    const triggerDraw = useCallback(() => {
+    // Trigger Draw Sequence (Server-Authoritative Provably Fair)
+    const triggerDraw = useCallback(async () => {
         if (isDrawing) return
         if (totalStaked === 0) {
             notifyLoss?.('Please place chips on colors or numbers first!')
+            return
+        }
+        if (totalStaked > balance) {
+            notifyLoss?.('Insufficient balance to draw!')
             return
         }
 
@@ -232,24 +190,42 @@ function ColorMatchGame() {
         setIsLocked(true)
         casinoAudio.playCardDeal?.()
 
-        // Generate Provably Fair outcome
-        const winningNum = Math.floor(Math.random() * 10)
+        // Submit to server-authoritative Provably Fair engine
+        const betResponse = await executeGameBet({
+            game: 'color-match',
+            gameName: 'Color Match',
+            betAmount: totalStaked,
+            bets: { ...bets }
+        })
 
-        // Rapid rolling animation for 2s
+        if (!betResponse || !betResponse.success) {
+            setIsDrawing(false)
+            setIsLocked(false)
+            notifyLoss?.(betResponse?.error || 'Unable to submit bet')
+            return
+        }
+
+        const evalData = betResponse.evaluation || {}
+        const serverWinningNum = evalData.luckyNumber ?? Math.floor(Math.random() * 10)
+        if (evalData.hash) {
+            setServerSeedHash(evalData.hash)
+        }
+
+        // Rapid rolling animation for 1.8s
         let rollCounter = 0
         const interval = setInterval(() => {
             setDisplayNum(Math.floor(Math.random() * 10))
             casinoAudio.playChip?.()
             rollCounter++
-            if (rollCounter >= 20) {
+            if (rollCounter >= 18) {
                 clearInterval(interval)
-                setDisplayNum(winningNum)
+                setDisplayNum(serverWinningNum)
                 setTimeout(() => {
-                    resolveRound(winningNum)
-                }, 600)
+                    resolveRound(serverWinningNum, evalData, betResponse)
+                }, 500)
             }
         }, 80)
-    }, [isDrawing, totalStaked, resolveRound, notifyLoss])
+    }, [isDrawing, totalStaked, balance, bets, executeGameBet, resolveRound, notifyLoss])
 
     // Switch game modes (30s, 1Min, 3Min, 5Min)
     const handleModeSwitch = (mode, seconds) => {

@@ -50,9 +50,19 @@ const StatsIcon = () => (
 )
 
 function MinesGame() {
-    const { balance, placeBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet();
+    const {
+        balance,
+        showToast,
+        currencySymbol,
+        currency,
+        startMinesRound,
+        revealMinesTile,
+        cashoutMinesRound,
+        getActiveMinesRound
+    } = useWallet();
     const [isPlaying, setIsPlaying] = useState(false);
-    const [betAmount, setBetAmount] = useState(1);
+    const [roundId, setRoundId] = useState(null);
+    const [betAmount, setBetAmount] = useState(10);
     const [minesCount, setMinesCount] = useState(3);
     const [revealedTiles, setRevealedTiles] = useState([]);
     const [mineLocations, setMineLocations] = useState([]);
@@ -113,7 +123,7 @@ function MinesGame() {
     const isDebugDragging = useRef(false);
     const debugDragOffset = useRef({ x: 0, y: 0 });
 
-    // Initialize ProvablyFair
+    // Initialize ProvablyFair and check for active session
     useEffect(() => {
         const pf = new ProvablyFair();
         fairnessRef.current = pf;
@@ -122,7 +132,19 @@ function MinesGame() {
             setFairnessData(data);
             setClientSeedInput(data.clientSeed);
         });
-    }, []);
+
+        if (getActiveMinesRound) {
+            getActiveMinesRound().then(active => {
+                if (active) {
+                    setRoundId(active.roundId);
+                    setMinesCount(active.minesCount);
+                    setBetAmount(active.betAmount);
+                    setRevealedTiles(active.revealedIndices || []);
+                    setIsPlaying(true);
+                }
+            });
+        }
+    }, [getActiveMinesRound]);
 
     // Fetch peek data for Fairness Debug whenever conditions change
     useEffect(() => {
@@ -395,76 +417,52 @@ function MinesGame() {
 
     const startGame = async () => {
         if (betAmount <= 0) return;
-        const pf = fairnessRef.current;
-        if (!pf) return;
-
-        const result = await pf.generateMinesPositions(minesCount);
-        const mines = new Set(result.minePositions);
-        const data = await pf.getFairnessData();
-
-        if (!placeBet(betAmount)) {
+        if (betAmount > balance) {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)}`);
             return;
         }
 
+        const res = await startMinesRound({ betAmount, minesCount });
+        if (!res || !res.success) {
+            showToast('error', 'Error Starting Game', res?.error || 'Failed to start game');
+            return;
+        }
+
         playSound('bet');
-        setFairnessData(data);
-        setMineLocations(Array.from(mines));
+        setRoundId(res.roundId);
         setRevealedTiles([]);
+        setMineLocations([]);
         setGameOverState(null);
         setIsPlaying(true);
         showToast('bet', 'Game Started', `${currencySymbol}${betAmount.toFixed(2)} bet placed`);
     };
 
-    const endGame = (reason) => {
-        setIsPlaying(false);
-        setGameOverState(reason);
-        if (reason === 'win') {
-            const profit = potentialWin - betAmount;
-            addWinnings(potentialWin);
-            recordGameRound({
-                game: 'mines',
-                gameName: 'Mines',
-                betAmount,
-                multiplier: currentMultiplier,
-                won: true
-            }).catch(() => {});
+    const cashout = async () => {
+        if (!isPlaying || revealedTiles.length === 0 || !roundId) return;
 
-            // Update stats
-            setTotalProfit(prev => prev + profit);
-            setWinsCount(prev => prev + 1);
-            setWinRecords(prev => [...prev, profit]);
-            profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
-
-            showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${currentMultiplier.toFixed(2)}×`, 4000);
-            if (currentMultiplier >= 3) {
-                playSound('bigWin');
-            } else {
-                playSound('cashout');
-            }
-        } else if (reason === 'loss') {
-            recordGameRound({
-                game: 'mines',
-                gameName: 'Mines',
-                betAmount,
-                multiplier: 0,
-                won: false
-            }).catch(() => {});
-
-            // Update stats
-            setTotalProfit(prev => prev - betAmount);
-            setLossesCount(prev => prev + 1);
-            setWinRecords(prev => [...prev, -betAmount]);
-            profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
-
-            showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
-            playSound('explosion');
+        const res = await cashoutMinesRound({ roundId });
+        if (!res || !res.success) {
+            showToast('error', 'Cashout Failed', res?.error || 'Cashout failed');
+            return;
         }
-    };
 
-    const cashout = () => {
-        if (!isPlaying || revealedTiles.length === 0) return;
-        endGame('win');
+        setIsPlaying(false);
+        setGameOverState('win');
+        setMineLocations(res.allMines || []);
+        const profit = res.payout - betAmount;
+
+        setTotalProfit(prev => prev + profit);
+        setWinsCount(prev => prev + 1);
+        setWinRecords(prev => [...prev, profit]);
+        profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
+
+        showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000);
+        if (res.multiplier >= 3) {
+            playSound('bigWin');
+        } else {
+            playSound('cashout');
+        }
+        setRoundId(null);
     };
 
     const pickRandom = () => {
@@ -482,44 +480,50 @@ function MinesGame() {
         }
     };
 
-    const handleTileClick = (index) => {
-        if (!isPlaying || revealedTiles.includes(index) || gameOverState) return;
+    const handleTileClick = async (index) => {
+        if (!isPlaying || revealedTiles.includes(index) || gameOverState || !roundId) return;
 
-        if (mineLocations.includes(index)) {
-            // Hit a mine
+        const res = await revealMinesTile({ roundId, tileIndex: index });
+        if (!res || !res.success) {
+            showToast('error', 'Tile Reveal Error', res?.error || 'Tile reveal failed');
+            return;
+        }
+
+        if (res.hitMine) {
+            // Hit a mine!
             setRevealedTiles(prev => [...prev, index]);
-            endGame('loss');
+            setMineLocations(res.allMines || []);
+            setIsPlaying(false);
+            setGameOverState('loss');
+
+            setTotalProfit(prev => prev - betAmount);
+            setLossesCount(prev => prev + 1);
+            setWinRecords(prev => [...prev, -betAmount]);
+            profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
+
+            showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
+            playSound('explosion');
+            setRoundId(null);
         } else {
-            // Hit a gem
+            // Hit a safe diamond gem!
             const newRevealed = [...revealedTiles, index];
             setRevealedTiles(newRevealed);
             playSound('gem', newRevealed.length);
 
-            // Check if user found all gems
-            if (newRevealed.length === 25 - minesCount) {
-                // Auto win
+            if (res.autoWin) {
                 setIsPlaying(false);
                 setGameOverState('win');
-                const finalMult = calculateMultiplier(minesCount, newRevealed.length);
-                const finalWin = betAmount * finalMult;
-                const profit = finalWin - betAmount;
-                addWinnings(finalWin);
-                recordGameRound({
-                    game: 'mines',
-                    gameName: 'Mines',
-                    betAmount,
-                    multiplier: finalMult,
-                    won: true
-                }).catch(() => {});
+                setMineLocations(res.allMines || []);
+                const profit = res.payout - betAmount;
 
-                // Update stats
                 setTotalProfit(prev => prev + profit);
                 setWinsCount(prev => prev + 1);
                 setWinRecords(prev => [...prev, profit]);
                 profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
-                showToast('win', 'All Gems Found!', `+${currencySymbol}${profit.toFixed(2)} at ${finalMult.toFixed(2)}×`, 4000);
+                showToast('win', 'Cleared All Gems!', `+${currencySymbol}${profit.toFixed(2)} at ${res.currentMultiplier.toFixed(2)}×`, 4000);
                 playSound('bigWin');
+                setRoundId(null);
             }
         }
     };

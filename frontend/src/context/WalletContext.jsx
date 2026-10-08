@@ -269,6 +269,219 @@ export function WalletProvider({ children }) {
         }
     }, [token, setStoredBalance])
 
+    // Execute server-authoritative bet (single-round games: Limbo, Plinko, Dragon Tiger, Color Match)
+    const executeGameBet = useCallback(async (betPayload) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) {
+                headers.Authorization = `Bearer ${token}`
+            }
+            const res = await fetch('/api/games/bet', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    currency: currencyRef.current,
+                    ...betPayload
+                })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') {
+                        setStoredBalance(updatedBal)
+                    }
+                } else {
+                    const parsedBet = parseFloat(betPayload.betAmount) || 0
+                    const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
+                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet + payout))
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    // Server-Authoritative Mines Lifecycle Methods
+    const startMinesRound = useCallback(async ({ betAmount, minesCount }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/mines/start', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    betAmount,
+                    minesCount,
+                    currency: currencyRef.current
+                })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+                } else {
+                    const parsedBet = parseFloat(betAmount) || 0
+                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet))
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const revealMinesTile = useCallback(async ({ roundId, tileIndex }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/mines/reveal', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId, tileIndex })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+                } else if (data.autoWin && data.payout > 0) {
+                    const payout = parseFloat(data.payout) || 0
+                    setStoredBalance(balanceRef.current + payout)
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const cashoutMinesRound = useCallback(async ({ roundId }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/mines/cashout', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+                } else {
+                    const payout = parseFloat(data.payout) || 0
+                    setStoredBalance(balanceRef.current + payout)
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const getActiveMinesRound = useCallback(async () => {
+        try {
+            const headers = {}
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/mines/active', { headers })
+            const data = await res.json()
+            return data.activeRound || null
+        } catch {
+            return null
+        }
+    }, [token])
+
+    // Server-Authoritative Crash Lifecycle Methods
+    const startCrashRound = useCallback(async ({ betAmount, autoCashout }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/start', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    betAmount,
+                    autoCashout,
+                    currency: currencyRef.current
+                })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+                } else {
+                    const parsedBet = parseFloat(betAmount) || 0
+                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet))
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const cashoutCrashRound = useCallback(async ({ roundId, multiplier }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/cashout', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId, multiplier })
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+                } else if (data.won && data.payout > 0) {
+                    const payout = parseFloat(data.payout) || 0
+                    setStoredBalance(balanceRef.current + payout)
+                }
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const bustCrashRound = useCallback(async ({ roundId }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/bust', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const getActiveCrashRound = useCallback(async () => {
+        try {
+            const headers = {}
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/active', { headers })
+            const data = await res.json()
+            return data.activeRound || null
+        } catch {
+            return null
+        }
+    }, [token])
+
     const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
     const [walletModalTab, setWalletModalTab] = useState('deposit')
 
@@ -453,6 +666,15 @@ export function WalletProvider({ children }) {
         canWithdraw: totalDeposited >= 300,
         updateBalance,
         recordGameRound,
+        executeGameBet,
+        startMinesRound,
+        revealMinesTile,
+        cashoutMinesRound,
+        getActiveMinesRound,
+        startCrashRound,
+        cashoutCrashRound,
+        bustCrashRound,
+        getActiveCrashRound,
         notifyWin,
         notifyLoss,
         toasts,

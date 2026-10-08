@@ -64,6 +64,7 @@ class GameEngineService {
     constructor() {
         // Active server-managed game sessions (Mines, Crash rounds)
         this.activeMinesRounds = new Map() // roundId -> { userId, betAmount, currency, minesCount, mineIndices, revealedIndices, currentMultiplier, active }
+        this.activeCrashRounds = new Map() // roundId -> { roundId, userId, currency, betAmount, crashPoint, autoCashout, startedAt, active }
         this.userNonces = new Map() // userId -> nonce counter
     }
 
@@ -186,7 +187,7 @@ class GameEngineService {
     }
 
     // ── 5. Dragon Tiger Evaluator (Server-Authoritative) ────────
-    evaluateDragonTiger({ betAmount, choice = 'dragon', clientSeed, nonce }) {
+    evaluateDragonTiger({ betAmount, choice = 'dragon', bets, clientSeed, nonce }) {
         const { hash } = this.generateHmacFloat(clientSeed, nonce)
 
         // Two cards drawn from 52 cards (1=Ace ... 13=King)
@@ -200,34 +201,55 @@ class GameEngineService {
         if (dVal > tVal) winner = 'dragon'
         else if (tVal > dVal) winner = 'tiger'
 
-        const selectedChoice = String(choice).toLowerCase()
         let won = false
-        let multiplier = 0
+        let payout = 0
+        let totalBet = parseFloat(betAmount) || 0
 
-        if (winner === 'tie') {
-            if (selectedChoice === 'tie') {
+        if (bets && typeof bets === 'object' && Object.keys(bets).length > 0) {
+            const bDragon = parseFloat(bets.dragon) || 0
+            const bTiger = parseFloat(bets.tiger) || 0
+            const bTie = parseFloat(bets.tie) || 0
+            totalBet = bDragon + bTiger + bTie || totalBet
+
+            if (winner === 'dragon') {
+                payout = bDragon * 2.0
+            } else if (winner === 'tiger') {
+                payout = bTiger * 2.0
+            } else if (winner === 'tie') {
+                payout = (bTie * 9.0) + (bDragon * 0.5) + (bTiger * 0.5)
+            }
+            payout = parseFloat(payout.toFixed(2))
+            won = payout > 0
+        } else {
+            const selectedChoice = String(choice).toLowerCase()
+            let multiplier = 0
+            if (winner === 'tie') {
+                if (selectedChoice === 'tie') {
+                    won = true
+                    multiplier = 9.0 // 8:1 profit + principal = 9x
+                } else {
+                    won = false
+                    multiplier = 0.5 // Standard casino tie rule: 50% refund on dragon/tiger
+                }
+            } else if (winner === selectedChoice) {
                 won = true
-                multiplier = 9.0 // 8:1 profit + principal = 9x
+                multiplier = 2.0 // 1:1 payout
             } else {
                 won = false
-                multiplier = 0.5 // Standard casino tie rule: 50% refund on dragon/tiger
+                multiplier = 0
             }
-        } else if (winner === selectedChoice) {
-            won = true
-            multiplier = 2.0 // 1:1 payout
-        } else {
-            won = false
-            multiplier = 0
+            payout = parseFloat((totalBet * multiplier).toFixed(2))
+            won = payout > 0
         }
 
-        const payout = parseFloat((betAmount * multiplier).toFixed(2))
+        const multiplier = totalBet > 0 ? parseFloat((payout / totalBet).toFixed(2)) : 0
 
         return {
             game: 'dragon-tiger',
             dragon: { value: dVal, suit: dSuit },
             tiger: { value: tVal, suit: tSuit },
             winner,
-            choice: selectedChoice,
+            choice: choice || 'dragon',
             won,
             multiplier,
             payout,
@@ -236,7 +258,7 @@ class GameEngineService {
     }
 
     // ── 6. Color Match Evaluator (Server-Authoritative) ─────────
-    evaluateColorMatch({ betAmount, choice = 'green', clientSeed, nonce }) {
+    evaluateColorMatch({ betAmount, choice = 'green', bets, clientSeed, nonce }) {
         const { hash } = this.generateHmacFloat(clientSeed, nonce)
         const luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
 
@@ -251,33 +273,68 @@ class GameEngineService {
         else if ([1, 3, 7, 9].includes(luckyNumber)) colors.push('green')
         else colors.push('red')
 
-        const selectedChoice = String(choice).toLowerCase()
-        let won = false
-        let multiplier = 0
+        const bigSmall = luckyNumber >= 5 ? 'big' : 'small'
 
-        if (colors.includes(selectedChoice)) {
-            won = true
-            if (selectedChoice === 'violet') {
-                multiplier = 4.5
-            } else if (luckyNumber === 0 || luckyNumber === 5) {
-                // Half win on split 0/5
-                multiplier = 1.5
-            } else {
+        let won = false
+        let payout = 0
+        let totalBet = parseFloat(betAmount) || 0
+
+        if (bets && typeof bets === 'object' && Object.keys(bets).length > 0) {
+            totalBet = Object.values(bets).reduce((a, b) => a + (parseFloat(b) || 0), 0) || totalBet
+
+            if (bets.green && colors.includes('green')) {
+                const mult = colors.includes('violet') ? 1.5 : 2.0
+                payout += (parseFloat(bets.green) || 0) * mult
+            }
+            if (bets.red && colors.includes('red')) {
+                const mult = colors.includes('violet') ? 1.5 : 2.0
+                payout += (parseFloat(bets.red) || 0) * mult
+            }
+            if (bets.violet && colors.includes('violet')) {
+                payout += (parseFloat(bets.violet) || 0) * 4.5
+            }
+            const numKey = `num_${luckyNumber}`
+            if (bets[numKey]) {
+                payout += (parseFloat(bets[numKey]) || 0) * 9.0
+            }
+            if (bets[bigSmall]) {
+                payout += (parseFloat(bets[bigSmall]) || 0) * 2.0
+            }
+            payout = parseFloat(payout.toFixed(2))
+            won = payout > 0
+        } else {
+            const selectedChoice = String(choice).toLowerCase()
+            let multiplier = 0
+
+            if (colors.includes(selectedChoice)) {
+                won = true
+                if (selectedChoice === 'violet') {
+                    multiplier = 4.5
+                } else if (luckyNumber === 0 || luckyNumber === 5) {
+                    // Half win on split 0/5
+                    multiplier = 1.5
+                } else {
+                    multiplier = 2.0
+                }
+            } else if (selectedChoice === String(luckyNumber)) {
+                // Exact number prediction pays 9x
+                won = true
+                multiplier = 9.0
+            } else if (selectedChoice === bigSmall) {
+                won = true
                 multiplier = 2.0
             }
-        } else if (selectedChoice === String(luckyNumber)) {
-            // Exact number prediction pays 9x
-            won = true
-            multiplier = 9.0
+            payout = parseFloat((totalBet * multiplier).toFixed(2))
         }
 
-        const payout = parseFloat((betAmount * multiplier).toFixed(2))
+        const multiplier = totalBet > 0 ? parseFloat((payout / totalBet).toFixed(2)) : 0
 
         return {
             game: 'color-match',
             luckyNumber,
             winningColors: colors,
-            choice: selectedChoice,
+            bigSmall,
+            choice,
             won,
             multiplier,
             payout,
@@ -355,6 +412,8 @@ class GameEngineService {
             return {
                 hitMine: true,
                 tileIndex: idx,
+                currency: session.currency,
+                betAmount: session.betAmount,
                 allMines: session.mineIndices,
                 won: false,
                 multiplier: 0,
@@ -379,6 +438,8 @@ class GameEngineService {
         return {
             hitMine: false,
             tileIndex: idx,
+            currency: session.currency,
+            betAmount: session.betAmount,
             gemsRevealed,
             currentMultiplier: session.currentMultiplier,
             nextMultiplier,
@@ -402,11 +463,133 @@ class GameEngineService {
 
         return {
             won: true,
+            currency: session.currency,
+            betAmount: session.betAmount,
             gemsRevealed: session.revealedIndices.length,
             multiplier: session.currentMultiplier,
             payout,
             allMines: session.mineIndices
         }
+    }
+
+    getActiveMinesRound(userId) {
+        if (!userId) return null
+        for (const session of this.activeMinesRounds.values()) {
+            if (session.userId === userId && session.active) {
+                return {
+                    roundId: session.roundId,
+                    minesCount: session.minesCount,
+                    revealedIndices: session.revealedIndices,
+                    currentMultiplier: session.currentMultiplier,
+                    nextMultiplier: this.calculateMinesMultiplier(session.minesCount, session.revealedIndices.length + 1),
+                    betAmount: session.betAmount,
+                    currency: session.currency,
+                    active: true
+                }
+            }
+        }
+        return null
+    }
+
+    // ── 8. Crash Round Lifecycle (Server-Authoritative Sessions) ──
+    startCrashRound({ userId, currency = 'INR', betAmount, autoCashout = null, clientSeed }) {
+        const nonce = this.getNextNonce(userId)
+        const { hash, floatVal } = this.generateHmacFloat(clientSeed, nonce)
+
+        // 1% instant bust (RTP = 99%)
+        let crashPoint = 1.00
+        if (floatVal >= 0.01) {
+            crashPoint = Math.floor((99 / (1 - floatVal))) / 100
+        }
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
+
+        const roundId = 'crash_' + Date.now().toString(36) + crypto.randomBytes(4).toString('hex')
+        const session = {
+            roundId,
+            userId,
+            currency,
+            betAmount: parseFloat(betAmount),
+            crashPoint,
+            autoCashout: autoCashout ? parseFloat(autoCashout) : null,
+            hash,
+            startedAt: Date.now(),
+            active: true
+        }
+
+        this.activeCrashRounds.set(roundId, session)
+
+        return {
+            roundId,
+            crashPoint,
+            hash,
+            autoCashout: session.autoCashout,
+            active: true
+        }
+    }
+
+    cashoutCrash({ userId, roundId, multiplier }) {
+        const session = this.activeCrashRounds.get(roundId)
+        if (!session) throw new Error('Active Crash round not found or already closed')
+        if (session.userId !== userId) throw new Error('Unauthorized round access')
+        if (!session.active) throw new Error('Round is already closed')
+
+        const requestedMultiplier = Math.max(1.01, parseFloat(multiplier) || 1.01)
+        session.active = false
+        this.activeCrashRounds.delete(roundId)
+
+        // Validate that requested multiplier did not exceed crash point
+        const won = requestedMultiplier <= session.crashPoint
+        const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
+        const payout = won ? parseFloat((session.betAmount * actualMultiplier).toFixed(2)) : 0
+
+        return {
+            roundId,
+            won,
+            currency: session.currency,
+            betAmount: session.betAmount,
+            multiplier: actualMultiplier,
+            payout,
+            crashPoint: session.crashPoint,
+            hash: session.hash
+        }
+    }
+
+    bustCrash({ userId, roundId }) {
+        const session = this.activeCrashRounds.get(roundId)
+        if (!session) return { alreadyClosed: true }
+        if (session.userId !== userId) throw new Error('Unauthorized round access')
+
+        session.active = false
+        this.activeCrashRounds.delete(roundId)
+
+        return {
+            roundId,
+            won: false,
+            currency: session.currency,
+            betAmount: session.betAmount,
+            multiplier: 0,
+            payout: 0,
+            crashPoint: session.crashPoint,
+            hash: session.hash
+        }
+    }
+
+    getActiveCrashRound(userId) {
+        if (!userId) return null
+        for (const session of this.activeCrashRounds.values()) {
+            if (session.userId === userId && session.active) {
+                return {
+                    roundId: session.roundId,
+                    betAmount: session.betAmount,
+                    currency: session.currency,
+                    crashPoint: session.crashPoint,
+                    autoCashout: session.autoCashout,
+                    startedAt: session.startedAt,
+                    active: true
+                }
+            }
+        }
+        return null
     }
 }
 

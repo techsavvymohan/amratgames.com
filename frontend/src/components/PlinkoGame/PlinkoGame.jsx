@@ -112,7 +112,7 @@ const BALL_TYPES = {
 
 function PlinkoGame() {
     // Shared Wallet
-    const { balance, placeBet, addWinnings, recordGameRound, currencySymbol, currency } = useWallet()
+    const { balance, placeBet, addWinnings, executeGameBet, currencySymbol, currency } = useWallet()
     // State
     const [betAmount, setBetAmount] = useState(1);
     const [rowCount, setRowCount] = useState(16);
@@ -188,13 +188,10 @@ function PlinkoGame() {
     const profitRangeMax = Math.max(maxProfit, 1);
     const profitRangeMin = Math.abs(Math.min(minProfit, -1));
 
-    // Handle balance change
+    // Handle balance change (no-op: financial state is strictly managed by executeGameBet)
     const handleBalanceChange = useCallback((amount) => {
-        if (amount > 0) {
-            addWinnings(amount);
-        }
-        // Negative amounts (bets) are handled by placeBet in handleDropBall
-    }, [addWinnings]);
+        // No-op: server reconciles balance upon bet placement
+    }, []);
 
     // Calculate bonus multiplier for special balls
     const calculateBonusMultiplier = useCallback((ballType) => {
@@ -202,7 +199,7 @@ function PlinkoGame() {
         return ball.multiplierBonus || 1;
     }, []);
 
-    // Handle ball enter bin
+    // Handle ball enter bin (Visual and records update; financial transaction handled server-authoritatively on drop)
     const handleBallEnterBin = useCallback((data) => {
         const ballType = data.ballType || selectedBallType;
         const actualBall = BALL_TYPES[ballType] || BALL_TYPES.normal;
@@ -218,14 +215,6 @@ function PlinkoGame() {
         } else if (profit > 0) {
             casinoAudio.playWin();
         }
-
-        recordGameRound({
-            game: 'plinko',
-            gameName: 'Plinko',
-            betAmount: data.betAmount * actualBall.cost,
-            multiplier: finalMultiplier,
-            won: profit >= 0
-        }).catch(() => {});
 
         const newRecord = {
             id: Date.now() + Math.random(),
@@ -253,13 +242,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-
-        // Adjust balance for special ball cost difference
-        const costAdjustment = data.betAmount * (actualBall.cost - 1);
-        if (costAdjustment !== 0) {
-            handleBalanceChange(-costAdjustment);
-        }
-    }, [selectedBallType, calculateBonusMultiplier, handleBalanceChange, maxStreak, recordGameRound]);
+    }, [selectedBallType, calculateBonusMultiplier, maxStreak]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -455,18 +438,20 @@ function PlinkoGame() {
         }
     }, [isDebugMode, rowCount, provablyFair, winRecords]);
 
-    // Drop ball
+    // Drop ball (Server-Authoritative Provably Fair)
     const handleDropBall = useCallback((isCancelled) => dropPlinkoBall({
         engine: engineRef.current,
         pendingDrops: pendingDropsRef,
         provablyFair,
         rowCount,
-        betAmount,
+        riskLevel,
+        betAmount: betAmount * currentBall.cost,
         currentBall,
         selectedBallType,
         placeBet,
+        executeGameBet,
         isCancelled,
-    }), [currentBall, rowCount, provablyFair, selectedBallType, betAmount, placeBet]);
+    }), [currentBall, rowCount, riskLevel, provablyFair, selectedBallType, betAmount, placeBet, executeGameBet]);
 
     // Fullscreen toggle
     const toggleFullscreen = useCallback(() => {

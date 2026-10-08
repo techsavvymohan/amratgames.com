@@ -64,7 +64,17 @@ const PHASE = {
 const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
 function CrashGame() {
-    const { balance, placeBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet()
+    const {
+        balance,
+        startCrashRound,
+        cashoutCrashRound,
+        bustCrashRound,
+        getActiveCrashRound,
+        showToast,
+        currencySymbol,
+        currency
+    } = useWallet()
+    const activeRoundIdRef = useRef(null)
     const [phase, setPhase] = useState(PHASE.IDLE)
     const [multiplier, setMultiplier] = useState(1.00)
     const [countdown, setCountdown] = useState(0)
@@ -352,30 +362,59 @@ function CrashGame() {
         setPlayerCashouts([])
     }, [])
 
-    // Handle crash
+    // Check and restore active crash flight on mount
+    useEffect(() => {
+        let mounted = true
+        getActiveCrashRound().then((active) => {
+            if (!mounted || !active || !active.active) return
+            const elapsed = (Date.now() - active.startedAt) / 1000
+            const currentMultiplier = Math.pow(Math.E, 0.1 * elapsed)
+            if (currentMultiplier < active.crashPoint) {
+                // Restore active flight in progress
+                activeRoundIdRef.current = active.roundId
+                setCrashPoint(active.crashPoint)
+                setBetAmount(active.betAmount)
+                setBetPlaced(true)
+                setUserBetData({
+                    name: 'You',
+                    amount: active.betAmount,
+                    currency: {
+                        symbol: currencySymbol,
+                        color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
+                        name: currency
+                    },
+                    active: true,
+                    cashoutAt: null,
+                    profit: null
+                })
+                startTimeRef.current = active.startedAt
+                setPhase(PHASE.RUNNING)
+            } else {
+                // Flight already crashed while user was away
+                bustCrashRound({ roundId: active.roundId }).catch(() => {})
+            }
+        }).catch(() => {})
+        return () => { mounted = false }
+    }, [getActiveCrashRound, bustCrashRound, currencySymbol, currency])
+
+    // Handle crash (Server-Authoritative)
     const handleCrash = useCallback((crashMultiplier) => {
         setHistory(prev => [crashMultiplier, ...prev].slice(0, 30))
         casinoAudio.playExplosion()
 
-        let profit = 0;
-        let didPlay = false;
+        let profit = 0
+        let didPlay = false
 
         if (userBetData) {
-            didPlay = true;
-            if (betPlaced) {
+            didPlay = true
+            if (betPlaced && activeRoundIdRef.current) {
                 // User didn't cash out in time, lost bet
                 profit = -userBetData.amount
-                recordGameRound({
-                    game: 'crash',
-                    gameName: 'Crash 1000x',
-                    betAmount: userBetData.amount,
-                    multiplier: 0,
-                    won: false
-                }).catch(() => {})
+                bustCrashRound({ roundId: activeRoundIdRef.current }).catch(() => {})
+                activeRoundIdRef.current = null
                 showToast('loss', 'You Lost!', `-${currencySymbol}${userBetData.amount.toFixed(2)} — Crashed @${crashMultiplier.toFixed(2)}×`, 4000)
             } else {
-                // User cashed out
-                profit = parseFloat(userBetData.profit) - userBetData.amount
+                profit = parseFloat(userBetData.profit || 0) - userBetData.amount
             }
         }
 
@@ -385,12 +424,14 @@ function CrashGame() {
                 multiplier: crashMultiplier,
                 cashedOutAt: betPlaced ? null : (userBetData.cashoutAt ? parseFloat(userBetData.cashoutAt) : null),
                 bet: userBetData.amount,
-                profit: profit
+                profit
             }])
         }
 
         setBetPlaced(false)
-        // Return to IDLE state after crash explosion (2.5s) - NO AUTO RESTART!
+        activeRoundIdRef.current = null
+
+        // Return to IDLE state after crash explosion (2.5s)
         setTimeout(() => {
             setPhase(PHASE.IDLE)
             setMultiplier(1.00)
@@ -401,7 +442,7 @@ function CrashGame() {
             setUserBetData(null)
             setPlayerCashouts([])
         }, 2500)
-    }, [userBetData, betPlaced, showToast, recordGameRound, currencySymbol])
+    }, [userBetData, betPlaced, showToast, bustCrashRound, currencySymbol])
 
     // Handle player cashout notification
     const handlePlayerCashout = useCallback((cashoutData) => {
@@ -450,7 +491,7 @@ function CrashGame() {
         }
     }, [phase, crashPoint, handleCrash])
 
-    // Handle user betting and starting flight (User Interaction Only)
+    // Handle user betting and starting flight (Server-Authoritative)
     const handleBet = async (amount) => {
         if (phase !== PHASE.IDLE) return
 
@@ -458,11 +499,15 @@ function CrashGame() {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
             return
         }
-        if (!placeBet(amount)) {
-            showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
+
+        const res = await startCrashRound({ betAmount: amount })
+        if (!res || !res.success) {
+            showToast('error', 'Launch Failed', res?.error || 'Unable to launch Crash flight')
             return
         }
-        casinoAudio.playBet()
+
+        activeRoundIdRef.current = res.roundId
+        setCrashPoint(res.crashPoint)
         setBetAmount(amount)
         setBetPlaced(true)
         setUserBetData({
@@ -477,11 +522,14 @@ function CrashGame() {
             cashoutAt: null,
             profit: null
         })
+
+        if (res.hash) {
+            setFairnessData(prev => ({ ...prev, serverSeedHash: res.hash }))
+        }
+
+        casinoAudio.playBet()
         showToast('bet', 'Flight Launched!', `${currencySymbol}${amount.toFixed(2)}`, 2000)
 
-        // Generate Provably Fair crash point and launch flight immediately
-        const point = await generateCrashPoint()
-        setCrashPoint(point)
         setMultiplier(1.00)
         setElapsedTime(0)
         multiplierRef.current = 1.00
@@ -490,32 +538,42 @@ function CrashGame() {
         setPhase(PHASE.RUNNING)
     }
 
-    // Handle cashout
-    const handleCashout = () => {
-        if (phase === PHASE.RUNNING && betPlaced) {
-            const winAmount = betAmount * multiplier
-            const profit = winAmount - betAmount
-            addWinnings(winAmount)
-            recordGameRound({
-                game: 'crash',
-                gameName: 'Crash 1000x',
-                betAmount,
-                multiplier,
-                won: true
-            }).catch(() => {})
-            setBetPlaced(false)
-            setUserBetData(prev => prev ? {
-                ...prev,
-                active: false,
-                cashoutAt: multiplier.toFixed(2),
-                profit: winAmount.toFixed(2)
-            } : null)
+    // Handle cashout (Server-Authoritative)
+    const handleCashout = async () => {
+        if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
+            const currentRoundId = activeRoundIdRef.current
+            const targetMult = multiplierRef.current
+            const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
 
-            showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${multiplier.toFixed(2)}×`, 4000)
-            if (multiplier >= 3) {
-                casinoAudio.playBigWin()
-            } else {
-                casinoAudio.playCashout()
+            if (res && res.success && res.won) {
+                setBetPlaced(false)
+                activeRoundIdRef.current = null
+                const winAmount = res.payout
+                const profit = winAmount - betAmount
+                setUserBetData(prev => prev ? {
+                    ...prev,
+                    active: false,
+                    cashoutAt: res.multiplier.toFixed(2),
+                    profit: winAmount.toFixed(2)
+                } : null)
+
+                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
+                if (res.multiplier >= 3) {
+                    casinoAudio.playBigWin()
+                } else {
+                    casinoAudio.playCashout()
+                }
+
+                setGameRecords(prev => [...prev, {
+                    id: Date.now(),
+                    multiplier: res.multiplier,
+                    cashedOutAt: res.multiplier,
+                    bet: betAmount,
+                    profit
+                }])
+            } else if (res && !res.won) {
+                // Server rejected cashout because flight crashed earlier
+                handleCrash(res.crashPoint || targetMult)
             }
         }
     }

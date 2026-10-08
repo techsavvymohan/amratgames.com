@@ -23,7 +23,7 @@ const MIN_MULTIPLIER = 1.01
 const QUICK_PRESETS = [1.50, 2.00, 5.00, 10.00, 50.00, 100.00]
 
 function LimboGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
 
     // Provably fair engine instance
     const fairnessRef = useRef(null)
@@ -133,7 +133,7 @@ function LimboGame() {
         handleTargetChange(preset)
     }
 
-    // Execute single roll using Provably Fair algorithm
+    // Execute single roll using Server-Authoritative Provably Fair algorithm
     const executeRoll = useCallback(async () => {
         if (isRolling) return
         const currentBet = activeBetRef.current
@@ -146,30 +146,33 @@ function LimboGame() {
         const target = parseFloat(targetMultiplier)
         if (isNaN(target) || target < MIN_MULTIPLIER) return
 
-        const pf = fairnessRef.current
-        if (!pf) return
-
         setIsRolling(true)
         setGameResult(null)
+        casinoAudio.playBet()
 
-        // Deduct bet from wallet
-        const success = placeBet(currentBet, 'Limbo')
-        if (!success) {
+        // Call server-authoritative bet evaluation
+        let betResponse
+        if (executeGameBet) {
+            betResponse = await executeGameBet({
+                game: 'limbo',
+                gameName: 'Limbo Multiplier',
+                betAmount: currentBet,
+                targetMultiplier: target
+            })
+        }
+
+        if (!betResponse || !betResponse.success) {
             setIsRolling(false)
             setIsAutoRunning(false)
             autoRunningRef.current = false
             return
         }
 
-        casinoAudio.playBet()
+        const outcome = betResponse.evaluation?.roll || 1.00
+        const isWin = Boolean(betResponse.won)
+        const winAmount = betResponse.payout || 0
 
-        // Generate Provably Fair outcome
-        const pfResult = await pf.generateLimboRoll()
-        setNonce(pf.nonce)
-        const outcome = pfResult.roll
-        const isWin = outcome >= target
-
-        // High-speed visual roll animation (250ms with rapid ticks)
+        // High-speed visual roll animation (240ms with rapid ticks) landing on server outcome
         const startTime = Date.now()
         const animDuration = 240
         const interval = setInterval(() => {
@@ -189,15 +192,6 @@ function LimboGame() {
                 setLastOutcome({ roll: outcome, target, win: isWin })
 
                 if (isWin) {
-                    const winAmount = parseFloat((currentBet * target).toFixed(2))
-                    addWinnings(winAmount, 'Limbo', target)
-                    recordGameRound({
-                        game: 'limbo',
-                        gameName: 'Limbo Multiplier',
-                        betAmount: currentBet,
-                        multiplier: target,
-                        won: true
-                    }).catch(() => {})
                     notifyWin(winAmount, target)
                     if (target >= 5) {
                         casinoAudio.playBigWin()
@@ -205,14 +199,6 @@ function LimboGame() {
                         casinoAudio.playWin()
                     }
                 } else {
-                    recordGameRound({
-                        game: 'limbo',
-                        gameName: 'Limbo Multiplier',
-                        betAmount: currentBet,
-                        multiplier: 0,
-                        won: false
-                    }).catch(() => {})
-                    // Suppress loss toast spam during auto-bet so multiplier remains clearly visible
                     if (!autoRunningRef.current) {
                         notifyLoss(currentBet)
                     }
@@ -258,7 +244,7 @@ function LimboGame() {
                 }
             }
         }, 28)
-    }, [isRolling, balance, targetMultiplier, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
+    }, [isRolling, balance, targetMultiplier, executeGameBet, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
 
     // Keep activeBetRef in sync with betAmount
     useEffect(() => {

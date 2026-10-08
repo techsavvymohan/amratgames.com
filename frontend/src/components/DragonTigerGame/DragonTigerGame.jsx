@@ -39,7 +39,7 @@ function getRandomCard() {
 }
 
 function DragonTigerGame() {
-    const { balance, currencySymbol, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
 
     // Chip & Bet state
     const [selectedChip, setSelectedChip] = useState(100)
@@ -57,7 +57,7 @@ function DragonTigerGame() {
 
     // Fairness
     const [fairnessOpen, setFairnessOpen] = useState(false)
-    const [serverSeedHash] = useState('d78e3a2b1c4f5e6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a')
+    const [serverSeedHash, setServerSeedHash] = useState('d78e3a2b1c4f5e6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a')
     const [clientSeed, setClientSeed] = useState('client-seed-' + Math.floor(Math.random() * 10000))
     const [nonce, setNonce] = useState(1)
 
@@ -99,24 +99,55 @@ function DragonTigerGame() {
         }))
     }
 
-    // Deal Round
-    const dealCards = useCallback(() => {
+    // Deal Round (Server-Authoritative Provably Fair)
+    const dealCards = useCallback(async () => {
         if (isDealing || totalBet <= 0 || totalBet > balance) return
 
-        const success = placeBet(totalBet, 'Dragon Tiger')
-        if (!success) return
-
-        playSound('deal')
         setIsDealing(true)
         setRevealed(false)
         setRoundResult(null)
+        playSound('deal')
         setNonce(prev => prev + 1)
 
-        // Draw cards
-        const dCard = getRandomCard()
-        let tCard = getRandomCard()
+        let primaryChoice = 'dragon'
+        if (bets.tiger > bets.dragon && bets.tiger > bets.tie) primaryChoice = 'tiger'
+        else if (bets.tie > bets.dragon && bets.tie > bets.tiger) primaryChoice = 'tie'
 
-        // 3D dealing animation sequence
+        const betResponse = await executeGameBet({
+            game: 'dragon-tiger',
+            gameName: 'Dragon Tiger',
+            betAmount: totalBet,
+            choice: primaryChoice,
+            bets: {
+                dragon: bets.dragon,
+                tie: bets.tie,
+                tiger: bets.tiger
+            }
+        })
+
+        if (!betResponse || !betResponse.success) {
+            setIsDealing(false)
+            notifyLoss?.(betResponse?.error || 'Unable to place bet')
+            return
+        }
+
+        const evalData = betResponse.evaluation || {}
+        if (evalData.hash) {
+            setServerSeedHash(evalData.hash)
+        }
+
+        const dValNum = evalData.dragon?.value || 7
+        const tValNum = evalData.tiger?.value || 7
+        const dSuit = evalData.dragon?.suit || '♠'
+        const tSuit = evalData.tiger?.suit || '♥'
+
+        const rankNames = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+        const dRank = rankNames[dValNum - 1] || '7'
+        const tRank = rankNames[tValNum - 1] || '7'
+
+        const dCard = { rank: dRank, value: dValNum, suit: dSuit, color: SUIT_COLORS[dSuit] || '#1e293b' }
+        const tCard = { rank: tRank, value: tValNum, suit: tSuit, color: SUIT_COLORS[tSuit] || '#e11d48' }
+
         setDragonCard(dCard)
         setTigerCard(tCard)
 
@@ -124,55 +155,26 @@ function DragonTigerGame() {
             setRevealed(true)
             setIsDealing(false)
 
-            let winner = 'tie'
-            if (dCard.value > tCard.value) winner = 'dragon'
-            else if (tCard.value > dCard.value) winner = 'tiger'
-
+            const winner = evalData.winner || 'dragon'
             setRoundResult(winner)
             setHistory(prev => [{ winner, dVal: dCard.rank, tVal: tCard.rank }, ...prev.slice(0, 19)])
 
-            // Calculate payout
-            let payout = 0
-            if (winner === 'dragon' && bets.dragon > 0) {
-                payout += bets.dragon * 2 // 1:1 profit + return
-            }
-            if (winner === 'tiger' && bets.tiger > 0) {
-                payout += bets.tiger * 2
-            }
-            if (winner === 'tie') {
-                if (bets.tie > 0) payout += bets.tie * 9 // 8:1 payout + return
-                // Tie pushes 50% of main bets back
-                payout += (bets.dragon * 0.5) + (bets.tiger * 0.5)
-            }
+            const payout = betResponse.payout ?? evalData.payout ?? 0
+            const won = Boolean(betResponse.won ?? evalData.won)
 
-            if (payout > 0) {
+            if (won && payout > 0) {
                 if (winner === 'tie' || (payout / totalBet) >= 3) {
                     playSound('bigWin')
                 } else {
                     playSound('win')
                 }
-                addWinnings(payout, 'Dragon Tiger', payout / totalBet)
-                recordGameRound({
-                    game: 'dragon-tiger',
-                    gameName: 'Dragon Tiger',
-                    betAmount: totalBet,
-                    multiplier: payout / totalBet,
-                    won: true
-                }).catch(() => {})
                 notifyWin(payout, (payout / totalBet).toFixed(2))
             } else {
                 playSound('loss')
-                recordGameRound({
-                    game: 'dragon-tiger',
-                    gameName: 'Dragon Tiger',
-                    betAmount: totalBet,
-                    multiplier: 0,
-                    won: false
-                }).catch(() => {})
                 notifyLoss(totalBet)
             }
         }, 900)
-    }, [isDealing, totalBet, balance, bets, placeBet, addWinnings, recordGameRound, notifyWin, notifyLoss])
+    }, [isDealing, totalBet, balance, bets, executeGameBet, notifyWin, notifyLoss])
 
     return (
         <div className="dt-page">
