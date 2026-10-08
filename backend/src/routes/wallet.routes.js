@@ -9,12 +9,20 @@ router.get('/balance', requireAuth, (req, res) => {
     try {
         const user = db.findUserById(req.user.id)
         const totalDeposited = user?.totalDeposited || 0
+        const totalWagered = user?.totalWagered || 0
+        const requiredTurnover = totalDeposited
+        const remainingTurnover = Math.max(0, parseFloat((requiredTurnover - totalWagered).toFixed(2)))
+        const canWithdraw = totalDeposited >= 300 && totalWagered >= requiredTurnover
+
         res.json({
             success: true,
             balances: user?.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 },
             totalDeposited,
+            totalWagered,
+            requiredTurnover,
+            remainingTurnover,
             minDepositRequired: 300,
-            canWithdraw: totalDeposited >= 300
+            canWithdraw
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -74,7 +82,7 @@ router.post('/withdraw', requireAuth, async (req, res) => {
                 throw err
             }
 
-            // ── Rule: User must deposit minimum ₹300 before requesting any withdrawal ──
+            // ── Rule 1: User must deposit minimum ₹300 before requesting any withdrawal ──
             const totalDeposited = user.totalDeposited || 0
             if (totalDeposited < 300) {
                 const needed = 300 - totalDeposited
@@ -84,6 +92,19 @@ router.post('/withdraw', requireAuth, async (req, res) => {
                 err.requiredDeposit = 300
                 err.currentDeposited = totalDeposited
                 err.remainingNeeded = needed
+                throw err
+            }
+
+            // ── Rule 2: AML 1.0x Wagering Turnover Requirement ──
+            const totalWagered = user.totalWagered || 0
+            if (totalWagered < totalDeposited) {
+                const neededWager = parseFloat((totalDeposited - totalWagered).toFixed(2))
+                const err = new Error(`Anti-Money Laundering (AML) Compliance: You must wager at least 1.0x of your total deposits before withdrawing. Wagered: ₹${totalWagered.toLocaleString('en-IN')}, Required: ₹${totalDeposited.toLocaleString('en-IN')}. Remaining turnover: ₹${neededWager.toLocaleString('en-IN')}.`)
+                err.code = 'AML_TURNOVER_REQUIRED'
+                err.status = 400
+                err.requiredTurnover = totalDeposited
+                err.currentWagered = totalWagered
+                err.remainingTurnover = neededWager
                 throw err
             }
 
@@ -109,7 +130,8 @@ router.post('/withdraw', requireAuth, async (req, res) => {
 
             return {
                 ...withdrawalResult,
-                totalDeposited
+                totalDeposited,
+                totalWagered
             }
         })
 
@@ -118,6 +140,7 @@ router.post('/withdraw', requireAuth, async (req, res) => {
             message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! Your request is pending admin cashier review.`,
             balances: result.user.balances,
             totalDeposited: result.totalDeposited,
+            totalWagered: result.totalWagered,
             canWithdraw: true,
             withdrawal: result.withdrawal,
             transaction: result.transaction
@@ -129,7 +152,10 @@ router.post('/withdraw', requireAuth, async (req, res) => {
             code: err.code,
             requiredDeposit: err.requiredDeposit,
             currentDeposited: err.currentDeposited,
-            remainingNeeded: err.remainingNeeded
+            remainingNeeded: err.remainingNeeded,
+            requiredTurnover: err.requiredTurnover,
+            currentWagered: err.currentWagered,
+            remainingTurnover: err.remainingTurnover
         })
     }
 })

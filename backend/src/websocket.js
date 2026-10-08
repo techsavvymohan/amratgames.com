@@ -1,15 +1,20 @@
 import { WebSocketServer, WebSocket } from 'ws'
+import { crashRoomService } from './services/CrashRoomService.js'
 
 let wss = null
 
 export function initWebSocketServer(server) {
     wss = new WebSocketServer({ server, path: '/ws' })
 
+    // Start synchronized multiplayer Crash room loop
+    crashRoomService.start()
+
     wss.on('connection', (ws) => {
-        // Send initial welcome
+        // Send initial welcome with active Crash room state
         ws.send(JSON.stringify({
             type: 'CONNECTED',
             message: 'Connected to AmratGames Real-time Live Engine',
+            crashRoom: crashRoomService.getState(),
             timestamp: new Date().toISOString()
         }))
 
@@ -18,6 +23,8 @@ export function initWebSocketServer(server) {
                 const data = JSON.parse(message)
                 if (data.type === 'PING') {
                     ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }))
+                } else if (data.type === 'GET_CRASH_ROOM_STATE') {
+                    ws.send(JSON.stringify({ type: 'CRASH_ROOM_STATE', payload: crashRoomService.getState() }))
                 }
             } catch (e) {
                 // ignore

@@ -90,6 +90,9 @@ export function WalletProvider({ children }) {
     const [currency, setCurrencyState] = useState(getStoredCurrency)
     const [balance, setBalance] = useState(() => getStoredBalance(getStoredCurrency()))
     const [totalDeposited, setTotalDeposited] = useState(0)
+    const [totalWagered, setTotalWagered] = useState(0)
+    const [requiredTurnover, setRequiredTurnover] = useState(0)
+    const [remainingTurnover, setRemainingTurnover] = useState(0)
     const balanceRef = useRef(balance)
     const currencyRef = useRef(currency)
     const [transactions, setTransactions] = useState([])
@@ -127,6 +130,41 @@ export function WalletProvider({ children }) {
         }
     }, [token])
 
+    // Fetch live balance and AML turnover rollover status
+    const refreshBalance = useCallback(async () => {
+        if (!token) return
+        try {
+            const res = await fetch('/api/wallet/balance', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (data.success) {
+                if (data.balances?.[currencyRef.current] !== undefined) {
+                    const rounded = parseFloat(data.balances[currencyRef.current].toFixed(2))
+                    balanceRef.current = rounded
+                    setBalance(rounded)
+                    try {
+                        localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyRef.current}`, rounded.toString())
+                    } catch { /* ignore */ }
+                }
+                if (typeof data.totalDeposited === 'number') {
+                    setTotalDeposited(data.totalDeposited)
+                }
+                if (typeof data.totalWagered === 'number') {
+                    setTotalWagered(data.totalWagered)
+                }
+                if (typeof data.requiredTurnover === 'number') {
+                    setRequiredTurnover(data.requiredTurnover)
+                }
+                if (typeof data.remainingTurnover === 'number') {
+                    setRemainingTurnover(data.remainingTurnover)
+                }
+            }
+        } catch {
+            // non-fatal
+        }
+    }, [token])
+
     // Synchronize balance and deposit stats from authenticated user record
     useEffect(() => {
         if (user && user.balances) {
@@ -143,12 +181,18 @@ export function WalletProvider({ children }) {
             if (typeof user.totalDeposited === 'number') {
                 setTotalDeposited(user.totalDeposited)
             }
+            if (typeof user.totalWagered === 'number') {
+                setTotalWagered(user.totalWagered)
+                setRequiredTurnover(user.totalDeposited || 0)
+                setRemainingTurnover(Math.max(0, (user.totalDeposited || 0) - user.totalWagered))
+            }
         }
         if (token) {
+            refreshBalance()
             refreshWithdrawals()
             refreshTransactions()
         }
-    }, [user, currency, token, refreshWithdrawals, refreshTransactions])
+    }, [user, currency, token, refreshBalance, refreshWithdrawals, refreshTransactions])
 
     // Toast system
     const [toasts, setToasts] = useState([])
@@ -662,8 +706,12 @@ export function WalletProvider({ children }) {
         deposit,
         withdraw,
         totalDeposited,
+        totalWagered,
+        requiredTurnover,
+        remainingTurnover,
         minDepositRequired: 300,
-        canWithdraw: totalDeposited >= 300,
+        canWithdraw: totalDeposited >= 300 && totalWagered >= totalDeposited,
+        refreshBalance,
         updateBalance,
         recordGameRound,
         executeGameBet,

@@ -13,6 +13,9 @@ export default function WalletModal() {
         openWalletModal,
         balance,
         totalDeposited,
+        totalWagered,
+        requiredTurnover,
+        remainingTurnover,
         canWithdraw,
         deposit,
         withdraw,
@@ -432,7 +435,7 @@ export default function WalletModal() {
                                     Back to Play
                                 </button>
                             </div>
-                        ) : !canWithdraw ? (
+                        ) : (totalDeposited || 0) < 300 ? (
                             <div className="amrat-lock-card">
                                 <div className="amrat-lock-title">
                                     <span>🔒</span>
@@ -463,11 +466,42 @@ export default function WalletModal() {
                                     Deposit ₹{Math.max(100, 300 - (totalDeposited || 0))} Now to Unlock
                                 </button>
                             </div>
+                        ) : (totalWagered || 0) < (totalDeposited || 0) ? (
+                            <div className="amrat-lock-card">
+                                <div className="amrat-lock-title">
+                                    <span>⚖️</span>
+                                    <span>AML 1.0x Wagering Rollover Required</span>
+                                </div>
+                                <div className="amrat-lock-desc">
+                                    Anti-Money Laundering (AML) Compliance: Deposited funds must achieve at least 1.0x wagering turnover before submitting withdrawal requests.
+                                </div>
+                                <div className="amrat-progress-track">
+                                    <div
+                                        className="amrat-progress-fill"
+                                        style={{ width: `${Math.min(100, (((totalWagered || 0) / (totalDeposited || 1)) * 100))}%`, background: 'linear-gradient(90deg, #f59e0b, #10b981)' }}
+                                    />
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Wagered: <strong>₹{(totalWagered || 0).toLocaleString('en-IN')}</strong></span>
+                                    <span>Required: <strong>₹{(totalDeposited || 0).toLocaleString('en-IN')}</strong></span>
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: '#eab308', marginTop: '2px', textAlign: 'center' }}>
+                                    Remaining turnover needed: <strong>₹{Math.max(0, (totalDeposited || 0) - (totalWagered || 0)).toLocaleString('en-IN')}</strong>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="amrat-submit-deposit-btn"
+                                    style={{ marginTop: '8px', background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+                                    onClick={closeWalletModal}
+                                >
+                                    Play Games to Complete Rollover
+                                </button>
+                            </div>
                         ) : (
                             <form onSubmit={handleWithdrawSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <div className="amrat-unlocked-card">
                                     <span>✓</span>
-                                    <span>Payouts Unlocked (Total Deposited: ₹{totalDeposited})</span>
+                                    <span>Payouts Unlocked (Deposited: ₹{totalDeposited} · Rollover: 100% Completed)</span>
                                 </div>
 
                                 {/* Amount Input */}

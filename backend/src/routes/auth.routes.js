@@ -3,8 +3,9 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { db, normalizePhone } from '../db/db.js'
 import { CONFIG } from '../config.js'
-import { requireAuth } from '../middleware/auth.js'
+import { requireAuth, revokeToken } from '../middleware/auth.js'
 import { emailService } from '../services/EmailService.js'
+import { loginRateLimiter, otpRateLimiter, registerRateLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -29,7 +30,7 @@ function sanitizeUser(user) {
 
 // ── 1. Password Login (Email, Phone, or Username) ──────────
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', loginRateLimiter, (req, res) => {
     try {
         const { login, password } = req.body
         if (!login || !password) {
@@ -67,7 +68,7 @@ router.post('/login', (req, res) => {
 
 // ── 2. Request OTP (SMS or Email) ──────────────────────────
 // POST /api/auth/send-otp
-router.post('/send-otp', (req, res) => {
+router.post('/send-otp', otpRateLimiter, (req, res) => {
     try {
         const { identifier, channel } = req.body
         if (!identifier) {
@@ -186,7 +187,7 @@ router.post('/verify-otp', (req, res) => {
 
 // ── 4. Standard Registration with Validation ──────────────
 // POST /api/auth/register
-router.post('/register', (req, res) => {
+router.post('/register', registerRateLimiter, (req, res) => {
     try {
         const { username, email, phone, password, otp } = req.body
 
@@ -422,6 +423,19 @@ router.get('/support-info', (req, res) => {
         expectedResponseTime: '< 2 hours',
         smtpActive: emailService.isSmtpConfigured()
     })
+})
+
+// ── 7. Secure Session Logout (Token Revocation) ──────────
+// POST /api/auth/logout
+router.post('/logout', requireAuth, (req, res) => {
+    try {
+        if (req.token) {
+            revokeToken(req.token)
+        }
+        res.json({ success: true, message: 'Logged out successfully. Session invalidated.' })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
 })
 
 export default router

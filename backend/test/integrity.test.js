@@ -7,6 +7,9 @@ import gamesRoutes from '../src/routes/games.routes.js'
 import walletRoutes from '../src/routes/wallet.routes.js'
 import { db } from '../src/db/db.js'
 import { gameEngine } from '../src/services/GameEngine.js'
+import { revokeToken, isTokenRevoked } from '../src/middleware/auth.js'
+import { checkPlatformMaintenance, checkGameMaintenance } from '../src/middleware/circuitBreaker.js'
+import { crashRoomService } from '../src/services/CrashRoomService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -432,5 +435,115 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         // Cleanup
         gameEngine.activeMinesRounds.delete(session.roundId)
+    })
+
+    it('verifies token revocation blacklist invalidates tokens on logout', () => {
+        const dummyToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_test_token'
+        assert.equal(isTokenRevoked(dummyToken), false, 'Token must not be revoked initially')
+        revokeToken(dummyToken)
+        assert.equal(isTokenRevoked(dummyToken), true, 'Token must be blacklisted after revocation')
+    })
+
+    it('verifies AML 1.0x wagering rollover requirement logic', () => {
+        const testUser = db.createUser({
+            username: 'test_aml_player_' + Date.now(),
+            email: `aml_${Date.now()}@test.com`,
+            passwordHash: 'dummy_hash',
+            role: 'player'
+        })
+
+        // User deposits ₹500
+        testUser.totalDeposited = 500
+        testUser.totalWagered = 250 // Only 0.5x turnover
+
+        const satisfiesDeposit = testUser.totalDeposited >= 300
+        const satisfiesTurnover = testUser.totalWagered >= testUser.totalDeposited
+        assert.equal(satisfiesDeposit, true, 'Must have deposited >= 300')
+        assert.equal(satisfiesTurnover, false, 'Must reject withdrawal if turnover < totalDeposited')
+
+        // User wagers ₹250 more to achieve 1.0x turnover
+        testUser.totalWagered += 250
+        assert.equal(testUser.totalWagered >= testUser.totalDeposited, true, 'Must unlock withdrawal once turnover is 100% completed')
+    })
+
+    it('verifies platform circuit breaker and per-game maintenance kill switches', () => {
+        // 1. Platform maintenance mode
+        db.data.settings.maintenanceMode = true
+        let statusSent = null
+        let jsonSent = null
+        const mockRes = {
+            status: (code) => {
+                statusSent = code
+                return {
+                    json: (data) => { jsonSent = data }
+                }
+            }
+        }
+
+        let nextCalled = false
+        checkPlatformMaintenance({ user: { role: 'player' } }, mockRes, () => { nextCalled = true })
+        assert.equal(statusSent, 503, 'Platform maintenance must return 503 for players')
+        assert.equal(jsonSent.code, 'PLATFORM_MAINTENANCE')
+        assert.equal(nextCalled, false)
+
+        // Admin must bypass platform maintenance
+        nextCalled = false
+        checkPlatformMaintenance({ user: { role: 'admin' } }, mockRes, () => { nextCalled = true })
+        assert.equal(nextCalled, true, 'Admin must bypass platform maintenance')
+
+        // Revert platform maintenance
+        db.data.settings.maintenanceMode = false
+
+        // 2. Per-game kill switch
+        db.data.settings.disabledGames = ['crash']
+        statusSent = null
+        jsonSent = null
+        nextCalled = false
+
+        checkGameMaintenance({ body: { game: 'crash' }, user: { role: 'player' } }, mockRes, () => { nextCalled = true })
+        assert.equal(statusSent, 503, 'Disabled game must return 503')
+        assert.equal(jsonSent.code, 'GAME_MAINTENANCE')
+        assert.equal(nextCalled, false)
+
+        // Non-disabled game must pass
+        nextCalled = false
+        checkGameMaintenance({ body: { game: 'mines' }, user: { role: 'player' } }, mockRes, () => { nextCalled = true })
+        assert.equal(nextCalled, true, 'Active game must pass maintenance check')
+
+        // Clean up disabled games
+        db.data.settings.disabledGames = []
+    })
+
+    it('verifies synchronized multiplayer Crash Room lifecycle and bet placement', async () => {
+        crashRoomService.startWaitingPhase()
+        assert.equal(crashRoomService.state, 'WAITING')
+        assert.ok(crashRoomService.crashPoint >= 1.00)
+        assert.ok(typeof crashRoomService.hash === 'string' && crashRoomService.hash.length > 0)
+
+        // Ensure test user has balance
+        const testUser = db.createUser({
+            username: 'crash_room_tester_' + Date.now(),
+            email: `crash_tester_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        testUser.balances.INR = 1000
+
+        const betResult = await crashRoomService.placeBet({
+            userId: testUser.id,
+            username: testUser.username,
+            betAmount: 100,
+            autoCashout: 2.0,
+            currency: 'INR'
+        })
+
+        assert.equal(betResult.success, true)
+        assert.equal(betResult.bet.betAmount, 100)
+        assert.equal(crashRoomService.activeBets.has(testUser.id), true)
+
+        const state = crashRoomService.getState()
+        assert.equal(state.state, 'WAITING')
+        assert.ok(Array.isArray(state.bets))
+        assert.equal(state.bets.length >= 1, true)
     })
 })

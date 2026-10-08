@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
 import walletRoutes from './routes/wallet.routes.js'
 import gamesRoutes from './routes/games.routes.js'
+import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
 const server = http.createServer(app)
@@ -60,11 +61,11 @@ app.get('/api/health/smtp', async (req, res) => {
     })
 })
 
-// Mount API routes
+// Mount API routes (with Emergency Circuit Breaker protection)
 app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminPanelModule.getRouter())
-app.use('/api/wallet', walletRoutes)
-app.use('/api/games', gamesRoutes)
+app.use('/api/wallet', checkPlatformMaintenance, walletRoutes)
+app.use('/api/games', checkPlatformMaintenance, gamesRoutes)
 
 // 404 handler
 app.use('/api/*', (req, res) => {

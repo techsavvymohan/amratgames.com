@@ -43,6 +43,10 @@ export function createAdminRouter() {
     router.patch('/settings', controller.updateSettings)
     router.post('/seed/rotate', controller.rotateSeed)
 
+    // Emergency Platform Circuit Breaker & Kill Switches
+    router.post('/circuit-breaker/maintenance', controller.toggleMaintenance)
+    router.post('/circuit-breaker/toggle-game', controller.toggleGameKillSwitch)
+
     // Supabase Cloud Database Management
     router.get('/supabase/status', controller.getSupabaseStatus)
     router.post('/supabase/migrate', controller.migrateToSupabase)

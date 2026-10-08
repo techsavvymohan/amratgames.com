@@ -5,6 +5,7 @@ import { PlatformAnalyticsService } from '../services/PlatformAnalyticsService.j
 import { GameEngineManager } from '../services/GameEngineManager.js'
 import { db } from '../../db/db.js'
 import { testSupabaseConnection } from '../../db/SupabaseClient.js'
+import { broadcastEvent } from '../../websocket.js'
 
 /**
  * AdminController — OOP Controller orchestrating admin API requests
@@ -40,6 +41,8 @@ export class AdminController {
         this.rejectDeposit = this.rejectDeposit.bind(this)
         this.approveKYC = this.approveKYC.bind(this)
         this.rejectKYC = this.rejectKYC.bind(this)
+        this.toggleMaintenance = this.toggleMaintenance.bind(this)
+        this.toggleGameKillSwitch = this.toggleGameKillSwitch.bind(this)
     }
 
     async getStats(req, res) {
@@ -245,6 +248,75 @@ export class AdminController {
         try {
             const result = this.gameManager.rotateSeed()
             res.json({ success: true, message: 'Server seed rotated successfully', ...result })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async toggleMaintenance(req, res) {
+        try {
+            const current = Boolean(db.data.settings?.maintenanceMode)
+            const nextMode = req.body?.maintenanceMode !== undefined ? Boolean(req.body.maintenanceMode) : !current
+            if (!db.data.settings) db.data.settings = {}
+            db.data.settings.maintenanceMode = nextMode
+            db.persist()
+
+            broadcastEvent('MAINTENANCE_MODE_UPDATED', { maintenanceMode: nextMode })
+            broadcastEvent('CIRCUIT_BREAKER_TRIGGERED', {
+                type: 'PLATFORM_MAINTENANCE',
+                active: nextMode,
+                timestamp: new Date().toISOString()
+            })
+
+            res.json({
+                success: true,
+                maintenanceMode: nextMode,
+                message: nextMode
+                    ? 'Platform maintenance mode ACTIVATED. Non-admin wagering and cashier actions paused.'
+                    : 'Platform maintenance mode DEACTIVATED. Full platform operational.'
+            })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async toggleGameKillSwitch(req, res) {
+        try {
+            const { game, disabled } = req.body
+            if (!game) {
+                return res.status(400).json({ success: false, error: 'Game identifier is required' })
+            }
+            if (!db.data.settings) db.data.settings = {}
+            if (!Array.isArray(db.data.settings.disabledGames)) {
+                db.data.settings.disabledGames = []
+            }
+            const list = new Set(db.data.settings.disabledGames)
+            const targetState = disabled !== undefined ? Boolean(disabled) : !list.has(game)
+
+            if (targetState) {
+                list.add(game)
+            } else {
+                list.delete(game)
+            }
+
+            db.data.settings.disabledGames = Array.from(list)
+            db.persist()
+
+            broadcastEvent('GAME_KILL_SWITCH_UPDATED', {
+                game,
+                disabled: targetState,
+                disabledGames: db.data.settings.disabledGames
+            })
+
+            res.json({
+                success: true,
+                game,
+                disabled: targetState,
+                disabledGames: db.data.settings.disabledGames,
+                message: targetState
+                    ? `Emergency kill switch ACTIVATED for ${game}. Game paused.`
+                    : `Emergency kill switch DEACTIVATED for ${game}. Game online.`
+            })
         } catch (err) {
             res.status(500).json({ success: false, error: err.message })
         }

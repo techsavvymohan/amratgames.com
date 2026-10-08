@@ -95,6 +95,11 @@ class Database {
             this.data.deposits = []
         }
 
+        // Ensure settings defaults
+        if (!this.data.settings) this.data.settings = {}
+        if (this.data.settings.maintenanceMode === undefined) this.data.settings.maintenanceMode = false
+        if (!Array.isArray(this.data.settings.disabledGames)) this.data.settings.disabledGames = []
+
         // Ensure phone numbers and clean balance for master admin
         const masterAdmin = this.data.users.find(u => u.id === 'usr_admin_001')
         if (masterAdmin) {
@@ -111,6 +116,14 @@ class Database {
                 }
             }
             this.flushSync()
+        }
+
+        // Ensure all users have totalWagered and totalDeposited initialized
+        if (Array.isArray(this.data.users)) {
+            for (const u of this.data.users) {
+                if (typeof u.totalWagered !== 'number') u.totalWagered = 0
+                if (typeof u.totalDeposited !== 'number') u.totalDeposited = 0
+            }
         }
 
         // Compute current server seed hash
@@ -364,6 +377,7 @@ class Database {
                 AMRAT: 0.00,
             },
             totalDeposited: 0, // Enforces ₹300 minimum deposit before withdrawal
+            totalWagered: 0, // 1.0x AML turnover requirement on deposits
             isBanned: false,
             kycStatus: 'unverified',
             phone: userData.phone ? normalizePhone(userData.phone) : '',
@@ -425,6 +439,11 @@ class Database {
         const newBal = Math.max(0, parseFloat((currentBal + delta).toFixed(4)))
         user.balances[currency] = newBal
 
+        // Accumulate totalWagered on game bet deductions (AML Turnover tracking)
+        if (delta < 0 && typeof note === 'string' && /(bet|launch|mines|crash|wager)/i.test(note)) {
+            user.totalWagered = parseFloat(((user.totalWagered || 0) + Math.abs(delta)).toFixed(2))
+        }
+
         // Record transaction
         const tx = {
             id: 'tx_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -471,6 +490,7 @@ class Database {
             // 1. Deduct bet amount immediately under exclusive lock
             const balanceAfterDeduct = Math.max(0, parseFloat((currentBal - betAmount).toFixed(4)))
             user.balances[currency] = balanceAfterDeduct
+            user.totalWagered = parseFloat(((user.totalWagered || 0) + betAmount).toFixed(2))
 
             // 2. Evaluate Provably Fair outcome
             const evaluation = await evaluator()

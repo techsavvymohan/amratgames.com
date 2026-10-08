@@ -4,8 +4,13 @@ import { db } from '../db/db.js'
 import { authenticate } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
 import { gameEngine } from '../services/GameEngine.js'
+import { checkGameMaintenance } from '../middleware/circuitBreaker.js'
+import { crashRoomService } from '../services/CrashRoomService.js'
 
 const router = express.Router()
+
+// Enforce per-game kill switch check
+router.use(checkGameMaintenance)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
 // GET /api/games/recent
@@ -572,6 +577,60 @@ router.post('/crash/bust', authenticate, async (req, res) => {
         }
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
+    }
+})
+
+// ── 2B. Synchronized Multiplayer Crash Room Endpoints ────────
+// GET /api/games/crash/room/state
+router.get('/crash/room/state', (req, res) => {
+    try {
+        res.json({
+            success: true,
+            room: crashRoomService.getState()
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/games/crash/room/bet
+router.post('/crash/room/bet', authenticate, async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Authentication required to join multiplayer room bets' })
+        }
+        const { betAmount, autoCashout, currency = 'INR' } = req.body
+        const result = await crashRoomService.placeBet({
+            userId: req.user.id,
+            username: req.user.username,
+            betAmount,
+            autoCashout,
+            currency
+        })
+        res.json({
+            success: true,
+            ...result
+        })
+    } catch (err) {
+        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
+    }
+})
+
+// POST /api/games/crash/room/cashout
+router.post('/crash/room/cashout', authenticate, async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Authentication required to cashout' })
+        }
+        const result = await crashRoomService.cashoutPlayer({
+            userId: req.user.id
+        })
+        res.json({
+            success: true,
+            ...result
+        })
+    } catch (err) {
+        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
     }
 })
 
