@@ -11,7 +11,7 @@ const VPS_USER = 'root'
 const VPS_PASS = 'Hj@KvB8*hDQv$j!Z'
 const BUNDLE_PATH = path.resolve('phase7.bundle')
 const REMOTE_DIR = '/var/www/amratgames.com'
-const REMOTE_BUNDLE = `${REMOTE_DIR}/phase7.bundle`
+const REMOTE_BUNDLE = '/tmp/phase7.bundle'
 
 console.log('👑 Connecting to VPS at', VPS_HOST, '...')
 const conn = new Client()
@@ -31,9 +31,9 @@ conn.on('ready', () => {
         const writeStream = sftp.createWriteStream(REMOTE_BUNDLE)
 
         writeStream.on('close', () => {
-            console.log('✓ phase7.bundle uploaded successfully to VPS!')
+            console.log('✓ phase7.bundle uploaded successfully to VPS /tmp!')
 
-            const cmd = `cd ${REMOTE_DIR} && git pull phase7.bundle main && rm -f phase7.bundle && bash scripts/deploy-vps.sh`
+            const cmd = `cd ${REMOTE_DIR} && rm -f ${REMOTE_DIR}/phase7.bundle && git pull /tmp/phase7.bundle main && rm -f /tmp/phase7.bundle && bash scripts/deploy-vps.sh`
             console.log('\nExecuting remote deployment pipeline:')
             console.log(cmd)
             console.log('--------------------------------------------------\n')
