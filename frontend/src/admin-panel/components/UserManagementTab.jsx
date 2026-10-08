@@ -6,6 +6,8 @@ export default function UserManagementTab({
     setStatusFilter,
     onSelectUserForBalance,
     onToggleBan,
+    onApproveKYC,
+    onRejectKYC,
     onRefresh
 }) {
     const filteredUsers = users.filter((u) => {
@@ -120,16 +122,51 @@ export default function UserManagementTab({
                                         {u.getFormattedBalance('AMRAT')}
                                     </td>
                                     <td>
-                                        <span style={{
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            color: u.kycStatus === 'verified' ? '#10b981' : '#f59e0b',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
-                                        }}>
-                                            {u.kycStatus === 'verified' ? 'Verified' : 'Pending'}
-                                        </span>
+                                        {u.kycStatus === 'verified' && (
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                ✓ Verified
+                                            </span>
+                                        )}
+                                        {u.kycStatus === 'pending_review' && (
+                                            <div>
+                                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#fbbf24', background: 'rgba(245, 158, 11, 0.2)', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '4px' }}>
+                                                    ⏳ Under Review
+                                                </span>
+                                                {u.kycDocumentType && (
+                                                    <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                                                        {u.kycDocumentType}: {u.kycDocumentNumber}
+                                                    </div>
+                                                )}
+                                                <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                                                    <button
+                                                        type="button"
+                                                        style={{ fontSize: '0.68rem', padding: '2px 6px', background: '#10b981', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer' }}
+                                                        onClick={() => onApproveKYC && onApproveKYC(u.id)}
+                                                        title="Approve KYC documents"
+                                                    >
+                                                        ✓ Pass
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        style={{ fontSize: '0.68rem', padding: '2px 6px', background: '#ef4444', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer' }}
+                                                        onClick={() => onRejectKYC && onRejectKYC(u.id)}
+                                                        title="Reject KYC documents"
+                                                    >
+                                                        ✕ Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {u.kycStatus === 'rejected' && (
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}>
+                                                ✕ Rejected
+                                            </span>
+                                        )}
+                                        {(!u.kycStatus || u.kycStatus === 'unverified') && (
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                Unverified
+                                            </span>
+                                        )}
                                     </td>
                                     <td style={{ textAlign: 'right' }}>
                                         <div style={{ display: 'inline-flex', gap: '8px' }}>

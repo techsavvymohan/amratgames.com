@@ -35,6 +35,11 @@ export class AdminController {
         this.rotateSeed = this.rotateSeed.bind(this)
         this.getSupabaseStatus = this.getSupabaseStatus.bind(this)
         this.migrateToSupabase = this.migrateToSupabase.bind(this)
+        this.listDeposits = this.listDeposits.bind(this)
+        this.approveDeposit = this.approveDeposit.bind(this)
+        this.rejectDeposit = this.rejectDeposit.bind(this)
+        this.approveKYC = this.approveKYC.bind(this)
+        this.rejectKYC = this.rejectKYC.bind(this)
     }
 
     async getStats(req, res) {
@@ -260,6 +265,75 @@ export class AdminController {
             res.json({ success: true, message: 'Database migration to Supabase completed!', report })
         } catch (err) {
             res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async listDeposits(req, res) {
+        try {
+            const { userId, status, search } = req.query
+            const deposits = db.getAllDeposits({ userId, status, search })
+            res.json({ success: true, total: deposits.length, deposits })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async approveDeposit(req, res) {
+        try {
+            const { id } = req.params
+            const { adminNote } = req.body
+            const adminUsername = req.user?.username || 'admin'
+            const result = db.approveDeposit(id, { adminUsername, adminNote })
+            res.json({ success: true, message: 'Deposit verified and player balance credited!', ...result })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async rejectDeposit(req, res) {
+        try {
+            const { id } = req.params
+            const { rejectionReason } = req.body
+            const adminUsername = req.user?.username || 'admin'
+            const result = db.rejectDeposit(id, { adminUsername, rejectionReason })
+            res.json({ success: true, message: 'Deposit rejected.', ...result })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async approveKYC(req, res) {
+        try {
+            const { id } = req.params
+            const user = db.findUserById(id)
+            if (!user) return res.status(404).json({ success: false, error: 'User not found' })
+
+            const updated = db.updateUser(id, {
+                kycStatus: 'verified',
+                kycVerifiedAt: new Date().toISOString(),
+                kycVerifiedBy: req.user?.username || 'admin'
+            })
+            res.json({ success: true, message: `KYC for ${user.username} approved!`, user: updated })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async rejectKYC(req, res) {
+        try {
+            const { id } = req.params
+            const { reason = 'Invalid document submitted' } = req.body
+            const user = db.findUserById(id)
+            if (!user) return res.status(404).json({ success: false, error: 'User not found' })
+
+            const updated = db.updateUser(id, {
+                kycStatus: 'rejected',
+                kycRejectionReason: reason,
+                kycRejectedAt: new Date().toISOString()
+            })
+            res.json({ success: true, message: `KYC for ${user.username} rejected.`, user: updated })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
         }
     }
 }

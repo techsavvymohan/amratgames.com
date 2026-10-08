@@ -170,6 +170,10 @@ export default function AuthModal() {
             setErrorMsg('Password must be at least 6 characters')
             return
         }
+        if (!regOtp.trim() || regOtp.trim().length < 6) {
+            setErrorMsg('Please request and enter your 6-digit OTP code to complete registration')
+            return
+        }
 
         try {
             setLoading(true)
@@ -178,7 +182,7 @@ export default function AuthModal() {
                 phone: regPhone.trim() || undefined,
                 email: regEmail.trim() || undefined,
                 password: regPassword,
-                otp: regOtp.trim() || undefined
+                otp: regOtp.trim()
             })
             setSuccessMsg(`Welcome to AmratGames, ${newUser.username}!`)
         } catch (err) {
@@ -477,16 +481,18 @@ export default function AuthModal() {
                             />
                         </div>
 
-                        {/* Optional OTP Verification for registration */}
-                        {regPhone.length >= 10 && (
+                        {/* Mandatory OTP Verification for registration */}
+                        {(regPhone.length >= 10 || (regEmail.includes('@') && regEmail.length >= 5)) && (
                             <div className="amrat-form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600 }}>Verify Phone (OTP)</span>
+                                    <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600 }}>
+                                        Verify {regPhone.length >= 10 ? 'Mobile' : 'Email'} (OTP) *
+                                    </span>
                                     <button
                                         type="button"
                                         className="amrat-secondary-btn"
                                         style={{ padding: '3px 8px', fontSize: '0.72rem' }}
-                                        onClick={() => handleSendOtp(regPhone, true)}
+                                        onClick={() => handleSendOtp(regPhone.trim() || regEmail.trim(), true)}
                                         disabled={loading}
                                     >
                                         {regOtpSent ? 'Resend' : 'Send OTP'}
@@ -502,6 +508,7 @@ export default function AuthModal() {
                                             placeholder="••••••"
                                             value={regOtp}
                                             onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ''))}
+                                            required
                                         />
                                     </>
                                 )}

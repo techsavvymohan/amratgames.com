@@ -289,8 +289,6 @@ export function WalletProvider({ children }) {
         const method = typeof options === 'string' ? options : (options.method || 'UPI')
         const utrNumber = typeof options === 'object' && options.utrNumber ? options.utrNumber : ''
 
-        let newBal = balanceRef.current + amt
-
         if (token) {
             try {
                 const res = await fetch('/api/wallet/deposit', {
@@ -308,37 +306,51 @@ export function WalletProvider({ children }) {
                 })
                 const data = await res.json()
                 if (data.success) {
+                    if (data.status === 'pending') {
+                        // Deposit is queued for cashier verification
+                        setTransactions(txs => [{
+                            id: data.depositId || Date.now(),
+                            type: 'deposit',
+                            status: 'pending',
+                            currency: currencyRef.current,
+                            symbol: CURRENCIES[currencyRef.current].symbol,
+                            amount: amt,
+                            balance: balanceRef.current,
+                            note: utrNumber ? `Deposit (UTR: ${utrNumber}) [Pending Review]` : 'Deposit [Pending Review]',
+                            timestamp: new Date()
+                        }, ...txs].slice(0, 100))
+                        return data
+                    }
                     if (data.balances?.[currencyRef.current] !== undefined) {
-                        newBal = setStoredBalance(data.balances[currencyRef.current])
-                    } else {
-                        newBal = setStoredBalance(balanceRef.current + amt)
+                        setStoredBalance(data.balances[currencyRef.current])
                     }
                     if (typeof data.totalDeposited === 'number') {
                         setTotalDeposited(data.totalDeposited)
                     }
+                    return data
+                } else {
+                    throw new Error(data.error || 'Failed to submit deposit request')
                 }
-            } catch {
-                newBal = setStoredBalance(balanceRef.current + amt)
-                setTotalDeposited(prev => prev + amt)
+            } catch (err) {
+                console.error('[WALLET] Deposit error:', err)
+                throw err
             }
         } else {
-            newBal = setStoredBalance(balanceRef.current + amt)
-            setTotalDeposited(prev => prev + amt)
+            // Guest practice balance refill
+            const newBal = setStoredBalance(balanceRef.current + amt)
+            setTransactions(txs => [{
+                id: Date.now(),
+                type: 'deposit',
+                currency: currencyRef.current,
+                symbol: CURRENCIES[currencyRef.current].symbol,
+                amount: amt,
+                balance: newBal,
+                note: 'Virtual Practice Refill',
+                timestamp: new Date()
+            }, ...txs].slice(0, 100))
+            showToast('success', 'Practice Balance Refilled', `+${currencySymbol}${amt.toLocaleString('en-IN')} added to practice wallet`)
+            return { success: true, balance: newBal }
         }
-
-        setTransactions(txs => [{
-            id: Date.now(),
-            type: 'deposit',
-            currency: currencyRef.current,
-            symbol: CURRENCIES[currencyRef.current].symbol,
-            amount: amt,
-            balance: newBal,
-            utrNumber,
-            timestamp: new Date(),
-        }, ...txs].slice(0, 100))
-
-        showToast('success', 'Deposit Submitted', `+${currencySymbol}${amt.toLocaleString('en-IN')} added to wallet`)
-        return { success: true, balance: newBal }
     }, [setStoredBalance, token, currencySymbol, showToast])
 
     // Withdraw funds (Enforces ₹300 minimum deposit condition)

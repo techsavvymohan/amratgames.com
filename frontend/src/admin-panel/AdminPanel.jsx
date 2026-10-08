@@ -9,6 +9,7 @@ import UserManagementTab from './components/UserManagementTab'
 import TokenDistributionTab from './components/TokenDistributionTab'
 import SettingsTab from './components/SettingsTab'
 import WithdrawalsTab from './components/WithdrawalsTab'
+import DepositsTab from './components/DepositsTab'
 import BalanceModal from './components/BalanceModal'
 import LockScreen from './components/LockScreen'
 
@@ -21,11 +22,12 @@ export default function AdminPanel() {
     const apiClient = useMemo(() => new AdminApiClient(() => token), [token])
 
     // Tabs & View State
-    const [currentTab, setCurrentTab] = useState('overview') // 'overview' | 'withdrawals' | 'users' | 'tokens' | 'settings'
+    const [currentTab, setCurrentTab] = useState('overview') // 'overview' | 'withdrawals' | 'deposits' | 'users' | 'tokens' | 'settings'
     const [loading, setLoading] = useState(false)
     const [stats, setStats] = useState(null)
     const [users, setUsers] = useState([])
     const [withdrawals, setWithdrawals] = useState([])
+    const [deposits, setDeposits] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [liveBets, setLiveBets] = useState([])
@@ -96,6 +98,13 @@ export default function AdminPanel() {
                         if (data.type === 'WITHDRAWAL_STATUS_UPDATED') {
                             loadData()
                         }
+                        if (data.type === 'NEW_DEPOSIT_REQUEST' && data.payload) {
+                            triggerToast(`🔔 New Deposit: ₹${data.payload.amount} submitted by ${data.payload.username}!`)
+                            loadData()
+                        }
+                        if (data.type === 'DEPOSIT_STATUS_UPDATED') {
+                            loadData()
+                        }
                     } catch {
                         // ignore
                     }
@@ -147,6 +156,10 @@ export default function AdminPanel() {
             // 5. Withdrawals
             const withdrawalModels = await apiClient.getWithdrawals().catch(() => [])
             setWithdrawals(withdrawalModels)
+
+            // 6. Deposits (Cashier Verification Queue)
+            const depositModels = await apiClient.getDeposits().catch(() => [])
+            setDeposits(depositModels)
         } catch (err) {
             console.warn('Admin data load notice:', err)
         } finally {
@@ -288,6 +301,54 @@ export default function AdminPanel() {
         }
     }
 
+    const handleApproveDeposit = async (id, { adminNote }) => {
+        try {
+            const result = await apiClient.approveDeposit(id, { adminNote })
+            triggerToast(`✓ Deposit approved and credited to player balance!`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error approving deposit: ' + err.message)
+            throw err
+        }
+    }
+
+    const handleRejectDeposit = async (id, { rejectionReason }) => {
+        try {
+            const result = await apiClient.rejectDeposit(id, { rejectionReason })
+            triggerToast(`✕ Deposit rejected.`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error rejecting deposit: ' + err.message)
+            throw err
+        }
+    }
+
+    const handleApproveKYC = async (userId) => {
+        try {
+            const result = await apiClient.approveKYC(userId)
+            triggerToast(`✓ KYC approved for player!`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error approving KYC: ' + err.message)
+        }
+    }
+
+    const handleRejectKYC = async (userId) => {
+        const reason = window.prompt('Enter reason for KYC rejection:', 'Document verification failed')
+        if (reason === null) return
+        try {
+            const result = await apiClient.rejectKYC(userId, { reason })
+            triggerToast(`✕ KYC rejected.`)
+            loadData()
+            return result
+        } catch (err) {
+            alert('Error rejecting KYC: ' + err.message)
+        }
+    }
+
     // If NOT logged in as Admin, show Modular Lock Screen
     if (!isAdmin) {
         return (
@@ -308,6 +369,7 @@ export default function AdminPanel() {
     const eligiblePlayersCount = users.filter((u) => !u.isAdmin() && !u.isSuspended()).length
     const vipCount = users.filter((u) => u.isVip()).length
     const pendingWithdrawalsCount = withdrawals.filter((w) => w.status === 'pending').length
+    const pendingDepositsCount = deposits.filter((d) => d.status === 'pending').length
 
     return (
         <div className="admin-container">
@@ -392,6 +454,27 @@ export default function AdminPanel() {
                     <span>Overview</span>
                 </button>
                 <button
+                    className={`admin-tab-btn ${currentTab === 'deposits' ? 'active' : ''}`}
+                    onClick={() => setCurrentTab('deposits')}
+                    style={pendingDepositsCount > 0 ? { position: 'relative' } : {}}
+                >
+                    <span>📥</span>
+                    <span>Deposits</span>
+                    {pendingDepositsCount > 0 && (
+                        <span style={{
+                            background: '#fbbf24',
+                            color: '#000',
+                            borderRadius: '10px',
+                            padding: '1px 7px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            marginLeft: '6px'
+                        }}>
+                            {pendingDepositsCount}
+                        </span>
+                    )}
+                </button>
+                <button
                     className={`admin-tab-btn ${currentTab === 'withdrawals' ? 'active' : ''}`}
                     onClick={() => setCurrentTab('withdrawals')}
                     style={pendingWithdrawalsCount > 0 ? { position: 'relative' } : {}}
@@ -448,6 +531,17 @@ export default function AdminPanel() {
                 />
             )}
 
+            {currentTab === 'deposits' && (
+                <DepositsTab
+                    deposits={deposits}
+                    loading={loading}
+                    onApprove={handleApproveDeposit}
+                    onReject={handleRejectDeposit}
+                    onRefresh={loadData}
+                    triggerToast={triggerToast}
+                />
+            )}
+
             {currentTab === 'withdrawals' && (
                 <WithdrawalsTab
                     withdrawals={withdrawals}
@@ -469,6 +563,8 @@ export default function AdminPanel() {
                     setStatusFilter={setStatusFilter}
                     onSelectUserForBalance={setSelectedUserForBalance}
                     onToggleBan={handleToggleBan}
+                    onApproveKYC={handleApproveKYC}
+                    onRejectKYC={handleRejectKYC}
                     onRefresh={loadData}
                 />
             )}

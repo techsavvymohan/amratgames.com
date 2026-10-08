@@ -34,37 +34,25 @@ router.post('/deposit', requireAuth, (req, res) => {
         const user = db.findUserById(req.user.id)
         if (!user) return res.status(404).json({ success: false, error: 'User not found' })
 
-        const depositNote = utrNumber 
-            ? `Deposit via ${paymentMethod} (UTR: ${utrNumber})`
-            : `Deposit via ${paymentMethod}`
-
-        const result = db.updateUserBalance(
-            req.user.id,
+        // Create pending deposit verification request — NO instant balance credit
+        const { deposit, transaction } = db.requestDeposit({
+            userId: req.user.id,
             currency,
-            parsedAmount,
-            depositNote
-        )
-
-        // Attach UTR to transaction record if provided
-        if (utrNumber && result?.transaction) {
-            result.transaction.utrNumber = utrNumber
-            db.persist()
-        }
-
-        // Accumulate user's total deposits
-        const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + parsedAmount).toFixed(2))
-        db.updateUser(user.id, { totalDeposited: newTotalDeposit })
+            amount: parsedAmount,
+            paymentMethod,
+            utrNumber
+        })
 
         res.json({
             success: true,
-            message: `Deposited ${currency} ${parsedAmount.toLocaleString('en-IN')} successfully!`,
-            balances: result.user.balances,
-            totalDeposited: newTotalDeposit,
-            canWithdraw: newTotalDeposit >= 300,
-            transaction: result.transaction
+            status: 'pending',
+            message: `Deposit request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted! Funds will be credited once verified.`,
+            depositId: deposit.id,
+            deposit,
+            transaction
         })
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message })
+        res.status(400).json({ success: false, error: err.message })
     }
 })
 
@@ -137,6 +125,19 @@ router.get('/withdrawals', requireAuth, (req, res) => {
         res.json({
             success: true,
             withdrawals: userWithdrawals
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// GET /api/wallet/deposits
+router.get('/deposits', requireAuth, (req, res) => {
+    try {
+        const userDeposits = db.getAllDeposits({ userId: req.user.id })
+        res.json({
+            success: true,
+            deposits: userDeposits
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })

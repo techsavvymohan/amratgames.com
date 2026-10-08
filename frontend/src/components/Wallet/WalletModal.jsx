@@ -95,13 +95,14 @@ export default function WalletModal() {
 
         try {
             setIsDepositing(true)
-            await deposit(amt, {
+            const res = await deposit(amt, {
                 method: 'UPI',
                 utrNumber: cleanUtr
             })
             setDepositSuccess({
                 amount: amt,
-                utr: cleanUtr
+                utr: cleanUtr,
+                isPending: res?.status === 'pending'
             })
             setUtrNumber('')
         } catch (err) {
@@ -246,12 +247,24 @@ export default function WalletModal() {
                     {activeTab === 'deposit' && (
                         depositSuccess ? (
                             <div className="amrat-success-card">
-                                <div className="amrat-success-icon">✓</div>
-                                <h3 style={{ margin: 0, color: '#10b981', fontSize: '1.25rem' }}>Deposit Submitted!</h3>
+                                <div className="amrat-success-icon" style={{ background: depositSuccess.isPending ? 'rgba(245, 158, 11, 0.2)' : undefined, color: depositSuccess.isPending ? '#fbbf24' : undefined }}>
+                                    {depositSuccess.isPending ? '⏳' : '✓'}
+                                </div>
+                                <h3 style={{ margin: 0, color: depositSuccess.isPending ? '#fbbf24' : '#10b981', fontSize: '1.25rem' }}>
+                                    {depositSuccess.isPending ? 'Deposit Submitted for Verification!' : 'Deposit Confirmed!'}
+                                </h3>
                                 <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                                    ₹{depositSuccess.amount.toLocaleString('en-IN')} has been added to your wallet.
+                                    {depositSuccess.isPending ? (
+                                        <>
+                                            Payment receipt submitted for ₹{depositSuccess.amount.toLocaleString('en-IN')}. Funds will be credited to your balance as soon as our cashier verifies the bank transfer.
+                                        </>
+                                    ) : (
+                                        <>
+                                            ₹{depositSuccess.amount.toLocaleString('en-IN')} has been added to your wallet.
+                                        </>
+                                    )}
                                     <br />
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                    <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
                                         UTR Reference: <strong>{depositSuccess.utr}</strong>
                                     </span>
                                 </p>

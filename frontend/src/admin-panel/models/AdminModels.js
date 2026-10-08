@@ -162,3 +162,54 @@ export class WithdrawalModel {
         }
     }
 }
+
+export class DepositModel {
+    constructor(data = {}) {
+        this.id = data.id || ''
+        this.transactionId = data.transactionId || ''
+        this.userId = data.userId || ''
+        this.username = data.username || 'Anonymous'
+        this.userEmail = data.userEmail || ''
+        this.userPhone = data.userPhone || ''
+        this.currency = data.currency || 'INR'
+        this.amount = typeof data.amount === 'number' ? data.amount : (parseFloat(data.amount) || 0)
+        this.paymentMethod = data.paymentMethod || 'UPI'
+        this.utrNumber = data.utrNumber || ''
+        this.status = data.status || 'pending'
+        this.createdAt = data.createdAt || new Date().toISOString()
+        this.approvedAt = data.approvedAt || null
+        this.approvedBy = data.approvedBy || null
+        this.adminNote = data.adminNote || ''
+        this.rejectionReason = data.rejectionReason || ''
+    }
+
+    isPending() {
+        return this.status === 'pending'
+    }
+
+    isCompleted() {
+        return this.status === 'completed'
+    }
+
+    isRejected() {
+        return this.status === 'rejected'
+    }
+
+    getFormattedAmount() {
+        return `₹${this.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+
+    getFormattedDate() {
+        try {
+            return new Date(this.createdAt).toLocaleString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        } catch {
+            return this.createdAt
+        }
+    }
+}
+

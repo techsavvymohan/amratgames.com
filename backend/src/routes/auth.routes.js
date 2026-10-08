@@ -229,12 +229,13 @@ router.post('/register', (req, res) => {
             }
         }
 
-        // Optional OTP verification check if OTP was supplied
-        if (otp) {
-            const idToCheck = cleanPhone || cleanEmail
-            if (!db.verifyOtp(idToCheck, otp)) {
-                return res.status(400).json({ success: false, error: 'Invalid or expired OTP verification code' })
-            }
+        // Enforce mandatory OTP verification to prevent bot registration & bonus farming
+        if (!otp) {
+            return res.status(400).json({ success: false, error: 'OTP verification is required to complete registration' })
+        }
+        const idToCheck = cleanPhone || cleanEmail
+        if (!db.verifyOtp(idToCheck, otp)) {
+            return res.status(400).json({ success: false, error: 'Invalid or expired OTP verification code' })
         }
 
         const passwordHash = bcrypt.hashSync(password, 10)
@@ -340,11 +341,10 @@ router.post('/verify-profile', requireAuth, (req, res) => {
         }
 
         const updates = {
-            kycStatus: 'verified',
+            kycStatus: 'pending_review',
             kycDocumentType: String(documentType).toUpperCase(),
             kycDocumentNumber: String(documentNumber).trim(),
-            kycSubmittedAt: new Date().toISOString(),
-            kycVerifiedAt: new Date().toISOString()
+            kycSubmittedAt: new Date().toISOString()
         }
         if (fullName) {
             const parts = fullName.trim().split(' ')
@@ -356,7 +356,7 @@ router.post('/verify-profile', requireAuth, (req, res) => {
         res.json({
             success: true,
             user: sanitizeUser(updated),
-            message: '🎉 Account Verified! Level 2 KYC unlocked for fast payouts.'
+            message: '📋 KYC documents submitted successfully! Your account is currently under review by compliance.'
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })

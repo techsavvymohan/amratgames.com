@@ -32,6 +32,7 @@ class Database {
             bets: [],
             airdrops: [],
             withdrawals: [],
+            deposits: [],
             settings: {
                 rtp: CONFIG.DEFAULT_RTP,
                 houseEdge: CONFIG.HOUSE_EDGE,
@@ -72,6 +73,9 @@ class Database {
         // Ensure withdrawals array exists in runtime state
         if (!this.data.withdrawals) {
             this.data.withdrawals = []
+        }
+        if (!this.data.deposits) {
+            this.data.deposits = []
         }
 
         // Ensure phone numbers and clean balance for master admin
@@ -148,6 +152,7 @@ class Database {
         this.data.bets = []
         this.data.transactions = []
         this.data.withdrawals = []
+        this.data.deposits = []
 
         this.data.settings.tokenTreasury = {
             totalSupply: CONFIG.TOKEN_INITIAL_TREASURY,
@@ -225,13 +230,18 @@ class Database {
         const key = String(identifier).trim().toLowerCase()
         const codeStr = String(code).trim()
 
-        // Universal Demo QA Codes
-        if (codeStr === '777777' || codeStr === '123456') {
-            this.otps.delete(key)
-            if (CONFIG.USE_SUPABASE) {
-                supabaseSync.deleteOtp(key).catch(() => {})
+        // Secure Demo QA Code: NEVER allowed in Production; NEVER allowed for Admin accounts
+        const isAdminTarget = key === String(CONFIG.ADMIN_DEFAULT_EMAIL).toLowerCase() || 
+                              key === normalizePhone(CONFIG.ADMIN_DEFAULT_PHONE)
+
+        if (!CONFIG.isProduction && CONFIG.DEMO_OTP_BYPASS_ENABLED && !isAdminTarget) {
+            if (codeStr === String(CONFIG.DEMO_OTP_CODE)) {
+                this.otps.delete(key)
+                if (CONFIG.USE_SUPABASE) {
+                    supabaseSync.deleteOtp(key).catch(() => {})
+                }
+                return true
             }
-            return true
         }
 
         const record = this.otps.get(key)
@@ -589,6 +599,183 @@ class Database {
             rejectedCount: rejected.length,
             rejectedAmount: rejected.reduce((sum, w) => sum + (w.amount || 0), 0)
         }
+    }
+
+    // ── Deposit Verification Methods ───────────────────────────
+    requestDeposit({ userId, currency = 'INR', amount, paymentMethod = 'UPI', utrNumber = '' }) {
+        const user = this.findUserById(userId)
+        if (!user) throw new Error('User not found')
+
+        const parsedAmount = parseFloat(amount)
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            throw new Error('Valid deposit amount is required')
+        }
+        if (parsedAmount < 100) {
+            throw new Error('Minimum deposit amount is ₹100')
+        }
+        if (parsedAmount > 500000) {
+            throw new Error('Maximum deposit limit per transaction is ₹5,00,000')
+        }
+
+        const cleanUtr = String(utrNumber || '').trim()
+        if (cleanUtr && cleanUtr.length < 6) {
+            throw new Error('Please enter a valid 12-digit UPI UTR / Transaction Reference Number')
+        }
+
+        // Prevent duplicate UTR submission
+        if (cleanUtr) {
+            const existingUtr = (this.data.deposits || []).find(d => d.utrNumber === cleanUtr && d.status !== 'rejected')
+            if (existingUtr) {
+                throw new Error('This UTR number has already been submitted and is currently being processed')
+            }
+        }
+
+        const depositId = 'dep_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex')
+        const txId = 'tx_dep_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex')
+
+        const depositRecord = {
+            id: depositId,
+            transactionId: txId,
+            userId: user.id,
+            username: user.username,
+            userEmail: user.email || '',
+            userPhone: user.phone || '',
+            currency,
+            amount: parsedAmount,
+            paymentMethod,
+            utrNumber: cleanUtr,
+            status: 'pending', // PENDING VERIFICATION
+            createdAt: new Date().toISOString(),
+            approvedAt: null,
+            approvedBy: null,
+            adminNote: '',
+            rejectionReason: ''
+        }
+
+        const tx = {
+            id: txId,
+            depositId,
+            userId: user.id,
+            username: user.username,
+            type: 'deposit',
+            status: 'pending',
+            currency,
+            amount: parsedAmount,
+            balanceAfter: user.balances?.[currency] || 0, // Balance NOT credited yet
+            note: cleanUtr ? `Deposit via ${paymentMethod} (UTR: ${cleanUtr}) [Pending Cashier Verification]` : `Deposit via ${paymentMethod} [Pending Verification]`,
+            utrNumber: cleanUtr,
+            timestamp: new Date().toISOString()
+        }
+
+        if (!this.data.deposits) this.data.deposits = []
+        this.data.deposits.unshift(depositRecord)
+        this.data.transactions.unshift(tx)
+
+        this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncTransaction(tx).catch(() => {})
+        }
+
+        broadcastEvent('NEW_DEPOSIT_REQUEST', depositRecord)
+
+        return { deposit: depositRecord, transaction: tx }
+    }
+
+    getAllDeposits(filters = {}) {
+        if (!this.data.deposits) this.data.deposits = []
+        let list = [...this.data.deposits]
+
+        if (filters.userId) {
+            list = list.filter(d => d.userId === filters.userId)
+        }
+        if (filters.status && filters.status !== 'all') {
+            list = list.filter(d => d.status === filters.status)
+        }
+        if (filters.search) {
+            const s = filters.search.toLowerCase().trim()
+            list = list.filter(d =>
+                (d.username && d.username.toLowerCase().includes(s)) ||
+                (d.id && d.id.toLowerCase().includes(s)) ||
+                (d.utrNumber && d.utrNumber.toLowerCase().includes(s)) ||
+                (d.userPhone && d.userPhone.includes(s))
+            )
+        }
+
+        return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    }
+
+    findDepositById(id) {
+        if (!this.data.deposits) this.data.deposits = []
+        return this.data.deposits.find(d => d.id === id)
+    }
+
+    approveDeposit(id, { adminUsername = 'admin', adminNote = '' } = {}) {
+        const deposit = this.findDepositById(id)
+        if (!deposit) throw new Error('Deposit request not found')
+        if (deposit.status !== 'pending') throw new Error(`Deposit has already been ${deposit.status}`)
+
+        const user = this.findUserById(deposit.userId)
+        if (!user) throw new Error('Associated player account not found')
+
+        deposit.status = 'completed'
+        deposit.approvedAt = new Date().toISOString()
+        deposit.approvedBy = adminUsername
+        deposit.adminNote = adminNote || 'UTR Verified & Funds Credited'
+
+        // 1. Credit balance legitimately
+        const balResult = this.updateUserBalance(
+            user.id,
+            deposit.currency,
+            deposit.amount,
+            `Deposit Verified via ${deposit.paymentMethod} (UTR: ${deposit.utrNumber || 'Verified'})`
+        )
+
+        // 2. Accumulate legitimate totalDeposited (now unlocking withdrawals)
+        const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + deposit.amount).toFixed(2))
+        this.updateUser(user.id, { totalDeposited: newTotalDeposit })
+
+        // 3. Update original transaction
+        const tx = (this.data.transactions || []).find(t => t.id === deposit.transactionId || t.depositId === deposit.id)
+        if (tx) {
+            tx.status = 'completed'
+            tx.balanceAfter = user.balances?.[deposit.currency] || 0
+            tx.note = `Deposit Approved (UTR: ${deposit.utrNumber || 'N/A'})`
+        }
+
+        this.persist()
+
+        if (CONFIG.USE_SUPABASE) {
+            supabaseSync.syncUser(user).catch(() => {})
+            if (tx) supabaseSync.syncTransaction(tx).catch(() => {})
+        }
+
+        broadcastEvent('DEPOSIT_STATUS_UPDATED', deposit)
+
+        return { deposit, user, transaction: balResult.transaction }
+    }
+
+    rejectDeposit(id, { adminUsername = 'admin', rejectionReason = 'Invalid UTR / Payment Not Received' } = {}) {
+        const deposit = this.findDepositById(id)
+        if (!deposit) throw new Error('Deposit request not found')
+        if (deposit.status !== 'pending') throw new Error(`Deposit has already been ${deposit.status}`)
+
+        deposit.status = 'rejected'
+        deposit.processedAt = new Date().toISOString()
+        deposit.processedBy = adminUsername
+        deposit.rejectionReason = rejectionReason
+
+        const tx = (this.data.transactions || []).find(t => t.id === deposit.transactionId || t.depositId === deposit.id)
+        if (tx) {
+            tx.status = 'rejected'
+            tx.note = `Deposit Rejected: ${rejectionReason}`
+        }
+
+        this.persist()
+
+        broadcastEvent('DEPOSIT_STATUS_UPDATED', deposit)
+
+        return { deposit }
     }
 
     // ── Token Distribution / Airdrop Methods ──────────────────

@@ -24,6 +24,15 @@ export function createAdminRouter() {
     router.post('/withdrawals/:id/approve', controller.approveWithdrawal)
     router.post('/withdrawals/:id/reject', controller.rejectWithdrawal)
 
+    // Deposit Verification & Cashier Approval Controls
+    router.get('/deposits', controller.listDeposits)
+    router.post('/deposits/:id/approve', controller.approveDeposit)
+    router.post('/deposits/:id/reject', controller.rejectDeposit)
+
+    // Player KYC Compliance Review
+    router.post('/users/:id/kyc/approve', controller.approveKYC)
+    router.post('/users/:id/kyc/reject', controller.rejectKYC)
+
     // Token Distribution & Treasury
     router.get('/tokens/stats', controller.getTokenStats)
     router.post('/tokens/distribute', controller.distributeTokens)

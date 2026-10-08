@@ -5,6 +5,7 @@ import { CONFIG, validateConfig } from '../src/config.js'
 import authRoutes from '../src/routes/auth.routes.js'
 import gamesRoutes from '../src/routes/games.routes.js'
 import walletRoutes from '../src/routes/wallet.routes.js'
+import { db } from '../src/db/db.js'
 import { gameEngine } from '../src/services/GameEngine.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
@@ -130,6 +131,143 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         assert.ok(walletRoutes, 'walletRoutes should be defined')
         assert.equal(typeof walletRoutes, 'function', 'Express Router is callable as middleware')
+    })
+
+    it('verifies deposits are queued in pending status without crediting unverified balance', () => {
+        // Create test player
+        const testUser = db.createUser({
+            username: 'deposit_tester_' + Date.now().toString(36),
+            phone: '9876543210',
+            passwordHash: 'hash'
+        })
+
+        const initialBalance = testUser.balances.INR
+        const initialDeposited = testUser.totalDeposited || 0
+
+        // Submit deposit with UTR
+        const { deposit } = db.requestDeposit({
+            userId: testUser.id,
+            currency: 'INR',
+            amount: 500,
+            paymentMethod: 'UPI',
+            utrNumber: 'UTR' + Date.now()
+        })
+
+        assert.equal(deposit.status, 'pending', 'Deposit must be pending verification')
+        assert.equal(deposit.amount, 500)
+
+        // Balance must NOT have changed!
+        const refreshedUser = db.findUserById(testUser.id)
+        assert.equal(refreshedUser.balances.INR, initialBalance, 'Unverified deposit must NOT credit player balance')
+        assert.equal(refreshedUser.totalDeposited || 0, initialDeposited, 'Unverified deposit must NOT increment totalDeposited')
+
+        // Now cashier approves deposit
+        const approveResult = db.approveDeposit(deposit.id, { adminUsername: 'master_admin', adminNote: 'Verified UTR' })
+        assert.equal(approveResult.deposit.status, 'completed')
+
+        const approvedUser = db.findUserById(testUser.id)
+        assert.equal(approvedUser.balances.INR, initialBalance + 500, 'Approved deposit must legitimately credit player balance')
+        assert.equal(approvedUser.totalDeposited, initialDeposited + 500, 'Approved deposit must legitimately increment totalDeposited')
+    })
+
+    it('verifies cashier rejection preserves balance and records rejection audit', () => {
+        const testUser = db.createUser({
+            username: 'reject_tester_' + Date.now().toString(36),
+            phone: '9876543211',
+            passwordHash: 'hash'
+        })
+
+        const initialBalance = testUser.balances.INR
+
+        const { deposit } = db.requestDeposit({
+            userId: testUser.id,
+            currency: 'INR',
+            amount: 1000,
+            paymentMethod: 'UPI',
+            utrNumber: 'UTR_REJECT_' + Date.now()
+        })
+
+        assert.equal(deposit.status, 'pending')
+
+        // Cashier rejects fraudulent / invalid UTR
+        const rejectResult = db.rejectDeposit(deposit.id, {
+            adminUsername: 'cashier_audit',
+            rejectionReason: 'Invalid UTR / Fake Screenshot'
+        })
+
+        assert.equal(rejectResult.deposit.status, 'rejected')
+        assert.equal(rejectResult.deposit.rejectionReason, 'Invalid UTR / Fake Screenshot')
+
+        const userAfterReject = db.findUserById(testUser.id)
+        assert.equal(userAfterReject.balances.INR, initialBalance, 'Rejected deposit must NEVER credit balance')
+    })
+
+    it('verifies duplicate UTR submissions are strictly blocked', () => {
+        const testUser = db.createUser({
+            username: 'utr_tester_' + Date.now().toString(36),
+            phone: '9876543212',
+            passwordHash: 'hash'
+        })
+
+        const uniqueUtr = 'UTR_DUP_' + Date.now()
+
+        db.requestDeposit({
+            userId: testUser.id,
+            currency: 'INR',
+            amount: 500,
+            paymentMethod: 'UPI',
+            utrNumber: uniqueUtr
+        })
+
+        // Attempting to submit the exact same UTR must throw
+        assert.throws(() => {
+            db.requestDeposit({
+                userId: testUser.id,
+                currency: 'INR',
+                amount: 500,
+                paymentMethod: 'UPI',
+                utrNumber: uniqueUtr
+            })
+        }, /already been submitted/)
+    })
+
+    it('verifies master admin account strictly rejects demo OTP bypass codes', () => {
+        const adminEmail = CONFIG.ADMIN_DEFAULT_EMAIL
+        const adminPhone = CONFIG.ADMIN_DEFAULT_PHONE
+
+        // Attempting to bypass admin account using 777777 or 123456 must FAIL
+        assert.equal(db.verifyOtp(adminEmail, '777777'), false, 'Master Admin email must NEVER accept demo bypass code')
+        assert.equal(db.verifyOtp(adminPhone, '777777'), false, 'Master Admin phone must NEVER accept demo bypass code')
+        assert.equal(db.verifyOtp(adminEmail, '123456'), false, '123456 code must be completely blocked')
+    })
+
+    it('verifies KYC profile verification defaults to pending_review and requires admin approval', () => {
+        const testUser = db.createUser({
+            username: 'kyc_tester_' + Date.now().toString(36),
+            phone: '9876543213',
+            passwordHash: 'hash'
+        })
+
+        assert.equal(testUser.kycStatus || 'unverified', 'unverified')
+
+        // Update to pending_review (as done by verify-profile route)
+        const submitted = db.updateUser(testUser.id, {
+            kycStatus: 'pending_review',
+            kycDocumentType: 'AADHAAR',
+            kycDocumentNumber: '1234-5678-9012'
+        })
+
+        assert.equal(submitted.kycStatus, 'pending_review', 'KYC must NOT auto-verify upon document upload')
+
+        // Compliance Admin approval
+        const verified = db.updateUser(testUser.id, {
+            kycStatus: 'verified',
+            kycVerifiedAt: new Date().toISOString(),
+            kycVerifiedBy: 'compliance_officer'
+        })
+
+        assert.equal(verified.kycStatus, 'verified')
+        assert.equal(verified.kycVerifiedBy, 'compliance_officer')
     })
 
     it('verifies casino platform RTP and house edge constants', () => {

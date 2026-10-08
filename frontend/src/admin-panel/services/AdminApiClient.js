@@ -1,4 +1,4 @@
-import { UserModel, AirdropModel, TreasuryModel, WithdrawalModel } from '../models/AdminModels.js'
+import { UserModel, AirdropModel, TreasuryModel, WithdrawalModel, DepositModel } from '../models/AdminModels.js'
 
 /**
  * AdminApiClient — OOP Service for interacting with AmratGames Admin API
@@ -113,6 +113,61 @@ export class AdminApiClient {
         const data = await res.json()
         if (!res.ok || !data.success) throw new Error(data.error || 'Failed to reject withdrawal')
         return new WithdrawalModel(data.withdrawal)
+    }
+
+    async getDeposits(filters = {}) {
+        const queryParams = new URLSearchParams()
+        if (filters.status && filters.status !== 'all') queryParams.set('status', filters.status)
+        if (filters.search) queryParams.set('search', filters.search)
+        if (filters.userId) queryParams.set('userId', filters.userId)
+
+        const res = await fetch(`${this.baseUrl}/deposits?${queryParams.toString()}`, { headers: this._getHeaders() })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to fetch deposits')
+        return (data.deposits || []).map(d => new DepositModel(d))
+    }
+
+    async approveDeposit(id, { adminNote = '' } = {}) {
+        const res = await fetch(`${this.baseUrl}/deposits/${id}/approve`, {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({ adminNote })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to approve deposit')
+        return new DepositModel(data.deposit)
+    }
+
+    async rejectDeposit(id, { rejectionReason = 'Invalid UTR / Payment Not Received' } = {}) {
+        const res = await fetch(`${this.baseUrl}/deposits/${id}/reject`, {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({ rejectionReason })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to reject deposit')
+        return new DepositModel(data.deposit)
+    }
+
+    async approveKYC(userId) {
+        const res = await fetch(`${this.baseUrl}/users/${userId}/kyc/approve`, {
+            method: 'POST',
+            headers: this._getHeaders()
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to approve KYC')
+        return new UserModel(data.user)
+    }
+
+    async rejectKYC(userId, { reason = 'Document verification failed' } = {}) {
+        const res = await fetch(`${this.baseUrl}/users/${userId}/kyc/reject`, {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({ reason })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to reject KYC')
+        return new UserModel(data.user)
     }
 
     async distributeTokens(payload) {
