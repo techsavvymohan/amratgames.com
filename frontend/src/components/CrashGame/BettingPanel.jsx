@@ -41,7 +41,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
     const handleBetClick = () => {
         if (phase === 'idle' || phase === 'waiting') {
             if (betAmount > 0) {
-                onBet(betAmount)
+                onBet(betAmount, autoCashout ? cashoutAt : null)
             }
         } else if (phase === 'running' && betPlaced) {
             onCashout()

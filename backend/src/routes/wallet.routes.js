@@ -1,6 +1,9 @@
 import express from 'express'
+import crypto from 'node:crypto'
 import { db } from '../db/db.js'
+import { CONFIG } from '../config.js'
 import { requireAuth } from '../middleware/auth.js'
+import { broadcastEvent } from '../websocket.js'
 
 const router = express.Router()
 
@@ -199,6 +202,94 @@ router.get('/transactions', requireAuth, (req, res) => {
             transactions: userTxs
         })
     } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/wallet/webhook
+// Automated Payment Webhook Handler (Dodo Payments / Razorpay / Custom Gateway)
+router.post('/webhook', async (req, res) => {
+    try {
+        const rawSignature = req.headers['x-webhook-signature'] || req.headers['webhook-signature'] || req.headers['x-signature']
+        const secret = CONFIG.DODO_PAYMENTS_WEBHOOK_SECRET || CONFIG.JWT_SECRET
+
+        // Cryptographic HMAC-SHA256 signature verification if secret is configured in production
+        if (secret && CONFIG.isProduction) {
+            const payload = JSON.stringify(req.body)
+            const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
+            if (!rawSignature || rawSignature !== expectedSig) {
+                return res.status(401).json({ success: false, error: 'Invalid or missing cryptographic webhook signature' })
+            }
+        }
+
+        const event = req.body || {}
+        const eventId = event.id || event.eventId || event.payment_id || event.payload?.payment?.id || `evt_${Date.now()}`
+
+        // Idempotency check: strictly eliminate replay attacks and double crediting
+        if (db.isWebhookProcessed(eventId)) {
+            return res.json({ success: true, duplicate: true, message: 'Webhook event already processed' })
+        }
+
+        const eventType = event.type || event.event || 'payment.succeeded'
+        const paymentData = event.data || event.payload?.payment?.entity || event
+
+        if (eventType === 'payment.succeeded' || eventType === 'payment_successful' || eventType === 'deposit.completed') {
+            const userId = paymentData.metadata?.userId || paymentData.userId || paymentData.customer_id
+            const amount = parseFloat(paymentData.amount || paymentData.total_amount || 0)
+            const currency = paymentData.currency || 'INR'
+            const utrNumber = paymentData.utrNumber || paymentData.acquirer_data?.rrn || paymentData.id || ''
+
+            if (!userId || isNaN(amount) || amount <= 0) {
+                return res.status(400).json({ success: false, error: 'Invalid webhook payload: userId and positive amount required' })
+            }
+
+            const result = await db.withUserLock(userId, async () => {
+                const user = db.findUserById(userId)
+                if (!user) throw new Error('Target player account not found')
+
+                // 1. Credit balance legitimately
+                db.updateUserBalance(userId, currency, amount, `Automated Gateway Deposit (Ref: ${utrNumber})`)
+
+                // 2. Accumulate totalDeposited (unlocking withdrawal qualification)
+                user.totalDeposited = parseFloat(((user.totalDeposited || 0) + amount).toFixed(2))
+
+                // 3. Record completed deposit record in db
+                const depositRecord = {
+                    id: 'dep_gw_' + Date.now().toString(36),
+                    userId,
+                    username: user.username,
+                    currency,
+                    amount,
+                    paymentMethod: 'GATEWAY_WEBHOOK',
+                    utrNumber,
+                    status: 'completed',
+                    createdAt: new Date().toISOString(),
+                    approvedAt: new Date().toISOString(),
+                    approvedBy: 'SYSTEM_WEBHOOK'
+                }
+                if (!db.data.deposits) db.data.deposits = []
+                db.data.deposits.unshift(depositRecord)
+                db.persist()
+
+                broadcastEvent('DEPOSIT_STATUS_UPDATED', depositRecord)
+                return { user, deposit: depositRecord }
+            })
+
+            // Mark webhook as processed in idempotency ledger
+            db.markWebhookProcessed(eventId)
+
+            return res.json({
+                success: true,
+                message: `Successfully processed deposit webhook for user ${userId}`,
+                depositId: result.deposit.id,
+                balances: result.user.balances
+            })
+        }
+
+        db.markWebhookProcessed(eventId)
+        res.json({ success: true, message: `Ignored unhandled webhook event: ${eventType}` })
+    } catch (err) {
+        console.error('[WEBHOOK ERROR]', err)
         res.status(500).json({ success: false, error: err.message })
     }
 })

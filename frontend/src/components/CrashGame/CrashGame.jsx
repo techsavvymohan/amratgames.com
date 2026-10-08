@@ -37,7 +37,9 @@ import {
     StarOutlined,
     LineChartOutlined,
     CloseOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    TeamOutlined,
+    UserOutlined
 } from '@ant-design/icons'
 import Chart from 'chart.js/auto'
 import BettingPanel from './BettingPanel'
@@ -49,6 +51,7 @@ import PlayerResults from './PlayerResults'
 import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
+import { useAuth } from '../../context/AuthContext'
 import './CrashGame.css'
 
 const { Text, Title, Paragraph } = Typography
@@ -64,20 +67,28 @@ const PHASE = {
 const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
 function CrashGame() {
+    const { user } = useAuth()
     const {
         balance,
         startCrashRound,
         cashoutCrashRound,
         bustCrashRound,
         getActiveCrashRound,
+        placeRoomCrashBet,
+        cashoutRoomCrash,
+        getRoomCrashState,
         showToast,
         currencySymbol,
         currency
     } = useWallet()
     const activeRoundIdRef = useRef(null)
-    const [phase, setPhase] = useState(PHASE.IDLE)
+    const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
+    const [roomBets, setRoomBets] = useState([])
+    const wsRef = useRef(null)
+    const roomRoundIdRef = useRef(null)
+    const [phase, setPhase] = useState(PHASE.WAITING)
     const [multiplier, setMultiplier] = useState(1.00)
-    const [countdown, setCountdown] = useState(0)
+    const [countdown, setCountdown] = useState(6)
     const [crashPoint, setCrashPoint] = useState(0)
     const [elapsedTime, setElapsedTime] = useState(0)
     const [history, setHistory] = useState([])
@@ -451,9 +462,187 @@ function CrashGame() {
         }
     }, [showPlayerResults])
 
-    // OPTIMIZED Game loop: use refs for high-freq updates, throttle setState to ~30fps
+    // Synchronize Room State
+    const syncRoomState = useCallback((room) => {
+        if (!room) return
+        roomRoundIdRef.current = room.roundId
+
+        if (room.state === 'WAITING') {
+            setPhase(PHASE.WAITING)
+            setCountdown(Math.max(0, Math.ceil(room.countdown || 6)))
+            setMultiplier(1.00)
+            setElapsedTime(0)
+            multiplierRef.current = 1.00
+            elapsedTimeRef.current = 0
+            startTimeRef.current = null
+        } else if (room.state === 'FLYING') {
+            setPhase(PHASE.RUNNING)
+            const m = room.currentMultiplier || 1.00
+            setMultiplier(m)
+            multiplierRef.current = m
+            if (room.flightStartTime) {
+                startTimeRef.current = room.flightStartTime
+                const el = (Date.now() - room.flightStartTime) / 1000
+                setElapsedTime(el)
+                elapsedTimeRef.current = el
+            }
+        } else if (room.state === 'CRASHED') {
+            setPhase(PHASE.CRASHED)
+            const pt = room.crashPoint || room.currentMultiplier || 1.00
+            setMultiplier(pt)
+            multiplierRef.current = pt
+        }
+
+        if (Array.isArray(room.history) && room.history.length > 0) {
+            setHistory(room.history.map(h => typeof h === 'object' ? h.crashPoint : h))
+        }
+
+        if (room.activeBets) {
+            const bets = Array.isArray(room.activeBets) ? room.activeBets : Object.values(room.activeBets)
+            setRoomBets(bets)
+
+            if (user) {
+                const myBet = bets.find(b => b.userId === user.id)
+                if (myBet && !myBet.cashedOut && room.state !== 'CRASHED') {
+                    setBetPlaced(true)
+                    setBetAmount(myBet.betAmount)
+                    setUserBetData({
+                        name: myBet.username || user.username || 'You',
+                        amount: myBet.betAmount,
+                        currency: { symbol: currencySymbol, name: currency },
+                        active: true,
+                        cashoutAt: null,
+                        profit: null
+                    })
+                }
+            }
+        }
+    }, [user, currencySymbol, currency])
+
+    // Real-Time Multiplayer Room WebSocket Connection
     useEffect(() => {
-        if (phase === PHASE.RUNNING) {
+        if (gameMode !== 'arena') return
+
+        let isMounted = true
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        const wsUrl = `${protocol}//${window.location.host}/ws`
+
+        let ws = null
+        const connectWs = () => {
+            try {
+                ws = new WebSocket(wsUrl)
+                wsRef.current = ws
+
+                ws.onopen = () => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'GET_CRASH_ROOM_STATE' }))
+                    }
+                }
+
+                ws.onmessage = (event) => {
+                    if (!isMounted) return
+                    try {
+                        const data = JSON.parse(event.data)
+                        const { type, payload } = data
+
+                        if (type === 'CRASH_ROOM_STATE' && payload) {
+                            syncRoomState(payload)
+                        } else if (type === 'CRASH_ROOM_TICK' && payload) {
+                            if (payload.state === 'WAITING') {
+                                setPhase(PHASE.WAITING)
+                                setCountdown(payload.countdown || 0)
+                                setMultiplier(1.00)
+                                setElapsedTime(0)
+                                multiplierRef.current = 1.00
+                                elapsedTimeRef.current = 0
+                                startTimeRef.current = null
+                            } else if (payload.state === 'FLYING') {
+                                setPhase(PHASE.RUNNING)
+                                setMultiplier(payload.multiplier || 1.00)
+                                multiplierRef.current = payload.multiplier || 1.00
+                                if (!startTimeRef.current) startTimeRef.current = Date.now()
+                                const elapsed = (Date.now() - startTimeRef.current) / 1000
+                                setElapsedTime(elapsed)
+                                elapsedTimeRef.current = elapsed
+                            }
+                        } else if (type === 'CRASH_ROOM_BUST' && payload) {
+                            setPhase(PHASE.CRASHED)
+                            const bustPoint = payload.crashPoint || 1.00
+                            setMultiplier(bustPoint)
+                            multiplierRef.current = bustPoint
+                            if (payload.history && Array.isArray(payload.history)) {
+                                setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
+                            } else {
+                                setHistory(prev => [bustPoint, ...prev.slice(0, 19)])
+                            }
+                            casinoAudio.playCrash?.()
+
+                            if (betPlaced) {
+                                setBetPlaced(false)
+                                setUserBetData(prev => prev ? { ...prev, active: false, profit: '0.00' } : null)
+                                showToast('loss', 'Crashed!', `Flight busted at ${bustPoint.toFixed(2)}×`, 3000)
+                            }
+                            startTimeRef.current = null
+                        } else if (type === 'CRASH_ROOM_BET' && payload) {
+                            if (payload.bet) {
+                                setRoomBets(prev => {
+                                    const existing = prev.filter(b => b.userId !== payload.bet.userId)
+                                    return [...existing, payload.bet]
+                                })
+                            }
+                        } else if (type === 'CRASH_ROOM_CASHOUT' && payload) {
+                            setRoomBets(prev => prev.map(b => {
+                                if (b.userId === payload.userId) {
+                                    return { ...b, cashedOut: true, multiplier: payload.multiplier, payout: payload.payout }
+                                }
+                                return b
+                            }))
+
+                            if (user && payload.userId === user.id && betPlaced) {
+                                setBetPlaced(false)
+                                setUserBetData(prev => prev ? {
+                                    ...prev,
+                                    active: false,
+                                    cashoutAt: payload.multiplier.toFixed(2),
+                                    profit: payload.payout.toFixed(2)
+                                } : null)
+                                showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}×`, 4000)
+                                casinoAudio.playCashout?.()
+                            }
+                        }
+                    } catch { /* ignore non-json messages */ }
+                }
+
+                ws.onerror = () => {}
+                ws.onclose = () => {
+                    if (isMounted && gameMode === 'arena') {
+                        setTimeout(connectWs, 3000)
+                    }
+                }
+            } catch { /* fallback to http */ }
+        }
+
+        connectWs()
+
+        // Fetch initial room state via HTTP
+        getRoomCrashState().then(room => {
+            if (room && isMounted) {
+                syncRoomState(room)
+            }
+        })
+
+        return () => {
+            isMounted = false
+            if (wsRef.current) {
+                try { wsRef.current.close() } catch { /* ignore */ }
+                wsRef.current = null
+            }
+        }
+    }, [gameMode, syncRoomState, betPlaced, user, currencySymbol, getRoomCrashState, showToast])
+
+    // OPTIMIZED Solo Game loop: only active when playing solo
+    useEffect(() => {
+        if (phase === PHASE.RUNNING && gameMode === 'solo') {
             const tick = () => {
                 const now = Date.now()
                 const elapsed = (now - startTimeRef.current) / 1000
@@ -471,7 +660,6 @@ function CrashGame() {
                     handleCrash(crashPoint)
                 } else {
                     // Throttle React state updates to every ~33ms (≈30fps for UI)
-                    // Canvas still renders at 60fps via requestAnimationFrame
                     if (now - lastStateUpdateRef.current >= 33) {
                         setMultiplier(currentMultiplier)
                         setElapsedTime(elapsed)
@@ -489,10 +677,49 @@ function CrashGame() {
                 }
             }
         }
-    }, [phase, crashPoint, handleCrash])
+    }, [phase, crashPoint, handleCrash, gameMode])
 
     // Handle user betting and starting flight (Server-Authoritative)
-    const handleBet = async (amount) => {
+    const handleBet = async (amount, autoCashoutTarget) => {
+        if (gameMode === 'arena') {
+            if (phase !== PHASE.WAITING) {
+                showToast('error', 'Round In Progress', 'Bets can only be placed during the countdown window!')
+                return
+            }
+            if (amount > balance) {
+                showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
+                return
+            }
+
+            const res = await placeRoomCrashBet({
+                betAmount: amount,
+                autoCashout: autoCashoutTarget || null
+            })
+            if (!res || !res.success) {
+                showToast('error', 'Bet Failed', res?.error || 'Unable to place room bet')
+                return
+            }
+
+            setBetAmount(amount)
+            setBetPlaced(true)
+            setUserBetData({
+                name: user?.username || 'You',
+                amount: amount,
+                currency: {
+                    symbol: currencySymbol,
+                    color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
+                    name: currency
+                },
+                active: true,
+                cashoutAt: null,
+                profit: null
+            })
+            casinoAudio.playBet()
+            showToast('bet', 'Room Bet Confirmed!', `${currencySymbol}${amount.toFixed(2)} locked in for flight`, 2000)
+            return
+        }
+
+        // Solo Provably Fair mode
         if (phase !== PHASE.IDLE) return
 
         if (amount > balance) {
@@ -500,7 +727,7 @@ function CrashGame() {
             return
         }
 
-        const res = await startCrashRound({ betAmount: amount })
+        const res = await startCrashRound({ betAmount: amount, autoCashout: autoCashoutTarget })
         if (!res || !res.success) {
             showToast('error', 'Launch Failed', res?.error || 'Unable to launch Crash flight')
             return
@@ -540,6 +767,41 @@ function CrashGame() {
 
     // Handle cashout (Server-Authoritative)
     const handleCashout = async () => {
+        if (gameMode === 'arena') {
+            if (phase !== PHASE.RUNNING || !betPlaced) return
+            const res = await cashoutRoomCrash()
+            if (res && res.success) {
+                setBetPlaced(false)
+                const winAmount = res.payout
+                const profit = winAmount - betAmount
+                setUserBetData(prev => prev ? {
+                    ...prev,
+                    active: false,
+                    cashoutAt: res.multiplier.toFixed(2),
+                    profit: winAmount.toFixed(2)
+                } : null)
+
+                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
+                if (res.multiplier >= 3) {
+                    casinoAudio.playBigWin()
+                } else {
+                    casinoAudio.playCashout()
+                }
+
+                setGameRecords(prev => [...prev, {
+                    id: Date.now(),
+                    multiplier: res.multiplier,
+                    cashedOutAt: res.multiplier,
+                    bet: betAmount,
+                    profit
+                }])
+            } else {
+                showToast('error', 'Cashout Rejected', res?.error || 'Flight may have already crashed')
+            }
+            return
+        }
+
+        // Solo Provably Fair mode
         if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
             const currentRoundId = activeRoundIdRef.current
             const targetMult = multiplierRef.current
@@ -627,6 +889,8 @@ function CrashGame() {
                                 multiplier={multiplier}
                                 onPlayerCashout={handlePlayerCashout}
                                 userBetData={userBetData}
+                                roomBets={roomBets}
+                                isArena={gameMode === 'arena'}
                             />
                         )}
 
@@ -665,6 +929,68 @@ function CrashGame() {
 
                 {/* Game Display */}
                 <div className="game-display" ref={gameDisplayRef}>
+                    {/* Mode Switcher */}
+                    <div className="crash-mode-header" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 14px',
+                        background: 'linear-gradient(90deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                        borderRadius: '10px',
+                        marginBottom: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                    }}>
+                        <Radio.Group
+                            value={gameMode}
+                            onChange={(e) => {
+                                const nextMode = e.target.value
+                                setGameMode(nextMode)
+                                setBetPlaced(false)
+                                if (nextMode === 'solo') {
+                                    setPhase(PHASE.IDLE)
+                                    setMultiplier(1.00)
+                                    setCountdown(0)
+                                }
+                            }}
+                            buttonStyle="solid"
+                            size="small"
+                        >
+                            <Radio.Button value="arena" style={{ fontWeight: 700, borderRadius: '6px 0 0 6px' }}>
+                                <TeamOutlined style={{ marginRight: 6 }} />
+                                Multiplayer Room
+                            </Radio.Button>
+                            <Radio.Button value="solo" style={{ fontWeight: 700, borderRadius: '0 6px 6px 0' }}>
+                                <UserOutlined style={{ marginRight: 6 }} />
+                                Solo Flight
+                            </Radio.Button>
+                        </Radio.Group>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                background: gameMode === 'arena' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                                border: `1px solid ${gameMode === 'arena' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: gameMode === 'arena' ? '#4ade80' : '#60a5fa'
+                            }}>
+                                <span style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: '50%',
+                                    background: gameMode === 'arena' ? '#22c55e' : '#3b82f6',
+                                    boxShadow: gameMode === 'arena' ? '0 0 8px #22c55e' : '0 0 8px #3b82f6'
+                                }} />
+                                {gameMode === 'arena' ? 'SYNCHRONIZED ROOM' : 'PROVABLY FAIR RNG'}
+                            </span>
+                        </div>
+                    </div>
+
                     <GameHistory history={history} />
 
                     <GameChart
@@ -716,6 +1042,8 @@ function CrashGame() {
                                         multiplier={multiplier}
                                         onPlayerCashout={handlePlayerCashout}
                                         userBetData={userBetData}
+                                        roomBets={roomBets}
+                                        isArena={gameMode === 'arena'}
                                     />
                                 ) : mobileDataTab === 'results' && showPlayerResults ? (
                                     <PlayerResults cashouts={playerCashouts} />

@@ -526,6 +526,121 @@ export function WalletProvider({ children }) {
         }
     }, [token])
 
+    // Multiplayer Synchronized Crash Room Methods
+    const placeRoomCrashBet = useCallback(async ({ betAmount, autoCashout }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/room/bet', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    betAmount,
+                    autoCashout,
+                    currency: currencyRef.current
+                })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const cashoutRoomCrash = useCallback(async () => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/room/cashout', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({})
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const getRoomCrashState = useCallback(async () => {
+        try {
+            const res = await fetch('/api/games/crash/room/state')
+            const data = await res.json()
+            return data.room || null
+        } catch {
+            return null
+        }
+    }, [])
+
+    // VIP Loyalty Engine Methods
+    const getVipStatus = useCallback(async () => {
+        try {
+            if (!token) return null
+            const res = await fetch('/api/vip/status', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            return await res.json()
+        } catch {
+            return null
+        }
+    }, [token])
+
+    const claimVipRakeback = useCallback(async () => {
+        try {
+            if (!token) return { success: false, error: 'Sign in required' }
+            const res = await fetch('/api/vip/claim-rakeback', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (data.success && typeof data.newBalance === 'number') {
+                setStoredBalance(data.newBalance)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    // Affiliate Referral Flywheel Methods
+    const getAffiliateStats = useCallback(async () => {
+        try {
+            if (!token) return null
+            const res = await fetch('/api/affiliate/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            return await res.json()
+        } catch {
+            return null
+        }
+    }, [token])
+
+    const claimAffiliateCommission = useCallback(async () => {
+        try {
+            if (!token) return { success: false, error: 'Sign in required' }
+            const res = await fetch('/api/affiliate/claim', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (data.success && typeof data.newBalance === 'number') {
+                setStoredBalance(data.newBalance)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
     const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
     const [walletModalTab, setWalletModalTab] = useState('deposit')
 
@@ -723,6 +838,13 @@ export function WalletProvider({ children }) {
         cashoutCrashRound,
         bustCrashRound,
         getActiveCrashRound,
+        placeRoomCrashBet,
+        cashoutRoomCrash,
+        getRoomCrashState,
+        getVipStatus,
+        claimVipRakeback,
+        getAffiliateStats,
+        claimAffiliateCommission,
         notifyWin,
         notifyLoss,
         toasts,

@@ -546,4 +546,102 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.ok(Array.isArray(state.bets))
         assert.equal(state.bets.length >= 1, true)
     })
+
+    it('verifies automated payment webhook idempotency and instant balance crediting', async () => {
+        const testUser = db.createUser({
+            username: 'webhook_test_player_' + Date.now(),
+            email: `wh_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const initialBal = testUser.balances.INR
+
+        const eventId = 'evt_test_unique_' + Date.now()
+        assert.equal(db.isWebhookProcessed(eventId), false, 'Webhook must not be processed initially')
+
+        // First deposit via webhook
+        await db.withUserLock(testUser.id, async () => {
+            db.updateUserBalance(testUser.id, 'INR', 500, 'Automated Gateway Deposit')
+            testUser.totalDeposited += 500
+            db.markWebhookProcessed(eventId)
+        })
+
+        assert.equal(testUser.balances.INR, initialBal + 500)
+        assert.equal(testUser.totalDeposited, 500)
+        assert.equal(db.isWebhookProcessed(eventId), true, 'Webhook must be marked as processed')
+    })
+
+    it('verifies viral affiliate referral tracking and 0.3% turnover commission accumulation', async () => {
+        const referrer = db.createUser({
+            username: 'referrer_vip_' + Date.now(),
+            email: `ref_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        assert.ok(referrer.referralCode, 'Every user must have a generated referral code')
+
+        // Create player referred by referrer
+        const referredPlayer = db.createUser({
+            username: 'referred_player_' + Date.now(),
+            email: `referred_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player',
+            referredBy: referrer.referralCode
+        })
+
+        assert.equal(referredPlayer.referredBy, referrer.id, 'Player must be linked to referrer')
+        assert.equal(referrer.affiliateStats.totalReferred >= 1, true, 'Referrer must track referred player count')
+
+        // Referred player places a ₹1,000 bet
+        referredPlayer.balances.INR = 2000
+        await db.executeAtomicBet({
+            userId: referredPlayer.id,
+            currency: 'INR',
+            betAmount: 1000,
+            game: 'limbo',
+            gameName: 'Limbo',
+            evaluator: async () => ({ won: false, multiplier: 0, payout: 0 })
+        })
+
+        // Commission is 0.3% of 1000 = ₹3.00
+        assert.equal(referrer.affiliateStats.totalTurnover, 1000)
+        assert.equal(referrer.affiliateStats.unclaimedEarnings, 3.0)
+
+        // Referrer claims affiliate commission
+        referrer.balances.INR = 100
+        referrer.affiliateStats.unclaimedEarnings = 50 // Set claimable amount >= 10
+        const claimResult = await db.claimAffiliateCommission(referrer.id)
+        assert.equal(claimResult.claimedAmount, 50)
+        assert.equal(referrer.balances.INR, 150)
+        assert.equal(referrer.affiliateStats.unclaimedEarnings, 0)
+    })
+
+    it('verifies VIP loyalty tier progression and rakeback claim settlement', async () => {
+        const vipPlayer = db.createUser({
+            username: 'vip_player_' + Date.now(),
+            email: `vip_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        // Status at 0 wager
+        const initialStatus = db.getVipStatus(vipPlayer.id)
+        assert.equal(initialStatus.currentTier, 'Bronze')
+        assert.equal(initialStatus.rakebackPercent, '3%')
+
+        // Player wagers ₹60,000 -> Reaches Gold tier (50k+)
+        vipPlayer.totalWagered = 60000
+        const goldStatus = db.getVipStatus(vipPlayer.id)
+        assert.equal(goldStatus.currentTier, 'Gold')
+        assert.equal(goldStatus.rakebackPercent, '7%')
+
+        // Accumulate and claim rakeback
+        vipPlayer.unclaimedRakeback = 25.50
+        const initialBal = vipPlayer.balances.INR
+        const claimResult = await db.claimRakeback(vipPlayer.id)
+
+        assert.equal(claimResult.claimedAmount, 25.50)
+        assert.equal(vipPlayer.balances.INR, parseFloat((initialBal + 25.50).toFixed(2)))
+        assert.equal(vipPlayer.unclaimedRakeback, 0)
+    })
 })

@@ -5,13 +5,19 @@ import { useWallet } from '../../context/WalletContext'
 
 const { Text } = Typography
 
-function PlayerBets({ multiplier, phase, onPlayerCashout, userBetData }) {
+function PlayerBets({ multiplier, phase, onPlayerCashout, userBetData, roomBets = [], isArena = false }) {
     const { currencySymbol, currency } = useWallet()
     const [expanded, setExpanded] = useState(true)
 
-    // Dynamic players list driven strictly by active player bets
-    const activePlayers = userBetData ? [userBetData] : []
-    const totalBet = userBetData?.amount || 0
+    // Dynamic players list driven by either shared arena room bets or solo bet
+    const activePlayers = isArena
+        ? (roomBets.length > 0 ? roomBets : (userBetData ? [userBetData] : []))
+        : (userBetData ? [userBetData] : [])
+
+    const totalBet = activePlayers.reduce((sum, p) => {
+        const amt = parseFloat(p.amount ?? p.betAmount ?? 0)
+        return sum + (isNaN(amt) ? 0 : amt)
+    }, 0)
     const playerCount = activePlayers.length
 
     return (
@@ -53,29 +59,39 @@ function PlayerBets({ multiplier, phase, onPlayerCashout, userBetData }) {
                             Waiting for bets in round...
                         </div>
                     ) : (
-                        activePlayers.map((player, i) => (
-                            <div key={i} className={`player-bet-row ${player.profit ? 'cashed-out' : ''}`}>
-                                <div className="player-info">
-                                    <Text className="player-name">{player.name || 'You'}</Text>
-                                    {player.cashoutAt && player.profit && (
-                                        <Text className="cashout-mult" type="success">
-                                            {player.cashoutAt}×
+                        activePlayers.map((player, i) => {
+                            const isCashed = Boolean(player.cashedOut || player.profit)
+                            const mult = player.multiplier || player.cashoutAt
+                            const pName = player.username || player.name || 'Player'
+                            const betAmt = parseFloat(player.betAmount ?? player.amount ?? 0)
+                            const displayAmt = isCashed
+                                ? `+${(parseFloat(player.payout || player.profit || (betAmt * mult)) || 0).toFixed(2)}`
+                                : betAmt.toFixed(2)
+
+                            return (
+                                <div key={player.userId || player.id || i} className={`player-bet-row ${isCashed ? 'cashed-out' : ''}`}>
+                                    <div className="player-info">
+                                        <Text className="player-name">{pName}</Text>
+                                        {isCashed && mult && (
+                                            <Text className="cashout-mult" type="success">
+                                                {parseFloat(mult).toFixed(2)}×
+                                            </Text>
+                                        )}
+                                    </div>
+                                    <div className="bet-amount">
+                                        <span
+                                            className="currency-badge small"
+                                            style={{ background: '#f5af19' }}
+                                        >
+                                            {currencySymbol}
+                                        </span>
+                                        <Text className={isCashed ? 'profit' : ''}>
+                                            {displayAmt}
                                         </Text>
-                                    )}
+                                    </div>
                                 </div>
-                                <div className="bet-amount">
-                                    <span
-                                        className="currency-badge small"
-                                        style={{ background: '#f5af19' }}
-                                    >
-                                        {currencySymbol}
-                                    </span>
-                                    <Text className={player.profit ? 'profit' : ''}>
-                                        {player.profit || (typeof player.amount === 'number' ? player.amount.toFixed(2) : player.betAmount)}
-                                    </Text>
-                                </div>
-                            </div>
-                        ))
+                            )
+                        })
                     )}
                 </div>
             )}

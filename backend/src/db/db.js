@@ -22,6 +22,31 @@ export function normalizePhone(phone) {
     return cleaned
 }
 
+export function getVipTier(totalWagered = 0) {
+    const wager = Math.max(0, parseFloat(totalWagered) || 0)
+    if (wager >= 1000000) {
+        return { tier: 'Diamond', level: 5, icon: '👑', rakebackRate: 0.15, minWager: 1000000, nextTierWager: null, progressPct: 100 }
+    }
+    if (wager >= 250000) {
+        const next = 1000000
+        const prog = Math.min(100, Math.floor(((wager - 250000) / (next - 250000)) * 100))
+        return { tier: 'Platinum', level: 4, icon: '💎', rakebackRate: 0.10, minWager: 250000, nextTierWager: next, progressPct: prog }
+    }
+    if (wager >= 50000) {
+        const next = 250000
+        const prog = Math.min(100, Math.floor(((wager - 50000) / (next - 50000)) * 100))
+        return { tier: 'Gold', level: 3, icon: '🥇', rakebackRate: 0.07, minWager: 50000, nextTierWager: next, progressPct: prog }
+    }
+    if (wager >= 10000) {
+        const next = 50000
+        const prog = Math.min(100, Math.floor(((wager - 10000) / (next - 10000)) * 100))
+        return { tier: 'Silver', level: 2, icon: '🥈', rakebackRate: 0.05, minWager: 10000, nextTierWager: next, progressPct: prog }
+    }
+    const next = 10000
+    const prog = Math.min(100, Math.floor((wager / next) * 100))
+    return { tier: 'Bronze', level: 1, icon: '🥉', rakebackRate: 0.03, minWager: 0, nextTierWager: next, progressPct: prog }
+}
+
 class Database {
     constructor() {
         this.dir = CONFIG.DATA_DIR
@@ -37,6 +62,7 @@ class Database {
             airdrops: [],
             withdrawals: [],
             deposits: [],
+            processedWebhooks: [],
             settings: {
                 rtp: CONFIG.DEFAULT_RTP,
                 houseEdge: CONFIG.HOUSE_EDGE,
@@ -94,6 +120,9 @@ class Database {
         if (!this.data.deposits) {
             this.data.deposits = []
         }
+        if (!Array.isArray(this.data.processedWebhooks)) {
+            this.data.processedWebhooks = []
+        }
 
         // Ensure settings defaults
         if (!this.data.settings) this.data.settings = {}
@@ -118,11 +147,19 @@ class Database {
             this.flushSync()
         }
 
-        // Ensure all users have totalWagered and totalDeposited initialized
+        // Ensure all users have totalWagered, totalDeposited, referralCode, and VIP fields initialized
         if (Array.isArray(this.data.users)) {
             for (const u of this.data.users) {
                 if (typeof u.totalWagered !== 'number') u.totalWagered = 0
                 if (typeof u.totalDeposited !== 'number') u.totalDeposited = 0
+                if (!u.referralCode) {
+                    u.referralCode = (u.username || 'PLAYER').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()
+                }
+                if (!u.affiliateStats) {
+                    u.affiliateStats = { totalReferred: 0, totalTurnover: 0, totalEarned: 0, unclaimedEarnings: 0 }
+                }
+                if (typeof u.unclaimedRakeback !== 'number') u.unclaimedRakeback = 0
+                if (typeof u.totalRakebackEarned !== 'number') u.totalRakebackEarned = 0
             }
         }
 
@@ -366,6 +403,26 @@ class Database {
 
     createUser(userData) {
         const id = 'usr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+
+        // Generate unique referral code
+        const baseRef = (userData.username || 'PLAYER').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()
+        const referralCode = (baseRef + Math.random().toString(36).slice(2, 5)).toUpperCase()
+
+        // Resolve referredBy if provided
+        let referredBy = null
+        const candidateCode = userData.referredBy || userData.referralCode
+        if (candidateCode) {
+            const cleanCode = String(candidateCode).trim().toUpperCase()
+            const referrer = this.data.users.find(u => u.referralCode && u.referralCode.toUpperCase() === cleanCode)
+            if (referrer && referrer.id !== id) {
+                referredBy = referrer.id
+                if (!referrer.affiliateStats) {
+                    referrer.affiliateStats = { totalReferred: 0, totalTurnover: 0, totalEarned: 0, unclaimedEarnings: 0 }
+                }
+                referrer.affiliateStats.totalReferred += 1
+            }
+        }
+
         const newUser = {
             id,
             role: 'player',
@@ -378,6 +435,16 @@ class Database {
             },
             totalDeposited: 0, // Enforces ₹300 minimum deposit before withdrawal
             totalWagered: 0, // 1.0x AML turnover requirement on deposits
+            referralCode,
+            referredBy,
+            affiliateStats: {
+                totalReferred: 0,
+                totalTurnover: 0,
+                totalEarned: 0,
+                unclaimedEarnings: 0
+            },
+            unclaimedRakeback: 0,
+            totalRakebackEarned: 0,
             isBanned: false,
             kycStatus: 'unverified',
             phone: userData.phone ? normalizePhone(userData.phone) : '',
@@ -387,7 +454,9 @@ class Database {
             lastLoginAt: new Date().toISOString(),
             avatar: '👤',
             passwordHash: userData.passwordHash || bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10),
-            ...userData
+            ...userData,
+            referralCode,
+            referredBy
         }
 
         // Automatic ₹100 Welcome Bonus Transaction record
@@ -442,6 +511,7 @@ class Database {
         // Accumulate totalWagered on game bet deductions (AML Turnover tracking)
         if (delta < 0 && typeof note === 'string' && /(bet|launch|mines|crash|wager)/i.test(note)) {
             user.totalWagered = parseFloat(((user.totalWagered || 0) + Math.abs(delta)).toFixed(2))
+            this.accumulateWagerRewards(user, Math.abs(delta))
         }
 
         // Record transaction
@@ -473,6 +543,158 @@ class Database {
         return userLockManager.withLock(userId, task)
     }
 
+    accumulateWagerRewards(user, betAmount) {
+        if (!user || betAmount <= 0) return
+
+        // 1. VIP Tier & Rakeback Accumulation
+        const tier = getVipTier(user.totalWagered)
+        const rakeback = parseFloat((betAmount * 0.01 * tier.rakebackRate).toFixed(4))
+        user.unclaimedRakeback = parseFloat(((user.unclaimedRakeback || 0) + rakeback).toFixed(4))
+        user.totalRakebackEarned = parseFloat(((user.totalRakebackEarned || 0) + rakeback).toFixed(4))
+
+        // 2. Affiliate Commission Accumulation for Referrer (0.3% turnover)
+        if (user.referredBy) {
+            const referrer = this.findUserById(user.referredBy)
+            if (referrer) {
+                if (!referrer.affiliateStats) {
+                    referrer.affiliateStats = { totalReferred: 0, totalTurnover: 0, totalEarned: 0, unclaimedEarnings: 0 }
+                }
+                const comm = parseFloat((betAmount * 0.003).toFixed(4))
+                referrer.affiliateStats.totalTurnover = parseFloat(((referrer.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
+                referrer.affiliateStats.totalEarned = parseFloat(((referrer.affiliateStats.totalEarned || 0) + comm).toFixed(4))
+                referrer.affiliateStats.unclaimedEarnings = parseFloat(((referrer.affiliateStats.unclaimedEarnings || 0) + comm).toFixed(4))
+            }
+        }
+    }
+
+    isWebhookProcessed(id) {
+        if (!this.data.processedWebhooks) this.data.processedWebhooks = []
+        return this.data.processedWebhooks.includes(id)
+    }
+
+    markWebhookProcessed(id) {
+        if (!this.data.processedWebhooks) this.data.processedWebhooks = []
+        this.data.processedWebhooks.push(id)
+        if (this.data.processedWebhooks.length > 2000) {
+            this.data.processedWebhooks = this.data.processedWebhooks.slice(-2000)
+        }
+        this.persist()
+    }
+
+    getAffiliateStats(userId) {
+        const user = this.findUserById(userId)
+        if (!user) return null
+
+        const referredUsers = (this.data.users || [])
+            .filter(u => u.referredBy === userId)
+            .map(u => ({
+                id: u.id,
+                username: u.username ? (u.username.slice(0, 2) + '***' + u.username.slice(-1)) : 'Player',
+                totalWagered: u.totalWagered || 0,
+                createdAt: u.createdAt
+            }))
+
+        return {
+            referralCode: user.referralCode || '',
+            referralLink: `https://amratgames.com/?ref=${user.referralCode || ''}`,
+            totalReferred: referredUsers.length,
+            totalTurnover: user.affiliateStats?.totalTurnover || 0,
+            totalEarned: user.affiliateStats?.totalEarned || 0,
+            unclaimedEarnings: user.affiliateStats?.unclaimedEarnings || 0,
+            referredUsers: referredUsers.slice(0, 20)
+        }
+    }
+
+    getVipStatus(userId) {
+        const user = this.findUserById(userId)
+        if (!user) return null
+        const totalWagered = user.totalWagered || 0
+        const tier = getVipTier(totalWagered)
+
+        return {
+            currentTier: tier.tier,
+            level: tier.level,
+            icon: tier.icon,
+            rakebackRate: tier.rakebackRate,
+            rakebackPercent: `${(tier.rakebackRate * 100).toFixed(0)}%`,
+            totalWagered,
+            unclaimedRakeback: user.unclaimedRakeback || 0,
+            totalRakebackEarned: user.totalRakebackEarned || 0,
+            minWager: tier.minWager,
+            nextTierWager: tier.nextTierWager,
+            progressPct: tier.progressPct,
+            canClaim: (user.unclaimedRakeback || 0) >= 1.0
+        }
+    }
+
+    async claimRakeback(userId) {
+        return this.withUserLock(userId, async () => {
+            const user = this.findUserById(userId)
+            if (!user) throw new Error('User not found')
+            const amount = user.unclaimedRakeback || 0
+            if (amount < 1) {
+                const err = new Error('Minimum claimable rakeback is ₹1.00')
+                err.status = 400
+                throw err
+            }
+
+            const currentBal = user.balances?.INR || 0
+            const newBal = parseFloat((currentBal + amount).toFixed(2))
+            user.balances.INR = newBal
+            user.unclaimedRakeback = 0
+
+            const tx = {
+                id: 'tx_rakeback_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
+                userId: user.id,
+                username: user.username,
+                type: 'credit',
+                currency: 'INR',
+                amount,
+                balanceAfter: newBal,
+                note: '👑 VIP Rakeback Reward Claimed',
+                timestamp: new Date().toISOString()
+            }
+            this.data.transactions.unshift(tx)
+            this.persist()
+
+            return { user, claimedAmount: amount, newBalance: newBal, transaction: tx }
+        })
+    }
+
+    async claimAffiliateCommission(userId) {
+        return this.withUserLock(userId, async () => {
+            const user = this.findUserById(userId)
+            if (!user) throw new Error('User not found')
+            const amount = user.affiliateStats?.unclaimedEarnings || 0
+            if (amount < 10) {
+                const err = new Error('Minimum claimable affiliate commission is ₹10.00')
+                err.status = 400
+                throw err
+            }
+
+            const currentBal = user.balances?.INR || 0
+            const newBal = parseFloat((currentBal + amount).toFixed(2))
+            user.balances.INR = newBal
+            user.affiliateStats.unclaimedEarnings = 0
+
+            const tx = {
+                id: 'tx_aff_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
+                userId: user.id,
+                username: user.username,
+                type: 'credit',
+                currency: 'INR',
+                amount,
+                balanceAfter: newBal,
+                note: '🤝 Affiliate Referral Commission Claimed',
+                timestamp: new Date().toISOString()
+            }
+            this.data.transactions.unshift(tx)
+            this.persist()
+
+            return { user, claimedAmount: amount, newBalance: newBal, transaction: tx }
+        })
+    }
+
     async executeAtomicBet({ userId, currency = 'INR', betAmount, game, gameName, evaluator }) {
         return this.withUserLock(userId, async () => {
             const user = this.findUserById(userId)
@@ -491,6 +713,7 @@ class Database {
             const balanceAfterDeduct = Math.max(0, parseFloat((currentBal - betAmount).toFixed(4)))
             user.balances[currency] = balanceAfterDeduct
             user.totalWagered = parseFloat(((user.totalWagered || 0) + betAmount).toFixed(2))
+            this.accumulateWagerRewards(user, betAmount)
 
             // 2. Evaluate Provably Fair outcome
             const evaluation = await evaluator()

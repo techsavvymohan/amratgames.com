@@ -350,6 +350,46 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                         <span>My Profile & KYC</span>
                                     </Link>
 
+                                    <Link
+                                        to="/profile?tab=vip"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => setShowUserDropdown(false)}
+                                        style={{
+                                            textDecoration: 'none',
+                                            color: '#fbbf24',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            fontSize: '13px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <span>👑</span>
+                                        <span>VIP Club & Rakeback</span>
+                                    </Link>
+
+                                    <Link
+                                        to="/profile?tab=affiliate"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => setShowUserDropdown(false)}
+                                        style={{
+                                            textDecoration: 'none',
+                                            color: '#34d399',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            fontSize: '13px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <span>💸</span>
+                                        <span>Affiliates (0.3% Share)</span>
+                                    </Link>
+
                                     <button
                                         type="button"
                                         className="amrat-user-dropdown-action logout"
@@ -417,6 +457,46 @@ function Header({ menuOpen, menuButtonRef, onMenuClick }) {
                                     >
                                         <span>👤</span>
                                         <span>My Profile & KYC</span>
+                                    </Link>
+
+                                    <Link
+                                        to="/profile?tab=vip"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => setShowUserDropdown(false)}
+                                        style={{
+                                            textDecoration: 'none',
+                                            color: '#fbbf24',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            fontSize: '13px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <span>👑</span>
+                                        <span>VIP Club & Rakeback</span>
+                                    </Link>
+
+                                    <Link
+                                        to="/profile?tab=affiliate"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => setShowUserDropdown(false)}
+                                        style={{
+                                            textDecoration: 'none',
+                                            color: '#34d399',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            fontSize: '13px',
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <span>💸</span>
+                                        <span>Affiliates (0.3% Share)</span>
                                     </Link>
 
                                     <button

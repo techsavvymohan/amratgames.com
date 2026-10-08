@@ -1,13 +1,43 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useWallet } from '../context/WalletContext'
 import './ProfilePage.css'
 
 export default function ProfilePage() {
     const { user, logout, updateProfile, changePassword, submitKycVerification, getBetsHistory, getPaymentsHistory } = useAuth()
+    const { getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission, currencySymbol } = useWallet()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
 
-    const [activeTab, setActiveTab] = useState('profile') // 'profile' | 'payments' | 'bets' | 'support'
+    const [activeTab, setActiveTab] = useState(() => {
+        const t = searchParams.get('tab')
+        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
+            return t
+        }
+        return 'profile'
+    })
+
+    // VIP Loyalty Engine State
+    const [vipData, setVipData] = useState(null)
+    const [loadingVip, setLoadingVip] = useState(false)
+    const [claimingRakeback, setClaimingRakeback] = useState(false)
+    const [rakebackMsg, setRakebackMsg] = useState('')
+
+    // Viral Affiliate Flywheel State
+    const [affiliateData, setAffiliateData] = useState(null)
+    const [loadingAffiliate, setLoadingAffiliate] = useState(false)
+    const [claimingCommission, setClaimingCommission] = useState(false)
+    const [commissionMsg, setCommissionMsg] = useState('')
+    const [copiedRefLink, setCopiedRefLink] = useState(false)
+
+    // Sync tab when query param changes
+    useEffect(() => {
+        const t = searchParams.get('tab')
+        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
+            setActiveTab(t)
+        }
+    }, [searchParams])
 
     // Main Info Form State
     const [firstName, setFirstName] = useState('')
@@ -67,9 +97,65 @@ export default function ProfilePage() {
         }
     }, [user])
 
-    // Load History data when tab switches
+    // VIP & Affiliate Loader Callbacks
+    const loadVip = useCallback(async () => {
+        setLoadingVip(true)
+        const res = await getVipStatus()
+        if (res && res.success) {
+            setVipData(res)
+        }
+        setLoadingVip(false)
+    }, [getVipStatus])
+
+    const handleClaimRakeback = async () => {
+        setClaimingRakeback(true)
+        setRakebackMsg('')
+        const res = await claimVipRakeback()
+        if (res && res.success) {
+            setRakebackMsg(`✓ Claimed ${currencySymbol}${res.claimedAmount.toFixed(2)} rakeback directly to your wallet!`)
+            loadVip()
+        } else {
+            setRakebackMsg(`⚠️ ${res?.error || 'Failed to claim rakeback'}`)
+        }
+        setClaimingRakeback(false)
+    }
+
+    const loadAffiliate = useCallback(async () => {
+        setLoadingAffiliate(true)
+        const res = await getAffiliateStats()
+        if (res && res.success) {
+            setAffiliateData(res)
+        }
+        setLoadingAffiliate(false)
+    }, [getAffiliateStats])
+
+    const handleClaimCommission = async () => {
+        setClaimingCommission(true)
+        setCommissionMsg('')
+        const res = await claimAffiliateCommission()
+        if (res && res.success) {
+            setCommissionMsg(`✓ Claimed ${currencySymbol}${res.claimedAmount.toFixed(2)} commission directly to your wallet!`)
+            loadAffiliate()
+        } else {
+            setCommissionMsg(`⚠️ ${res?.error || 'Failed to claim commission'}`)
+        }
+        setClaimingCommission(false)
+    }
+
+    const handleCopyRefLink = () => {
+        const link = affiliateData?.referralLink || `${window.location.origin}/?ref=${user?.referralCode || ''}`
+        navigator.clipboard.writeText(link)
+        setCopiedRefLink(true)
+        setTimeout(() => setCopiedRefLink(false), 2000)
+    }
+
+    // Load tab-specific data when tab switches
     useEffect(() => {
-        if (activeTab === 'payments') {
+        if (activeTab === 'vip') {
+            loadVip()
+        } else if (activeTab === 'affiliate') {
+            loadAffiliate()
+        } else if (activeTab === 'payments') {
             setLoadingHistory(true)
             getPaymentsHistory().then(res => {
                 setPaymentsData(res)
@@ -82,7 +168,7 @@ export default function ProfilePage() {
                 setLoadingHistory(false)
             })
         }
-    }, [activeTab])
+    }, [activeTab, loadVip, loadAffiliate, getPaymentsHistory, getBetsHistory])
 
     const handleCopyUuid = () => {
         if (!user?.id) return
@@ -187,6 +273,20 @@ export default function ProfilePage() {
                     onClick={() => setActiveTab('profile')}
                 >
                     Profile
+                </button>
+                <button
+                    type="button"
+                    className={`profile-subnav-btn ${activeTab === 'vip' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('vip')}
+                >
+                    👑 VIP Club
+                </button>
+                <button
+                    type="button"
+                    className={`profile-subnav-btn ${activeTab === 'affiliate' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('affiliate')}
+                >
+                    💸 Affiliates (0.3%)
                 </button>
                 <button
                     type="button"
@@ -782,6 +882,323 @@ export default function ProfilePage() {
                                 <div style={{ fontSize: '0.8rem', color: '#38bdf8' }}>@AmratGamesSupport</div>
                             </div>
                             <span style={{ fontSize: '18px' }}>✈️</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 5: VIP CLUB & RAKEBACK */}
+            {activeTab === 'vip' && (
+                <div className="profile-vip-section">
+                    {/* VIP Luxury Status Card */}
+                    <div className="profile-card" style={{
+                        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+                        border: '1px solid rgba(245, 175, 25, 0.3)',
+                        boxShadow: '0 8px 32px rgba(245, 175, 25, 0.15)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}>
+                        <div style={{
+                            position: 'absolute',
+                            top: '-30px',
+                            right: '-30px',
+                            width: '140px',
+                            height: '140px',
+                            background: 'radial-gradient(circle, rgba(245, 175, 25, 0.2) 0%, transparent 70%)',
+                            pointerEvents: 'none'
+                        }} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                            <div>
+                                <div style={{ fontSize: '0.8rem', color: '#f5af19', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                                    LOYALTY PROGRESSION
+                                </div>
+                                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                    <span>👑</span>
+                                    <span>{vipData?.name || 'Bronze VIP'}</span>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        background: 'rgba(245, 175, 25, 0.2)',
+                                        color: '#fbbf24',
+                                        padding: '2px 8px',
+                                        borderRadius: '20px',
+                                        border: '1px solid rgba(245, 175, 25, 0.4)'
+                                    }}>
+                                        {((vipData?.rakebackRate || 0.03) * 100).toFixed(0)}% RAKEBACK
+                                    </span>
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Lifetime Wagered</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                                    {currencySymbol}{parseFloat(vipData?.totalWagered || user?.totalWagered || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Progress to Next Tier */}
+                        {vipData?.nextTier && (
+                            <div style={{ marginTop: '14px', marginBottom: '18px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
+                                    <span style={{ color: '#94a3b8' }}>Next Tier: <strong style={{ color: '#f8fafc' }}>{vipData.nextTier}</strong></span>
+                                    <span style={{ color: '#f5af19', fontWeight: 700 }}>
+                                        {currencySymbol}{parseFloat(vipData.totalWagered || 0).toLocaleString()} / {currencySymbol}{parseFloat(vipData.nextTierThreshold || 0).toLocaleString()} ({vipData.progressPct || 0}%)
+                                    </span>
+                                </div>
+                                <div style={{ height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{
+                                        width: `${Math.min(100, Math.max(0, vipData.progressPct || 0))}%`,
+                                        height: '100%',
+                                        background: 'linear-gradient(90deg, #f5af19 0%, #ffd700 100%)',
+                                        borderRadius: '4px',
+                                        transition: 'width 0.4s ease'
+                                    }} />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Unclaimed Rakeback Box */}
+                        <div style={{
+                            background: 'rgba(15, 23, 42, 0.7)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px'
+                        }}>
+                            <div>
+                                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Unclaimed VIP Rakeback</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#4ade80' }}>
+                                    {currencySymbol}{parseFloat(vipData?.unclaimedRakeback || 0).toFixed(2)}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                    Calculated on every single bet based on game house edge
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="profile-btn-primary"
+                                style={{
+                                    maxWidth: '180px',
+                                    background: (vipData?.unclaimedRakeback || 0) > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
+                                    cursor: (vipData?.unclaimedRakeback || 0) > 0 ? 'pointer' : 'not-allowed',
+                                    boxShadow: (vipData?.unclaimedRakeback || 0) > 0 ? '0 4px 16px rgba(16, 185, 129, 0.3)' : 'none'
+                                }}
+                                disabled={claimingRakeback || (vipData?.unclaimedRakeback || 0) <= 0}
+                                onClick={handleClaimRakeback}
+                            >
+                                {claimingRakeback ? 'Claiming...' : 'Claim Rakeback'}
+                            </button>
+                        </div>
+
+                        {rakebackMsg && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                background: rakebackMsg.startsWith('✓') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                color: rakebackMsg.startsWith('✓') ? '#4ade80' : '#f87171',
+                                fontSize: '0.82rem',
+                                fontWeight: 600
+                            }}>
+                                {rakebackMsg}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* VIP Tier Matrix Card */}
+                    <div className="profile-card">
+                        <div className="profile-card-title">VIP Loyalty Progression Tiers</div>
+                        <div style={{ display: 'grid', gap: '10px' }}>
+                            {[
+                                { tier: 'Bronze', rate: '3%', threshold: '₹0+', perk: 'Instant 3% Rakeback on House Edge' },
+                                { tier: 'Silver', rate: '5%', threshold: '₹50,000+', perk: '5% Rakeback + Faster Withdrawals' },
+                                { tier: 'Gold', rate: '7%', threshold: '₹2,00,000+', perk: '7% Rakeback + Weekly Reload Bonuses' },
+                                { tier: 'Platinum', rate: '10%', threshold: '₹10,00,000+', perk: '10% Rakeback + Dedicated VIP Host' },
+                                { tier: 'Diamond', rate: '15%', threshold: '₹50,000,000+', perk: '15% Rakeback + Bespoke High-Roller Limits' },
+                            ].map((lvl) => {
+                                const isCurrent = vipData?.name?.toLowerCase().includes(lvl.tier.toLowerCase())
+                                return (
+                                    <div key={lvl.tier} style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '12px 14px',
+                                        background: isCurrent ? 'rgba(245, 175, 25, 0.12)' : '#1e293b',
+                                        border: isCurrent ? '1px solid rgba(245, 175, 25, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                                        borderRadius: '10px'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontWeight: 800, fontSize: '0.92rem', color: isCurrent ? '#fbbf24' : '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <span>{lvl.tier}</span>
+                                                {isCurrent && <span style={{ fontSize: '0.7rem', background: '#f5af19', color: '#000', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>ACTIVE</span>}
+                                            </div>
+                                            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
+                                                {lvl.perk}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#4ade80' }}>{lvl.rate}</div>
+                                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{lvl.threshold}</div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 6: AFFILIATES & REFERRALS */}
+            {activeTab === 'affiliate' && (
+                <div className="profile-affiliate-section">
+                    {/* Affiliate Hero & Referral Link */}
+                    <div className="profile-card" style={{
+                        background: 'linear-gradient(135deg, #0f172a 0%, #064e3b 100%)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        boxShadow: '0 8px 32px rgba(16, 185, 129, 0.15)'
+                    }}>
+                        <div style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>
+                            0.3% LIFETIME TURNOVER FLYWHEEL
+                        </div>
+                        <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc', marginBottom: 12 }}>
+                            Earn Commission on Every Bet Friends Make
+                        </div>
+                        <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: 16 }}>
+                            Share your link. When players join and wager in any game (Crash, Plinko, Mines, Limbo, etc.), you get 0.3% of their total bet volume instantly credited to your affiliate vault — win or lose!
+                        </p>
+
+                        {/* Referral Link Box */}
+                        <div style={{
+                            background: '#0f172a',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: '10px',
+                            padding: '8px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '10px'
+                        }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem', color: '#67e8f9', fontFamily: 'monospace' }}>
+                                {affiliateData?.referralLink || `${window.location.origin}/?ref=${user?.referralCode || ''}`}
+                            </div>
+                            <button
+                                type="button"
+                                className="profile-btn-primary"
+                                style={{
+                                    maxWidth: '120px',
+                                    padding: '8px 12px',
+                                    fontSize: '0.8rem',
+                                    background: copiedRefLink ? '#10b981' : '#2563eb'
+                                }}
+                                onClick={handleCopyRefLink}
+                            >
+                                {copiedRefLink ? '✓ Copied' : 'Copy Link'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 4-Stat Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Referred Users</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc', marginTop: 4 }}>
+                                {affiliateData?.stats?.referredCount || 0}
+                            </div>
+                        </div>
+
+                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Network Turnover</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#60a5fa', marginTop: 4 }}>
+                                {currencySymbol}{parseFloat(affiliateData?.stats?.lifetimeTurnover || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                            </div>
+                        </div>
+
+                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Earned</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f5af19', marginTop: 4 }}>
+                                {currencySymbol}{parseFloat(affiliateData?.stats?.totalTurnoverCommission || 0).toFixed(2)}
+                            </div>
+                        </div>
+
+                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
+                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Unclaimed Vault</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#4ade80', marginTop: 4 }}>
+                                {currencySymbol}{parseFloat(affiliateData?.stats?.pendingCommission || 0).toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Claim Commission Card */}
+                    <div className="profile-card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                            <div>
+                                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f8fafc' }}>
+                                    Pending Commission Payout
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
+                                    Minimum claim threshold: ₹10. Directly credited to your main balance for playing or withdrawal.
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="profile-btn-primary"
+                                style={{
+                                    maxWidth: '180px',
+                                    background: (affiliateData?.stats?.pendingCommission || 0) >= 10 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
+                                    cursor: (affiliateData?.stats?.pendingCommission || 0) >= 10 ? 'pointer' : 'not-allowed'
+                                }}
+                                disabled={claimingCommission || (affiliateData?.stats?.pendingCommission || 0) < 10}
+                                onClick={handleClaimCommission}
+                            >
+                                {claimingCommission ? 'Claiming...' : 'Claim to Wallet'}
+                            </button>
+                        </div>
+
+                        {commissionMsg && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                background: commissionMsg.startsWith('✓') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                color: commissionMsg.startsWith('✓') ? '#4ade80' : '#f87171',
+                                fontSize: '0.82rem',
+                                fontWeight: 600
+                            }}>
+                                {commissionMsg}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* How It Works Infographic */}
+                    <div className="profile-card">
+                        <div className="profile-card-title">How the 0.3% Affiliate Model Works</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>1️⃣</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Share Link</div>
+                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
+                                    Share your personalized link on WhatsApp, Telegram, or YouTube.
+                                </div>
+                            </div>
+                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>2️⃣</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Friends Play</div>
+                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
+                                    When they deposit and wager in Crash, Mines, Plinko or any game.
+                                </div>
+                            </div>
+                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>3️⃣</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Earn 0.3% Forever</div>
+                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
+                                    0.3% of every wager automatically accumulates into your vault with 1-click claims!
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
