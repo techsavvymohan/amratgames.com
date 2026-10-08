@@ -79,10 +79,16 @@ jobs:
             echo "👑 Deploying AmratGames.com to Production VPS"
             echo "======================================================"
             cd /var/www/amratgames.com
-            
-            # Ensure deploy script is executable and execute
-            chmod +x scripts/deploy-vps.sh 2>/dev/null || true
-            bash /var/www/amratgames.com/scripts/deploy-vps.sh
+
+            # Ensure safe directory and fetch latest commit
+            git config --global --add safe.directory /var/www/amratgames.com || true
+            echo "▶ Fetching latest codebase from origin/main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Make deploy script executable and execute
+            chmod +x scripts/deploy-vps.sh
+            bash scripts/deploy-vps.sh
 
   # ── 3. Post-Deployment Smoke Test & Summary ───────────────
   smoke-test:
