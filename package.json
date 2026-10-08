@@ -18,5 +18,11 @@
     "test:frontend": "pnpm --filter ./frontend test",
     "check": "node --check backend/src/server.js && node --check backend/src/config.js",
     "setup:env": "node scripts/setup-env.js"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw"
+    ]
   }
 }
