@@ -4,14 +4,58 @@ import { CONFIG } from './config.js'
 import { db } from './db/db.js'
 import { crashRoomService } from './services/CrashRoomService.js'
 import { chatService } from './services/ChatService.js'
+import { redisPubSub } from './services/RedisPubSubService.js'
 
 let wss = null
+
+function sendLocalClients(type, payload) {
+    if (!wss) return
+    const message = JSON.stringify({
+        type,
+        payload,
+        timestamp: new Date().toISOString()
+    })
+
+    wss.clients.forEach((client) => {
+        if (client.readyState === 1) { // 1 = WebSocket.OPEN
+            try { client.send(message) } catch {}
+        }
+    })
+}
 
 export function initWebSocketServer(server) {
     wss = new WebSocketServer({ server, path: '/ws' })
 
     // Start synchronized multiplayer Crash room loop
     crashRoomService.start()
+
+    // Subscribe to cross-instance Redis event channels
+    redisPubSub.subscribe(redisPubSub.CHANNELS.EVENTS, (msg) => {
+        if (msg.senderInstance !== redisPubSub.instanceId) {
+            sendLocalClients(msg.type, msg.payload)
+        }
+    })
+
+    redisPubSub.subscribe(redisPubSub.CHANNELS.CHAT, (msg) => {
+        if (msg.type === 'NEW_CHAT_MESSAGE' && msg.payload) {
+            chatService.ingestRemoteMessage(msg.payload)
+        }
+        if (msg.senderInstance !== redisPubSub.instanceId) {
+            sendLocalClients(msg.type, msg.payload)
+        }
+    })
+
+    redisPubSub.subscribe(redisPubSub.CHANNELS.CRASH, (msg) => {
+        if (msg.senderInstance !== redisPubSub.instanceId) {
+            sendLocalClients(msg.type, msg.payload)
+        }
+    })
+
+    redisPubSub.subscribe(redisPubSub.CHANNELS.BETS, (msg) => {
+        if (msg.senderInstance !== redisPubSub.instanceId) {
+            sendLocalClients(msg.type, msg.payload)
+        }
+    })
 
     wss.on('connection', (ws) => {
         // Send initial welcome with active Crash room state and recent community chat
@@ -70,17 +114,9 @@ export function initWebSocketServer(server) {
 }
 
 export function broadcastEvent(type, payload) {
-    if (!wss) return
+    // 1. Immediately send to locally connected clients
+    sendLocalClients(type, payload)
 
-    const message = JSON.stringify({
-        type,
-        payload,
-        timestamp: new Date().toISOString()
-    })
-
-    wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(message)
-        }
-    })
+    // 2. Publish across Redis Pub/Sub bus to all other cluster worker instances
+    redisPubSub.broadcast(type, payload).catch(() => {})
 }

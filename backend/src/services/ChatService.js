@@ -40,6 +40,16 @@ export class ChatService {
         return this.messages.slice(-limit)
     }
 
+    ingestRemoteMessage(messageObj) {
+        if (!messageObj || !messageObj.id) return
+        if (!this.messages.some(m => m.id === messageObj.id)) {
+            this.messages.push(messageObj)
+            if (this.messages.length > 60) {
+                this.messages.shift()
+            }
+        }
+    }
+
     sanitizeText(input) {
         if (!input || typeof input !== 'string') return ''
         return input

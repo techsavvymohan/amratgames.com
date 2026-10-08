@@ -12,6 +12,7 @@ import { checkPlatformMaintenance, checkGameMaintenance } from '../src/middlewar
 import { crashRoomService } from '../src/services/CrashRoomService.js'
 import { chatService } from '../src/services/ChatService.js'
 import { antiFraudService } from '../src/services/AntiFraudService.js'
+import { redisPubSub } from '../src/services/RedisPubSubService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -774,5 +775,29 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         assert.ok(roll >= 1.00, 'Roll must be at least 1.00')
         assert.equal(hash.length, 64)
+    })
+
+    it('verifies Redis Pub/Sub multi-instance event bus and graceful local fallback', async () => {
+        assert.ok(redisPubSub.instanceId.startsWith('worker_'), 'Instance ID must identify process worker')
+        assert.ok(redisPubSub.CHANNELS.CHAT === 'amrat:chat')
+        assert.ok(redisPubSub.CHANNELS.CRASH === 'amrat:crash')
+
+        let receivedPayload = null
+        const unsubscribe = redisPubSub.subscribe(redisPubSub.CHANNELS.CHAT, (envelope) => {
+            receivedPayload = envelope
+        })
+
+        // Broadcast test chat message
+        await redisPubSub.broadcast('NEW_CHAT_MESSAGE', {
+            id: 'msg_test_redis_sync',
+            text: 'Multi-instance cluster sync test',
+            vipTier: 'Gold'
+        })
+
+        assert.ok(receivedPayload !== null, 'Subscriber must receive dispatched message')
+        assert.equal(receivedPayload.type, 'NEW_CHAT_MESSAGE')
+        assert.equal(receivedPayload.payload.text, 'Multi-instance cluster sync test')
+
+        unsubscribe()
     })
 })
