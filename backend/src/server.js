@@ -1,12 +1,14 @@
 import http from 'node:http'
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import { CONFIG, validateConfig, logConfigSummary } from './config.js'
 import { authenticate } from './middleware/auth.js'
 import { initWebSocketServer, broadcastEvent } from './websocket.js'
 import { db } from './db/db.js'
 import { testSupabaseConnection } from './db/SupabaseClient.js'
 import { emailService } from './services/EmailService.js'
+import { redisCache } from './services/RedisCacheService.js'
 
 import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
@@ -18,32 +20,56 @@ import communityRoutes from './routes/community.routes.js'
 import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
+app.disable('x-powered-by')
+
 const server = http.createServer(app)
+server.keepAliveTimeout = 65000
+server.headersTimeout = 66000
 
 // Initialize WebSockets
 initWebSocketServer(server)
 
-// Middleware
+// High-Performance Middleware
+app.use(compression({
+    level: 6,
+    threshold: 1024,
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) return false
+        return compression.filter(req, res)
+    }
+}))
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
 app.use(authenticate)
 
-// Health Check
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'online',
-        platform: 'AmratGames.com Gaming & Casino Engine',
-        version: '2.0.0',
-        rtp: db.data.settings.rtp,
-        serverTime: new Date().toISOString(),
-        activePlayers: db.data.users.filter(u => !u.isBanned).length,
-        tokenTreasuryRemaining: db.data.settings.tokenTreasury.treasuryBalance,
-        database: CONFIG.USE_SUPABASE ? 'Supabase (PostgreSQL)' : 'Local JSON DB'
-    })
+// Fast Health Check (Cached in Redis for 3s to handle high-frequency LB probes)
+app.get('/api/health', async (req, res) => {
+    try {
+        const payload = await redisCache.getOrSet('platform:health', 3, async () => {
+            return {
+                status: 'online',
+                platform: 'AmratGames.com Gaming & Casino Engine',
+                version: '2.0.0',
+                rtp: db.data.settings?.rtp || 99,
+                serverTime: new Date().toISOString(),
+                activePlayers: db.data.users ? db.data.users.filter(u => !u.isBanned).length : 0,
+                tokenTreasuryRemaining: db.data.settings?.tokenTreasury?.treasuryBalance || 0,
+                database: CONFIG.USE_SUPABASE ? 'Supabase (PostgreSQL)' : 'Local JSON DB'
+            }
+        })
+        res.json(payload)
+    } catch {
+        res.json({
+            status: 'online',
+            platform: 'AmratGames.com Gaming & Casino Engine',
+            version: '2.0.0',
+            serverTime: new Date().toISOString()
+        })
+    }
 })
 
 // Supabase Connection Health Check

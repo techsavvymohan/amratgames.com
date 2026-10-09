@@ -55,6 +55,10 @@ class Database {
         this._flushTimer = null
         this._isFlushing = false
         this._needsFlushAgain = false
+        this._usersById = new Map()
+        this._usersByEmail = new Map()
+        this._usersByUsername = new Map()
+        this._usersByPhone = new Map()
         this.data = {
             users: [],
             transactions: [],
@@ -170,6 +174,30 @@ class Database {
                 .update(this.data.settings.currentServerSeed)
                 .digest('hex')
         }
+        this._rebuildUserIndexes()
+    }
+
+    _rebuildUserIndexes() {
+        this._usersById.clear()
+        this._usersByEmail.clear()
+        this._usersByUsername.clear()
+        this._usersByPhone.clear()
+        if (Array.isArray(this.data.users)) {
+            for (const u of this.data.users) {
+                this._indexUser(u)
+            }
+        }
+    }
+
+    _indexUser(u) {
+        if (!u) return
+        if (u.id) this._usersById.set(u.id, u)
+        if (u.email) this._usersByEmail.set(String(u.email).toLowerCase(), u)
+        if (u.username) this._usersByUsername.set(String(u.username).toLowerCase(), u)
+        if (u.phone) {
+            const norm = normalizePhone(u.phone)
+            if (norm) this._usersByPhone.set(norm, u)
+        }
     }
 
     scheduleFlush() {
@@ -266,24 +294,28 @@ class Database {
         }
     }
 
-    // ── User Methods ──────────────────────────────────────────
+    // ── User Methods (O(1) Hash Map Indexed) ─────────────────
     findUserById(id) {
-        return this.data.users.find(u => u.id === id)
+        if (!id) return null
+        return this._usersById.get(id) || this.data.users.find(u => u.id === id) || null
     }
 
     findUserByEmail(email) {
         if (!email) return null
-        return this.data.users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase())
+        const key = String(email).toLowerCase()
+        return this._usersByEmail.get(key) || this.data.users.find(u => u.email && u.email.toLowerCase() === key) || null
     }
 
     findUserByUsername(username) {
-        return this.data.users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase())
+        if (!username) return null
+        const key = String(username).toLowerCase()
+        return this._usersByUsername.get(key) || this.data.users.find(u => u.username && u.username.toLowerCase() === key) || null
     }
 
     findUserByPhone(phone) {
         const normalized = normalizePhone(phone)
         if (!normalized) return null
-        return this.data.users.find(u => u.phone && normalizePhone(u.phone) === normalized)
+        return this._usersByPhone.get(normalized) || this.data.users.find(u => u.phone && normalizePhone(u.phone) === normalized) || null
     }
 
     findUserByLogin(login) {
@@ -473,6 +505,7 @@ class Database {
         }
 
         this.data.users.push(newUser)
+        this._indexUser(newUser)
         this.data.transactions.unshift(bonusTx)
         this.updateTreasurySupply()
         this.persist()
@@ -489,6 +522,7 @@ class Database {
         const index = this.data.users.findIndex(u => u.id === id)
         if (index === -1) return null
         this.data.users[index] = { ...this.data.users[index], ...updates }
+        this._indexUser(this.data.users[index])
         this.updateTreasurySupply()
         this.persist()
 
@@ -1450,6 +1484,7 @@ class Database {
                 for (const lu of this.data.users) userMap.set(lu.id, lu)
                 for (const cu of mappedUsers) userMap.set(cu.id, cu)
                 this.data.users = Array.from(userMap.values())
+                this._rebuildUserIndexes()
                 console.log(`[DB] Successfully synced ${mappedUsers.length} user accounts from Supabase!`)
             }
 
