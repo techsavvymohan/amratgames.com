@@ -72,6 +72,14 @@ const ColorMatchIcon = () => (
     </svg>
 )
 
+const CoinTossIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v10"/>
+        <path d="M9 10h6"/>
+    </svg>
+)
+
 const GAME_ICONS = {
     crash: CrashIcon,
     plinko: PlinkoIcon,
@@ -79,7 +87,8 @@ const GAME_ICONS = {
     mines: MinesIcon,
     limbo: LimboIcon,
     'dragon-tiger': DragonTigerIcon,
-    'color-match': ColorMatchIcon
+    'color-match': ColorMatchIcon,
+    'coin-toss': CoinTossIcon
 }
 
 const primaryRoutes = [

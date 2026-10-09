@@ -138,6 +138,14 @@ router.post('/provably-fair/verify', (req, res) => {
                 minesCount: count,
                 mineIndices: tiles.slice(0, count)
             }
+        } else if (gameType === 'coin-toss' || gameType === 'cointoss' || gameType === 'coinflip') {
+            const outcome = floatVal < 0.50 ? 'heads' : 'tails'
+            result = {
+                game: 'coin-toss',
+                outcome,
+                floatVal,
+                multiplier: 1.98
+            }
         } else {
             result = { game: gameType, floatVal, hash }
         }
@@ -245,6 +253,19 @@ function evaluateGameRound({
                 payout,
                 hash: crypto.randomBytes(16).toString('hex')
             }
+            break
+        }
+
+        case 'coin-toss':
+        case 'cointoss':
+        case 'coinflip':
+        case 'coin-flip': {
+            evaluation = gameEngine.evaluateCoinToss({
+                betAmount: parsedAmount,
+                choice: choice || reqBody.choice || reqBody.side || 'heads',
+                clientSeed,
+                nonce
+            })
             break
         }
 
@@ -863,6 +884,98 @@ router.post('/bet', authenticate, async (req, res) => {
                 won,
                 payout,
                 multiplier: finalMultiplier,
+                balances: null
+            })
+        }
+    } catch (err) {
+        const statusCode = err.status || (err.code === 'INSUFFICIENT_BALANCE' ? 400 : 500)
+        res.status(statusCode).json({ success: false, error: err.message })
+    }
+})
+
+// ── 4. Coin Toss Dedicated Endpoint ────────────────────────
+// POST /api/games/coin-toss/flip
+router.post('/coin-toss/flip', authenticate, async (req, res) => {
+    try {
+        const { betAmount, choice = 'heads', currency = 'INR', clientSeed = 'coin-player' } = req.body
+        const parsedAmount = parseFloat(betAmount)
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            return res.status(400).json({ success: false, error: 'Valid bet amount is required' })
+        }
+        if (parsedAmount > 50000) {
+            return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000 per round' })
+        }
+
+        const selectedChoice = String(choice).toLowerCase().trim() === 'tails' ? 'tails' : 'heads'
+
+        if (req.user) {
+            const betResult = await db.executeAtomicBet({
+                userId: req.user.id,
+                currency,
+                betAmount: parsedAmount,
+                game: 'coin-toss',
+                gameName: 'Royal Coin Toss',
+                evaluator: async () => {
+                    const nonce = gameEngine.getNextNonce(req.user.id)
+                    return gameEngine.evaluateCoinToss({
+                        betAmount: parsedAmount,
+                        choice: selectedChoice,
+                        clientSeed,
+                        nonce
+                    })
+                }
+            })
+
+            broadcastEvent('NEW_BET', betResult.bet)
+
+            return res.json({
+                success: true,
+                outcome: betResult.evaluation.outcome,
+                won: betResult.won,
+                multiplier: betResult.multiplier,
+                payout: betResult.payout,
+                bet: betResult.bet,
+                evaluation: betResult.evaluation,
+                balances: betResult.balances
+            })
+        } else {
+            const nonce = gameEngine.getNextNonce('guest')
+            const evaluation = gameEngine.evaluateCoinToss({
+                betAmount: parsedAmount,
+                choice: selectedChoice,
+                clientSeed,
+                nonce
+            })
+
+            const payout = evaluation.payout || 0
+            const won = Boolean(evaluation.won)
+            const finalMultiplier = evaluation.multiplier || 0
+            const profit = payout - parsedAmount
+
+            const betRecord = db.recordBet({
+                userId: null,
+                username: 'Player_' + crypto.randomBytes(2).toString('hex'),
+                game: 'coin-toss',
+                gameName: 'Royal Coin Toss',
+                currency,
+                betAmount: parsedAmount,
+                multiplier: finalMultiplier,
+                payout,
+                profit,
+                won,
+                hash: evaluation.hash
+            })
+
+            broadcastEvent('NEW_BET', betRecord)
+
+            return res.json({
+                success: true,
+                outcome: evaluation.outcome,
+                won,
+                multiplier: finalMultiplier,
+                payout,
+                bet: betRecord,
+                evaluation,
                 balances: null
             })
         }

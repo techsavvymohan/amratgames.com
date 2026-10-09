@@ -112,7 +112,8 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
                             { id: 'plinko', label: '🟢 Plinko' },
                             { id: 'dragon-tiger', label: '🐉 Dragon Tiger' },
                             { id: 'color-match', label: '🎨 Color Match' },
-                            { id: 'mines', label: '💣 Mines' }
+                            { id: 'mines', label: '💣 Mines' },
+                            { id: 'coin-toss', label: '🪙 Coin Toss' }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -325,6 +326,17 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
                                                 )
                                             })}
                                         </div>
+                                    </div>
+                                )}
+
+                                {game === 'coin-toss' && (
+                                    <div className="outcome-stat-highlight">
+                                        <span className="outcome-main-number" style={{ color: '#f59e0b' }}>
+                                            {verificationResult.outcome?.outcome === 'heads' ? '👑 HEADS' : '⭐ TAILS'}
+                                        </span>
+                                        <span className="outcome-desc">
+                                            Outcome: {verificationResult.outcome?.outcome?.toUpperCase()} • Multiplier: {verificationResult.outcome?.multiplier}x (HMAC Float: {verificationResult.outcome?.floatVal?.toFixed(6)})
+                                        </span>
                                     </div>
                                 )}
                             </div>

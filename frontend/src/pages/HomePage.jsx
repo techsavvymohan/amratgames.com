@@ -172,6 +172,29 @@ const HERO_SLIDES = [
             cta: 'Play Mines & Diamonds',
             to: '/mines'
         }
+    },
+    {
+        id: 'coin-toss',
+        badge: '🪙 NEW GAME • 1.98X INSTANT WIN',
+        titlePrefix: 'Heads or Tails? ',
+        titleHighlight: 'Flip & Double Your Cash Instantly!',
+        description: 'Pick Heads or Tails, flip the golden 3D coin, and pocket an instant 1.98x multiplier payout. 100% Provably Fair cryptographic math with 99% player RTP.',
+        primaryCta: { label: 'Play Coin Toss Now', icon: '🪙', to: '/coin-toss' },
+        secondaryCta: { label: 'Explore All Games', icon: '🎮', hash: '#amrat-originals' },
+        navLabel: 'Coin Toss (1.98x)',
+        stats: [
+            { label: 'Instant 1-Second Payout', value: '1.98x Multiplier', icon: '⚡' },
+            { label: 'Provably Fair HMAC', value: '99% RTP', icon: '🪙' },
+            { label: 'Fast Action Bets', value: '₹10 Min Bet', icon: '🎯' },
+            { label: 'Certified Fair Play', value: '100% Honest', icon: '🛡️' },
+        ],
+        showcase: {
+            type: 'coin-toss',
+            tag: 'NEW EXCLUSIVE GAME',
+            title: 'Coin Toss: Heads or Tails',
+            subtitle: 'Choose your side & double up',
+            to: '/coin-toss'
+        }
     }
 ]
 
@@ -410,6 +433,39 @@ function HomePage() {
                                 </div>
                                 <Link to={currentSlide.showcase.to} className="showcase-cta-btn">
                                     <span>💎</span> <span>Play Mines Game Now</span>
+                                </Link>
+                            </div>
+                        )}
+
+                        {currentSlide.showcase?.type === 'coin-toss' && (
+                            <div className="showcase-card showcase-coin">
+                                <div className="showcase-header">
+                                    <span className="showcase-tag">{currentSlide.showcase.tag}</span>
+                                    <span className="showcase-live-pill is-pulse">🪙 1.98x Payout</span>
+                                </div>
+                                <div className="coin-preview-showcase" style={{ textAlign: 'center', padding: '12px 0 8px 0' }}>
+                                    <img
+                                        src="/images/coin-toss.jpg?v=1"
+                                        alt="Coin Toss Banner"
+                                        style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '10px' }}
+                                    />
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '4px' }}>
+                                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>👑 HEADS (1.98x)</span>
+                                        <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>⭐ TAILS (1.98x)</span>
+                                    </div>
+                                </div>
+                                <div className="showcase-stats-row">
+                                    <div className="showcase-stat">
+                                        <span className="stat-label">Win Multiplier</span>
+                                        <span className="stat-val" style={{ color: '#10b981' }}>1.98x Instant</span>
+                                    </div>
+                                    <div className="showcase-stat">
+                                        <span className="stat-label">House Edge</span>
+                                        <span className="stat-val">Only 1% (99% RTP)</span>
+                                    </div>
+                                </div>
+                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#0b0f19', fontWeight: '700' }}>
+                                    <span>🪙</span> <span>Flip Coin & Win Now</span>
                                 </Link>
                             </div>
                         )}

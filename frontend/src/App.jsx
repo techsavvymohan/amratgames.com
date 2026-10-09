@@ -12,6 +12,7 @@ const loadMines = () => import('./pages/MinesPage')
 const loadLimbo = () => import('./pages/LimboPage')
 const loadDragonTiger = () => import('./pages/DragonTigerPage')
 const loadColorMatch = () => import('./pages/ColorMatchPage')
+const loadCoinToss = () => import('./pages/CoinTossPage')
 const loadAdmin = () => import('./admin-panel')
 
 const CrashPage = lazy(loadCrash)
@@ -21,6 +22,7 @@ const MinesPage = lazy(loadMines)
 const LimboPage = lazy(loadLimbo)
 const DragonTigerPage = lazy(loadDragonTiger)
 const ColorMatchPage = lazy(loadColorMatch)
+const CoinTossPage = lazy(loadCoinToss)
 const AdminPage = lazy(loadAdmin)
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
@@ -37,6 +39,7 @@ function App() {
                     loadLimbo()
                     loadDragonTiger()
                     loadColorMatch()
+                    loadCoinToss()
                 })
             } else {
                 setTimeout(() => {
@@ -47,6 +50,7 @@ function App() {
                     loadLimbo()
                     loadDragonTiger()
                     loadColorMatch()
+                    loadCoinToss()
                 }, 800)
             }
         }
@@ -75,6 +79,7 @@ function App() {
                             <Route path="limbo" element={<LimboPage />} />
                             <Route path="dragon-tiger" element={<DragonTigerPage />} />
                             <Route path="color-match" element={<ColorMatchPage />} />
+                            <Route path="coin-toss" element={<CoinTossPage />} />
                             <Route path="profile" element={<ProfilePage />} />
                         </Route>
 

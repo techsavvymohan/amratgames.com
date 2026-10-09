@@ -800,4 +800,36 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         unsubscribe()
     })
+
+    it('verifies Provably Fair Coin Toss evaluation and 1.98x payout calculation', () => {
+        const evalHeads = gameEngine.evaluateCoinToss({
+            betAmount: 100,
+            choice: 'heads',
+            clientSeed: 'test-seed-heads',
+            nonce: 1
+        })
+        assert.ok(['heads', 'tails'].includes(evalHeads.outcome), 'Outcome must be heads or tails')
+        assert.equal(evalHeads.game, 'coin-toss')
+        assert.equal(evalHeads.choice, 'heads')
+        if (evalHeads.won) {
+            assert.equal(evalHeads.multiplier, 1.98, 'Win multiplier must be 1.98x')
+            assert.equal(evalHeads.payout, 198, 'Payout must be 1.98x of stake')
+        } else {
+            assert.equal(evalHeads.multiplier, 0)
+            assert.equal(evalHeads.payout, 0)
+        }
+
+        const evalTails = gameEngine.evaluateCoinToss({
+            betAmount: 200,
+            choice: 'tails',
+            clientSeed: 'test-seed-tails',
+            nonce: 2
+        })
+        assert.ok(['heads', 'tails'].includes(evalTails.outcome), 'Outcome must be heads or tails')
+        assert.equal(evalTails.choice, 'tails')
+        if (evalTails.won) {
+            assert.equal(evalTails.multiplier, 1.98)
+            assert.equal(evalTails.payout, 396)
+        }
+    })
 })

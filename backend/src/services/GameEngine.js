@@ -591,6 +591,32 @@ class GameEngineService {
         }
         return null
     }
+
+    // ── 8. Coin Toss Evaluator (Server-Authoritative) ────────────
+    evaluateCoinToss({ betAmount, choice = 'heads', clientSeed, nonce }) {
+        const { hash, floatVal } = this.generateHmacFloat(clientSeed, nonce)
+
+        // Provably Fair Coin Toss:
+        // floatVal < 0.50 -> 'heads', else 'tails'
+        // RTP = 99.00% (House Edge: 1.00%), Multiplier = 1.98x
+        const outcome = floatVal < 0.50 ? 'heads' : 'tails'
+        const selectedChoice = String(choice).toLowerCase().trim() === 'tails' ? 'tails' : 'heads'
+        const won = (selectedChoice === outcome)
+        const multiplier = won ? 1.98 : 0
+        const totalBet = parseFloat(betAmount) || 0
+        const payout = won ? parseFloat((totalBet * multiplier).toFixed(2)) : 0
+
+        return {
+            game: 'coin-toss',
+            outcome, // 'heads' | 'tails'
+            choice: selectedChoice,
+            won,
+            multiplier,
+            payout,
+            floatVal,
+            hash
+        }
+    }
 }
 
 export const gameEngine = new GameEngineService()
