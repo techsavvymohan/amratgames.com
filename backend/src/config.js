@@ -65,7 +65,9 @@ export const CONFIG = {
     SMS_GATEWAY_PROVIDER: process.env.SMS_GATEWAY_PROVIDER || 'mock',
     SMS_GATEWAY_API_KEY: process.env.SMS_GATEWAY_API_KEY || '',
     SMS_GATEWAY_SENDER_ID: process.env.SMS_GATEWAY_SENDER_ID || 'AMRATG',
-    DEMO_OTP_BYPASS_ENABLED: process.env.DEMO_OTP_BYPASS_ENABLED !== 'false',
+    DEMO_OTP_BYPASS_ENABLED: (process.env.NODE_ENV === 'production')
+        ? (process.env.DEMO_OTP_BYPASS_ENABLED === 'true')
+        : (process.env.DEMO_OTP_BYPASS_ENABLED !== 'false'),
     DEMO_OTP_CODE: process.env.DEMO_OTP_CODE || '777777',
 
     // Official Support & Outgoing Email Dispatcher

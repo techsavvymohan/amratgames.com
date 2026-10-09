@@ -522,7 +522,7 @@ class Database {
         const index = this.data.users.findIndex(u => u.id === id)
         if (index === -1) return null
         this.data.users[index] = { ...this.data.users[index], ...updates }
-        this._indexUser(this.data.users[index])
+        this._rebuildUserIndexes()
         this.updateTreasurySupply()
         this.persist()
 

@@ -58,6 +58,11 @@ export function initWebSocketServer(server) {
     })
 
     wss.on('connection', (ws) => {
+        ws.isAlive = true
+        ws.on('pong', () => {
+            ws.isAlive = true
+        })
+
         // Send initial welcome with active Crash room state and recent community chat
         ws.send(JSON.stringify({
             type: 'CONNECTED',
@@ -71,6 +76,7 @@ export function initWebSocketServer(server) {
             try {
                 const data = JSON.parse(message)
                 if (data.type === 'PING') {
+                    ws.isAlive = true
                     ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }))
                 } else if (data.type === 'GET_CRASH_ROOM_STATE') {
                     ws.send(JSON.stringify({ type: 'CRASH_ROOM_STATE', payload: crashRoomService.getState() }))
@@ -108,6 +114,20 @@ export function initWebSocketServer(server) {
             }
         })
     })
+
+    // Active heartbeat sweep to terminate dead zombie sockets
+    const heartbeatInterval = setInterval(() => {
+        if (!wss) return
+        wss.clients.forEach((ws) => {
+            if (ws.isAlive === false) {
+                return ws.terminate()
+            }
+            ws.isAlive = false
+            try { ws.ping() } catch {}
+        })
+    }, 30000)
+
+    wss.on('close', () => clearInterval(heartbeatInterval))
 
     console.log('[WS] WebSocket server initialized on path /ws')
     return wss

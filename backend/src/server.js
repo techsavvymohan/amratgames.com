@@ -107,9 +107,15 @@ app.use('/api/*', (req, res) => {
 // Central error handler
 app.use((err, req, res, next) => {
     console.error('[API ERROR]', err)
-    res.status(err.status || 500).json({
+    const statusCode = err.status || err.statusCode || 500
+    const message = (statusCode === 500 && CONFIG.isProduction)
+        ? 'Internal Server Error'
+        : (err.message || 'Internal Server Error')
+
+    res.status(statusCode).json({
         success: false,
-        error: err.message || 'Internal Server Error'
+        error: message,
+        ...(err.code ? { code: err.code } : {})
     })
 })
 
