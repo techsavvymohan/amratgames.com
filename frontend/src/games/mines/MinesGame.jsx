@@ -23,6 +23,7 @@ import { useWallet } from '../../context/WalletContext'
 import { CurrencyIcon } from '../../components/Header'
 import ProvablyFair from '../../utils/ProvablyFair'
 import MobileBetSheet from '../../components/MobileBetSheet'
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import './MinesGame.css'
 
 const HOUSE_EDGE = 0.99; // 1% edge
@@ -70,6 +71,11 @@ function MinesGame() {
     const [isHovering, setIsHovering] = useState(null);
     const [autoTab, setAutoTab] = useState('manual');
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false);
+
+    // Live Spectator Missed Win State & Demo Ticker
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null);
+    const [spectatorCountdown, setSpectatorCountdown] = useState(5);
+    const demoTimeoutRef = useRef(null);
 
     // Bottom Controls State
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -416,6 +422,9 @@ function MinesGame() {
     };
 
     const startGame = async () => {
+        if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
+        setSpectatorMissedWin(null);
+
         if (betAmount <= 0) return;
         if (betAmount > balance) {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)}`);
@@ -577,6 +586,82 @@ function MinesGame() {
         }
         return tiles;
     };
+
+    // Continuous Live Spectator Round Runner (Non-stop auto play)
+    const runSimulatedMinesRound = useCallback(() => {
+        if (isPlaying) return;
+
+        // Clear previous state
+        setGameOverState(null);
+        setSpectatorMissedWin(null);
+
+        // Generate 25 tiles pool
+        const allIndices = Array.from({ length: 25 }, (_, i) => i);
+        for (let i = allIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
+        }
+
+        const simMines = allIndices.slice(0, minesCount);
+        const safePool = allIndices.slice(minesCount);
+
+        // Pick 2 to 4 safe gems
+        const pickCount = Math.min(safePool.length, Math.floor(Math.random() * 3) + 2);
+        const demoGems = safePool.slice(0, pickCount);
+
+        let step = 0;
+        const revealStep = () => {
+            if (isPlaying) return;
+            if (step < demoGems.length) {
+                const currentGem = demoGems[step];
+                setRevealedTiles(prev => [...prev, currentGem]);
+                playSound('gem', step + 1);
+                step++;
+                demoTimeoutRef.current = setTimeout(revealStep, 350);
+            } else {
+                setMineLocations(simMines);
+                setGameOverState('win');
+                const mult = calculateMultiplier(minesCount, demoGems.length);
+                const currentBet = betAmount || 50;
+                const winPayout = (currentBet * mult).toFixed(0);
+
+                playSound('cashout');
+                setSpectatorMissedWin({
+                    outcome: `${mult.toFixed(2)}x (${demoGems.length} Gems Cleared)`,
+                    multiplier: mult,
+                    amount: currentBet,
+                    payout: winPayout
+                });
+                setSpectatorCountdown(5);
+            }
+        };
+
+        setRevealedTiles([]);
+        demoTimeoutRef.current = setTimeout(revealStep, 250);
+    }, [isPlaying, minesCount, betAmount]);
+
+    // NON-STOP LIVE SPECTATOR TICKER LOOP
+    useEffect(() => {
+        if (isPlaying) {
+            if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setSpectatorCountdown(prev => {
+                if (prev <= 1) {
+                    runSimulatedMinesRound();
+                    return 5;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            clearInterval(timer);
+            if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
+        };
+    }, [isPlaying, runSimulatedMinesRound]);
 
     return (
         <div className="mines-game">
@@ -751,6 +836,19 @@ function MinesGame() {
 
                 {/* Game Display Wrapper */}
                 <div className="mines-display-wrapper">
+                    {spectatorMissedWin && (
+                        <MissedWinBanner
+                            outcome={spectatorMissedWin.outcome}
+                            multiplier={spectatorMissedWin.multiplier}
+                            betAmount={spectatorMissedWin.amount}
+                            potentialPayout={spectatorMissedWin.payout}
+                            countdown={spectatorCountdown}
+                            onBetNow={() => {
+                                setSpectatorMissedWin(null);
+                                startGame();
+                            }}
+                        />
+                    )}
                     <div className="mines-display">
                         <div className="mines-grid">
                             {renderGrid()}

@@ -42,6 +42,7 @@ import { dropPlinkoBall } from './dropPlinkoBall';
 import { ProvablyFair } from '../../utils/ProvablyFair';
 import { useWallet } from '../../context/WalletContext';
 import casinoAudio from '../../utils/casinoAudio';
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner';
 import './PlinkoGame.css';
 
 const { Text, Title, Paragraph } = Typography;
@@ -128,6 +129,11 @@ function PlinkoGame() {
     const [currentStreak, setCurrentStreak] = useState(0);
     const [maxStreak, setMaxStreak] = useState(0);
 
+    // Live Spectator Missed Win State
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null);
+    const [spectatorCountdown, setSpectatorCountdown] = useState(5);
+    const demoDropIdsRef = useRef(new Set());
+
     // UI States
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [statsDrawerOpen, setStatsDrawerOpen] = useState(false);
@@ -206,8 +212,9 @@ function PlinkoGame() {
 
         const bonusMultiplier = calculateBonusMultiplier(ballType);
         const finalMultiplier = data.payout.multiplier * bonusMultiplier;
-        const finalPayout = data.betAmount * finalMultiplier;
-        const profit = finalPayout - (data.betAmount * actualBall.cost);
+        const currentEffectiveBet = (betAmount || 10) * actualBall.cost;
+        const finalPayout = currentEffectiveBet * finalMultiplier;
+        const profit = finalPayout - currentEffectiveBet;
 
         casinoAudio.playBinLand(finalMultiplier);
         if (finalMultiplier >= 5) {
@@ -215,6 +222,22 @@ function PlinkoGame() {
         } else if (profit > 0) {
             casinoAudio.playWin();
         }
+
+        if (data.isDemo) {
+            if (finalMultiplier >= 1.5) {
+                setSpectatorMissedWin({
+                    outcome: `${finalMultiplier}x (Bin ${data.binIndex})`,
+                    multiplier: finalMultiplier,
+                    amount: currentEffectiveBet,
+                    payout: finalPayout.toFixed(0)
+                });
+                setSpectatorCountdown(5);
+            }
+            return;
+        }
+
+        // Real bet placed & settled: clear spectator missed win prompt
+        setSpectatorMissedWin(null);
 
         const newRecord = {
             id: Date.now() + Math.random(),
@@ -242,7 +265,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-    }, [selectedBallType, calculateBonusMultiplier, maxStreak]);
+    }, [selectedBallType, calculateBonusMultiplier, maxStreak, betAmount]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -468,6 +491,31 @@ function PlinkoGame() {
         }
     }, []);
 
+    // NON-STOP LIVE SPECTATOR TICKER LOOP (Auto Drops Demo Balls)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setSpectatorCountdown((prev) => {
+                if (prev <= 1) {
+                    if (engineRef.current && engineRef.current.getActiveBallCount() < 2) {
+                        // Binomial distribution with exciting edge potential
+                        let simBin = 0;
+                        for (let s = 0; s < rowCount; s++) {
+                            if (Math.random() < 0.5) simBin++;
+                        }
+                        if (Math.random() < 0.20) {
+                            simBin = Math.random() < 0.5 ? 0 : rowCount;
+                        }
+                        engineRef.current.dropBall(simBin, selectedBallType, true);
+                    }
+                    return 5;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [rowCount, selectedBallType]);
+
     // Check for outstanding balls
     const hasOutstandingBalls = engineRef.current?.hasOutstandingBalls?.() || false;
 
@@ -509,6 +557,19 @@ function PlinkoGame() {
 
                     {/* Plinko Game Area */}
                     <div className="plinko-game-wrapper">
+                        {spectatorMissedWin && (
+                            <MissedWinBanner
+                                outcome={spectatorMissedWin.outcome}
+                                multiplier={spectatorMissedWin.multiplier}
+                                betAmount={spectatorMissedWin.amount}
+                                potentialPayout={spectatorMissedWin.payout}
+                                countdown={spectatorCountdown}
+                                onBetNow={() => {
+                                    handleDropBall();
+                                    setSpectatorMissedWin(null);
+                                }}
+                            />
+                        )}
                         <Plinko
                             rowCount={rowCount}
                             riskLevel={riskLevel}

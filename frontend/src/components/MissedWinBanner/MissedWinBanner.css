@@ -1,0 +1,192 @@
+/* High-Conversion Missed Opportunity FOMO Alert Styling */
+
+.missed-win-banner-container {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 650px;
+    background: linear-gradient(135deg, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1.5px solid rgba(245, 158, 11, 0.55);
+    border-radius: 16px;
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.7),
+        0 0 25px rgba(245, 158, 11, 0.25);
+    backdrop-filter: blur(16px);
+    z-index: 100;
+    overflow: hidden;
+    animation: missedSlideUp 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes missedSlideUp {
+    from {
+        transform: translate(-50%, 40px) scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+.missed-win-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #ef4444, #10b981, #f59e0b);
+    background-size: 200% 100%;
+    animation: glowSlide 2s linear infinite;
+}
+
+@keyframes glowSlide {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
+.missed-win-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+}
+
+@media (max-width: 600px) {
+    .missed-win-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+}
+
+.missed-win-icon-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 12px;
+    min-width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+}
+
+.missed-flame-icon {
+    font-size: 1.3rem;
+    color: #f97316;
+    animation: flameFlicker 0.8s infinite alternate;
+}
+
+@keyframes flameFlicker {
+    from {
+        transform: scale(0.95);
+        filter: drop-shadow(0 0 4px #ef4444);
+    }
+    to {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 10px #f59e0b);
+    }
+}
+
+.missed-mult-tag {
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: #fbbf24;
+    letter-spacing: 0.05em;
+    margin-top: -2px;
+}
+
+.missed-win-text-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.missed-win-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.missed-headline {
+    font-size: 0.88rem;
+    font-weight: 900;
+    color: #ef4444;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.missed-outcome-chip {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 8px;
+}
+
+.missed-win-subtext {
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    line-height: 1.3;
+}
+
+.highlight-amt {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.highlight-win {
+    color: #34d399;
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+
+.missed-win-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    border-radius: 12px;
+    color: #0b0f19;
+    font-size: 0.82rem;
+    font-weight: 900;
+    padding: 10px 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4);
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
+}
+
+.missed-win-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(245, 158, 11, 0.6);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.missed-win-cta-btn:active {
+    transform: translateY(0);
+}
+
+.cta-arrow {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.missed-win-cta-btn:hover .cta-arrow {
+    transform: translateX(3px);
+}

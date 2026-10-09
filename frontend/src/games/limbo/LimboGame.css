@@ -79,6 +79,34 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
     padding: 2px 4px;
 }
 
+.limbo-live-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 12px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
+.limbo-live-status .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 6px #ef4444;
+    animation: liveDotPulse 1s infinite alternate;
+}
+
+@keyframes liveDotPulse {
+    from { transform: scale(0.8); opacity: 0.6; }
+    to { transform: scale(1.3); opacity: 1; }
+}
+
 .limbo-history-pill {
     padding: 4px 10px;
     border-radius: 6px;

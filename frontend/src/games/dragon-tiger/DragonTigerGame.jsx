@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import './DragonTigerGame.css'
 
 const { Text, Title } = Typography
@@ -54,6 +55,11 @@ function DragonTigerGame() {
 
     // Real-time dynamic history roadmap (No demo data)
     const [history, setHistory] = useState([])
+
+    // Live Macau Continuous Deal Loop
+    const [spectatorLive, setSpectatorLive] = useState(true)
+    const [spectatorCountdown, setSpectatorCountdown] = useState(5)
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
 
     // Fairness
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -176,6 +182,69 @@ function DragonTigerGame() {
         }, 900)
     }, [isDealing, totalBet, balance, bets, executeGameBet, notifyWin, notifyLoss])
 
+    // Non-stop Macau Dealer Live Simulation
+    const runSimulatedDeal = useCallback(() => {
+        if (isDealing) return
+        setIsDealing(true)
+        setRevealed(false)
+        setRoundResult(null)
+        setSpectatorMissedWin(null)
+        playSound('deal')
+
+        const dCard = getRandomCard()
+        let tCard = getRandomCard()
+        while (tCard.suit === dCard.suit && tCard.rank === dCard.rank) {
+            tCard = getRandomCard()
+        }
+
+        setDragonCard(dCard)
+        setTigerCard(tCard)
+
+        setTimeout(() => {
+            setRevealed(true)
+            setIsDealing(false)
+
+            let winner = 'tie'
+            if (dCard.value > tCard.value) winner = 'dragon'
+            else if (tCard.value > dCard.value) winner = 'tiger'
+
+            setRoundResult(winner)
+            setHistory(prev => [{ winner, dVal: dCard.rank, tVal: tCard.rank }, ...prev.slice(0, 19)])
+
+            const mult = winner === 'tie' ? 8 : 2
+            const chipAmt = selectedChip || 100
+            setSpectatorMissedWin({
+                outcome: `${winner.toUpperCase()} (${dCard.rank} vs ${tCard.rank})`,
+                multiplier: mult,
+                amount: chipAmt,
+                payout: (chipAmt * mult).toFixed(0)
+            })
+
+            setSpectatorCountdown(5)
+        }, 900)
+    }, [isDealing, selectedChip])
+
+    // NON-STOP MACAU DEAL TICKER
+    useEffect(() => {
+        if (!spectatorLive || isDealing) return
+
+        const timer = setInterval(() => {
+            setSpectatorCountdown((prev) => {
+                if (prev <= 1) {
+                    if (totalBet > 0) {
+                        dealCards()
+                    } else {
+                        runSimulatedDeal()
+                    }
+                    return 5
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [spectatorLive, isDealing, totalBet, dealCards, runSimulatedDeal])
+
     return (
         <div className="dt-page">
             <div className="dt-container">
@@ -275,6 +344,21 @@ function DragonTigerGame() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Spectator Missed Win FOMO Banner */}
+                    <MissedWinBanner
+                        visible={Boolean(spectatorMissedWin && !isDealing && totalBet === 0)}
+                        outcome={spectatorMissedWin?.outcome}
+                        multiplier={spectatorMissedWin?.multiplier}
+                        amount={spectatorMissedWin?.amount}
+                        payout={spectatorMissedWin?.payout}
+                        currencySymbol={currencySymbol}
+                        countdown={spectatorCountdown}
+                        onAction={() => {
+                            setSpectatorMissedWin(null)
+                            handleAddBet('dragon')
+                        }}
+                    />
 
                     {/* Betting Zones */}
                     <div className="dt-bet-zones">

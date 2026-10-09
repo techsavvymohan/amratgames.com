@@ -11,6 +11,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import './LimboGame.css'
 
 const { Text } = Typography
@@ -56,6 +57,11 @@ function LimboGame() {
     const [baseBetAmount, setBaseBetAmount] = useState(100)
     const autoRunningRef = useRef(false)
     const activeBetRef = useRef(betAmount)
+
+    // Non-stop Live Spectator Rounds
+    const [spectatorLive, setSpectatorLive] = useState(true)
+    const [spectatorCountdown, setSpectatorCountdown] = useState(4)
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
 
     // Modals
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -284,7 +290,67 @@ function LimboGame() {
         setAutoBetsRemaining(0)
     }
 
+    // Continuous Live Spectator Round Runner (Non-stop auto play)
+    const runSimulatedRoll = useCallback(() => {
+        if (isRolling || isAutoRunning) return
+        setIsRolling(true)
+        setGameResult(null)
+        setSpectatorMissedWin(null)
 
+        const target = parseFloat(targetMultiplier) || 2.00
+        // Provably Fair 99% RTP curve simulation
+        const u = Math.random()
+        const rawMultiplier = 0.99 / (1 - u * 0.99)
+        const outcome = parseFloat(Math.max(1.01, Math.min(1000, rawMultiplier)).toFixed(2))
+
+        const startTime = Date.now()
+        const animDuration = 220
+        const interval = setInterval(() => {
+            const elapsed = Date.now() - startTime
+            if (elapsed < animDuration) {
+                const randomVisual = (Math.random() * target * 1.5 + 0.8).toFixed(2)
+                setCurrentRoll(parseFloat(randomVisual))
+                casinoAudio.playTick()
+            } else {
+                clearInterval(interval)
+                setCurrentRoll(outcome)
+                setIsRolling(false)
+
+                const isHit = outcome >= target
+                setLastOutcome({ roll: outcome, target, win: isHit })
+
+                if (isHit) {
+                    setSpectatorMissedWin({
+                        outcome: `${outcome}x`,
+                        multiplier: target,
+                        amount: betAmount || 100,
+                        payout: ((betAmount || 100) * target).toFixed(0)
+                    })
+                    casinoAudio.playWin()
+                }
+
+                setHistory(prev => [{ roll: outcome, target, win: isHit, id: Date.now() }, ...prev.slice(0, 11)])
+                setSpectatorCountdown(4)
+            }
+        }, 28)
+    }, [isRolling, isAutoRunning, targetMultiplier, betAmount])
+
+    // NON-STOP LIVE SPECTATOR TICKER LOOP
+    useEffect(() => {
+        if (!spectatorLive || isRolling || isAutoRunning) return
+
+        const timer = setInterval(() => {
+            setSpectatorCountdown((prev) => {
+                if (prev <= 1) {
+                    runSimulatedRoll()
+                    return 4
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [spectatorLive, isRolling, isAutoRunning, runSimulatedRoll])
 
     const potentialProfit = ((betAmount * (parseFloat(targetMultiplier) || 2)) - betAmount)
 
@@ -295,8 +361,11 @@ function LimboGame() {
                 <div className="limbo-arena">
                     {/* Real-time Dynamic History Pills */}
                     <div className="limbo-history-bar">
+                        <div className="limbo-live-status">
+                            <span className="live-dot" /> LIVE AUTO ROLL IN {spectatorCountdown}s
+                        </div>
                         {history.length === 0 ? (
-                            <span className="limbo-history-empty">Waiting for first roll…</span>
+                            <span className="limbo-history-empty">Live rolls running non-stop…</span>
                         ) : (
                             history.map((item) => (
                                 <span
@@ -333,6 +402,21 @@ function LimboGame() {
                                 <span>BUSTED BELOW TARGET</span>
                             </div>
                         )}
+
+                        {/* Spectator Missed Win FOMO Banner */}
+                        <MissedWinBanner
+                            visible={Boolean(spectatorMissedWin && !isRolling && !gameResult)}
+                            outcome={spectatorMissedWin?.outcome}
+                            multiplier={spectatorMissedWin?.multiplier}
+                            amount={spectatorMissedWin?.amount}
+                            payout={spectatorMissedWin?.payout}
+                            currencySymbol={currencySymbol}
+                            countdown={spectatorCountdown}
+                            onAction={() => {
+                                setSpectatorMissedWin(null)
+                                executeRoll()
+                            }}
+                        />
                     </div>
 
                     {/* Fairness & Verification Trigger */}

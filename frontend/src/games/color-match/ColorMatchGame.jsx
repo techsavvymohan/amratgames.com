@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import './ColorMatchGame.css'
 
 const { Text } = Typography
@@ -71,6 +72,9 @@ function ColorMatchGame() {
     // Player personal bets record
     const [myBets, setMyBets] = useState([])
     const [activeTab, setActiveTab] = useState('history')
+
+    // Live Spectator Missed Win State
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
 
     // Modals
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -227,6 +231,75 @@ function ColorMatchGame() {
         }, 80)
     }, [isDrawing, totalStaked, balance, bets, executeGameBet, resolveRound, notifyLoss])
 
+    // Automated Continuous Live Spectator Draw
+    const runSimulatedColorDraw = useCallback(() => {
+        if (isDrawing) return
+        setIsDrawing(true)
+        setIsLocked(true)
+        setSpectatorMissedWin(null)
+
+        const simulatedWinningNum = Math.floor(Math.random() * 10)
+        let rollCounter = 0
+        const interval = setInterval(() => {
+            setDisplayNum(Math.floor(Math.random() * 10))
+            casinoAudio.playChip?.()
+            rollCounter++
+            if (rollCounter >= 16) {
+                clearInterval(interval)
+                setDisplayNum(simulatedWinningNum)
+                setTimeout(() => {
+                    const item = NUMBER_DATA[simulatedWinningNum]
+                    const resultRecord = {
+                        period: periodId,
+                        num: simulatedWinningNum,
+                        colors: item.colors,
+                        bigSmall: item.bigSmall
+                    }
+                    setLastDraw(resultRecord)
+                    setHistory(prev => [resultRecord, ...prev.slice(0, 19)])
+                    setPeriodId(prev => prev + 1)
+                    setIsDrawing(false)
+                    setIsLocked(false)
+                    setTimeLeft(maxTime)
+
+                    // Spectator Missed Win FOMO Banner
+                    const chipAmt = selectedChip * activeMultiplier || 100
+                    const winColors = item.colors.join('/')
+                    setSpectatorMissedWin({
+                        outcome: `#${simulatedWinningNum} (${winColors.toUpperCase()})`,
+                        multiplier: item.colors.includes('violet') ? 4.5 : 2,
+                        amount: chipAmt,
+                        payout: (chipAmt * (item.colors.includes('violet') ? 4.5 : 2)).toFixed(0)
+                    })
+                }, 500)
+            }
+        }, 80)
+    }, [isDrawing, periodId, selectedChip, activeMultiplier, maxTime])
+
+    // NON-STOP LOTTERY COUNTDOWN TICKER
+    useEffect(() => {
+        const timer = setInterval(() => {
+            if (isDrawing) return
+
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    if (totalStaked > 0) {
+                        triggerDraw()
+                    } else {
+                        runSimulatedColorDraw()
+                    }
+                    return maxTime
+                }
+                if (prev <= 5 && !isLocked) {
+                    setIsLocked(true)
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [isDrawing, totalStaked, triggerDraw, runSimulatedColorDraw, maxTime, isLocked])
+
     // Switch game modes (30s, 1Min, 3Min, 5Min)
     const handleModeSwitch = (mode, seconds) => {
         if (isDrawing) return
@@ -373,6 +446,21 @@ function ColorMatchGame() {
                             <span>{isDrawing ? 'DRAWING LIVE RESULT...' : 'BETTING CLOSED · DRAWING IN PROGRESS'}</span>
                         </div>
                     )}
+
+                    {/* Spectator Missed Win FOMO Banner */}
+                    <MissedWinBanner
+                        visible={Boolean(spectatorMissedWin && !isDrawing && totalStaked === 0)}
+                        outcome={spectatorMissedWin?.outcome}
+                        multiplier={spectatorMissedWin?.multiplier}
+                        amount={spectatorMissedWin?.amount}
+                        payout={spectatorMissedWin?.payout}
+                        currencySymbol={currencySymbol}
+                        countdown={timeLeft}
+                        onAction={() => {
+                            setSpectatorMissedWin(null)
+                            addBet('green')
+                        }}
+                    />
 
                     {/* 1. 3D Crystal Color Buttons (Using Generated 8K Raytraced Gem Assets) */}
                     <div className="cm-bet-console">

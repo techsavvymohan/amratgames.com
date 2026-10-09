@@ -52,6 +52,7 @@ import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
+import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import './CrashGame.css'
 
 const { Text, Title, Paragraph } = Typography
@@ -107,6 +108,7 @@ function CrashGame() {
     const [statsDrawerOpen, setStatsDrawerOpen] = useState(false)
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false)
+    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
     const [layout, setLayout] = useState('default') // 'default', 'compact', 'wide'
     const [mobileDataTab, setMobileDataTab] = useState('bets')
     const [isMobileLayout, setIsMobileLayout] = useState(() =>
@@ -558,6 +560,7 @@ function CrashGame() {
                                 startTimeRef.current = null
                             } else if (payload.state === 'FLYING') {
                                 setPhase(PHASE.RUNNING)
+                                setSpectatorMissedWin(null)
                                 setMultiplier(payload.multiplier || 1.00)
                                 multiplierRef.current = payload.multiplier || 1.00
                                 if (!startTimeRef.current) startTimeRef.current = Date.now()
@@ -581,6 +584,15 @@ function CrashGame() {
                                 setBetPlaced(false)
                                 setUserBetData(prev => prev ? { ...prev, active: false, profit: '0.00' } : null)
                                 showToast('loss', 'Crashed!', `Flight busted at ${bustPoint.toFixed(2)}×`, 3000)
+                            } else {
+                                if (bustPoint >= 1.5) {
+                                    setSpectatorMissedWin({
+                                        outcome: `${bustPoint.toFixed(2)}x`,
+                                        multiplier: Math.min(bustPoint, 2.0).toFixed(2),
+                                        amount: betAmount || 100,
+                                        payout: ((betAmount || 100) * Math.min(bustPoint, 2.0)).toFixed(0)
+                                    })
+                                }
                             }
                             startTimeRef.current = null
                         } else if (type === 'CRASH_ROOM_BET' && payload) {
@@ -998,6 +1010,20 @@ function CrashGame() {
                         multiplier={multiplier}
                         elapsedTime={elapsedTime}
                         countdown={countdown}
+                    />
+
+                    {/* Spectator Missed Win FOMO Banner */}
+                    <MissedWinBanner
+                        visible={Boolean(spectatorMissedWin && phase === PHASE.CRASHED && !betPlaced)}
+                        outcome={spectatorMissedWin?.outcome}
+                        multiplier={spectatorMissedWin?.multiplier}
+                        amount={spectatorMissedWin?.amount}
+                        payout={spectatorMissedWin?.payout}
+                        currencySymbol={currencySymbol}
+                        countdown={countdown || 5}
+                        onAction={() => {
+                            setSpectatorMissedWin(null)
+                        }}
                     />
 
                     {/* Player Results (floating on chart) */}

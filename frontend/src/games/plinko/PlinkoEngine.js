@@ -215,10 +215,14 @@ class PlinkoEngine {
                 binIndex,
                 payout: { multiplier, value: payoutValue },
                 profit,
-                ballType: ball.type // Pass the preserved ball type back!
+                ballType: ball.type, // Pass the preserved ball type back!
+                isDemo: Boolean(ball.isDemo),
+                ballId: ball.id
             });
 
-            this.onBalanceChange(payoutValue);
+            if (!ball.isDemo) {
+                this.onBalanceChange(payoutValue);
+            }
         }
 
         this.removeBall(ball);
@@ -261,11 +265,14 @@ class PlinkoEngine {
 
         ball.id = Math.random().toString(36).substr(2, 9);
         ball.type = ballType; // Attach ballType to preserve it
+        ball.isDemo = Boolean(isDemo);
         this.balls.push(ball);
         this.betAmountOfExistingBalls[ball.id] = this.betAmount;
 
-        // Notify balance change (deduct bet)
-        this.onBalanceChange(-this.betAmount);
+        // Notify balance change only for real bets
+        if (!isDemo) {
+            this.onBalanceChange(-this.betAmount);
+        }
 
         return ball;
     }
