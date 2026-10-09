@@ -1,7 +1,1 @@
-import ColorMatchGame from '../components/ColorMatchGame/ColorMatchGame'
-
-function ColorMatchPage() {
-    return <ColorMatchGame />
-}
-
-export default ColorMatchPage
+export { default } from '../games/color-match/ColorMatchPage'

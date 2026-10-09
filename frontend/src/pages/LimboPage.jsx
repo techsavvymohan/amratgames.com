@@ -1,7 +1,1 @@
-import LimboGame from '../components/LimboGame/LimboGame'
-
-function LimboPage() {
-    return <LimboGame />
-}
-
-export default LimboPage
+export { default } from '../games/limbo/LimboPage'

@@ -1,7 +1,1 @@
-import PlinkoGame from '../components/PlinkoGame'
-
-function PlinkoPage() {
-    return <PlinkoGame />
-}
-
-export default PlinkoPage
+export { default } from '../games/plinko/PlinkoPage'

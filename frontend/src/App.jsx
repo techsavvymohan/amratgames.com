@@ -5,14 +5,14 @@ import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
-const loadCrash = () => import('./pages/CrashPage')
-const loadPlinko = () => import('./pages/PlinkoPage')
-const loadDino = () => import('./pages/DinoPage')
-const loadMines = () => import('./pages/MinesPage')
-const loadLimbo = () => import('./pages/LimboPage')
-const loadDragonTiger = () => import('./pages/DragonTigerPage')
-const loadColorMatch = () => import('./pages/ColorMatchPage')
-const loadCoinToss = () => import('./pages/CoinTossPage')
+const loadCrash = () => import('./games/crash')
+const loadPlinko = () => import('./games/plinko')
+const loadDino = () => import('./games/dino')
+const loadMines = () => import('./games/mines')
+const loadLimbo = () => import('./games/limbo')
+const loadDragonTiger = () => import('./games/dragon-tiger')
+const loadColorMatch = () => import('./games/color-match')
+const loadCoinToss = () => import('./games/coin-toss')
 const loadAdmin = () => import('./admin-panel')
 
 const CrashPage = lazy(loadCrash)

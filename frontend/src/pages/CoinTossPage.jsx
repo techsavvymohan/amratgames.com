@@ -1,7 +1,1 @@
-import CoinTossGame from '../components/CoinTossGame/CoinTossGame'
-
-function CoinTossPage() {
-    return <CoinTossGame />
-}
-
-export default CoinTossPage
+export { default } from '../games/coin-toss/CoinTossPage'

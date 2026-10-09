@@ -1,0 +1,40 @@
+import crypto from 'node:crypto'
+import { db } from '../../db/db.js'
+
+/**
+ * Shared Cryptographic Provably Fair Core Entropy & Nonce Engine
+ */
+class ProvablyFairCore {
+    constructor() {
+        this.userNonces = new Map() // userId -> nonce counter
+    }
+
+    getServerSeed() {
+        return db.data.settings?.currentServerSeed || crypto.randomBytes(32).toString('hex')
+    }
+
+    getNextNonce(userId = 'guest') {
+        const current = this.userNonces.get(userId) || 1
+        this.userNonces.set(userId, current + 1)
+        return current
+    }
+
+    /**
+     * Compute HMAC-SHA256 outcome hash and uniform float in [0, 1)
+     */
+    generateHmacFloat(clientSeed = 'amrat-player', nonce = 1, serverSeedOverride = null) {
+        const serverSeed = serverSeedOverride || this.getServerSeed()
+        const message = `${String(clientSeed).trim()}:${nonce}`
+        const hmac = crypto.createHmac('sha256', serverSeed)
+        hmac.update(message)
+        const hash = hmac.digest('hex')
+
+        // First 8 hex characters (32 bits) divided by 2^32 gives uniform float [0, 1)
+        const intVal = parseInt(hash.slice(0, 8), 16)
+        const floatVal = intVal / 0x100000000
+
+        return { hash, floatVal, serverSeed }
+    }
+}
+
+export const provablyFairCore = new ProvablyFairCore()
