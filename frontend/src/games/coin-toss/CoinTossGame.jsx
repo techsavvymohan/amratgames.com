@@ -1,25 +1,27 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Typography, Modal, Tooltip } from 'antd'
+import { Typography, Tooltip } from 'antd'
 import {
     ThunderboltOutlined,
     SafetyCertificateOutlined,
-    HistoryOutlined,
     TrophyOutlined,
     SoundOutlined,
-    ReloadOutlined,
-    InfoCircleOutlined
+    RocketOutlined,
+    CheckCircleFilled,
+    FireOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
+import CoinParticles from './CoinParticles'
 import './CoinTossGame.css'
-
-const { Text } = Typography
 
 const MULTIPLIER = 1.98 // 99% RTP / 1% House Edge
 const MIN_BET = 10
 const MAX_BET = 100000
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000]
+
+const HEADS_ASSET = '/images/coin-toss/heads.jpg'
+const TAILS_ASSET = '/images/coin-toss/tails.jpg'
 
 export default function CoinTossGame() {
     const { balance, currencySymbol, executeGameBet } = useWallet()
@@ -28,14 +30,23 @@ export default function CoinTossGame() {
     const [choice, setChoice] = useState('heads') // 'heads' | 'tails'
     const [betAmount, setBetAmount] = useState(100)
     const [isFlipping, setIsFlipping] = useState(false)
+    const [turboMode, setTurboMode] = useState(false)
+
+    // Interactive 3D Parallax Tilt state
+    const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 })
+    const [isHoveringCoin, setIsHoveringCoin] = useState(false)
 
     // Animation & Outcome states
     const [coinTransform, setCoinTransform] = useState('rotateY(0deg)')
-    const [coinSide, setCoinSide] = useState('heads') // current visible side
-    const [lastResult, setLastResult] = useState(null) // { won: bool, outcome: 'heads'|'tails', payout: number }
+    const [coinSide, setCoinSide] = useState('heads') // current visible face
+    const [lastResult, setLastResult] = useState(null)
     const [streakCount, setStreakCount] = useState(0)
 
-    // History and stats
+    // Particle effect trigger timestamps
+    const [landingTrigger, setLandingTrigger] = useState(0)
+    const [winTrigger, setWinTrigger] = useState(0)
+
+    // History and sound
     const [history, setHistory] = useState([])
     const [isMuted, setIsMuted] = useState(casinoAudio.getMuted())
 
@@ -83,10 +94,7 @@ export default function CoinTossGame() {
     const adjustBet = (delta) => {
         if (isFlipping) return
         casinoAudio.playChip()
-        setBetAmount((prev) => {
-            const next = Math.max(MIN_BET, Math.min(MAX_BET, Math.floor((prev || 0) + delta)))
-            return next
-        })
+        setBetAmount((prev) => Math.max(MIN_BET, Math.min(MAX_BET, Math.floor((prev || 0) + delta))))
     }
 
     const multiplyBet = (factor) => {
@@ -94,8 +102,7 @@ export default function CoinTossGame() {
         casinoAudio.playChip()
         setBetAmount((prev) => {
             const base = prev || MIN_BET
-            const next = Math.max(MIN_BET, Math.min(MAX_BET, Math.floor(base * factor)))
-            return next
+            return Math.max(MIN_BET, Math.min(MAX_BET, Math.floor(base * factor)))
         })
     }
 
@@ -118,6 +125,32 @@ export default function CoinTossGame() {
         setIsMuted(next)
     }
 
+    // Interactive 3D Coin Tilt handlers
+    const handleStageMouseMove = (e) => {
+        if (isFlipping) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = (e.clientX - rect.left) / rect.width - 0.5
+        const y = (e.clientY - rect.top) / rect.height - 0.5
+        setMouseTilt({ x: -y * 24, y: x * 24 })
+        setIsHoveringCoin(true)
+    }
+
+    const handleStageMouseLeave = () => {
+        setMouseTilt({ x: 0, y: 0 })
+        setIsHoveringCoin(false)
+    }
+
+    // Direct prediction pick preview: smoothly turns the coin to preview the chosen face
+    const handleSelectChoice = (side) => {
+        if (isFlipping) return
+        casinoAudio.playChip()
+        setChoice(side)
+        setCoinSide(side)
+        if (!isFlipping) {
+            setCoinTransform(side === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)')
+        }
+    }
+
     // Execute Coin Toss Flip
     const handleFlip = useCallback(async () => {
         if (isFlipping) return
@@ -130,17 +163,26 @@ export default function CoinTossGame() {
 
         setIsFlipping(true)
         setLastResult(null)
-        casinoAudio.playBet()
+        setMouseTilt({ x: 0, y: 0 })
+        setIsHoveringCoin(false)
 
-        // Flip launch sound
+        // Launch audio: whoosh + high-speed spin whirr
+        if (typeof casinoAudio.playCoinFlip === 'function') {
+            casinoAudio.playCoinFlip()
+        } else {
+            casinoAudio.playBet()
+        }
+
+        const spinDuration = turboMode ? 550 : 1150
+        const tickInterval = turboMode ? 70 : 100
+
         let tickTimer = setInterval(() => {
             casinoAudio.playTick()
-        }, 110)
+        }, tickInterval)
 
-        // Random spin revolutions for 3D physics (5 full turns = 1800deg)
-        const baseTurns = 1800 + Math.floor(Math.random() * 2) * 360
-        // Initial spinning animation in CSS
-        setCoinTransform(`rotateY(${baseTurns}deg) scale(1.15)`)
+        // Generate dynamic 3D spin revolutions (8 full turns for normal, 5 turns for turbo)
+        const baseDeg = turboMode ? 1440 : 2520
+        setCoinTransform(`rotateY(${baseDeg}deg) rotateX(360deg) scale(1.18)`)
 
         let res = null
         try {
@@ -157,13 +199,12 @@ export default function CoinTossGame() {
             console.error('[COIN-TOSS] Error placing bet:', err)
         }
 
-        // Wait for realistic coin toss arc (1.1s total spin duration)
         setTimeout(() => {
             clearInterval(tickTimer)
 
             if (!res || !res.success) {
                 setIsFlipping(false)
-                setCoinTransform('rotateY(0deg)')
+                setCoinTransform(choice === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)')
                 return
             }
 
@@ -171,10 +212,16 @@ export default function CoinTossGame() {
             const won = Boolean(res.won)
             const payout = res.payout || (won ? parseFloat((currentBet * MULTIPLIER).toFixed(2)) : 0)
 
-            // Calculate landing angle: Heads = 0deg or 360deg, Tails = 180deg
-            const finalDegrees = outcome === 'heads' ? 2160 : 2340
-            setCoinTransform(`rotateY(${finalDegrees}deg) scale(1)`)
+            // Final settled landing degrees: Heads = 0 / 360 multiples, Tails = 180 + multiples
+            const finalDegrees = outcome === 'heads' ? 2880 : 3060
+            setCoinTransform(`rotateY(${finalDegrees}deg) rotateX(0deg) scale(1)`)
             setCoinSide(outcome)
+
+            // Trigger physical impact sound and landing shockwave
+            if (typeof casinoAudio.playCoinLand === 'function') {
+                casinoAudio.playCoinLand()
+            }
+            setLandingTrigger(Date.now())
 
             setLastResult({
                 won,
@@ -184,9 +231,10 @@ export default function CoinTossGame() {
                 choice
             })
 
-            // Update streaks
+            // Update streaks and audio fanfare
             if (won) {
                 setStreakCount((prev) => prev + 1)
+                setWinTrigger(Date.now())
                 casinoAudio.playWin()
                 if (payout >= currentBet * 5) {
                     casinoAudio.playBigWin()
@@ -214,13 +262,31 @@ export default function CoinTossGame() {
             setHistory((prev) => [record, ...prev.slice(0, 19)])
             setIsFlipping(false)
 
-            // Update Provably Fair nonce
+            // Advance Provably Fair nonce
             setProvablyFairSeed((prev) => ({
                 ...prev,
                 nonce: prev.nonce + 1
             }))
-        }, 1150)
-    }, [isFlipping, betAmount, balance, executeGameBet, choice, provablyFairSeed])
+        }, spinDuration)
+    }, [isFlipping, betAmount, balance, executeGameBet, choice, provablyFairSeed, turboMode])
+
+    // Keyboard Shortcuts: H / T to select side, Space to flip
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Ignore if active element is an input
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return
+            if (e.key === 'h' || e.key === 'H') {
+                handleSelectChoice('heads')
+            } else if (e.key === 't' || e.key === 'T') {
+                handleSelectChoice('tails')
+            } else if (e.key === ' ') {
+                e.preventDefault()
+                handleFlip()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [handleSelectChoice, handleFlip])
 
     // History statistics
     const stats = useMemo(() => {
@@ -247,6 +313,15 @@ export default function CoinTossGame() {
         setVerifierOpen(true)
     }
 
+    // Dynamic tilt calculation for interactive inspection
+    const activeTransform = isFlipping
+        ? coinTransform
+        : isHoveringCoin
+        ? `perspective(1000px) rotateX(${mouseTilt.x}deg) rotateY(${mouseTilt.y + (coinSide === 'heads' ? 0 : 180)}deg)`
+        : coinSide === 'heads'
+        ? 'rotateY(0deg)'
+        : 'rotateY(180deg)'
+
     return (
         <div className="coin-toss-wrapper">
             {/* Top Game Bar */}
@@ -257,9 +332,24 @@ export default function CoinTossGame() {
                     <span className="badge-provable">
                         <SafetyCertificateOutlined /> Provably Fair
                     </span>
+                    {turboMode && (
+                        <span className="badge-turbo">
+                            <RocketOutlined /> TURBO
+                        </span>
+                    )}
                 </div>
 
                 <div className="header-actions">
+                    <button
+                        type="button"
+                        className={`header-action-btn ${turboMode ? 'active-turbo' : ''}`}
+                        onClick={() => setTurboMode((prev) => !prev)}
+                        title={turboMode ? 'Turbo Mode (0.5s Fast Toss)' : 'Arcade Mode (1.2s Realistic Arc)'}
+                    >
+                        <ThunderboltOutlined />
+                        <span className="btn-label">{turboMode ? 'Turbo ON' : 'Turbo'}</span>
+                    </button>
+
                     <button
                         type="button"
                         className="header-action-btn"
@@ -269,6 +359,7 @@ export default function CoinTossGame() {
                     >
                         <SoundOutlined className={isMuted ? 'muted' : ''} />
                     </button>
+
                     <button
                         type="button"
                         className="header-action-btn verifier-btn"
@@ -291,7 +382,18 @@ export default function CoinTossGame() {
             {/* Main Stage Grid */}
             <div className="coin-toss-arena">
                 {/* 3D Coin Canvas / Flip Zone */}
-                <div className="coin-stage-card">
+                <div
+                    className="coin-stage-card"
+                    onMouseMove={handleStageMouseMove}
+                    onMouseLeave={handleStageMouseLeave}
+                >
+                    {/* HTML5 Canvas Sparkles & Win Particles Overlay */}
+                    <CoinParticles
+                        isFlipping={isFlipping}
+                        landingTrigger={landingTrigger}
+                        winTrigger={winTrigger}
+                    />
+
                     {/* Live Flip Streak Ribbon */}
                     <div className="history-ribbon">
                         <span className="history-label">RECENT:</span>
@@ -303,11 +405,16 @@ export default function CoinTossGame() {
                                     <button
                                         key={item.id}
                                         type="button"
-                                        className={`history-pill ${item.outcome} ${item.won ? 'is-win' : 'is-loss'}`}
+                                        className={`history-pill-asset ${item.outcome} ${item.won ? 'is-win' : 'is-loss'}`}
                                         onClick={() => openVerifierForRound(item)}
-                                        title={`Flip: ${item.outcome.toUpperCase()} (${item.won ? 'WON' : 'LOST'}). Click to verify.`}
+                                        title={`Outcome: ${item.outcome.toUpperCase()} (${item.won ? 'WON' : 'LOST'}). Click to verify.`}
                                     >
-                                        {item.outcome === 'heads' ? 'H' : 'T'}
+                                        <img
+                                            src={item.outcome === 'heads' ? HEADS_ASSET : TAILS_ASSET}
+                                            alt={item.outcome}
+                                            className="history-pill-img"
+                                        />
+                                        <span className="pill-letter">{item.outcome === 'heads' ? 'H' : 'T'}</span>
                                     </button>
                                 ))
                             )}
@@ -316,36 +423,45 @@ export default function CoinTossGame() {
 
                     {/* Central 3D Coin Animation Stage */}
                     <div className="coin-viewport">
+                        {/* Table Pedestal Shockwave Ring */}
+                        <div className={`table-impact-ring ${landingTrigger ? 'trigger-impact' : ''}`} key={landingTrigger} />
+
+                        {/* 3D Coin Object with True Physical Assets & Milled Ridges */}
                         <div
-                            className={`coin-3d-object ${isFlipping ? 'is-flipping' : ''}`}
-                            style={{ transform: coinTransform }}
+                            className={`coin-3d-object ${isFlipping ? (turboMode ? 'is-flipping-turbo' : 'is-flipping') : ''}`}
+                            style={{ transform: activeTransform }}
                             aria-label={`3D Coin facing ${coinSide}`}
                         >
-                            {/* Heads Face */}
+                            {/* Heads Face Asset */}
                             <div className="coin-face coin-face-heads">
-                                <div className="coin-ring">
-                                    <div className="coin-crest">
-                                        <div className="crown-icon">👑</div>
-                                        <div className="coin-label">HEADS</div>
-                                        <div className="coin-sublabel">1.98X</div>
-                                    </div>
-                                </div>
+                                <img
+                                    src={HEADS_ASSET}
+                                    alt="Royal Casino Heads Coin"
+                                    className="coin-artwork-img"
+                                />
+                                <div className="coin-inner-rim-bevel" />
+                                <div className={`coin-glint-sweep ${isFlipping ? 'glint-active' : ''}`} />
                             </div>
 
-                            {/* Tails Face */}
+                            {/* 3D Cylindrical Edge Ridges (Milled Reeding) */}
+                            <div className="coin-reeded-edge" />
+
+                            {/* Tails Face Asset */}
                             <div className="coin-face coin-face-tails">
-                                <div className="coin-ring">
-                                    <div className="coin-crest">
-                                        <div className="star-icon">⭐</div>
-                                        <div className="coin-label">TAILS</div>
-                                        <div className="coin-sublabel">1.98X</div>
-                                    </div>
-                                </div>
+                                <img
+                                    src={TAILS_ASSET}
+                                    alt="Royal Casino Tails Coin"
+                                    className="coin-artwork-img"
+                                />
+                                <div className="coin-inner-rim-bevel" />
+                                <div className={`coin-glint-sweep ${isFlipping ? 'glint-active' : ''}`} />
                             </div>
                         </div>
 
-                        {/* Interactive Coin Shadow that reacts to height */}
-                        <div className={`coin-shadow ${isFlipping ? 'shadow-floating' : ''}`} />
+                        {/* Interactive Dynamic Coin Shadow */}
+                        <div
+                            className={`coin-shadow ${isFlipping ? (turboMode ? 'shadow-turbo' : 'shadow-floating') : ''}`}
+                        />
 
                         {/* Result Splash Badge */}
                         {lastResult && !isFlipping && (
@@ -356,13 +472,13 @@ export default function CoinTossGame() {
                                 <div className="splash-info">
                                     <div className="splash-title">
                                         {lastResult.won
-                                            ? `YOU WON ${currencySymbol}${lastResult.payout.toLocaleString('en-IN')}`
+                                            ? `YOU WON ${currencySymbol}${lastResult.payout.toLocaleString('en-IN')}!`
                                             : `COIN LANDED ON ${lastResult.outcome.toUpperCase()}`}
                                     </div>
                                     <div className="splash-subtitle">
                                         {lastResult.won
                                             ? `Multiplier 1.98x • Net Profit +${currencySymbol}${(lastResult.payout - lastResult.betAmount).toLocaleString('en-IN')}`
-                                            : `Better luck next toss!`}
+                                            : `Better luck next flip! Press Space to try again.`}
                                     </div>
                                 </div>
                             </div>
@@ -394,49 +510,59 @@ export default function CoinTossGame() {
 
                 {/* Betting Control Panel */}
                 <div className="coin-controls-card">
-                    {/* Choose Heads or Tails */}
+                    {/* Choose Heads or Tails with Rich Playable Assets */}
                     <div className="control-group">
                         <label className="control-title">
-                            <span>1. SELECT YOUR PREDICTION</span>
+                            <span>1. SELECT PREDICTION</span>
                             <span className="payout-pill">WIN 1.98X</span>
                         </label>
                         <div className="side-selector-grid">
+                            {/* Heads Prediction Card */}
                             <button
                                 type="button"
                                 className={`side-card side-heads ${choice === 'heads' ? 'selected' : ''}`}
-                                onClick={() => {
-                                    if (!isFlipping) {
-                                        casinoAudio.playChip()
-                                        setChoice('heads')
-                                    }
-                                }}
+                                onClick={() => handleSelectChoice('heads')}
                                 disabled={isFlipping}
                             >
-                                <div className="side-card-icon">👑</div>
+                                <div className="side-asset-avatar">
+                                    <img
+                                        src={HEADS_ASSET}
+                                        alt="Heads Medal"
+                                        className="side-asset-img"
+                                    />
+                                    <span className="side-asset-glow" />
+                                </div>
                                 <div className="side-card-info">
                                     <span className="side-card-name">HEADS</span>
-                                    <span className="side-card-mult">1.98x Payout</span>
+                                    <span className="side-card-mult">Royal Crown • 1.98x</span>
                                 </div>
-                                {choice === 'heads' && <span className="selection-checkmark">✓</span>}
+                                {choice === 'heads' && (
+                                    <CheckCircleFilled className="selection-badge-icon" />
+                                )}
                             </button>
 
+                            {/* Tails Prediction Card */}
                             <button
                                 type="button"
                                 className={`side-card side-tails ${choice === 'tails' ? 'selected' : ''}`}
-                                onClick={() => {
-                                    if (!isFlipping) {
-                                        casinoAudio.playChip()
-                                        setChoice('tails')
-                                    }
-                                }}
+                                onClick={() => handleSelectChoice('tails')}
                                 disabled={isFlipping}
                             >
-                                <div className="side-card-icon">⭐</div>
+                                <div className="side-asset-avatar">
+                                    <img
+                                        src={TAILS_ASSET}
+                                        alt="Tails Medal"
+                                        className="side-asset-img"
+                                    />
+                                    <span className="side-asset-glow" />
+                                </div>
                                 <div className="side-card-info">
                                     <span className="side-card-name">TAILS</span>
-                                    <span className="side-card-mult">1.98x Payout</span>
+                                    <span className="side-card-mult">Imperial Eagle • 1.98x</span>
                                 </div>
-                                {choice === 'tails' && <span className="selection-checkmark">✓</span>}
+                                {choice === 'tails' && (
+                                    <CheckCircleFilled className="selection-badge-icon" />
+                                )}
                             </button>
                         </div>
                     </div>
@@ -549,12 +675,12 @@ export default function CoinTossGame() {
                         )}
                     </button>
 
-                    {/* Streak Info */}
+                    {/* Streak & Hot Multiplier Notification */}
                     {streakCount > 1 && (
                         <div className="streak-banner">
-                            <TrophyOutlined className="streak-icon" />
+                            <FireOutlined className="streak-icon" />
                             <span>
-                                <strong>{streakCount} FLIP WIN STREAK!</strong> Double up luck!
+                                <strong>{streakCount}X WIN STREAK!</strong> You are on fire!
                             </span>
                         </div>
                     )}

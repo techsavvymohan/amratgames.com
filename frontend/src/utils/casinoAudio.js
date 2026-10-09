@@ -502,6 +502,82 @@ class CasinoAudioEngine {
         osc.start(now)
         osc.stop(now + 0.025)
     }
+
+    /**
+     * Rapid spinning whirr & whoosh for coin flip
+     */
+    playCoinFlip() {
+        if (this.isMuted) return
+        const ctx = this.initContext()
+        if (!ctx) return
+
+        this.vibrate([15, 10, 15])
+        const now = ctx.currentTime
+
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(320, now)
+        osc.frequency.exponentialRampToValueAtTime(1400, now + 0.12)
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.25)
+
+        gain.gain.setValueAtTime(0.18, now)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26)
+
+        osc.connect(gain)
+        gain.connect(this.masterGain)
+        osc.start(now)
+        osc.stop(now + 0.27)
+    }
+
+    /**
+     * Crisp high-metallic ringing clink of a heavy gold coin landing and bouncing
+     */
+    playCoinLand() {
+        if (this.isMuted) return
+        const ctx = this.initContext()
+        if (!ctx) return
+
+        this.vibrate([25, 15])
+        const now = ctx.currentTime
+
+        // Primary metallic clink (bell harmonics: 2850Hz & 4220Hz)
+        const freqs = [2850, 4220, 5600]
+        freqs.forEach((freq, i) => {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(freq, now)
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.95, now + 0.3)
+
+            const vol = i === 0 ? 0.28 : 0.14
+            gain.gain.setValueAtTime(vol, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28 + i * 0.05)
+
+            osc.connect(gain)
+            gain.connect(this.masterGain)
+            osc.start(now)
+            osc.stop(now + 0.35)
+        })
+
+        // Secondary micro-bounce clink
+        setTimeout(() => {
+            if (this.isMuted || !this.ctx) return
+            const bounceNow = this.ctx.currentTime
+            const bounceOsc = this.ctx.createOscillator()
+            const bounceGain = this.ctx.createGain()
+            bounceOsc.type = 'triangle'
+            bounceOsc.frequency.setValueAtTime(3100, bounceNow)
+
+            bounceGain.gain.setValueAtTime(0.12, bounceNow)
+            bounceGain.gain.exponentialRampToValueAtTime(0.001, bounceNow + 0.15)
+
+            bounceOsc.connect(bounceGain)
+            bounceGain.connect(this.masterGain)
+            bounceOsc.start(bounceNow)
+            bounceOsc.stop(bounceNow + 0.16)
+        }, 110)
+    }
 }
 
 export const casinoAudio = new CasinoAudioEngine()
