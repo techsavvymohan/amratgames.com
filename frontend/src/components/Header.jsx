@@ -49,9 +49,11 @@ function Header({
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
     const { user, logout, openAuthModal } = useAuth()
     const [showUserDropdown, setShowUserDropdown] = useState(false)
+    const [showPaletteMenu, setShowPaletteMenu] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchOpen, setSearchOpen] = useState(false)
     const userDropdownRef = useRef(null)
+    const paletteMenuRef = useRef(null)
     const searchRef = useRef(null)
 
     const isGamePage = isGamePath(location.pathname)
@@ -66,6 +68,9 @@ function Header({
         const handleClickOutside = (e) => {
             if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
                 setShowUserDropdown(false)
+            }
+            if (paletteMenuRef.current && !paletteMenuRef.current.contains(e.target)) {
+                setShowPaletteMenu(false)
             }
             if (searchRef.current && !searchRef.current.contains(e.target)) {
                 setSearchOpen(false)
@@ -296,182 +301,72 @@ function Header({
                     <span style={{ fontSize: '15px' }}>⚖️</span>
                 </button>
 
-                {/* Currency Switcher */}
-                <label className="palette-select-label desktop-only-control" style={{ marginRight: '6px' }}>
-                    <span className="palette-select-text">Currency</span>
+                {/* Currency Switcher Pill */}
+                <div className="header-currency-pill desktop-only-control" title="Change display currency">
                     <select
-                        className="palette-select"
+                        className="header-currency-select"
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
                         aria-label="Select Currency"
                     >
                         <option value="INR">🇮🇳 INR (₹)</option>
-                        <option value="BTC">₿ Bitcoin</option>
+                        <option value="BTC">₿ BTC</option>
                         <option value="USDT">₮ USDT</option>
-                        <option value="AMRAT">👑 $AMRAT</option>
+                        <option value="AMRAT">👑 AMRAT</option>
                     </select>
-                </label>
+                    <span className="currency-pill-caret" aria-hidden="true">▾</span>
+                </div>
 
-                {/* Theme Palette Switcher */}
-                <label className="palette-select-label desktop-only-control">
-                    <span className="palette-select-text">Palette</span>
-                    <select
-                        className="palette-select"
-                        value={paletteId}
-                        onChange={(event) => setPaletteId(event.target.value)}
-                        aria-label="Color palette"
+                {/* Theme Palette Switcher Icon & Dropdown */}
+                <div className="header-palette-wrapper desktop-only-control" ref={paletteMenuRef} style={{ position: 'relative' }}>
+                    <button
+                        type="button"
+                        className={`header-icon-btn ${showPaletteMenu ? 'active' : ''}`}
+                        onClick={() => setShowPaletteMenu(!showPaletteMenu)}
+                        title="Theme Color Palette"
+                        aria-label="Theme Color Palette"
+                        style={{
+                            background: showPaletteMenu ? 'rgba(245, 175, 25, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                            border: showPaletteMenu ? '1px solid #f5af19' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            width: '34px',
+                            height: '34px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                        }}
                     >
-                        {palettes.map((palette) => (
-                            <option key={palette.id} value={palette.id}>{palette.name}</option>
-                        ))}
-                    </select>
-                </label>
+                        <span style={{ fontSize: '15px' }}>🎨</span>
+                    </button>
+                    {showPaletteMenu && (
+                        <div className="header-palette-dropdown">
+                            <div className="header-palette-dropdown-title">Theme Palette</div>
+                            {palettes.map((p) => {
+                                const color = p.tokens?.primary || '#f5af19'
+                                const isActive = paletteId === p.id
+                                return (
+                                    <button
+                                        key={p.id}
+                                        type="button"
+                                        className={`palette-dropdown-item ${isActive ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setPaletteId(p.id)
+                                            setShowPaletteMenu(false)
+                                        }}
+                                    >
+                                        <span className="palette-color-dot" style={{ backgroundColor: color }}></span>
+                                        <span className="palette-name">{p.name}</span>
+                                        {isActive && <span className="palette-check">✓</span>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    )}
+                </div>
 
                 <div className="desktop-auth-container">
-                    {isGamePage ? (
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }} ref={userDropdownRef}>
-                            <button className="header-icon-btn" title="Search">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                            </button>
-                            <button
-                                className="header-icon-btn"
-                                title={user ? `Logged in as ${user.username}` : "Sign In"}
-                                onClick={user ? () => setShowUserDropdown(!showUserDropdown) : () => openAuthModal('login')}
-                            >
-                                {user ? (
-                                    <span style={{ fontWeight: 800, color: '#fbbf24', fontSize: '13px' }}>
-                                        {user.username.charAt(0).toUpperCase()}
-                                    </span>
-                                ) : (
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
-                                )}
-                            </button>
-                            <button className="header-icon-btn" title="Notifications">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path></svg>
-                            </button>
-
-                            {user && showUserDropdown && (
-                                <div className="amrat-user-dropdown">
-                                    <div className="amrat-user-dropdown-header">
-                                        <div className="amrat-user-dropdown-name">{user.username}</div>
-                                        <div className="amrat-user-dropdown-role">
-                                            {user.role === 'admin' ? 'Admin' : 'VIP Player'}
-                                        </div>
-                                        {user.phone && (
-                                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-                                                📱 +91 {user.phone}
-                                            </div>
-                                        )}
-                                        {user.email && (
-                                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', wordBreak: 'break-all' }}>
-                                                ✉️ {user.email}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <Link
-                                        to="/profile"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => setShowUserDropdown(false)}
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: '#f8fafc',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            fontSize: '13px',
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        <span>👤</span>
-                                        <span>My Profile & KYC</span>
-                                    </Link>
-
-                                    <Link
-                                        to="/profile?tab=vip"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => setShowUserDropdown(false)}
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: '#fbbf24',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            fontSize: '13px',
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        <span>👑</span>
-                                        <span>VIP Club & Rakeback</span>
-                                    </Link>
-
-                                    <Link
-                                        to="/profile?tab=affiliate"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => setShowUserDropdown(false)}
-                                        style={{
-                                            textDecoration: 'none',
-                                            color: '#34d399',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            fontSize: '13px',
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        <span>💸</span>
-                                        <span>Affiliates (0.3% Share)</span>
-                                    </Link>
-
-
-                                    <button
-                                        type="button"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => {
-                                            setShowUserDropdown(false)
-                                            onOpenVerifier && onOpenVerifier()
-                                        }}
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            color: '#38bdf8',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            fontSize: '13px',
-                                            fontWeight: 600,
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <span>⚖️</span>
-                                        <span>Provably Fair Verifier</span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        className="amrat-user-dropdown-action logout"
-                                        onClick={() => {
-                                            logout()
-                                            setShowUserDropdown(false)
-                                        }}
-                                    >
-                                        <span>🚪</span>
-                                        <span>Sign Out</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ) : user ? (
+                    {user ? (
                         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={userDropdownRef}>
                             <button
                                 type="button"
@@ -566,7 +461,6 @@ function Header({
                                         <span>Affiliates (0.3% Share)</span>
                                     </Link>
 
-
                                     <button
                                         type="button"
                                         className="amrat-user-dropdown-action"
@@ -609,10 +503,10 @@ function Header({
                             )}
                         </div>
                     ) : (
-                        <>
+                        <div className="header-auth-buttons">
                             <button id="header-login-btn" className="btn btn-login" onClick={() => openAuthModal('login')}>Sign In</button>
                             <button id="header-register-btn" className="btn btn-register" onClick={() => openAuthModal('register')}>Register</button>
-                        </>
+                        </div>
                     )}
                 </div>
 

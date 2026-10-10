@@ -102,7 +102,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 20px;
     height: 60px;
     background: var(--bg-secondary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -110,43 +110,11 @@ body {
     z-index: 100;
 }
 
-.palette-select-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.palette-select {
-    min-width: 136px;
-    height: 34px;
-    padding: 0 28px 0 10px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.palette-select:focus-visible {
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
-}
-
-.palette-select option {
-    background: var(--surface-1);
-    color: var(--text-primary);
-}
-
 .header-left {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
 }
 
 .icon-btn {
@@ -182,19 +150,19 @@ body {
     flex: 1;
     display: flex;
     justify-content: center;
-    max-width: 500px;
-    margin: 0 24px;
+    max-width: 280px;
+    margin: 0 16px;
 }
 
 .search-input-wrapper {
     display: flex;
     align-items: center;
     background: var(--bg-tertiary);
-    border-radius: 20px;
-    padding: 0 16px;
+    border-radius: 18px;
+    padding: 0 14px;
     width: 100%;
-    height: 40px;
-    border: 2px solid transparent;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all var(--transition-fast);
 }
 
@@ -209,9 +177,9 @@ body {
     border: none;
     color: var(--text-primary);
     width: 100%;
-    margin-left: 10px;
+    margin-left: 8px;
     outline: none;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .search-input::placeholder {
@@ -220,48 +188,194 @@ body {
 
 .header-right {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    flex-shrink: 0;
+}
+
+/* Compact Currency Switcher Pill */
+.header-currency-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: all 0.15s ease;
+}
+
+.header-currency-pill:hover {
+    border-color: rgba(245, 175, 25, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.header-currency-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 0 24px 0 10px;
+    height: 100%;
+    cursor: pointer;
+    outline: none;
+    line-height: 34px;
+}
+
+.header-currency-select option {
+    background: #111726;
+    color: #f8fafc;
+    font-size: 13px;
+    padding: 8px;
+}
+
+.currency-pill-caret {
+    position: absolute;
+    right: 8px;
+    pointer-events: none;
+    font-size: 10px;
+    color: #94a3b8;
+    line-height: 1;
+}
+
+/* Floating Theme Palette Dropdown */
+.header-palette-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 210px;
+    background: #111726;
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: authFadeIn 0.15s ease;
+}
+
+.header-palette-dropdown-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    padding: 6px 10px 4px;
+}
+
+.palette-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.palette-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.palette-dropdown-item.active {
+    background: rgba(245, 175, 25, 0.15);
+    color: #fbbf24;
+}
+
+.palette-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.palette-dropdown-item .palette-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.palette-dropdown-item .palette-check {
+    font-size: 12px;
+    color: #fbbf24;
+    font-weight: 800;
+}
+
+/* Header Buttons & Auth */
+.desktop-auth-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .btn {
-    padding: 10px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
+    padding: 0 16px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-fast);
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
 }
 
 .btn-login {
-    background: transparent;
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .btn-login:hover {
-    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
 }
 
 .btn-register {
-    background: var(--primary);
-    color: var(--text-primary);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px var(--primary-soft);
+    background: linear-gradient(135deg, #f5af19 0%, #d49110 100%);
+    color: #0b0f19;
+    font-weight: 800;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(245, 175, 25, 0.35);
 }
 
 .btn-register:hover {
     filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.5);
 }
 
 /* ===== Homepage Chrome ===== */
 @media (min-width: 769px) {
     .header-home .header-center {
-        max-width: 680px;
-        margin-inline: 32px;
+        max-width: 280px;
+        margin-inline: 16px;
     }
 }
 
