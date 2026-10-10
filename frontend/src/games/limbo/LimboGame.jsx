@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Input, Typography, Modal, Statistic, Row, Col, Tabs } from 'antd'
+import { Button, Input, Typography, Modal, Statistic, Row, Col, Tabs, Drawer } from 'antd'
 import {
     ThunderboltOutlined,
     SafetyCertificateOutlined,
@@ -66,6 +66,7 @@ function LimboGame() {
 
     // Modals
     const [fairnessOpen, setFairnessOpen] = useState(false)
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
 
     // Initialize Provably Fair on mount
     useEffect(() => {
@@ -421,7 +422,15 @@ function LimboGame() {
                     </div>
 
                     {/* Fairness & Verification Trigger */}
-                    <div className="limbo-arena-footer">
+                    <div className="limbo-arena-footer" style={{ display: 'flex', gap: '8px' }}>
+                        <Button
+                            type="text"
+                            icon={<HistoryOutlined />}
+                            onClick={() => setHistoryDrawerOpen(true)}
+                            className="limbo-btn-secondary"
+                        >
+                            History
+                        </Button>
                         <Button
                             type="text"
                             icon={<SafetyCertificateOutlined />}
@@ -599,12 +608,24 @@ function LimboGame() {
                 </div>
             </div>
 
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="limbo"
-                gameTitle="Limbo"
-                localRounds={history}
-            />
+            {/* Slide-out Game Specific Round History Drawer */}
+            <Drawer
+                title="Limbo · Live Round History"
+                placement="right"
+                width={520}
+                open={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                styles={{
+                    body: { padding: 12, background: '#0b101b' },
+                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
+                }}
+            >
+                <GameBottomHistory
+                    gameKey="limbo"
+                    gameTitle="Limbo"
+                    localRounds={history}
+                />
+            </Drawer>
 
             {/* Provably Fair Modal */}
             <Modal

@@ -12,7 +12,8 @@ import {
     ExpandOutlined,
     FullscreenExitOutlined,
     CheckCircleOutlined,
-    BugOutlined
+    BugOutlined,
+    HistoryOutlined
 } from '@ant-design/icons'
 import { Modal, Tooltip, Statistic, Row, Col, Space, Button, Typography, Tag, Divider, Input, InputNumber } from 'antd'
 import Chart from 'chart.js/auto'
@@ -874,18 +875,15 @@ function MinesGame() {
                             </Tooltip>
                         </Space>
                         <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>
+                        <Button type="text" icon={<HistoryOutlined />} className="fairness-btn" onClick={() => setHistoryModalOpen(true)}>
+                            History
+                        </Button>
                         <Button type="text" icon={<SafetyCertificateOutlined />} className="fairness-btn" onClick={() => setFairnessModalOpen(true)}>
                             Fairness
                         </Button>
                     </div>
                 </div>
             </div>
-
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="mines"
-                gameTitle="Mines"
-            />
 
             <Modal
                 title={
@@ -1153,12 +1151,6 @@ function MinesGame() {
                     </div>
                 </div>
             )}
-
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="mines"
-                gameTitle="Mines"
-            />
         </div>
     );
 }

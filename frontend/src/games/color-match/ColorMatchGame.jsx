@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, InputNumber, Typography, Modal, Tabs, message } from 'antd'
+import { Button, InputNumber, Typography, Modal, Tabs, Drawer, message } from 'antd'
 import {
     SafetyCertificateOutlined,
     ClockCircleOutlined,
@@ -77,8 +77,9 @@ function ColorMatchGame() {
     // Live Spectator Missed Win State
     const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
 
-    // Modals
+    // Modals & Drawers
     const [fairnessOpen, setFairnessOpen] = useState(false)
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [serverSeedHash, setServerSeedHash] = useState('d3b07384d113edec49eaa6238ad5ff00b1a0d7d8e8749a9040306c4599a0f4a7')
     const [clientSeed] = useState('amrat-cm-' + Math.floor(Math.random() * 100000))
 
@@ -352,7 +353,15 @@ function ColorMatchGame() {
                     ))}
                 </div>
 
-                <div className="cm-top-right">
+                <div className="cm-top-right" style={{ display: 'flex', gap: '8px' }}>
+                    <Button
+                        type="text"
+                        icon={<HistoryOutlined style={{ color: '#ffd700' }} />}
+                        onClick={() => setHistoryDrawerOpen(true)}
+                        className="cm-fair-btn"
+                    >
+                        History
+                    </Button>
                     <Button
                         type="text"
                         icon={<SafetyCertificateOutlined style={{ color: '#00e676' }} />}
@@ -897,12 +906,25 @@ function ColorMatchGame() {
                     </div>
                 </div>
             </Modal>
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="color-match"
-                gameTitle="Color Match"
-                localRounds={myBets}
-            />
+
+            {/* Slide-out Game Specific Round History Drawer */}
+            <Drawer
+                title="Color Match · Live Round History"
+                placement="right"
+                width={520}
+                open={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                styles={{
+                    body: { padding: 12, background: '#0b101b' },
+                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
+                }}
+            >
+                <GameBottomHistory
+                    gameKey="color-match"
+                    gameTitle="Color Match"
+                    localRounds={myBets}
+                />
+            </Drawer>
         </div>
     )
 }

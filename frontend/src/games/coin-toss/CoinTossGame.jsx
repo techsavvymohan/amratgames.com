@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Typography, Tooltip } from 'antd'
+import { Typography, Tooltip, Drawer, Button } from 'antd'
 import {
     ThunderboltOutlined,
     SafetyCertificateOutlined,
@@ -10,7 +10,8 @@ import {
     FireOutlined,
     ClockCircleFilled,
     PlayCircleOutlined,
-    PauseCircleOutlined
+    PauseCircleOutlined,
+    HistoryOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
@@ -62,8 +63,9 @@ export default function CoinTossGame() {
     const [history, setHistory] = useState([])
     const [isMuted, setIsMuted] = useState(casinoAudio.getMuted())
 
-    // Provably fair modal state
+    // Provably fair modal & history drawer state
     const [verifierOpen, setVerifierOpen] = useState(false)
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [verifierData, setVerifierData] = useState(null)
     const [provablyFairSeed, setProvablyFairSeed] = useState({
         serverSeedHash: 'Loading cryptographic hash...',
@@ -399,6 +401,16 @@ export default function CoinTossGame() {
                         title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
                     >
                         <SoundOutlined className={isMuted ? 'muted' : ''} />
+                    </button>
+
+                    <button
+                        type="button"
+                        className="header-action-btn verifier-btn"
+                        onClick={() => setHistoryDrawerOpen(true)}
+                        title="View Live Round History"
+                    >
+                        <HistoryOutlined />
+                        <span className="btn-label">History</span>
                     </button>
 
                     <button
@@ -765,12 +777,24 @@ export default function CoinTossGame() {
                 </div>
             </div>
 
-            {/* In-Window Game Specific Round History (Scroll down to view) */}
-            <GameBottomHistory
-                gameKey="coin-toss"
-                gameTitle="Coin Toss"
-                localRounds={history}
-            />
+            {/* Slide-out Game Specific Round History Drawer */}
+            <Drawer
+                title="Coin Toss · Live Round History"
+                placement="right"
+                width={520}
+                open={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                styles={{
+                    body: { padding: 12, background: '#0b101b' },
+                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
+                }}
+            >
+                <GameBottomHistory
+                    gameKey="coin-toss"
+                    gameTitle="Coin Toss"
+                    localRounds={history}
+                />
+            </Drawer>
 
             {/* Provably Fair Verifier Modal */}
             <ProvablyFairVerifierModal

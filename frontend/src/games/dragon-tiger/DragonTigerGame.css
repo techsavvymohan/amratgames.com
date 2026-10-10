@@ -13,24 +13,43 @@
     align-items: stretch;
 }
 
-/* Laptop Viewport: Clean layout with space for bottom history */
+/* Laptop Viewport: 100% Zero-Scroll Perfect Fit */
 @media (min-width: 901px) {
     .dt-page {
-        min-height: calc(100vh - 70px);
-        padding: 16px 20px 60px;
+        height: calc(100vh - 60px);
+        max-height: calc(100vh - 60px);
+        overflow: hidden;
+        padding: 12px 18px;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
     }
     .dt-container {
-        min-height: 520px;
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+        align-items: stretch;
+        overflow: hidden;
     }
     .dt-felt {
         height: 100%;
-        min-height: unset !important;
-        padding: 16px 20px !important;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 14px 18px !important;
+        overflow: hidden;
     }
     .dt-controls-card {
         height: 100%;
-        padding: 16px 18px !important;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
         justify-content: space-between;
+        padding: 14px 16px !important;
+        overflow: hidden;
     }
 }
 

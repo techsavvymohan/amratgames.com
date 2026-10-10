@@ -1163,6 +1163,16 @@ function CrashGame() {
 
                         <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>
 
+                        {/* History Button */}
+                        <Button
+                            type="text"
+                            icon={<BarChartOutlined />}
+                            className="fairness-btn"
+                            onClick={() => setHistoryDrawerOpen(true)}
+                        >
+                            History
+                        </Button>
+
                         {/* Fairness Button */}
                         <Button
                             type="text"
@@ -1446,13 +1456,6 @@ function CrashGame() {
                     Rotate Seed (Reveal Current)
                 </Button>
             </Modal>
-
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="crash"
-                gameTitle="Rocket Crash"
-                localRounds={history}
-            />
         </div>
     )
 }

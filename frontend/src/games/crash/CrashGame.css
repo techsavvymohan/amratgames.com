@@ -7,8 +7,9 @@
 .crash-game {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    overflow-y: auto;
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
+    overflow: hidden;
     background: var(--bg-primary);
 }
 

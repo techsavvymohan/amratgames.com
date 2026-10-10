@@ -698,12 +698,6 @@ function PlinkoGame() {
                 </div>
             </div>
 
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="plinko"
-                gameTitle="Plinko"
-            />
-
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (
                 <div className="fixed-widget fade-in-scale" ref={widgetRef}>

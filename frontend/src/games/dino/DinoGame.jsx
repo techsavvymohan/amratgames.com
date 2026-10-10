@@ -42,7 +42,8 @@ import {
     BulbOutlined,
     LineChartOutlined,
     ReloadOutlined,
-    RightOutlined
+    RightOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
 import Chart from 'chart.js/auto';
 
@@ -1085,6 +1086,9 @@ function DinoGame() {
                                 </Tooltip>
                             </Space>
                             <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>
+                            <Button type="text" icon={<HistoryOutlined />} className="fairness-btn" onClick={() => setHistoryModalOpen(true)}>
+                                History
+                            </Button>
                             <Button type="text" icon={<SafetyCertificateOutlined />} className="fairness-btn" onClick={() => setFairnessModalOpen(true)}>
                                 Fairness
                             </Button>
@@ -1113,12 +1117,6 @@ function DinoGame() {
                     </div>
                 </div>
             </div>
-
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="dino"
-                gameTitle="Dino Run"
-            />
 
             {/* Live Stats Draggable Widget */}
             {statsDrawerOpen && (

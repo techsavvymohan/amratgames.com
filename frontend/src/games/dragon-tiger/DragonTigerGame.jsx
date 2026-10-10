@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Input, InputNumber, Typography, Modal, Statistic, Row, Col } from 'antd'
+import { Button, Input, InputNumber, Typography, Modal, Statistic, Row, Col, Drawer } from 'antd'
 import {
     SafetyCertificateOutlined,
     ReloadOutlined,
     UndoOutlined,
-    TrophyOutlined
+    TrophyOutlined,
+    HistoryOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
@@ -64,6 +65,7 @@ function DragonTigerGame() {
 
     // Fairness
     const [fairnessOpen, setFairnessOpen] = useState(false)
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [serverSeedHash, setServerSeedHash] = useState('d78e3a2b1c4f5e6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a')
     const [clientSeed, setClientSeed] = useState('client-seed-' + Math.floor(Math.random() * 10000))
     const [nonce, setNonce] = useState(1)
@@ -467,7 +469,15 @@ function DragonTigerGame() {
                         </Button>
                     </div>
 
-                    <div className="dt-footer-actions">
+                    <div className="dt-footer-actions" style={{ display: 'flex', gap: '8px' }}>
+                        <Button
+                            type="text"
+                            icon={<HistoryOutlined />}
+                            onClick={() => setHistoryDrawerOpen(true)}
+                            className="dt-btn-secondary"
+                        >
+                            History
+                        </Button>
                         <Button
                             type="text"
                             icon={<SafetyCertificateOutlined />}
@@ -480,11 +490,23 @@ function DragonTigerGame() {
                 </div>
             </div>
 
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="dragon-tiger"
-                gameTitle="Dragon Tiger"
-            />
+            {/* Slide-out Game Specific Round History Drawer */}
+            <Drawer
+                title="Dragon Tiger · Live Round History"
+                placement="right"
+                width={520}
+                open={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                styles={{
+                    body: { padding: 12, background: '#0b101b' },
+                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
+                }}
+            >
+                <GameBottomHistory
+                    gameKey="dragon-tiger"
+                    gameTitle="Dragon Tiger"
+                />
+            </Drawer>
 
             {/* Provably Fair Modal */}
             <Modal

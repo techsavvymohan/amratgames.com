@@ -1764,6 +1764,7 @@ body {
     .main-content:has(.limbo-page),
     .main-content:has(.dragon-tiger-page),
     .main-content:has(.color-match-page),
+    .main-content:has(.coin-toss-wrapper),
     .main-content:has(.dino-game-page) {
         padding-bottom: 0 !important;
         overflow: hidden !important;
