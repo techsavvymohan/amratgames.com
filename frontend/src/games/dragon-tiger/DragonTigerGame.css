@@ -730,23 +730,36 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 @media (max-width: 768px) {
     .dt-page,
     .dragon-tiger-page {
-        min-height: 100vh;
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: auto !important;
-        padding: 8px 8px 80px !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    .dt-felt {
-        min-height: 380px !important;
-        padding: 14px 10px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 4px 6px 0 !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
-        border-radius: 16px !important;
-        margin-bottom: 12px !important;
+    }
+
+    .dt-container {
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+    }
+
+    .dt-felt {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        padding: 8px 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        border-radius: 14px !important;
+        margin-bottom: 4px !important;
     }
 
     .dt-duel-arena {

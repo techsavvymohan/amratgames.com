@@ -1115,20 +1115,20 @@
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .crash-game {
-        min-height: 100vh;
-        height: auto !important;
-        max-height: none !important;
-        padding-bottom: 80px !important;
-        overflow-y: auto !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
     }
 
     .crash-game .game-container {
-        height: auto !important;
-        max-height: none !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 auto !important;
@@ -1139,7 +1139,7 @@
         width: 100% !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
-        max-height: 52vh !important;
+        max-height: calc(100% - 145px) !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
@@ -1236,8 +1236,7 @@
     }
 
     .crash-mobile-tabs {
-        display: block;
-        padding: 10px 12px 18px;
+        display: none !important;
     }
 
     .crash-mobile-tabs [role='tablist'] {

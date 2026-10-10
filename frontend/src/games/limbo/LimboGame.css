@@ -542,28 +542,33 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
 /* ── Mobile Viewport Fit ── */
 @media (max-width: 900px) {
     .limbo-page {
-        min-height: 100vh;
-        height: auto !important;
-        max-height: none !important;
-        overflow-y: auto !important;
-        padding: 8px 8px 80px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 4px 8px 0 !important;
         display: flex !important;
         flex-direction: column !important;
+        justify-content: space-between !important;
     }
 
     .limbo-container {
-        height: auto !important;
-        max-height: none !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        justify-content: space-between !important;
         grid-template-columns: 1fr !important;
-        gap: 12px !important;
+        gap: 6px !important;
         padding: 0 !important;
     }
 
     .limbo-arena {
-        min-height: 280px !important;
-        padding: 16px !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        padding: 10px 12px !important;
         border-radius: 14px !important;
         justify-content: space-between !important;
     }

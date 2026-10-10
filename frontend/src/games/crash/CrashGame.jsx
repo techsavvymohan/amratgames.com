@@ -1186,20 +1186,6 @@ function CrashGame() {
                 </div>
             </div>
 
-            {/* Hot Bet Banner */}
-            <div className="hot-bet-banner">
-                <Tag color="purple" className="mega-tag">
-                    🔥 611,100.00×
-                </Tag>
-                <Text type="secondary">ogicjp won big!</Text>
-            </div>
-
-            {/* In-Window Game Specific Round History */}
-            <GameBottomHistory
-                gameKey="crash"
-                gameTitle="Crash"
-                localRounds={gameRecords}
-            />
 
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (
@@ -1337,6 +1323,15 @@ function CrashGame() {
                                 })
                             )}
                         </div>
+                    </div>
+
+                    {/* Game Bottom History (Live Bets & My Bets) */}
+                    <div className="dashboard-section" style={{ marginTop: 16 }}>
+                        <GameBottomHistory
+                            gameKey="crash"
+                            gameTitle="Crash"
+                            localRounds={gameRecords}
+                        />
                     </div>
                 </div>
             </Modal>
