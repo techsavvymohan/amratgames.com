@@ -21,6 +21,7 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
     // Animation & synchronization refs
     const animFrameRef = useRef(null)
     const activeFlightStartRef = useRef(null)
+    const maxElapsedRef = useRef(0)
     const lastRenderedRef = useRef({ elapsed: 0, multiplier: 1.00 })
     const phaseRef = useRef(phase)
     phaseRef.current = phase
@@ -203,9 +204,10 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             ctx.lineJoin = 'round'
             ctx.stroke()
 
-            // 5. Exact Mathematical Tangent Angle (zero wobble)
-            const dx = chartWidth / maxT
-            const dy = - (CRASH_GROWTH_RATE * curMult * chartHeight) / (maxM - 1)
+            // 5. Exact Mathematical Tangent Angle along curve (zero wobble, zero jitter)
+            const prevPt = (points && numPoints > 0) ? points[numPoints - 1] : { x: endX - 1, y: endY + 0.5 }
+            const dx = endX - prevPt.x
+            const dy = endY - prevPt.y
             const angle = Math.atan2(dy, dx)
 
             // 6. Direct GPU Transform Updates (translate3d, zero reflow)
@@ -291,7 +293,7 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
         }
     }, [getMultiplierColor])
 
-    // High-performance 60fps/120fps flight animation loop
+    // High-performance 60fps/120fps flight animation loop (rock-solid, monotonic)
     useEffect(() => {
         if (phase === 'running') {
             // Resolve anchor start time
@@ -301,10 +303,15 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                 anchorTime = Date.now() - estimatedSecs * 1000
             }
             activeFlightStartRef.current = anchorTime
+            maxElapsedRef.current = 0
 
             const loop = () => {
                 const now = Date.now()
-                const curElapsed = Math.max(0, (now - activeFlightStartRef.current) / 1000)
+                const rawElapsed = Math.max(0, (now - activeFlightStartRef.current) / 1000)
+                // STRICT MONOTONICITY: Elapsed flight time can NEVER decrease!
+                const curElapsed = Math.max(maxElapsedRef.current, rawElapsed)
+                maxElapsedRef.current = curElapsed
+
                 const curMult = Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * curElapsed))
 
                 drawScene(curElapsed, curMult, false)
@@ -325,6 +332,8 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                 cancelAnimationFrame(animFrameRef.current)
                 animFrameRef.current = null
             }
+            activeFlightStartRef.current = null
+            maxElapsedRef.current = 0
             const crashMult = multiplier > 1.0 ? multiplier : lastRenderedRef.current.multiplier
             const crashElapsed = Math.log(Math.max(1.0, crashMult)) / CRASH_GROWTH_RATE
             drawScene(crashElapsed, crashMult, true)
@@ -334,20 +343,11 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                 cancelAnimationFrame(animFrameRef.current)
                 animFrameRef.current = null
             }
+            activeFlightStartRef.current = null
+            maxElapsedRef.current = 0
             drawScene(0, 1.00, false)
         }
     }, [phase, flightStartTime, drawScene])
-
-    // Subtle clock drift correction if server sends a tick
-    useEffect(() => {
-        if (phase === 'running' && activeFlightStartRef.current && multiplier > 1.0) {
-            const expectedElapsed = Math.log(multiplier) / CRASH_GROWTH_RATE
-            const localElapsed = (Date.now() - activeFlightStartRef.current) / 1000
-            if (Math.abs(expectedElapsed - localElapsed) > 0.15) {
-                activeFlightStartRef.current += (localElapsed - expectedElapsed) * 0.1 * 1000
-            }
-        }
-    }, [multiplier, phase])
 
     // Persistent single-instance ResizeObserver (never rebuilt on animation ticks)
     useEffect(() => {
@@ -461,7 +461,11 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                         fontFamily: "'Inter', -apple-system, sans-serif"
                     }}
                 >
-                    <span ref={multiplierNumberRef}>{multiplier.toFixed(2)}</span>
+                    <span ref={multiplierNumberRef}>
+                        {phase === 'running' && lastRenderedRef.current.multiplier > 1.0
+                            ? lastRenderedRef.current.multiplier.toFixed(2)
+                            : multiplier.toFixed(2)}
+                    </span>
                     <span className="multiplier-suffix">×</span>
                 </Title>
             </div>

@@ -492,10 +492,14 @@ function CrashGame() {
             const m = room.currentMultiplier || 1.00
             setMultiplier(m)
             multiplierRef.current = m
-            const fStart = room.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, m)) / CRASH_GROWTH_RATE) * 1000)
-            startTimeRef.current = fStart
-            setFlightStartTime(fStart)
-            const el = (Date.now() - fStart) / 1000
+            if (!startTimeRef.current || roomRoundIdRef.current !== room.roundId) {
+                roomRoundIdRef.current = room.roundId
+                const initialSecs = (m > 1.02) ? (Math.log(m) / CRASH_GROWTH_RATE) * 1000 : 0
+                const fStart = Date.now() - initialSecs
+                startTimeRef.current = fStart
+                setFlightStartTime(fStart)
+            }
+            const el = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
             setElapsedTime(el)
             elapsedTimeRef.current = el
         } else if (room.state === 'CRASHED') {
@@ -505,6 +509,7 @@ function CrashGame() {
             multiplierRef.current = pt
             startTimeRef.current = null
             setFlightStartTime(null)
+            roomRoundIdRef.current = room.roundId
         }
 
         if (Array.isArray(room.history) && room.history.length > 0) {
@@ -571,17 +576,22 @@ function CrashGame() {
                                 elapsedTimeRef.current = 0
                                 startTimeRef.current = null
                                 setFlightStartTime(null)
+                                roomRoundIdRef.current = payload.roundId
                             } else if (payload.state === 'FLYING') {
                                 setPhase(PHASE.RUNNING)
                                 setSpectatorMissedWin(null)
                                 setMultiplier(payload.multiplier || 1.00)
                                 multiplierRef.current = payload.multiplier || 1.00
-                                if (!startTimeRef.current || (payload.flightStartTime && Math.abs(startTimeRef.current - payload.flightStartTime) > 300)) {
-                                    const fStart = payload.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, payload.multiplier || 1.0)) / CRASH_GROWTH_RATE) * 1000)
+                                if (!startTimeRef.current || roomRoundIdRef.current !== payload.roundId) {
+                                    roomRoundIdRef.current = payload.roundId
+                                    const initialSecs = (payload.multiplier && payload.multiplier > 1.02)
+                                        ? (Math.log(payload.multiplier) / CRASH_GROWTH_RATE) * 1000
+                                        : 0
+                                    const fStart = Date.now() - initialSecs
                                     startTimeRef.current = fStart
                                     setFlightStartTime(fStart)
                                 }
-                                const elapsed = (Date.now() - startTimeRef.current) / 1000
+                                const elapsed = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
                                 setElapsedTime(elapsed)
                                 elapsedTimeRef.current = elapsed
                             }
@@ -592,6 +602,7 @@ function CrashGame() {
                             multiplierRef.current = bustPoint
                             startTimeRef.current = null
                             setFlightStartTime(null)
+                            roomRoundIdRef.current = payload.roundId
                             if (payload.history && Array.isArray(payload.history)) {
                                 setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
                             } else {
@@ -676,7 +687,7 @@ function CrashGame() {
         if (phase === PHASE.RUNNING && gameMode === 'solo') {
             const tick = () => {
                 const now = Date.now()
-                const elapsed = (now - startTimeRef.current) / 1000
+                const elapsed = Math.max(0, (now - startTimeRef.current) / 1000)
                 const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
 
                 // Always update refs (used by Canvas directly)
@@ -690,8 +701,8 @@ function CrashGame() {
                     setPhase(PHASE.CRASHED)
                     handleCrash(crashPoint)
                 } else {
-                    // Throttle React state updates to every ~33ms (≈30fps for UI)
-                    if (now - lastStateUpdateRef.current >= 33) {
+                    // Throttle React state updates to every ~50ms (20fps for UI labels, while Canvas runs 60-120fps)
+                    if (now - lastStateUpdateRef.current >= 50) {
                         setMultiplier(currentMultiplier)
                         setElapsedTime(elapsed)
                         lastStateUpdateRef.current = now
