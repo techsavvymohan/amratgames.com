@@ -1153,6 +1153,12 @@ function MinesGame() {
                     </div>
                 </div>
             )}
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="mines"
+                gameTitle="Mines"
+            />
         </div>
     );
 }

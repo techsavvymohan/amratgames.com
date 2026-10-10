@@ -42,9 +42,18 @@ server {
         access_log off;
     }
 
-    # SPA Routing Fallback
+    # SPA Routing Fallback (Prevent stale browser caching of index.html)
+    location = /index.html {
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+        add_header Pragma "no-cache" always;
+        add_header Expires "0" always;
     }
 
     # High-Throughput API Reverse Proxy with Keep-Alive Pooling

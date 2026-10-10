@@ -13,20 +13,14 @@
     align-items: stretch;
 }
 
-/* Laptop Viewport Fit: No vertical scrolling required on standard 720p/768p/1080p laptop screens */
+/* Laptop Viewport: Clean layout with space for bottom history */
 @media (min-width: 901px) {
     .dt-page {
-        height: calc(100vh - 70px);
-        max-height: calc(100vh - 70px);
-        overflow: hidden;
-        padding: 8px 16px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        min-height: calc(100vh - 70px);
+        padding: 16px 20px 60px;
     }
     .dt-container {
-        height: 100%;
-        max-height: 600px;
+        min-height: 520px;
     }
     .dt-felt {
         height: 100%;
@@ -717,24 +711,23 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 @media (max-width: 768px) {
     .dt-page,
     .dragon-tiger-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
-        padding: 2px 4px !important;
+        min-height: 100vh;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        padding: 8px 8px 80px !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
     }
 
     .dt-felt {
-        flex: 1 1 auto !important;
-        min-height: 0 !important;
-        max-height: 42vh !important;
-        padding: 6px !important;
+        min-height: 380px !important;
+        padding: 14px 10px !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-evenly !important;
-        border-radius: 12px !important;
+        justify-content: space-between !important;
+        border-radius: 16px !important;
+        margin-bottom: 12px !important;
     }
 
     .dt-duel-arena {

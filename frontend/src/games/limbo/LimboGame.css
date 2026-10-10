@@ -491,60 +491,48 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
 /* ── Laptop Viewport Fit ── */
 @media (min-width: 901px) {
     .limbo-page {
-        height: calc(100vh - 70px);
-        max-height: calc(100vh - 70px);
-        overflow: hidden;
-        padding: 8px 16px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        min-height: calc(100vh - 70px);
+        padding: 16px 20px 60px;
     }
     .limbo-container {
-        height: 100%;
-        max-height: 560px;
+        min-height: 520px;
     }
     .limbo-arena {
-        height: 100%;
-        min-height: unset !important;
-        padding: 16px 20px !important;
+        min-height: 480px;
+        padding: 20px !important;
     }
     .limbo-controls-card {
-        height: 100%;
-        padding: 16px 18px !important;
+        padding: 20px !important;
         justify-content: space-between;
     }
 }
 
-/* ── Mobile Viewport Fit (Zero Scroll Guarantee) ── */
+/* ── Mobile Viewport Fit ── */
 @media (max-width: 900px) {
     .limbo-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
-        padding: 2px 4px !important;
+        min-height: 100vh;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        padding: 8px 8px 80px !important;
         display: flex !important;
         flex-direction: column !important;
     }
 
     .limbo-container {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
+        height: auto !important;
+        max-height: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
         grid-template-columns: 1fr !important;
-        gap: 4px !important;
+        gap: 12px !important;
         padding: 0 !important;
-        flex: 1 1 auto !important;
     }
 
     .limbo-arena {
-        flex: 1 1 auto !important;
-        min-height: 0 !important;
-        max-height: 38% !important;
-        padding: 8px 10px !important;
-        border-radius: 12px !important;
+        min-height: 280px !important;
+        padding: 16px !important;
+        border-radius: 14px !important;
         justify-content: space-between !important;
     }
 

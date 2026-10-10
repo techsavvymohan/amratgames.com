@@ -3,10 +3,10 @@
 .plinko-page {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    min-height: 100vh;
     width: 100%;
     background: var(--bg-secondary);
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
 }
 
@@ -1092,21 +1092,21 @@
 
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .plinko-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        min-height: 0 !important;
-        padding-bottom: 0 !important;
-        overflow: hidden !important;
+        min-height: 100vh;
+        height: auto !important;
+        max-height: none !important;
+        padding-bottom: 80px !important;
+        overflow-y: auto !important;
         display: flex !important;
         flex-direction: column !important;
     }
 
     .plinko-page .plinko-main,
     .plinko-page .plinko-container {
-        height: 100% !important;
-        max-height: 100% !important;
+        height: auto !important;
+        max-height: none !important;
         min-height: 0 !important;
-        overflow: hidden !important;
+        overflow: visible !important;
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 auto !important;

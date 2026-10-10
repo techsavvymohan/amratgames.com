@@ -1446,6 +1446,13 @@ function CrashGame() {
                     Rotate Seed (Reveal Current)
                 </Button>
             </Modal>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="crash"
+                gameTitle="Rocket Crash"
+                localRounds={history}
+            />
         </div>
     )
 }
