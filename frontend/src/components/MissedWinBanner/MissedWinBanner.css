@@ -58,11 +58,42 @@
 }
 
 @media (max-width: 600px) {
+    .missed-win-banner-container {
+        bottom: 8px;
+        width: 95%;
+        border-radius: 12px;
+    }
     .missed-win-content {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-        padding: 10px 14px;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+    }
+    .missed-win-icon-badge {
+        min-width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+    .missed-flame-icon {
+        font-size: 0.95rem;
+    }
+    .missed-mult-tag {
+        display: none;
+    }
+    .missed-headline {
+        font-size: 0.72rem;
+    }
+    .missed-outcome-chip {
+        font-size: 0.62rem;
+        padding: 1px 4px;
+    }
+    .missed-win-subtext {
+        font-size: 0.68rem;
+    }
+    .missed-win-cta-btn {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        border-radius: 8px;
     }
 }
 

@@ -379,7 +379,7 @@ export default function CoinTossGame() {
 
     return (
         <div className="coin-toss-wrapper">
-            {/* Top Game Bar */}
+            {/* Top Game Bar - Streamlined & Minimal */}
             <header className="coin-toss-header">
                 <div className="header-meta">
                     <span className="badge-live-pulse">
@@ -388,36 +388,9 @@ export default function CoinTossGame() {
                     <span className="badge-countdown">
                         <ClockCircleFilled /> TOSS IN {roundCountdown}s
                     </span>
-                    <span className="badge-rtp">🪙 99% RTP</span>
-                    <span className="badge-mult">1.98X</span>
-                    {turboMode && (
-                        <span className="badge-turbo">
-                            <RocketOutlined /> TURBO
-                        </span>
-                    )}
                 </div>
 
                 <div className="header-actions">
-                    <button
-                        type="button"
-                        className={`header-action-btn ${liveRoundsActive ? 'active-auto' : ''}`}
-                        onClick={() => setLiveRoundsActive((prev) => !prev)}
-                        title="Toggle Non-Stop 24/7 Rounds"
-                    >
-                        {liveRoundsActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                        <span className="btn-label">{liveRoundsActive ? 'Non-Stop ON' : 'Non-Stop OFF'}</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        className={`header-action-btn ${turboMode ? 'active-turbo' : ''}`}
-                        onClick={() => setTurboMode((prev) => !prev)}
-                        title={turboMode ? 'Turbo Mode' : 'Arcade Mode'}
-                    >
-                        <ThunderboltOutlined />
-                        <span className="btn-label">{turboMode ? 'Turbo ON' : 'Turbo'}</span>
-                    </button>
-
                     <button
                         type="button"
                         className="header-action-btn"
@@ -462,33 +435,6 @@ export default function CoinTossGame() {
                         winTrigger={winTrigger}
                     />
 
-                    {/* Live Flip Streak Ribbon */}
-                    <div className="history-ribbon">
-                        <span className="history-label">RECENT:</span>
-                        <div className="history-pills">
-                            {history.length === 0 ? (
-                                <span className="history-empty">Live rounds tossing non-stop...</span>
-                            ) : (
-                                history.slice(0, 10).map((item) => (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className={`history-pill-asset ${item.outcome} ${item.won ? 'is-win' : 'is-loss'}`}
-                                        onClick={() => openVerifierForRound(item)}
-                                        title={`Outcome: ${item.outcome.toUpperCase()} (${item.won ? 'WON' : 'LOST'}). Click to verify.`}
-                                    >
-                                        <img
-                                            src={item.outcome === 'heads' ? HEADS_ASSET : TAILS_ASSET}
-                                            alt={item.outcome}
-                                            className="history-pill-img"
-                                        />
-                                        <span className="pill-letter">{item.outcome === 'heads' ? 'H' : 'T'}</span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
                     {/* Central 3D Coin Animation Stage */}
                     <div className="coin-viewport">
                         {/* Table Pedestal Shockwave Ring */}
@@ -502,10 +448,14 @@ export default function CoinTossGame() {
                         >
                             {/* Heads Face Asset */}
                             <div className="coin-face coin-face-heads">
+                                <div className="coin-fallback-art">
+                                    <span className="coin-fallback-letter">H</span>
+                                </div>
                                 <img
                                     src={HEADS_ASSET}
                                     alt="Royal Casino Heads Coin"
                                     className="coin-artwork-img"
+                                    loading="eager"
                                 />
                                 <div className="coin-inner-rim-bevel" />
                                 <div className={`coin-glint-sweep ${isFlipping ? 'glint-active' : ''}`} />
@@ -516,10 +466,14 @@ export default function CoinTossGame() {
 
                             {/* Tails Face Asset */}
                             <div className="coin-face coin-face-tails">
+                                <div className="coin-fallback-art">
+                                    <span className="coin-fallback-letter">T</span>
+                                </div>
                                 <img
                                     src={TAILS_ASSET}
                                     alt="Royal Casino Tails Coin"
                                     className="coin-artwork-img"
+                                    loading="eager"
                                 />
                                 <div className="coin-inner-rim-bevel" />
                                 <div className={`coin-glint-sweep ${isFlipping ? 'glint-active' : ''}`} />
@@ -590,6 +544,34 @@ export default function CoinTossGame() {
 
                 {/* Betting Control Panel */}
                 <div className="coin-controls-card">
+                    {/* Game Multiplier, RTP & Automation Controls */}
+                    <div className="coin-controls-top-row">
+                        <div className="controls-badges">
+                            <span className="badge-mult-pill">1.98X PAYOUT</span>
+                            <span className="badge-rtp-pill">🪙 99% RTP</span>
+                        </div>
+                        <div className="controls-toggles">
+                            <button
+                                type="button"
+                                className={`control-toggle-btn ${liveRoundsActive ? 'active' : ''}`}
+                                onClick={() => setLiveRoundsActive((prev) => !prev)}
+                                title="Toggle Non-Stop 24/7 Rounds"
+                            >
+                                {liveRoundsActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                                <span>Non-Stop {liveRoundsActive ? 'ON' : 'OFF'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                className={`control-toggle-btn ${turboMode ? 'active' : ''}`}
+                                onClick={() => setTurboMode((prev) => !prev)}
+                                title="Toggle Turbo Mode"
+                            >
+                                <ThunderboltOutlined />
+                                <span>Turbo</span>
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Live Next Round Queue Status */}
                     <div className={`live-queue-indicator ${userBetLocked ? 'is-locked-in' : ''}`}>
                         <div className="queue-status-text">

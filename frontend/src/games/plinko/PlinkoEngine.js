@@ -235,7 +235,7 @@ class PlinkoEngine {
      * @param {number} binIndex - The target bin index (0 = leftmost, rowCount = rightmost)
      * @param {string} ballType - The identifier for the ball type being dropped
      */
-    dropBall(binIndex, ballType) {
+    dropBall(binIndex, ballType, isDemo = false) {
         if (this.getActiveBallCount() >= MAX_ACTIVE_BALLS) return null;
 
         // Get pre-calculated X for this bin

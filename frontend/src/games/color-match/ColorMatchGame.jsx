@@ -396,10 +396,10 @@ function ColorMatchGame() {
                                     />
                                 </svg>
                                 <div className="cm-dial-time">
-                                    <span className="cm-time-num" style={{ fontSize: isDrawing ? 13 : 15, fontWeight: 900 }}>
-                                        {isDrawing ? 'ROLLING' : 'READY'}
+                                    <span className="cm-time-num" style={{ fontSize: isDrawing ? 12 : 14, fontWeight: 900 }}>
+                                        {isDrawing ? 'ROLL' : 'READY'}
                                     </span>
-                                    <span className="cm-time-lbl">{isDrawing ? 'DRAWING' : 'BET & DRAW'}</span>
+                                    <span className="cm-time-lbl">{isDrawing ? 'DRAWING' : 'ROUND'}</span>
                                 </div>
                             </div>
                         </div>

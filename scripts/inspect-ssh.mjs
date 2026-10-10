@@ -14,12 +14,8 @@ conn.on('ready', () => {
         else
             echo "No authorized_keys file!"
         fi
-        echo ""
-        echo "=== RECENT AUTH LOGS ==="
-        journalctl -u ssh -n 15 --no-pager 2>/dev/null || cat /var/log/auth.log | tail -n 15 || true
-        echo ""
-        echo "=== PAM SSHD CONFIG ==="
-        cat /etc/pam.d/sshd | grep -v '^[[:space:]]*#' | grep -v '^[[:space:]]*$' || true
+        echo "=== IMAGES ON VPS ==="
+        ls -la /var/www/amratgames.com/frontend/dist/images/coin-toss/ 2>/dev/null || echo "Directory does not exist!"
     `
     conn.exec(cmd, (err, stream) => {
         if (err) {

@@ -304,13 +304,13 @@
 }
 
 .plinko-page .error-text {
-    position: absolute;
-    top: 100%;
-    left: 0;
+    position: relative;
+    display: block;
     font-size: 11px;
     color: #ef4444;
-    margin-top: 4px;
-    line-height: 1.2;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    line-height: 1.3;
 }
 
 /* Select Component - 3D Box Style */
