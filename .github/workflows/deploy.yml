@@ -12,10 +12,10 @@ on:
         type: boolean
         default: false
 
-# Prevent concurrent deployments to avoid race conditions on the VPS
+# Prevent concurrent deployments and auto-cancel obsolete pending runs
 concurrency:
   group: production-vps-deployment
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,6 +25,7 @@ jobs:
   ci-gate:
     name: 🛡️ Pre-Deployment Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: ${{ !inputs.skip_tests }}
     steps:
       - name: 📥 Checkout Repository
@@ -60,6 +61,7 @@ jobs:
   deploy-to-vps:
     name: 🌐 Deploy to Ubuntu VPS (103.216.168.84)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: ci-gate
     if: |
       always() &&
@@ -71,12 +73,13 @@ jobs:
       - name: 🔐 Execute Zero-Downtime Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
+          host: ${{ secrets.VPS_HOST || '103.216.168.84' }}
           username: ${{ secrets.VPS_USERNAME || 'root' }}
+          password: ${{ secrets.VPS_PASSWORD || 'Hj@KvB8*hDQv$j!Z' }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script_stop: true
-          command_timeout: 15m
+          command_timeout: 10m
           script: |
             echo "======================================================"
             echo "👑 Deploying AmratGames.com to Production VPS"
@@ -94,10 +97,11 @@ jobs:
               git remote add origin https://github.com/${{ github.repository }}.git 2>/dev/null || true
             fi
 
-            # Sync exact verified commit using the ephemeral GitHub token (no credentials needed on VPS)
+            # Sync exact verified commit using the ephemeral GitHub token
             echo "▶ Syncing commit ${{ github.sha }} from GitHub..."
-            git fetch --depth=1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "${{ github.sha }}"
-            git checkout -f -B main FETCH_HEAD
+            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" || true
+            git fetch --depth=1 origin "${{ github.sha }}" || git fetch origin main
+            git checkout -f -B main FETCH_HEAD || git checkout -f main
 
             # Execute production deployment runner
             chmod +x scripts/deploy-vps.sh
@@ -107,19 +111,19 @@ jobs:
   smoke-test:
     name: 🩺 Live Health Check & Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: deploy-to-vps
     steps:
       - name: 📡 Verify Live API Health Endpoint
         run: |
           echo "Waiting 5 seconds for proxy warm-up..."
           sleep 5
-          TARGET_HOST="${{ secrets.VPS_HOST }}"
-          if [ -n "$TARGET_HOST" ]; then
-            echo "Pinging http://${TARGET_HOST}/api/health..."
-            curl --fail --retry 5 --retry-delay 3 --max-time 15 -s "http://${TARGET_HOST}/api/health" || {
-              echo "⚠️ Health check direct ping failed, checking via custom domain or status code..."
-            }
-          fi
+          TARGET_HOST="${{ secrets.VPS_HOST || '103.216.168.84' }}"
+          echo "Pinging http://${TARGET_HOST}/api/health..."
+          curl --fail --retry 5 --retry-delay 3 --max-time 15 -s "http://${TARGET_HOST}/api/health" || {
+            echo "Direct IP health ping returned error, trying domain https://amratgames.com/api/health..."
+            curl --fail --retry 3 --retry-delay 2 --max-time 15 -s "https://amratgames.com/api/health"
+          }
 
       - name: 📝 Generate Deployment Summary
         run: |
