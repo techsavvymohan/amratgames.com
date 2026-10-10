@@ -33,10 +33,10 @@ export class RedisPubSubService {
                 lazyConnect: true,
                 maxRetriesPerRequest: 1,
                 enableReadyCheck: true,
-                connectTimeout: 3000,
+                connectTimeout: 2000,
                 retryStrategy: (times) => {
-                    // Try reconnecting up to 5 times, then back off gracefully
-                    if (times > 5) return 10000
+                    // In test / CI mode or when retried more than 3 times, do not keep sockets open
+                    if (process.env.NODE_ENV === 'test' || process.env.CI || times > 3) return null
                     return Math.min(times * 500, 3000)
                 }
             }
@@ -154,6 +154,18 @@ export class RedisPubSubService {
         }
 
         return this.publish(channel, eventType, payload)
+    }
+
+    disconnect() {
+        if (this.pubClient) {
+            try { this.pubClient.disconnect() } catch {}
+            this.pubClient = null
+        }
+        if (this.subClient) {
+            try { this.subClient.disconnect() } catch {}
+            this.subClient = null
+        }
+        this.isConnected = false
     }
 }
 

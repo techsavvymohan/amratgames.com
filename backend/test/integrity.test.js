@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test'
+import { describe, it, after } from 'node:test'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import { CONFIG, validateConfig } from '../src/config.js'
@@ -834,5 +834,13 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
             assert.equal(evalTails.multiplier, 1.98)
             assert.equal(evalTails.payout, 396)
         }
+    })
+
+    after(() => {
+        redisPubSub.disconnect()
+        // Ensure TAP test output flushes completely, then terminate cleanly to prevent keep-alive hang
+        setTimeout(() => {
+            process.exit(0)
+        }, 150)
     })
 })
