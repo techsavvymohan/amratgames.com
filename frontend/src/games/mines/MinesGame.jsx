@@ -24,7 +24,6 @@ import { useWallet } from '../../context/WalletContext'
 import { CurrencyIcon } from '../../components/Header'
 import ProvablyFair from '../../utils/ProvablyFair'
 import MobileBetSheet from '../../components/MobileBetSheet'
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './MinesGame.css'
 
@@ -71,13 +70,7 @@ function MinesGame() {
     const [mineLocations, setMineLocations] = useState([]);
     const [gameOverState, setGameOverState] = useState(null) // 'win', 'loss', or null
     const [isHovering, setIsHovering] = useState(null);
-    const [autoTab, setAutoTab] = useState('manual');
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false);
-
-    // Live Spectator Missed Win State & Demo Ticker
-    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null);
-    const [spectatorCountdown, setSpectatorCountdown] = useState(5);
-    const demoTimeoutRef = useRef(null);
 
     // Bottom Controls State
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -589,82 +582,6 @@ function MinesGame() {
         return tiles;
     };
 
-    // Continuous Live Spectator Round Runner (Non-stop auto play)
-    const runSimulatedMinesRound = useCallback(() => {
-        if (isPlaying) return;
-
-        // Clear previous state
-        setGameOverState(null);
-        setSpectatorMissedWin(null);
-
-        // Generate 25 tiles pool
-        const allIndices = Array.from({ length: 25 }, (_, i) => i);
-        for (let i = allIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
-        }
-
-        const simMines = allIndices.slice(0, minesCount);
-        const safePool = allIndices.slice(minesCount);
-
-        // Pick 2 to 4 safe gems
-        const pickCount = Math.min(safePool.length, Math.floor(Math.random() * 3) + 2);
-        const demoGems = safePool.slice(0, pickCount);
-
-        let step = 0;
-        const revealStep = () => {
-            if (isPlaying) return;
-            if (step < demoGems.length) {
-                const currentGem = demoGems[step];
-                setRevealedTiles(prev => [...prev, currentGem]);
-                playSound('gem', step + 1);
-                step++;
-                demoTimeoutRef.current = setTimeout(revealStep, 350);
-            } else {
-                setMineLocations(simMines);
-                setGameOverState('win');
-                const mult = calculateMultiplier(minesCount, demoGems.length);
-                const currentBet = betAmount || 50;
-                const winPayout = (currentBet * mult).toFixed(0);
-
-                playSound('cashout');
-                setSpectatorMissedWin({
-                    outcome: `${mult.toFixed(2)}x (${demoGems.length} Gems Cleared)`,
-                    multiplier: mult,
-                    amount: currentBet,
-                    payout: winPayout
-                });
-                setSpectatorCountdown(5);
-            }
-        };
-
-        setRevealedTiles([]);
-        demoTimeoutRef.current = setTimeout(revealStep, 250);
-    }, [isPlaying, minesCount, betAmount]);
-
-    // NON-STOP LIVE SPECTATOR TICKER LOOP
-    useEffect(() => {
-        if (isPlaying) {
-            if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
-            return;
-        }
-
-        const timer = setInterval(() => {
-            setSpectatorCountdown(prev => {
-                if (prev <= 1) {
-                    runSimulatedMinesRound();
-                    return 5;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => {
-            clearInterval(timer);
-            if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
-        };
-    }, [isPlaying, runSimulatedMinesRound]);
-
     return (
         <div className="mines-game">
             <div className="game-container">
@@ -673,22 +590,6 @@ function MinesGame() {
                     <div className="mines-sidebar">
                     <div className="mines-sidebar-content">
                         <div className="mines-bet-panel">
-                            {/* Bet Mode Tabs */}
-                            <div className="bet-mode-tabs mobile-sheet-secondary">
-                                <button
-                                    className={`bet-mode-tab ${autoTab === 'manual' ? 'active' : ''}`}
-                                    onClick={() => setAutoTab('manual')}
-                                >
-                                    Manual
-                                </button>
-                                <button
-                                    className={`bet-mode-tab ${autoTab === 'auto' ? 'active' : ''}`}
-                                    onClick={() => setAutoTab('auto')}
-                                >
-                                    Auto
-                                </button>
-                            </div>
-
                             {/* Bet Amount */}
                             <div className="form-group">
                                 <div className="form-header">
@@ -762,12 +663,13 @@ function MinesGame() {
 
                             {/* Action Buttons */}
                             {!isPlaying ? (
-                                <button className="btn-bet-mines" onClick={startGame}>
+                                <button id="mines-bet-btn" className="btn-bet-mines" onClick={startGame}>
                                     Bet
                                 </button>
                             ) : (
                                 <>
                                     <button
+                                        id="mines-cashout-btn"
                                         className="btn-bet-mines"
                                         onClick={cashout}
                                         disabled={revealedTiles.length === 0}
@@ -775,6 +677,7 @@ function MinesGame() {
                                         Cashout
                                     </button>
                                     <button
+                                        id="mines-random-pick-btn"
                                         className="btn-random-pick mobile-sheet-secondary"
                                         onClick={pickRandom}
                                     >
@@ -838,19 +741,6 @@ function MinesGame() {
 
                 {/* Game Display Wrapper */}
                 <div className="mines-display-wrapper">
-                    {spectatorMissedWin && (
-                        <MissedWinBanner
-                            outcome={spectatorMissedWin.outcome}
-                            multiplier={spectatorMissedWin.multiplier}
-                            betAmount={spectatorMissedWin.amount}
-                            potentialPayout={spectatorMissedWin.payout}
-                            countdown={spectatorCountdown}
-                            onBetNow={() => {
-                                setSpectatorMissedWin(null);
-                                startGame();
-                            }}
-                        />
-                    )}
                     <div className="mines-display">
                         <div className="mines-grid">
                             {renderGrid()}

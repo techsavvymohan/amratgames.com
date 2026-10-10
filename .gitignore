@@ -42,3 +42,6 @@ Thumbs.db
 # Runtime database & local state
 backend/data/*.json
 !backend/data/.gitkeep
+backend/data/*.tmp
+*.tmp
+.chrome-temp*

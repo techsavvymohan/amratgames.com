@@ -66,6 +66,8 @@ const PHASE = {
     CRASHED: 'crashed'
 }
 
+export const CRASH_GROWTH_RATE = 0.06
+
 const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
 function CrashGame() {
@@ -90,6 +92,7 @@ function CrashGame() {
     const roomRoundIdRef = useRef(null)
     const [phase, setPhase] = useState(PHASE.WAITING)
     const [multiplier, setMultiplier] = useState(1.00)
+    const [flightStartTime, setFlightStartTime] = useState(null)
     const [countdown, setCountdown] = useState(6)
     const [crashPoint, setCrashPoint] = useState(0)
     const [elapsedTime, setElapsedTime] = useState(0)
@@ -370,6 +373,8 @@ function CrashGame() {
         setElapsedTime(0)
         multiplierRef.current = 1.00
         elapsedTimeRef.current = 0
+        startTimeRef.current = null
+        setFlightStartTime(null)
         setCountdown(0)
         setBetPlaced(false)
         setUserBetData(null)
@@ -382,7 +387,7 @@ function CrashGame() {
         getActiveCrashRound().then((active) => {
             if (!mounted || !active || !active.active) return
             const elapsed = (Date.now() - active.startedAt) / 1000
-            const currentMultiplier = Math.pow(Math.E, 0.1 * elapsed)
+            const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
             if (currentMultiplier < active.crashPoint) {
                 // Restore active flight in progress
                 activeRoundIdRef.current = active.roundId
@@ -402,6 +407,7 @@ function CrashGame() {
                     profit: null
                 })
                 startTimeRef.current = active.startedAt
+                setFlightStartTime(active.startedAt)
                 setPhase(PHASE.RUNNING)
             } else {
                 // Flight already crashed while user was away
@@ -452,6 +458,8 @@ function CrashGame() {
             setElapsedTime(0)
             multiplierRef.current = 1.00
             elapsedTimeRef.current = 0
+            startTimeRef.current = null
+            setFlightStartTime(null)
             setCountdown(0)
             setUserBetData(null)
             setPlayerCashouts([])
@@ -478,22 +486,25 @@ function CrashGame() {
             multiplierRef.current = 1.00
             elapsedTimeRef.current = 0
             startTimeRef.current = null
+            setFlightStartTime(null)
         } else if (room.state === 'FLYING') {
             setPhase(PHASE.RUNNING)
             const m = room.currentMultiplier || 1.00
             setMultiplier(m)
             multiplierRef.current = m
-            if (room.flightStartTime) {
-                startTimeRef.current = room.flightStartTime
-                const el = (Date.now() - room.flightStartTime) / 1000
-                setElapsedTime(el)
-                elapsedTimeRef.current = el
-            }
+            const fStart = room.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, m)) / CRASH_GROWTH_RATE) * 1000)
+            startTimeRef.current = fStart
+            setFlightStartTime(fStart)
+            const el = (Date.now() - fStart) / 1000
+            setElapsedTime(el)
+            elapsedTimeRef.current = el
         } else if (room.state === 'CRASHED') {
             setPhase(PHASE.CRASHED)
             const pt = room.crashPoint || room.currentMultiplier || 1.00
             setMultiplier(pt)
             multiplierRef.current = pt
+            startTimeRef.current = null
+            setFlightStartTime(null)
         }
 
         if (Array.isArray(room.history) && room.history.length > 0) {
@@ -559,12 +570,17 @@ function CrashGame() {
                                 multiplierRef.current = 1.00
                                 elapsedTimeRef.current = 0
                                 startTimeRef.current = null
+                                setFlightStartTime(null)
                             } else if (payload.state === 'FLYING') {
                                 setPhase(PHASE.RUNNING)
                                 setSpectatorMissedWin(null)
                                 setMultiplier(payload.multiplier || 1.00)
                                 multiplierRef.current = payload.multiplier || 1.00
-                                if (!startTimeRef.current) startTimeRef.current = Date.now()
+                                if (!startTimeRef.current || (payload.flightStartTime && Math.abs(startTimeRef.current - payload.flightStartTime) > 300)) {
+                                    const fStart = payload.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, payload.multiplier || 1.0)) / CRASH_GROWTH_RATE) * 1000)
+                                    startTimeRef.current = fStart
+                                    setFlightStartTime(fStart)
+                                }
                                 const elapsed = (Date.now() - startTimeRef.current) / 1000
                                 setElapsedTime(elapsed)
                                 elapsedTimeRef.current = elapsed
@@ -574,6 +590,8 @@ function CrashGame() {
                             const bustPoint = payload.crashPoint || 1.00
                             setMultiplier(bustPoint)
                             multiplierRef.current = bustPoint
+                            startTimeRef.current = null
+                            setFlightStartTime(null)
                             if (payload.history && Array.isArray(payload.history)) {
                                 setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
                             } else {
@@ -659,7 +677,7 @@ function CrashGame() {
             const tick = () => {
                 const now = Date.now()
                 const elapsed = (now - startTimeRef.current) / 1000
-                const currentMultiplier = Math.pow(Math.E, 0.1 * elapsed)
+                const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
 
                 // Always update refs (used by Canvas directly)
                 multiplierRef.current = currentMultiplier
@@ -774,7 +792,9 @@ function CrashGame() {
         setElapsedTime(0)
         multiplierRef.current = 1.00
         elapsedTimeRef.current = 0
-        startTimeRef.current = Date.now()
+        const launchTime = Date.now()
+        startTimeRef.current = launchTime
+        setFlightStartTime(launchTime)
         setPhase(PHASE.RUNNING)
     }
 
@@ -1011,6 +1031,7 @@ function CrashGame() {
                         multiplier={multiplier}
                         elapsedTime={elapsedTime}
                         countdown={countdown}
+                        flightStartTime={flightStartTime}
                     />
 
                     {/* Spectator Missed Win FOMO Banner */}

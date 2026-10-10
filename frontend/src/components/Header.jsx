@@ -103,6 +103,7 @@ function Header({
                 <div className="header-wallet">
                     <button
                         type="button"
+                        id="header-mobile-wallet-btn"
                         className="mobile-wallet-balance"
                         aria-label={`Open wallet, balance ${currencySymbol}${formattedBalance}`}
                         onClick={() => openWalletModal('deposit')}
@@ -115,6 +116,7 @@ function Header({
                     {isGamePage && (
                         <>
                             <div
+                                id="header-wallet-balance-display"
                                 className="wallet-balance-display"
                                 onClick={() => openWalletModal('deposit')}
                                 style={{ cursor: 'pointer' }}
@@ -123,6 +125,7 @@ function Header({
                                 <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
                                 <span className="wallet-balance-amount">{formattedBalance}</span>
                                 <button
+                                    id="header-wallet-dropdown-btn"
                                     className="wallet-dropdown-toggle"
                                     onClick={(e) => {
                                         e.stopPropagation()
@@ -136,6 +139,7 @@ function Header({
                                 </button>
                             </div>
                             <button
+                                id="header-wallet-modal-btn"
                                 className="wallet-btn"
                                 onClick={() => openWalletModal('deposit')}
                             >
@@ -606,8 +610,8 @@ function Header({
                         </div>
                     ) : (
                         <>
-                            <button className="btn btn-login" onClick={() => openAuthModal('login')}>Sign In</button>
-                            <button className="btn btn-register" onClick={() => openAuthModal('register')}>Register</button>
+                            <button id="header-login-btn" className="btn btn-login" onClick={() => openAuthModal('login')}>Sign In</button>
+                            <button id="header-register-btn" className="btn btn-register" onClick={() => openAuthModal('register')}>Register</button>
                         </>
                     )}
                 </div>

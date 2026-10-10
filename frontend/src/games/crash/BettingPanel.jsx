@@ -107,6 +107,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                         </div>
                         <div className="input-row">
                             <InputNumber
+                                id="crash-bet-amount-input"
                                 value={betAmount}
                                 onChange={setBetAmount}
                                 min={0}
@@ -173,6 +174,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
 
                     {/* Bet Button */}
                     <button
+                        id="crash-bet-action-btn"
                         onClick={handleBetClick}
                         className={getButtonClass()}
                         disabled={phase === 'crashed' || (phase === 'running' && !betPlaced)}

@@ -17,7 +17,6 @@ import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import CoinParticles from './CoinParticles'
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CoinTossGame.css'
 
@@ -30,20 +29,13 @@ const HEADS_ASSET = '/images/coin-toss/heads.jpg'
 const TAILS_ASSET = '/images/coin-toss/tails.jpg'
 
 export default function CoinTossGame() {
-    const { balance, currencySymbol, executeGameBet } = useWallet()
+    const { balance, currencySymbol, executeGameBet, showToast } = useWallet()
 
     // Betting selections
     const [choice, setChoice] = useState('heads') // 'heads' | 'tails'
     const [betAmount, setBetAmount] = useState(100)
     const [isFlipping, setIsFlipping] = useState(false)
     const [turboMode, setTurboMode] = useState(false)
-
-    // Non-stop Live Rounds Engine state
-    const [liveRoundsActive, setLiveRoundsActive] = useState(true)
-    const [roundIndex, setRoundIndex] = useState(() => Math.floor(1000 + Math.random() * 5000))
-    const [roundCountdown, setRoundCountdown] = useState(4) // 4s countdown between flips
-    const [userBetLocked, setUserBetLocked] = useState(false)
-    const [missedWin, setMissedWin] = useState(null)
 
     // Interactive 3D Parallax Tilt state
     const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 })
@@ -160,25 +152,27 @@ export default function CoinTossGame() {
         }
     }
 
-    // Lock in bet for upcoming round
-    const handleLockInBet = () => {
+    // Flip coin on user click
+    const handleLockInBet = useCallback(() => {
+        if (isFlipping) return
         if (betAmount > balance) {
             casinoAudio.playLoss()
             return
         }
-        casinoAudio.playBet()
-        setUserBetLocked(true)
-        setMissedWin(null)
-    }
+        runCoinToss()
+    }, [isFlipping, betAmount, balance])
 
-    // Execute Coin Toss Flip (used by both user-triggered and non-stop auto spectator loop)
-    const runCoinToss = useCallback(async (isRealBet) => {
+    // Execute Coin Toss Flip
+    const runCoinToss = useCallback(async () => {
         if (isFlipping) return
         const currentBet = Math.floor(parseFloat(betAmount) || 0)
+        if (currentBet > balance) {
+            casinoAudio.playLoss()
+            return
+        }
 
         setIsFlipping(true)
         setLastResult(null)
-        setMissedWin(null)
         setMouseTilt({ x: 0, y: 0 })
         setIsHoveringCoin(false)
 
@@ -200,38 +194,40 @@ export default function CoinTossGame() {
         setCoinTransform(`rotateY(${baseDeg}deg) rotateX(360deg) scale(1.18)`)
 
         let res = null
-        if (isRealBet) {
-            try {
-                if (executeGameBet) {
-                    res = await executeGameBet({
-                        game: 'coin-toss',
-                        gameName: 'Coin Toss (Heads or Tails)',
-                        betAmount: currentBet,
-                        choice: choice,
-                        targetMultiplier: MULTIPLIER
-                    })
-                }
-            } catch (err) {
-                console.error('[COIN-TOSS] Error placing bet:', err)
+        try {
+            if (executeGameBet) {
+                res = await executeGameBet({
+                    game: 'coin-toss',
+                    gameName: 'Coin Toss (Heads or Tails)',
+                    betAmount: currentBet,
+                    choice: choice,
+                    targetMultiplier: MULTIPLIER
+                })
             }
+        } catch (err) {
+            console.error('[COIN-TOSS] Error placing bet:', err)
+        }
+
+        if (!res || !res.success) {
+            clearInterval(tickTimer)
+            setIsFlipping(false)
+            setCoinTransform(choice === 'heads' ? 'rotateY(0deg)' : 'rotateY(180deg)')
+            if (typeof casinoAudio.playLoss === 'function') {
+                casinoAudio.playLoss()
+            }
+            if (showToast) {
+                showToast('error', 'Bet Failed', res?.error || 'Unable to place bet')
+            }
+            return
         }
 
         setTimeout(() => {
             clearInterval(tickTimer)
 
-            // Determine outcome: real bet result or simulated provably-fair outcome
-            let outcome = Math.random() < 0.5 ? 'heads' : 'tails'
-            let won = false
-            let payout = 0
-
-            if (isRealBet && res && res.success) {
-                outcome = res.evaluation?.outcome || (res.won ? choice : (choice === 'heads' ? 'tails' : 'heads'))
-                won = Boolean(res.won)
-                payout = res.payout || (won ? parseFloat((currentBet * MULTIPLIER).toFixed(2)) : 0)
-            } else {
-                won = outcome === choice
-                payout = won ? parseFloat((currentBet * MULTIPLIER).toFixed(2)) : 0
-            }
+            // Determine outcome from provably-fair server result
+            const outcome = res.evaluation?.outcome || (res.won ? choice : (choice === 'heads' ? 'tails' : 'heads'))
+            const won = Boolean(res.won)
+            const payout = res.payout || (won ? parseFloat((currentBet * MULTIPLIER).toFixed(2)) : 0)
 
             // Final settled landing degrees
             const finalDegrees = outcome === 'heads' ? 2880 : 3060
@@ -244,44 +240,32 @@ export default function CoinTossGame() {
             }
             setLandingTrigger(Date.now())
 
-            if (isRealBet) {
-                setLastResult({
-                    won,
-                    outcome,
-                    payout,
-                    betAmount: currentBet,
-                    choice
-                })
+            setLastResult({
+                won,
+                outcome,
+                payout,
+                betAmount: currentBet,
+                choice
+            })
 
-                if (won) {
-                    setStreakCount((prev) => prev + 1)
-                    setWinTrigger(Date.now())
-                    casinoAudio.playWin()
-                    if (payout >= currentBet * 5) {
-                        casinoAudio.playBigWin()
-                    }
-                } else {
-                    setStreakCount(0)
-                    casinoAudio.playLoss()
+            if (won) {
+                setStreakCount((prev) => prev + 1)
+                setWinTrigger(Date.now())
+                casinoAudio.playWin()
+                if (payout >= currentBet * 5) {
+                    casinoAudio.playBigWin()
                 }
-                setUserBetLocked(false)
             } else {
-                // SPECTATOR / MISSED WIN TRIGGER: Show visitor what they missed!
-                setMissedWin({
-                    visible: true,
-                    outcome,
-                    multiplier: 1.98,
-                    amount: currentBet || 100,
-                    payout: ((currentBet || 100) * MULTIPLIER).toFixed(0)
-                })
+                setStreakCount(0)
+                casinoAudio.playLoss()
             }
 
             // Record in history ribbon
             const record = {
                 id: Date.now() + Math.random(),
                 outcome,
-                choice: isRealBet ? choice : outcome,
-                won: isRealBet ? won : true,
+                choice,
+                won,
                 payout,
                 betAmount: currentBet,
                 timestamp: new Date(),
@@ -293,41 +277,14 @@ export default function CoinTossGame() {
 
             setHistory((prev) => [record, ...prev.slice(0, 19)])
             setIsFlipping(false)
-            setRoundIndex((prev) => prev + 1)
-            setRoundCountdown(4) // Reset countdown for next non-stop toss
 
             setProvablyFairSeed((prev) => ({
                 ...prev,
                 nonce: prev.nonce + 1
             }))
         }, spinDuration)
-    }, [isFlipping, betAmount, executeGameBet, choice, provablyFairSeed, turboMode])
+    }, [isFlipping, betAmount, balance, executeGameBet, choice, provablyFairSeed, turboMode])
 
-    // Immediate manual flip button
-    const handleInstantFlip = () => {
-        handleLockInBet()
-        runCoinToss(true)
-    }
-
-    // NON-STOP LIVE ROUNDS TICKER LOOP
-    useEffect(() => {
-        if (!liveRoundsActive) return
-
-        const timer = setInterval(() => {
-            if (isFlipping) return
-
-            setRoundCountdown((prev) => {
-                if (prev <= 1) {
-                    // Launch next round!
-                    runCoinToss(userBetLocked)
-                    return 4
-                }
-                return prev - 1
-            })
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [liveRoundsActive, isFlipping, userBetLocked, runCoinToss])
 
     // Keyboard Shortcuts
     useEffect(() => {
@@ -339,7 +296,7 @@ export default function CoinTossGame() {
                 handleSelectChoice('tails')
             } else if (e.key === ' ') {
                 e.preventDefault()
-                handleInstantFlip()
+                handleLockInBet()
             }
         }
         window.addEventListener('keydown', handleKeyDown)
@@ -385,10 +342,10 @@ export default function CoinTossGame() {
             <header className="coin-toss-header">
                 <div className="header-meta">
                     <span className="badge-live-pulse">
-                        <span className="pulse-dot" /> LIVE ROUND #{roundIndex}
+                        <span className="pulse-dot" /> PROVABLY FAIR
                     </span>
                     <span className="badge-countdown">
-                        <ClockCircleFilled /> TOSS IN {roundCountdown}s
+                        <CheckCircleFilled /> 99% RTP
                     </span>
                 </div>
 
@@ -518,17 +475,6 @@ export default function CoinTossGame() {
                             </div>
                         )}
 
-                        {/* MISSED OPPORTUNITY / FOMO BANNER FOR SPECTATORS / VISITORS */}
-                        <MissedWinBanner
-                            visible={Boolean(missedWin && missedWin.visible && !isFlipping && !lastResult)}
-                            outcome={missedWin?.outcome}
-                            multiplier={missedWin?.multiplier}
-                            amount={missedWin?.amount}
-                            payout={missedWin?.payout}
-                            currencySymbol={currencySymbol}
-                            countdown={roundCountdown}
-                            onAction={handleLockInBet}
-                        />
                     </div>
 
                     {/* Win Ratio Stats Bar */}
@@ -565,15 +511,6 @@ export default function CoinTossGame() {
                         <div className="controls-toggles">
                             <button
                                 type="button"
-                                className={`control-toggle-btn ${liveRoundsActive ? 'active' : ''}`}
-                                onClick={() => setLiveRoundsActive((prev) => !prev)}
-                                title="Toggle Non-Stop 24/7 Rounds"
-                            >
-                                {liveRoundsActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                                <span>Non-Stop {liveRoundsActive ? 'ON' : 'OFF'}</span>
-                            </button>
-                            <button
-                                type="button"
                                 className={`control-toggle-btn ${turboMode ? 'active' : ''}`}
                                 onClick={() => setTurboMode((prev) => !prev)}
                                 title="Toggle Turbo Mode"
@@ -581,21 +518,6 @@ export default function CoinTossGame() {
                                 <ThunderboltOutlined />
                                 <span>Turbo</span>
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Live Next Round Queue Status */}
-                    <div className={`live-queue-indicator ${userBetLocked ? 'is-locked-in' : ''}`}>
-                        <div className="queue-status-text">
-                            {userBetLocked ? (
-                                <span>
-                                    <CheckCircleFilled style={{ color: '#10b981' }} /> BET LOCKED IN FOR NEXT TOSS
-                                </span>
-                            ) : (
-                                <span>
-                                    <ClockCircleFilled /> TOSSING IN {roundCountdown}s • Place bet to participate!
-                                </span>
-                            )}
                         </div>
                     </div>
 
@@ -610,6 +532,7 @@ export default function CoinTossGame() {
                             {/* Heads Prediction Card */}
                             <button
                                 type="button"
+                                id="cointoss-choice-heads"
                                 className={`side-card side-heads ${choice === 'heads' ? 'selected' : ''}`}
                                 onClick={() => handleSelectChoice('heads')}
                             >
@@ -631,6 +554,7 @@ export default function CoinTossGame() {
                             {/* Tails Prediction Card */}
                             <button
                                 type="button"
+                                id="cointoss-choice-tails"
                                 className={`side-card side-tails ${choice === 'tails' ? 'selected' : ''}`}
                                 onClick={() => handleSelectChoice('tails')}
                             >
@@ -743,17 +667,14 @@ export default function CoinTossGame() {
                     <div className="action-buttons-row">
                         <button
                             type="button"
-                            className={`flip-submit-btn ${userBetLocked ? 'is-queued' : ''} ${isFlipping ? 'is-animating' : ''}`}
+                            id="cointoss-flip-btn"
+                            className={`flip-submit-btn ${isFlipping ? 'is-animating' : ''}`}
                             onClick={handleLockInBet}
-                            disabled={betAmount > balance || betAmount < MIN_BET}
+                            disabled={isFlipping || betAmount > balance || betAmount < MIN_BET}
                         >
                             {isFlipping ? (
                                 <span className="btn-flipping-label">
                                     <span className="flipping-spinner" /> FLIPPING COIN...
-                                </span>
-                            ) : userBetLocked ? (
-                                <span>
-                                    ✓ BET LOCKED FOR NEXT TOSS ({roundCountdown}s)
                                 </span>
                             ) : betAmount > balance ? (
                                 <span>INSUFFICIENT BALANCE</span>

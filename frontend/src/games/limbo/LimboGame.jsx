@@ -292,68 +292,6 @@ function LimboGame() {
         setAutoBetsRemaining(0)
     }
 
-    // Continuous Live Spectator Round Runner (Non-stop auto play)
-    const runSimulatedRoll = useCallback(() => {
-        if (isRolling || isAutoRunning) return
-        setIsRolling(true)
-        setGameResult(null)
-        setSpectatorMissedWin(null)
-
-        const target = parseFloat(targetMultiplier) || 2.00
-        // Provably Fair 99% RTP curve simulation
-        const u = Math.random()
-        const rawMultiplier = 0.99 / (1 - u * 0.99)
-        const outcome = parseFloat(Math.max(1.01, Math.min(1000, rawMultiplier)).toFixed(2))
-
-        const startTime = Date.now()
-        const animDuration = 220
-        const interval = setInterval(() => {
-            const elapsed = Date.now() - startTime
-            if (elapsed < animDuration) {
-                const randomVisual = (Math.random() * target * 1.5 + 0.8).toFixed(2)
-                setCurrentRoll(parseFloat(randomVisual))
-                casinoAudio.playTick()
-            } else {
-                clearInterval(interval)
-                setCurrentRoll(outcome)
-                setIsRolling(false)
-
-                const isHit = outcome >= target
-                setLastOutcome({ roll: outcome, target, win: isHit })
-
-                if (isHit) {
-                    setSpectatorMissedWin({
-                        outcome: `${outcome}x`,
-                        multiplier: target,
-                        amount: betAmount || 100,
-                        payout: ((betAmount || 100) * target).toFixed(0)
-                    })
-                    casinoAudio.playWin()
-                }
-
-                setHistory(prev => [{ roll: outcome, target, win: isHit, id: Date.now() }, ...prev.slice(0, 11)])
-                setSpectatorCountdown(4)
-            }
-        }, 28)
-    }, [isRolling, isAutoRunning, targetMultiplier, betAmount])
-
-    // NON-STOP LIVE SPECTATOR TICKER LOOP
-    useEffect(() => {
-        if (!spectatorLive || isRolling || isAutoRunning) return
-
-        const timer = setInterval(() => {
-            setSpectatorCountdown((prev) => {
-                if (prev <= 1) {
-                    runSimulatedRoll()
-                    return 4
-                }
-                return prev - 1
-            })
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [spectatorLive, isRolling, isAutoRunning, runSimulatedRoll])
-
     const potentialProfit = ((betAmount * (parseFloat(targetMultiplier) || 2)) - betAmount)
 
     return (
@@ -364,10 +302,10 @@ function LimboGame() {
                     {/* Real-time Dynamic History Pills */}
                     <div className="limbo-history-bar">
                         <div className="limbo-live-status">
-                            <span className="live-dot" /> LIVE AUTO ROLL IN {spectatorCountdown}s
+                            <span className="live-dot" /> Provably Fair 99% RTP
                         </div>
                         {history.length === 0 ? (
-                            <span className="limbo-history-empty">Live rolls running non-stop…</span>
+                            <span className="limbo-history-empty">Place a bet to roll!</span>
                         ) : (
                             history.map((item) => (
                                 <span
@@ -444,25 +382,6 @@ function LimboGame() {
 
                 {/* ── Betting Cockpit (Zero-Scroll Controls) ── */}
                 <div className="limbo-controls-card">
-                    {/* Manual / Auto Mode Switch */}
-                    <div className="limbo-mode-tabs">
-                        <button
-                            type="button"
-                            className={`limbo-mode-tab ${betMode === 'manual' ? 'active' : ''}`}
-                            onClick={() => { setBetMode('manual'); if (isAutoRunning) stopAutoBet(); }}
-                            disabled={isRolling || isAutoRunning}
-                        >
-                            Manual
-                        </button>
-                        <button
-                            type="button"
-                            className={`limbo-mode-tab ${betMode === 'auto' ? 'active' : ''}`}
-                            onClick={() => setBetMode('auto')}
-                            disabled={isRolling || isAutoRunning}
-                        >
-                            Auto
-                        </button>
-                    </div>
 
                     {/* Wager Amount Control */}
                     <div className="limbo-control-group">
@@ -472,6 +391,7 @@ function LimboGame() {
                         </div>
                         <div className="limbo-input-wrap">
                             <Input
+                                id="limbo-bet-input"
                                 type="number"
                                 value={betAmount}
                                 onChange={(e) => setBetAmount(Math.max(0, parseFloat(e.target.value) || 0))}
@@ -543,68 +463,18 @@ function LimboGame() {
                         </strong>
                     </div>
 
-                    {/* Manual Bet Action */}
-                    {betMode === 'manual' ? (
-                        <Button
-                            type="primary"
-                            size="large"
-                            block
-                            onClick={executeRoll}
-                            disabled={isRolling || betAmount > balance || betAmount <= 0}
-                            className="limbo-bet-btn"
-                        >
-                            {isRolling ? 'Rolling…' : 'Play Limbo'}
-                        </Button>
-                    ) : (
-                        /* Auto Bet Controls */
-                        <div className="limbo-auto-controls">
-                            {!isAutoRunning ? (
-                                <div className="limbo-auto-inputs">
-                                    <div className="limbo-auto-counts">
-                                        {[10, 25, 50, 100].map(c => (
-                                            <button
-                                                key={c}
-                                                type="button"
-                                                className={`limbo-count-btn ${autoBetCount === c ? 'active' : ''}`}
-                                                onClick={() => setAutoBetCount(c)}
-                                            >
-                                                {c}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        block
-                                        icon={<PlayCircleOutlined />}
-                                        onClick={startAutoBet}
-                                        disabled={betAmount > balance || betAmount <= 0}
-                                        className="limbo-bet-btn limbo-auto-btn"
-                                    >
-                                        Start Auto Bet ({autoBetCount} Rounds)
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="limbo-auto-running-box">
-                                    <div className="limbo-auto-status">
-                                        <span>Rounds Remaining: <strong>{autoBetsRemaining}</strong></span>
-                                        <span className="limbo-pulse-indicator"></span>
-                                    </div>
-                                    <Button
-                                        type="primary"
-                                        danger
-                                        size="large"
-                                        block
-                                        icon={<PauseCircleOutlined />}
-                                        onClick={stopAutoBet}
-                                        className="limbo-bet-btn limbo-stop-btn"
-                                    >
-                                        Stop Auto Bet
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    {/* Play Limbo Action */}
+                    <Button
+                        id="limbo-bet-btn"
+                        type="primary"
+                        size="large"
+                        block
+                        onClick={executeRoll}
+                        disabled={isRolling || betAmount > balance || betAmount <= 0}
+                        className="limbo-bet-btn"
+                    >
+                        {isRolling ? 'Rolling…' : 'Play Limbo'}
+                    </Button>
                 </div>
             </div>
 

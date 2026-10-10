@@ -282,7 +282,7 @@ export function WalletProvider({ children }) {
     }, [setStoredBalance])
 
     // Record game round with backend (authenticated or guest)
-    const recordGameRound = useCallback(async ({ game, gameName, betAmount, multiplier = 0, won = false }) => {
+    const recordGameRound = useCallback(async ({ game, gameName, betAmount, multiplier = 0, won = false, ...extra }) => {
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
@@ -297,7 +297,8 @@ export function WalletProvider({ children }) {
                     currency: currencyRef.current,
                     betAmount,
                     multiplier,
-                    won
+                    won,
+                    ...extra
                 })
             })
             const data = await res.json()
@@ -746,6 +747,7 @@ export function WalletProvider({ children }) {
         }
 
         let newBal = balanceRef.current - amt
+        let data = null
 
         if (token) {
             const res = await fetch('/api/wallet/withdraw', {
@@ -762,7 +764,7 @@ export function WalletProvider({ children }) {
                     bankDetails: options.bankDetails || null
                 })
             })
-            const data = await res.json()
+            data = await res.json()
             if (!res.ok || !data.success) {
                 const err = data.error || 'Failed to submit withdrawal request'
                 showToast('error', 'Withdrawal Rejected', err)

@@ -57,7 +57,6 @@ import { useWallet } from '../../context/WalletContext';
 import { CurrencyIcon } from '../../components/Header';
 import MobileBetSheet from '../../components/MobileBetSheet';
 import casinoAudio from '../../utils/casinoAudio';
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner';
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory';
 import './DinoGame.css';
 
@@ -158,15 +157,6 @@ function DinoGame() {
     const difficultyRef = useRef('medium');
     const gamePhaseRef = useRef('idle');
     const placeBetRef = useRef(null);
-
-    // Live Spectator Missed Win State & Demo Runner
-    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null);
-    const [spectatorCountdown, setSpectatorCountdown] = useState(4);
-    const [isDemoRun, setIsDemoRun] = useState(false);
-    const isDemoRef = useRef(false);
-    const demoJumpTimeoutRef = useRef(null);
-    const isRealBetActiveRef = useRef(false);
-
     const widgetRef = useRef(null);
     const chartCanvasRef = useRef(null);
     const chartInstanceRef = useRef(null);
@@ -274,11 +264,6 @@ function DinoGame() {
 
                     // Hook into GAME_START and GAME_RESTART events
                     const onGameStartOrRestart = () => {
-                        if (isDemoRef.current) {
-                            setGamePhase('running');
-                            gameScene.events.emit(CONFIG.EVENTS.BETTING_MODE_ON);
-                            return;
-                        }
                         if (gamePhaseRef.current === 'betting') {
                             setGamePhase('running');
                             // Enable betting mode in Phaser
@@ -293,55 +278,6 @@ function DinoGame() {
                     gameScene.events.on(CONFIG.EVENTS.WAITING_FOR_JUMP, (cleared) => {
                         setGamePhase('waiting');
                         setObstaclesCleared(cleared);
-
-                        if (isDemoRef.current) {
-                            if (demoJumpTimeoutRef.current) clearTimeout(demoJumpTimeoutRef.current);
-                            demoJumpTimeoutRef.current = setTimeout(() => {
-                                if (!isDemoRef.current || !gameSceneRef.current) return;
-
-                                // If cleared >= 2, 60% chance to cashout simulated win
-                                if (cleared >= 2 && Math.random() < 0.6) {
-                                    const diff = DIFFICULTIES[difficultyRef.current || 'medium'];
-                                    const prob = Math.pow(diff.survivalChance, cleared);
-                                    const simMult = parseFloat((Math.floor((0.99 / prob) * 100) / 100).toFixed(2));
-                                    const demoBet = betAmountRef.current || 50;
-
-                                    setSpectatorMissedWin({
-                                        outcome: `${simMult.toFixed(2)}x (${cleared} Jumps Clean Run)`,
-                                        multiplier: simMult,
-                                        amount: demoBet,
-                                        payout: (demoBet * simMult).toFixed(0)
-                                    });
-                                    setSpectatorCountdown(4);
-                                    casinoAudio.playCashout();
-
-                                    isDemoRef.current = false;
-                                    setIsDemoRun(false);
-                                    setGamePhase('cashed_out');
-                                    gamePhaseRef.current = 'cashed_out';
-
-                                    gameSceneRef.current.events.emit(CONFIG.EVENTS.BETTING_MODE_OFF);
-                                    gameSceneRef.current.events.emit(CONFIG.EVENTS.GAME_OVER, gameSceneRef.current.score, gameSceneRef.current.highScore);
-                                    return;
-                                }
-
-                                // Otherwise 80% chance to jump
-                                if (Math.random() < 0.8) {
-                                    gameSceneRef.current.events.emit(CONFIG.EVENTS.JUMP_SUCCESS);
-                                    const nextCleared = cleared + 1;
-                                    const diff = DIFFICULTIES[difficultyRef.current || 'medium'];
-                                    const prob = Math.pow(diff.survivalChance, nextCleared);
-                                    const nextMult = parseFloat((Math.floor((0.99 / prob) * 100) / 100).toFixed(2));
-
-                                    setObstaclesCleared(nextCleared);
-                                    setCurrentMultiplier(nextMult);
-                                    setGamePhase('running');
-                                    casinoAudio.playGem(nextCleared);
-                                } else {
-                                    gameSceneRef.current.events.emit(CONFIG.EVENTS.JUMP_FAIL);
-                                }
-                            }, 500);
-                        }
                     });
 
                     // Sync dark mode once scene is ready
@@ -349,19 +285,9 @@ function DinoGame() {
 
                     // Hook into GAME_OVER event
                     gameScene.events.on(CONFIG.EVENTS.GAME_OVER, (finalScore, hi) => {
-                        if (isDemoRef.current) {
-                            isDemoRef.current = false;
-                            setIsDemoRun(false);
-                            setGamePhase('idle');
-                            gamePhaseRef.current = 'idle';
-                            setSpectatorCountdown(4);
-                            return;
-                        }
-
                         if (gamePhaseRef.current === 'running' || gamePhaseRef.current === 'waiting') {
                             setGamePhase('crashed');
                             gamePhaseRef.current = 'crashed'; // Immediate sync to prevent multiple triggers
-                            isRealBetActiveRef.current = false;
                             setTotalProfit(prev => prev - betAmountRef.current);
                             setWinRecords(prev => [...prev, -betAmountRef.current]);
                             setLastResult({
@@ -375,7 +301,9 @@ function DinoGame() {
                                 gameName: 'Dino Run',
                                 betAmount: betAmountRef.current,
                                 multiplier: 0,
-                                won: false
+                                won: false,
+                                obstaclesCleared: gameSceneRef.current?.obstaclesCleared || 0,
+                                difficulty: difficultyRef.current
                             }).catch(() => {});
 
                             showToast('loss', 'Dino Crashed!', `-${currencySymbol}${betAmountRef.current.toFixed(2)}`, 3000);
@@ -406,15 +334,9 @@ function DinoGame() {
 
     // Place bet
     const placeBet = useCallback(() => {
-        if (demoJumpTimeoutRef.current) clearTimeout(demoJumpTimeoutRef.current);
-        isDemoRef.current = false;
-        setIsDemoRun(false);
-        setSpectatorMissedWin(null);
-
         if (betAmount <= 0 || betAmount > balance) return;
 
         if (!walletPlaceBet(betAmount)) return;
-        isRealBetActiveRef.current = true;
         casinoAudio.playBet();
         setTotalWagered(prev => prev + betAmount);
         setGamesPlayed(prev => prev + 1);
@@ -504,7 +426,9 @@ function DinoGame() {
             gameName: 'Dino Run',
             betAmount: betAmountRef.current,
             multiplier: currentMultiplier,
-            won: true
+            won: true,
+            obstaclesCleared,
+            difficulty: difficultyRef.current
         }).catch(() => {});
 
         const profit = winAmount - betAmountRef.current;
@@ -518,7 +442,6 @@ function DinoGame() {
         });
         setGamePhase('cashed_out');
         gamePhaseRef.current = 'cashed_out'; // Immediate sync to prevent GAME_OVER listener from logging a loss
-        isRealBetActiveRef.current = false;
 
         if (currentMultiplier >= 3) {
             casinoAudio.playBigWin();
@@ -534,36 +457,6 @@ function DinoGame() {
 
         showToast('win', 'Cashed Out!', `+${currencySymbol}${(winAmount - betAmountRef.current).toFixed(2)} at ${currentMultiplier.toFixed(2)}×`, 4000);
     }, [gamePhase, currentMultiplier, obstaclesCleared, showToast, currencySymbol, recordGameRound]);
-
-    // NON-STOP LIVE SPECTATOR TICKER LOOP
-    useEffect(() => {
-        const timer = setInterval(() => {
-            if (isRealBetActiveRef.current) return;
-
-            setSpectatorCountdown((prev) => {
-                if (prev <= 1) {
-                    if (gameSceneRef.current && (gamePhaseRef.current === 'idle' || gamePhaseRef.current === 'crashed' || gamePhaseRef.current === 'cashed_out')) {
-                        isDemoRef.current = true;
-                        setIsDemoRun(true);
-                        setSpectatorMissedWin(null);
-                        setObstaclesCleared(0);
-                        setCurrentMultiplier(1.00);
-
-                        const scene = gameSceneRef.current;
-                        if (scene.isInitialStart) {
-                            scene.events.emit(CONFIG.EVENTS.GAME_START);
-                        } else {
-                            scene.events.emit(CONFIG.EVENTS.GAME_RESTART);
-                        }
-                    }
-                    return 4;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, []);
 
     // Fullscreen
     const toggleFullscreen = useCallback(() => {
@@ -765,12 +658,6 @@ function DinoGame() {
                         collapseOn={gamePhase === 'running' || gamePhase === 'waiting'}
                     >
                         <div className="dino-sidebar">
-                        {/* Bet Mode Tabs */}
-                        <div className="bet-mode-tabs">
-                            <button className="bet-mode-tab active">Manual</button>
-                            <button className="bet-mode-tab" disabled>Auto</button>
-                        </div>
-
                         {/* Bet Amount */}
                         <div className="form-group">
                             <div className="form-header">
@@ -847,6 +734,7 @@ function DinoGame() {
                         {/* Action Buttons */}
                         {canBet && (
                             <button
+                                id="dino-bet-btn"
                                 className="bet-button"
                                 onClick={placeBet}
                                 disabled={betAmount <= 0 || betAmount > balance}
@@ -858,6 +746,7 @@ function DinoGame() {
                         {(gamePhase === 'running' || gamePhase === 'waiting') && (
                             <div className="jump-decision">
                                 <button
+                                    id="dino-jump-btn"
                                     className="bet-button jump-btn"
                                     style={{ marginBottom: '12px' }}
                                     onClick={handleJump}
@@ -873,6 +762,7 @@ function DinoGame() {
                                     </div>
                                 </button>
                                 <button
+                                    id="dino-cashout-btn"
                                     className="bet-button"
                                     onClick={cashOut}
                                     disabled={!(gamePhase === 'waiting' || (gamePhase === 'running' && obstaclesCleared > 0))}
@@ -954,19 +844,6 @@ function DinoGame() {
 
                     {/* Game Area */}
                     <div className="dino-game-area">
-                        {spectatorMissedWin && (
-                            <MissedWinBanner
-                                outcome={spectatorMissedWin.outcome}
-                                multiplier={spectatorMissedWin.multiplier}
-                                betAmount={spectatorMissedWin.amount}
-                                potentialPayout={spectatorMissedWin.payout}
-                                countdown={spectatorCountdown}
-                                onBetNow={() => {
-                                    setSpectatorMissedWin(null);
-                                    placeBet();
-                                }}
-                            />
-                        )}
                         <div className="game-hud">
                             <div className="hud-item score">
                                 <span className="hud-label">Jumps</span>
@@ -988,7 +865,7 @@ function DinoGame() {
                         {/* Phaser Game Container */}
                         <div ref={phaserContainerRef} className="phaser-container" />
 
-                        {gamePhase === 'idle' && !isDemoRun && !spectatorMissedWin && (
+                        {gamePhase === 'idle' && (
                             <div className="bet-overlay">
                                 <div className="bet-overlay-content">
                                     <div className="dino-icon">🦖</div>

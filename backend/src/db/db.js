@@ -103,6 +103,18 @@ class Database {
             fs.mkdirSync(this.dir, { recursive: true })
         }
 
+        // Clean up any dangling temporary files from previous unexpected halts
+        try {
+            if (fs.existsSync(this.dir)) {
+                const files = fs.readdirSync(this.dir)
+                for (const f of files) {
+                    if (f.endsWith('.tmp') && f.startsWith('amratgames_db.json')) {
+                        try { fs.unlinkSync(path.join(this.dir, f)) } catch {}
+                    }
+                }
+            }
+        } catch {}
+
         if (fs.existsSync(this.filePath)) {
             try {
                 const raw = fs.readFileSync(this.filePath, 'utf-8')
@@ -218,13 +230,23 @@ class Database {
         this._isFlushing = true
         this._needsFlushAgain = false
 
+        let tempFile = null
         try {
-            const tempFile = `${this.filePath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`
+            tempFile = `${this.filePath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`
             const serialized = JSON.stringify(this.data, null, 2)
             await fs.promises.writeFile(tempFile, serialized, 'utf-8')
-            await fs.promises.rename(tempFile, this.filePath)
+            try {
+                await fs.promises.rename(tempFile, this.filePath)
+            } catch (renameErr) {
+                // Windows NTFS lock fallback: copyFile + unlink
+                await fs.promises.copyFile(tempFile, this.filePath)
+                await fs.promises.unlink(tempFile).catch(() => {})
+            }
         } catch (err) {
             console.error('[DB] Async persist error:', err)
+            if (tempFile) {
+                await fs.promises.unlink(tempFile).catch(() => {})
+            }
         } finally {
             this._isFlushing = false
             if (this._needsFlushAgain) {
@@ -234,12 +256,21 @@ class Database {
     }
 
     flushSync() {
+        let tempFile = null
         try {
-            const tempFile = `${this.filePath}.tmp`
+            tempFile = `${this.filePath}.${Date.now()}.tmp`
             fs.writeFileSync(tempFile, JSON.stringify(this.data, null, 2), 'utf-8')
-            fs.renameSync(tempFile, this.filePath)
+            try {
+                fs.renameSync(tempFile, this.filePath)
+            } catch (renameErr) {
+                fs.copyFileSync(tempFile, this.filePath)
+                try { fs.unlinkSync(tempFile) } catch {}
+            }
         } catch (err) {
             console.error('[DB] Synchronous flush error:', err)
+            if (tempFile) {
+                try { fs.unlinkSync(tempFile) } catch {}
+            }
         }
     }
 
@@ -561,6 +592,9 @@ class Database {
             timestamp: new Date().toISOString()
         }
         this.data.transactions.unshift(tx)
+        if (this.data.transactions.length > 5000) {
+            this.data.transactions = this.data.transactions.slice(0, 5000)
+        }
         this.updateTreasurySupply()
         this.persist()
 
@@ -779,6 +813,9 @@ class Database {
                 timestamp: new Date().toISOString()
             }
             this.data.transactions.unshift(tx)
+            if (this.data.transactions.length > 5000) {
+                this.data.transactions = this.data.transactions.slice(0, 5000)
+            }
 
             // 5. Record bet in historical roll
             const betRecord = {
@@ -857,6 +894,9 @@ class Database {
         }
         if (bankDetails) tx.bankDetails = bankDetails
         this.data.transactions.unshift(tx)
+        if (this.data.transactions.length > 5000) {
+            this.data.transactions = this.data.transactions.slice(0, 5000)
+        }
 
         if (!this.data.withdrawals) this.data.withdrawals = []
 
@@ -986,6 +1026,10 @@ class Database {
                 timestamp: new Date().toISOString()
             }
             this.data.transactions.unshift(refundTx)
+            if (this.data.transactions.length > 5000) {
+                this.data.transactions = this.data.transactions.slice(0, 5000)
+            }
+            this.updateTreasurySupply()
 
             if (CONFIG.USE_SUPABASE) {
                 supabaseSync.syncUser(user).catch(() => {})
@@ -1097,6 +1141,9 @@ class Database {
         if (!this.data.deposits) this.data.deposits = []
         this.data.deposits.unshift(depositRecord)
         this.data.transactions.unshift(tx)
+        if (this.data.transactions.length > 5000) {
+            this.data.transactions = this.data.transactions.slice(0, 5000)
+        }
 
         this.persist()
 

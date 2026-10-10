@@ -241,8 +241,7 @@ function evaluateGameRound({
             break
         }
 
-        case 'crash':
-        case 'dino': {
+        case 'crash': {
             evaluation = gameEngine.evaluateCrash({
                 claimedMultiplier: claimedMultiplier || reqBody.multiplier,
                 clientSeed,
@@ -250,6 +249,31 @@ function evaluateGameRound({
                 autoCashout: reqBody.autoCashout
             })
             evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
+            break
+        }
+
+        case 'dino': {
+            const clientWon = Boolean(reqBody.won)
+            const diff = reqBody.difficulty || 'medium'
+            const cleared = parseInt(reqBody.obstaclesCleared || 0, 10)
+            const diffChances = { easy: 0.85, medium: 0.65, hard: 0.45 }
+            const chance = diffChances[diff] || 0.65
+            const maxAllowedMult = cleared > 0 ? parseFloat((0.99 / Math.pow(chance, cleared)).toFixed(2)) : 1.00
+            const clientMult = parseFloat(reqBody.multiplier || claimedMultiplier || 1.00)
+
+            const won = clientWon && cleared > 0 && clientMult <= (maxAllowedMult + 0.1)
+            const multiplier = won ? clientMult : 0
+            const payout = won ? parseFloat((parsedAmount * multiplier).toFixed(2)) : 0
+
+            evaluation = {
+                game: 'dino',
+                won,
+                multiplier,
+                payout,
+                obstaclesCleared: cleared,
+                difficulty: diff,
+                hash: crypto.randomBytes(16).toString('hex')
+            }
             break
         }
 

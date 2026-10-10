@@ -492,31 +492,6 @@ function PlinkoGame() {
         }
     }, []);
 
-    // NON-STOP LIVE SPECTATOR TICKER LOOP (Auto Drops Demo Balls)
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setSpectatorCountdown((prev) => {
-                if (prev <= 1) {
-                    if (engineRef.current && engineRef.current.getActiveBallCount() < 2) {
-                        // Binomial distribution with exciting edge potential
-                        let simBin = 0;
-                        for (let s = 0; s < rowCount; s++) {
-                            if (Math.random() < 0.5) simBin++;
-                        }
-                        if (Math.random() < 0.20) {
-                            simBin = Math.random() < 0.5 ? 0 : rowCount;
-                        }
-                        engineRef.current.dropBall(simBin, selectedBallType, true);
-                    }
-                    return 5;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [rowCount, selectedBallType]);
-
     // Check for outstanding balls
     const hasOutstandingBalls = engineRef.current?.hasOutstandingBalls?.() || false;
 

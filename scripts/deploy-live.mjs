@@ -73,10 +73,17 @@ conn.on('keyboard-interactive', (name, instr, lang, prompts, finish) => {
     finish(['Hj@KvB8*hDQv$j!Z']);
 });
 
+conn.on('error', (err) => {
+    console.error('Connection error:', err.message);
+    process.exit(1);
+});
+
 conn.connect({
     host: '103.216.168.84',
     port: 22,
     username: 'root',
     password: 'Hj@KvB8*hDQv$j!Z',
-    tryKeyboard: true
+    tryKeyboard: true,
+    readyTimeout: 60000,
+    keepaliveInterval: 10000
 });

@@ -34,71 +34,14 @@ function Sidebar({
     maxStreak,
 }) {
     const { currencySymbol, currency } = useWallet();
-    const [betMode, setBetMode] = useState('manual'); // 'manual' | 'auto'
-    const [autoBetInput, setAutoBetInput] = useState(0);
-    const [autoBetsLeft, setAutoBetsLeft] = useState(null);
-    const [isAutoBetting, setIsAutoBetting] = useState(false);
-    const autoBetTickRunningRef = useRef(false);
-    const autoBetSessionRef = useRef(0);
 
     // Validation
     const isBetAmountNegative = betAmount < 0;
     const isBetExceedBalance = betAmount > balance;
-    const isAutoBetInputNegative = autoBetInput < 0;
-    const isDropBallDisabled = isBetAmountNegative || isBetExceedBalance || isAutoBetInputNegative;
-
-    // Auto bet drop ball
-    const autoBetDropBall = useCallback(async () => {
-        if (autoBetTickRunningRef.current) return;
-        autoBetTickRunningRef.current = true;
-
-        const session = autoBetSessionRef.current;
-        try {
-            const result = await onDropBall?.(() => session !== autoBetSessionRef.current);
-            if (result === 'insufficient-funds') {
-                setIsAutoBetting(false);
-            } else if (result === 'dropped' && autoBetsLeft !== null) {
-                setAutoBetsLeft(prev => prev - 1);
-            }
-        } finally {
-            autoBetTickRunningRef.current = false;
-        }
-    }, [autoBetsLeft, isAutoBetting, onDropBall]);
-
-    // Start/stop auto bet interval
-    useEffect(() => {
-        if (!isAutoBetting) return;
-
-        const intervalId = setInterval(autoBetDropBall, AUTO_BET_INTERVAL_MS);
-        return () => clearInterval(intervalId);
-    }, [isAutoBetting, autoBetDropBall]);
-
-    useEffect(() => {
-        if (autoBetsLeft === 0) setIsAutoBetting(false);
-    }, [autoBetsLeft]);
+    const isDropBallDisabled = isBetAmountNegative || isBetExceedBalance;
 
     const handleBetClick = () => {
-        if (betMode === 'manual') {
-            onDropBall?.();
-        } else if (isAutoBetting) {
-            autoBetSessionRef.current++;
-            setIsAutoBetting(false);
-            setAutoBetsLeft(null);
-        } else {
-            autoBetSessionRef.current++;
-            setAutoBetsLeft(autoBetInput === 0 ? null : autoBetInput);
-            setIsAutoBetting(true);
-        }
-    };
-
-    const handleBetAmountChange = (e) => {
-        const value = parseFloat(e.target.value);
-        setBetAmount(isNaN(value) ? 0 : value);
-    };
-
-    const handleAutoBetInputChange = (e) => {
-        const value = parseInt(e.target.value);
-        setAutoBetInput(isNaN(value) ? 0 : value);
+        onDropBall?.();
     };
 
     const riskLevels = [
@@ -109,23 +52,6 @@ function Sidebar({
 
     return (
         <div className="sidebar">
-            {/* Bet Mode Tabs */}
-            <div className="bet-mode-tabs">
-                <button
-                    className={`bet-mode-tab ${betMode === 'manual' ? 'active' : ''}`}
-                    onClick={() => setBetMode('manual')}
-                    disabled={isAutoBetting}
-                >
-                    Manual
-                </button>
-                <button
-                    className={`bet-mode-tab ${betMode === 'auto' ? 'active' : ''}`}
-                    onClick={() => setBetMode('auto')}
-                    disabled={isAutoBetting}
-                >
-                    Auto
-                </button>
-            </div>
 
             {/* Bet Amount */}
             <div className="form-group">
@@ -140,7 +66,6 @@ function Sidebar({
                         onChange={(val) => setBetAmount(isNaN(Number(val)) ? 0 : Number(val))}
                         min={0}
                         step={0.01}
-                        disabled={isAutoBetting}
                         style={{ flex: 1 }}
                         controls={false}
                         formatter={(v) => `${v}`}
@@ -150,13 +75,11 @@ function Sidebar({
                     <Button.Group>
                         <Button
                             onClick={() => setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))}
-                            disabled={isAutoBetting}
                         >
                             ½
                         </Button>
                         <Button
                             onClick={() => setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)))}
-                            disabled={isAutoBetting}
                         >
                             2×
                         </Button>
@@ -178,7 +101,7 @@ function Sidebar({
                         id="riskLevel"
                         value={riskLevel}
                         onChange={(e) => setRiskLevel(e.target.value)}
-                        disabled={hasOutstandingBalls || isAutoBetting}
+                        disabled={hasOutstandingBalls}
                         className="form-select"
                     >
                         {riskLevels.map(({ value, label }) => (
@@ -193,7 +116,7 @@ function Sidebar({
                         id="rowCount"
                         value={rowCount}
                         onChange={(e) => setRowCount(parseInt(e.target.value))}
-                        disabled={hasOutstandingBalls || isAutoBetting}
+                        disabled={hasOutstandingBalls}
                         className="form-select"
                     >
                         {ROW_COUNT_OPTIONS.map((value) => (
@@ -203,41 +126,14 @@ function Sidebar({
                 </div>
             </div>
 
-            {/* Auto Bet Input */}
-            {betMode === 'auto' && (
-                <div className="form-group mobile-sheet-secondary">
-                    <div className="form-label-row">
-                        <label htmlFor="autoBetInput" className="form-label">Number of Bets</label>
-                        <span className="help-icon" title="Enter '0' for unlimited bets.">?</span>
-                    </div>
-                    <div className="auto-bet-input">
-                        <input
-                            id="autoBetInput"
-                            type="number"
-                            value={isAutoBetting ? (autoBetsLeft ?? 0) : autoBetInput}
-                            onChange={handleAutoBetInputChange}
-                            disabled={isAutoBetting}
-                            min="0"
-                            inputMode="numeric"
-                            className={isAutoBetInputNegative ? 'error' : ''}
-                        />
-                        {autoBetInput === 0 && !isAutoBetting && (
-                            <span className="infinity-icon">∞</span>
-                        )}
-                    </div>
-                    {isAutoBetInputNegative && (
-                        <p className="error-text">This must be greater than or equal to 0.</p>
-                    )}
-                </div>
-            )}
-
             {/* Bet Button */}
             <button
-                className={`bet-button ${isAutoBetting ? 'stop' : ''}`}
+                id="plinko-drop-btn"
+                className="bet-button"
                 onClick={handleBetClick}
                 disabled={isDropBallDisabled}
             >
-                {betMode === 'manual' ? 'Drop Ball' : isAutoBetting ? 'Stop Autobet' : 'Start Autobet'}
+                Drop Ball
             </button>
 
             {/* Footer */}

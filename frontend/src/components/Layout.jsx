@@ -8,6 +8,7 @@ import WalletModal from './Wallet/WalletModal'
 import ChatDrawer from './Chat/ChatDrawer'
 import DailyWagerRaceModal from './Tournament/DailyWagerRaceModal'
 import ProvablyFairVerifierModal from './ProvablyFair/ProvablyFairVerifierModal'
+import SEOManager from './SEO/SEOManager'
 
 function Layout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -27,6 +28,7 @@ function Layout() {
 
     return (
         <div className="app-layout">
+            <SEOManager />
             <Sidebar
                 isOpen={isSidebarOpen}
                 toggleSidebar={() => setIsSidebarOpen(value => !value)}

@@ -13,7 +13,6 @@ import {
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './ColorMatchGame.css'
 
@@ -73,9 +72,6 @@ function ColorMatchGame() {
     // Player personal bets record
     const [myBets, setMyBets] = useState([])
     const [activeTab, setActiveTab] = useState('history')
-
-    // Live Spectator Missed Win State
-    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
 
     // Modals & Drawers
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -239,75 +235,6 @@ function ColorMatchGame() {
         }, 80)
     }, [isDrawing, totalStaked, balance, bets, executeGameBet, resolveRound, notifyLoss])
 
-    // Automated Continuous Live Spectator Draw
-    const runSimulatedColorDraw = useCallback(() => {
-        if (isDrawing) return
-        setIsDrawing(true)
-        setIsLocked(true)
-        setSpectatorMissedWin(null)
-
-        const simulatedWinningNum = Math.floor(Math.random() * 10)
-        let rollCounter = 0
-        const interval = setInterval(() => {
-            setDisplayNum(Math.floor(Math.random() * 10))
-            casinoAudio.playChip?.()
-            rollCounter++
-            if (rollCounter >= 16) {
-                clearInterval(interval)
-                setDisplayNum(simulatedWinningNum)
-                setTimeout(() => {
-                    const item = NUMBER_DATA[simulatedWinningNum]
-                    const resultRecord = {
-                        period: periodId,
-                        num: simulatedWinningNum,
-                        colors: item.colors,
-                        bigSmall: item.bigSmall
-                    }
-                    setLastDraw(resultRecord)
-                    setHistory(prev => [resultRecord, ...prev.slice(0, 19)])
-                    setPeriodId(prev => prev + 1)
-                    setIsDrawing(false)
-                    setIsLocked(false)
-                    setTimeLeft(maxTime)
-
-                    // Spectator Missed Win FOMO Banner
-                    const chipAmt = selectedChip * activeMultiplier || 100
-                    const winColors = item.colors.join('/')
-                    setSpectatorMissedWin({
-                        outcome: `#${simulatedWinningNum} (${winColors.toUpperCase()})`,
-                        multiplier: item.colors.includes('violet') ? 4.5 : 2,
-                        amount: chipAmt,
-                        payout: (chipAmt * (item.colors.includes('violet') ? 4.5 : 2)).toFixed(0)
-                    })
-                }, 500)
-            }
-        }, 80)
-    }, [isDrawing, periodId, selectedChip, activeMultiplier, maxTime])
-
-    // NON-STOP LOTTERY COUNTDOWN TICKER
-    useEffect(() => {
-        const timer = setInterval(() => {
-            if (isDrawing) return
-
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    if (totalStaked > 0) {
-                        triggerDraw()
-                    } else {
-                        runSimulatedColorDraw()
-                    }
-                    return maxTime
-                }
-                if (prev <= 5 && !isLocked) {
-                    setIsLocked(true)
-                }
-                return prev - 1
-            })
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [isDrawing, totalStaked, triggerDraw, runSimulatedColorDraw, maxTime, isLocked])
-
     // Switch game modes (30s, 1Min, 3Min, 5Min)
     const handleModeSwitch = (mode, seconds) => {
         if (isDrawing) return
@@ -463,21 +390,6 @@ function ColorMatchGame() {
                         </div>
                     )}
 
-                    {/* Spectator Missed Win FOMO Banner */}
-                    <MissedWinBanner
-                        visible={Boolean(spectatorMissedWin && !isDrawing && totalStaked === 0)}
-                        outcome={spectatorMissedWin?.outcome}
-                        multiplier={spectatorMissedWin?.multiplier}
-                        amount={spectatorMissedWin?.amount}
-                        payout={spectatorMissedWin?.payout}
-                        currencySymbol={currencySymbol}
-                        countdown={timeLeft}
-                        onAction={() => {
-                            setSpectatorMissedWin(null)
-                            addBet('green')
-                        }}
-                    />
-
                     {/* 1. 3D Crystal Color Buttons (Using Generated 8K Raytraced Gem Assets) */}
                     <div className="cm-bet-console">
                         <div className="cm-section-header">
@@ -487,6 +399,7 @@ function ColorMatchGame() {
 
                         <div className="cm-color-crystals">
                             <button
+                                id="cm-bet-green"
                                 type="button"
                                 className={`cm-crystal-btn btn-green ${bets.green ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
@@ -507,6 +420,7 @@ function ColorMatchGame() {
                             </button>
 
                             <button
+                                id="cm-bet-violet"
                                 type="button"
                                 className={`cm-crystal-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
@@ -527,6 +441,7 @@ function ColorMatchGame() {
                             </button>
 
                             <button
+                                id="cm-bet-red"
                                 type="button"
                                 className={`cm-crystal-btn btn-red ${bets.red ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
@@ -587,6 +502,7 @@ function ColorMatchGame() {
 
                         <div className="cm-bigsmall-duo">
                             <button
+                                id="cm-bet-big"
                                 type="button"
                                 className={`cm-pocket-btn btn-big ${bets.big ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
@@ -601,6 +517,7 @@ function ColorMatchGame() {
                             </button>
 
                             <button
+                                id="cm-bet-small"
                                 type="button"
                                 className={`cm-pocket-btn btn-small ${bets.small ? 'active-bet' : ''}`}
                                 disabled={isLocked || isDrawing}
@@ -681,6 +598,7 @@ function ColorMatchGame() {
 
                             <div className="cm-dock-actions">
                                 <Button
+                                    id="cm-clear-btn"
                                     icon={<UndoOutlined />}
                                     onClick={clearBets}
                                     disabled={isLocked || isDrawing || totalStaked === 0}
@@ -689,6 +607,7 @@ function ColorMatchGame() {
                                     Clear
                                 </Button>
                                 <Button
+                                    id="cm-double-btn"
                                     onClick={doubleBets}
                                     disabled={isLocked || isDrawing || totalStaked === 0}
                                     className="cm-ctrl-btn cm-btn-double"
@@ -696,6 +615,7 @@ function ColorMatchGame() {
                                     2X Double
                                 </Button>
                                 <Button
+                                    id="cm-draw-btn"
                                     type="primary"
                                     icon={<ThunderboltOutlined />}
                                     onClick={triggerDraw}

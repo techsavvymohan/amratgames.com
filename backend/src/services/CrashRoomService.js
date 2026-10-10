@@ -195,7 +195,8 @@ export class CrashRoomService {
                 broadcastEvent('CRASH_ROOM_TICK', {
                     state: 'FLYING',
                     roundId: this.roundId,
-                    multiplier: this.currentMultiplier
+                    multiplier: this.currentMultiplier,
+                    flightStartTime: this.flightStartTime
                 })
             }
         }
@@ -418,6 +419,7 @@ export class CrashRoomService {
             roundId: this.roundId,
             currentMultiplier: this.currentMultiplier,
             countdown: Math.max(0, Math.ceil(this.countdown)),
+            flightStartTime: this.flightStartTime,
             hash: this.hash,
             bets: this.getPublicBets(),
             history: this.history.slice(0, 10),

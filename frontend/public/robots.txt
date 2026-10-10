@@ -1,5 +1,5 @@
 # Robots.txt for AmratGames.com
-# 10/10 Search & Generative Engine Directives
+# 10/10 Search & Generative AI Crawler Directives
 
 User-agent: *
 Allow: /
@@ -7,12 +7,18 @@ Allow: /crash
 Allow: /plinko
 Allow: /mines
 Allow: /dino
+Allow: /limbo
+Allow: /dragon-tiger
+Allow: /color-match
+Allow: /coin-toss
 Allow: /amrat-logo.png
 Allow: /images/
 
 # Disallow internal debug or private endpoints
 Disallow: /api/
 Disallow: /_api/
+Disallow: /admin
+Disallow: /profile
 
 # Sitemaps
 Sitemap: https://amratgames.com/sitemap.xml
