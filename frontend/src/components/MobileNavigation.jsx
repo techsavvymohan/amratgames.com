@@ -102,7 +102,7 @@ const primaryRoutes = [
 
 const comingSoon = ['Favourites', 'Recent', 'Challenges', 'My Bets']
 
-function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
+function MobileNavigation({ drawerOpen, onClose, returnFocusRef, onToggleChat, isChatOpen }) {
     const location = useLocation()
     const navigate = useNavigate()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
@@ -198,40 +198,45 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                 }}
                 rootClassName="mobile-navigation-drawer"
             >
-                {/* User Status / Auth CTA in Drawer */}
-                <div style={{ marginBottom: '16px' }}>
+                {/* 👑 UI/UX Pro Max: User Status / Auth CTA & Community Live Chat in Drawer */}
+                <div style={{ marginBottom: '18px' }}>
                     {user ? (
                         <div style={{
-                            padding: '12px',
-                            background: 'rgba(245, 175, 25, 0.1)',
+                            padding: '12px 14px',
+                            background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.12), rgba(212, 145, 16, 0.05))',
                             border: '1px solid rgba(245, 175, 25, 0.35)',
-                            borderRadius: '10px',
+                            borderRadius: '12px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between'
+                            justifyContent: 'space-between',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)'
                         }}>
                             <div 
                                 onClick={() => { onClose(); navigate('/profile'); }}
-                                style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                                 title="Open Verified Profile"
                             >
                                 <div style={{
-                                    width: '30px',
-                                    height: '30px',
+                                    width: '34px',
+                                    height: '34px',
                                     borderRadius: '50%',
                                     background: 'linear-gradient(135deg, #f5af19, #d49110)',
                                     color: '#0b0f19',
-                                    fontWeight: 800,
+                                    fontWeight: 900,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    fontSize: '12px'
+                                    fontSize: '14px',
+                                    boxShadow: '0 2px 6px rgba(245, 175, 25, 0.4)'
                                 }}>
                                     {user.username.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                    <div style={{ fontWeight: 700, color: '#fbbf24', fontSize: '0.85rem' }}>{user.username}</div>
-                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                    <div style={{ fontWeight: 800, color: '#fbbf24', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <span>{user.username}</span>
+                                        <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '1px 5px', borderRadius: '4px' }}>VIP</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
                                         {user.phone ? `📱 +91 ${user.phone}` : (user.email || 'Verified Player')}
                                     </div>
                                 </div>
@@ -240,44 +245,110 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                                 type="button"
                                 onClick={() => { logout(); onClose(); }}
                                 style={{
-                                    background: 'rgba(239, 68, 68, 0.2)',
-                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    border: '1px solid rgba(239, 68, 68, 0.35)',
                                     color: '#f87171',
-                                    padding: '5px 10px',
-                                    borderRadius: '6px',
-                                    fontSize: '0.72rem',
+                                    padding: '6px 12px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
                                     cursor: 'pointer',
-                                    fontWeight: 600
+                                    fontWeight: 700,
+                                    transition: 'background 0.15s ease'
                                 }}
                             >
                                 Logout
                             </button>
                         </div>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => { onClose(); openAuthModal('otp'); }}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'linear-gradient(135deg, #f5af19, #d49110)',
-                                border: 'none',
-                                borderRadius: '10px',
-                                color: '#0b0f19',
-                                fontWeight: 800,
-                                fontSize: '0.88rem',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                boxShadow: '0 4px 12px rgba(245, 175, 25, 0.25)'
-                            }}
-                        >
-                            <span>⚡</span>
-                            <span>Sign In</span>
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                type="button"
+                                onClick={() => { onClose(); openAuthModal('login'); }}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 14px',
+                                    background: 'linear-gradient(135deg, #f5af19, #d49110)',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    color: '#0b0f19',
+                                    fontWeight: 800,
+                                    fontSize: '0.92rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 4px 14px rgba(245, 175, 25, 0.35)'
+                                }}
+                            >
+                                <span>⚡</span>
+                                <span>Sign In</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { onClose(); openAuthModal('register'); }}
+                                style={{
+                                    flex: 1,
+                                    padding: '12px 14px',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '12px',
+                                    color: '#f8fafc',
+                                    fontWeight: 700,
+                                    fontSize: '0.92rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <span>Register</span>
+                            </button>
+                        </div>
                     )}
+
+                    {/* 💬 Community Live Chat Button inside Menu Drawer */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            onClose();
+                            if (onToggleChat) onToggleChat();
+                        }}
+                        style={{
+                            width: '100%',
+                            marginTop: '10px',
+                            padding: '12px 14px',
+                            background: isChatOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                            border: isChatOpen ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: '12px',
+                            color: '#f8fafc',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.2s ease',
+                            boxShadow: isChatOpen ? '0 0 14px rgba(16, 185, 129, 0.25)' : 'none'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '18px' }}>💬</span>
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f8fafc' }}>Community Live Chat</div>
+                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Connect with active players</div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                boxShadow: '0 0 8px #10b981'
+                            }} />
+                            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 800 }}>LIVE</span>
+                        </div>
+                    </button>
                 </div>
 
                 <label className="mobile-drawer-field">
@@ -335,6 +406,12 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                                     onClose()
                                     if (!user) openAuthModal('login')
                                     else navigate('/profile')
+                                } else if (label === 'Notifications') {
+                                    onClose()
+                                    navigate('/profile?tab=transactions')
+                                } else if (label === 'Chat') {
+                                    onClose()
+                                    if (onToggleChat) onToggleChat()
                                 }
                             }}
                         >

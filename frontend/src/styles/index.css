@@ -1604,7 +1604,11 @@ body {
 @media (max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none) {
     .header {
         height: var(--mobile-header-height);
-        padding: env(safe-area-inset-top) 10px 0;
+        padding: env(safe-area-inset-top) 12px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
     }
 
     .logo-text {
@@ -1617,132 +1621,116 @@ body {
         filter: drop-shadow(0 0 10px rgba(245, 175, 25, 0.6)) !important;
     }
 
+    .header-left {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        z-index: 2;
+    }
+
+    /* 👑 UI/UX Pro Max: Keep Wallet perfectly in center of mobile navbar */
     .header-center {
-        min-width: 0;
-        margin: 0 4px 0 auto;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        pointer-events: auto;
     }
 
     .header-center .search-input-wrapper,
     .desktop-only-control,
     .desktop-auth-container,
     .wallet-balance-display,
-    .wallet-btn {
+    .wallet-btn,
+    .header-race-pill,
+    .mobile-user-quick-action {
         display: none !important;
     }
 
     .header-right {
+        flex: 0 0 auto;
         display: flex;
         align-items: center;
+        justify-content: flex-end;
+        margin-left: auto;
+        z-index: 2;
         gap: 6px;
     }
 
-    .mobile-wallet-balance,
-    .mobile-user-quick-action,
-    .mobile-menu-button {
-        display: flex;
+    /* 👑 UI/UX Pro Max: Centered Wallet Pill */
+    .mobile-wallet-balance {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .mobile-wallet-balance {
-        max-width: min(48vw, 190px);
-        gap: 6px;
-        padding: 4px 8px 4px 6px;
-        border: 1px solid rgba(245, 175, 25, 0.35);
-        border-radius: 20px;
-        background: rgba(245, 175, 25, 0.12);
+        gap: 8px;
+        padding: 5px 12px 5px 10px;
+        border: 1px solid rgba(245, 175, 25, 0.45);
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(245, 175, 25, 0.16), rgba(212, 145, 16, 0.08));
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         color: var(--text-primary);
         font-weight: 800;
-        font-size: 13px;
+        font-size: 13.5px;
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease;
+        transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .mobile-wallet-balance:active {
-        background: rgba(245, 175, 25, 0.22);
+        transform: scale(0.97);
+        background: linear-gradient(135deg, rgba(245, 175, 25, 0.28), rgba(212, 145, 16, 0.18));
     }
 
     .mobile-wallet-balance .mobile-bal-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
         letter-spacing: -0.01em;
+        font-weight: 800;
+        color: #f8fafc;
     }
 
     .mobile-deposit-plus {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 18px;
-        height: 18px;
+        width: 19px;
+        height: 19px;
         border-radius: 50%;
         background: linear-gradient(135deg, #f5af19, #d49110);
         color: #0b0f19;
         font-weight: 900;
         font-size: 13px;
         line-height: 1;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 6px rgba(245, 175, 25, 0.4);
         flex-shrink: 0;
     }
 
-    .mobile-user-quick-action {
-        display: flex;
-        align-items: center;
-    }
-
-    .mobile-profile-avatar-btn {
-        position: relative;
+    /* 👑 UI/UX Pro Max: Sleek Hamburger Menu Button */
+    .mobile-menu-button {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #f5af19, #d49110);
-        color: #0b0f19;
-        font-weight: 900;
-        font-size: 13px;
-        text-decoration: none;
-        box-shadow: 0 2px 8px rgba(245, 175, 25, 0.35);
-        border: 1.5px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .mobile-online-indicator {
-        position: absolute;
-        bottom: -1px;
-        right: -1px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #10b981;
-        border: 1.5px solid #09192b;
-    }
-
-    .mobile-header-signin-btn {
-        padding: 5px 10px;
-        background: rgba(245, 175, 25, 0.14);
-        border: 1px solid rgba(245, 175, 25, 0.35);
-        color: #fbbf24;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 800;
-        cursor: pointer;
-        white-space: nowrap;
-    }
-
-    .mobile-header-signin-btn:active {
-        background: rgba(245, 175, 25, 0.25);
-    }
-
-    .mobile-menu-button {
-        min-width: 38px;
-        height: 38px;
-        border: 0;
-        background: transparent;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
         color: var(--text-primary);
         cursor: pointer;
-        padding: 4px;
-        border-radius: 8px;
+        padding: 0;
+        border-radius: 10px;
+        transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-menu-button:active {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(0.95);
     }
 
     .header-wallet .wallet-dropdown {

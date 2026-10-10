@@ -49,6 +49,8 @@ function Layout() {
                 drawerOpen={isMobileMenuOpen}
                 onClose={closeMobileMenu}
                 returnFocusRef={mobileMenuButtonRef}
+                onToggleChat={() => setIsChatOpen((o) => !o)}
+                isChatOpen={isChatOpen}
             />
             <ChatDrawer
                 isOpen={isChatOpen}

@@ -239,35 +239,10 @@ function Header({
             </div>
 
             <div className="header-right">
-                {/* 🏆 ₹50K Daily Race Button */}
+                {/* 💬 Community Live Chat Toggle (Desktop Only; Mobile Chat is inside Menu Drawer) */}
                 <button
                     type="button"
-                    className="header-action-pill-btn header-race-pill"
-                    onClick={onOpenRace}
-                    title="Daily ₹50,000 Turnover Sprint"
-                    style={{
-                        background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(202, 138, 4, 0.2))',
-                        border: '1px solid rgba(234, 179, 8, 0.4)',
-                        color: '#facc15',
-                        fontWeight: 700,
-                        fontSize: '12px',
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    <span>🏆</span>
-                    <span className="desktop-only-text">₹50K Race</span>
-                </button>
-
-                {/* 💬 Community Live Chat Toggle */}
-                <button
-                    type="button"
-                    className={`header-icon-btn ${isChatOpen ? 'active' : ''}`}
+                    className={`header-icon-btn desktop-only-control ${isChatOpen ? 'active' : ''}`}
                     onClick={onToggleChat}
                     title="Live Community Chat"
                     style={{
@@ -347,32 +322,6 @@ function Header({
                         ))}
                     </select>
                 </label>
-
-                {/* Mobile Direct Profile Avatar or Sign-in button */}
-                <div className="mobile-user-quick-action">
-                    {user ? (
-                        <Link
-                            to="/profile"
-                            className="mobile-profile-avatar-btn"
-                            title={`Account: ${user.username}`}
-                            aria-label="My Profile"
-                        >
-                            <span className="mobile-avatar-char">
-                                {user.username ? user.username.charAt(0).toUpperCase() : '👤'}
-                            </span>
-                            <span className="mobile-online-indicator" />
-                        </Link>
-                    ) : (
-                        <button
-                            type="button"
-                            className="mobile-header-signin-btn"
-                            onClick={() => openAuthModal('login')}
-                            aria-label="Sign In"
-                        >
-                            Sign In
-                        </button>
-                    )}
-                </div>
 
                 <div className="desktop-auth-container">
                     {isGamePage ? (
@@ -476,32 +425,6 @@ function Header({
                                         <span>Affiliates (0.3% Share)</span>
                                     </Link>
 
-                                    <button
-                                        type="button"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => {
-                                            setShowUserDropdown(false)
-                                            onOpenRace && onOpenRace()
-                                        }}
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            color: '#facc15',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            fontSize: '13px',
-                                            fontWeight: 600,
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <span>🏆</span>
-                                        <span>Daily ₹50K Race</span>
-                                    </button>
 
                                     <button
                                         type="button"
@@ -639,32 +562,6 @@ function Header({
                                         <span>Affiliates (0.3% Share)</span>
                                     </Link>
 
-                                    <button
-                                        type="button"
-                                        className="amrat-user-dropdown-action"
-                                        onClick={() => {
-                                            setShowUserDropdown(false)
-                                            onOpenRace && onOpenRace()
-                                        }}
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                                            color: '#facc15',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '10px 14px',
-                                            fontSize: '13px',
-                                            fontWeight: 600,
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <span>🏆</span>
-                                        <span>Daily ₹50K Race</span>
-                                    </button>
 
                                     <button
                                         type="button"
