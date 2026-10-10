@@ -258,9 +258,11 @@ body {
 }
 
 /* ===== Homepage Chrome ===== */
-.header-home .header-center {
-    max-width: 680px;
-    margin-inline: 32px;
+@media (min-width: 769px) {
+    .header-home .header-center {
+        max-width: 680px;
+        margin-inline: 32px;
+    }
 }
 
 .header-home .search-input-wrapper {
@@ -1629,17 +1631,21 @@ body {
     }
 
     /* 👑 UI/UX Pro Max: Keep Wallet perfectly in center of mobile navbar */
+    .header .header-center,
+    .header-home .header-center,
     .header-center {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-        pointer-events: auto;
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 1 !important;
+        pointer-events: auto !important;
     }
 
     .header-center .search-input-wrapper,
@@ -1712,7 +1718,7 @@ body {
 
     /* 👑 UI/UX Pro Max: Sleek Hamburger Menu Button */
     .mobile-menu-button {
-        display: flex;
+        display: flex !important;
         align-items: center;
         justify-content: center;
         width: 40px;
