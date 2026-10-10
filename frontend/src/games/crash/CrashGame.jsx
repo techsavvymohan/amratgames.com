@@ -53,6 +53,7 @@ import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CrashGame.css'
 
 const { Text, Title, Paragraph } = Typography
@@ -1182,6 +1183,13 @@ function CrashGame() {
                 </Tag>
                 <Text type="secondary">ogicjp won big!</Text>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="crash"
+                gameTitle="Crash"
+                localRounds={gameRecords}
+            />
 
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (

@@ -99,7 +99,7 @@
 }
 
 .live-bets-table th {
-    padding: 14px 18px;
+    padding: 10px 14px;
     color: #64748b;
     font-size: 11px;
     font-weight: 700;
@@ -107,12 +107,14 @@
     letter-spacing: 0.06em;
     background: rgba(0, 0, 0, 0.15);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
 }
 
 .live-bets-table td {
-    padding: 12px 18px;
+    padding: 9px 14px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .live-bet-row {
@@ -126,10 +128,11 @@
 .game-icon-pill {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 4px 10px;
+    gap: 6px;
+    padding: 3px 8px;
     border-radius: 8px;
     border: 1px solid transparent;
+    white-space: nowrap;
 }
 
 .game-emoji {
@@ -140,6 +143,7 @@
     font-weight: 600;
     color: #f1f5f9;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 .player-handle {

@@ -14,6 +14,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './ColorMatchGame.css'
 
 const { Text } = Typography
@@ -152,10 +153,16 @@ function ColorMatchGame() {
             setMyBets(prev => [
                 {
                     period: periodId,
+                    betAmount: totalStaked,
                     stake: totalStaked,
+                    payout: totalWin,
                     win: totalWin,
                     resultNum: winningNum,
-                    winStatus: isWin && totalWin > 0
+                    outcome: `#${periodId} → ${winningNum} (${colors.join(', ')})`,
+                    won: isWin && totalWin > 0,
+                    winStatus: isWin && totalWin > 0,
+                    multiplier: totalStaked > 0 ? (totalWin / totalStaked) : 0,
+                    time: Date.now()
                 },
                 ...prev.slice(0, 19)
             ])
@@ -890,6 +897,12 @@ function ColorMatchGame() {
                     </div>
                 </div>
             </Modal>
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="color-match"
+                gameTitle="Color Match"
+                localRounds={myBets}
+            />
         </div>
     )
 }

@@ -57,6 +57,7 @@ import { CurrencyIcon } from '../../components/Header';
 import MobileBetSheet from '../../components/MobileBetSheet';
 import casinoAudio from '../../utils/casinoAudio';
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner';
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory';
 import './DinoGame.css';
 
 const { Text, Title, Paragraph } = Typography;
@@ -1112,6 +1113,12 @@ function DinoGame() {
                     </div>
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="dino"
+                gameTitle="Dino Run"
+            />
 
             {/* Live Stats Draggable Widget */}
             {statsDrawerOpen && (

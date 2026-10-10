@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '../../context/WalletContext'
 import './WalletModal.css'
 
@@ -180,6 +180,11 @@ export default function WalletModal() {
     }
 
     const PRESET_AMOUNTS = [300, 500, 1000, 2500, 5000]
+
+    // Filter out game bets and wins so Cashier Ledger only shows wallet movements (deposits, withdrawals, refunds)
+    const cashierTransactions = useMemo(() => {
+        return (transactions || []).filter((tx) => tx.type !== 'bet' && tx.type !== 'win')
+    }, [transactions])
 
     return (
         <div className="amrat-wallet-overlay" onClick={closeWalletModal}>
@@ -683,7 +688,7 @@ export default function WalletModal() {
                                     style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem', fontWeight: 700 }}
                                     onClick={() => setHistorySubTab('all')}
                                 >
-                                    📜 All Transactions ({transactions.length})
+                                    📜 Cashier Ledger ({cashierTransactions.length})
                                 </button>
                             </div>
 
@@ -708,6 +713,7 @@ export default function WalletModal() {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
                                             })
+                                            const shortId = w.id ? (w.id.length > 8 ? w.id.slice(-6).toUpperCase() : w.id) : ''
 
                                             return (
                                                 <div
@@ -723,17 +729,18 @@ export default function WalletModal() {
                                                         padding: '12px 14px',
                                                         display: 'flex',
                                                         flexDirection: 'column',
-                                                        gap: '6px'
+                                                        gap: '8px'
                                                     }}
                                                 >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    {/* Row 1: Left has Type & Status Badge, Right has bold Amount */}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                            <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', color: '#94a3b8' }}>
-                                                                #{w.id}
+                                                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f1f5f9' }}>
+                                                                🏧 Withdrawal {shortId ? `(#${shortId})` : ''}
                                                             </span>
                                                             {isPending && (
                                                                 <span style={{
-                                                                    fontSize: '0.7rem',
+                                                                    fontSize: '0.68rem',
                                                                     fontWeight: 700,
                                                                     color: '#f59e0b',
                                                                     background: 'rgba(245, 158, 11, 0.15)',
@@ -746,7 +753,7 @@ export default function WalletModal() {
                                                             )}
                                                             {isApproved && (
                                                                 <span style={{
-                                                                    fontSize: '0.7rem',
+                                                                    fontSize: '0.68rem',
                                                                     fontWeight: 700,
                                                                     color: '#10b981',
                                                                     background: 'rgba(16, 185, 129, 0.15)',
@@ -754,12 +761,12 @@ export default function WalletModal() {
                                                                     borderRadius: '12px',
                                                                     border: '1px solid rgba(16, 185, 129, 0.3)'
                                                                 }}>
-                                                                    ✓ Transferred &amp; Paid
+                                                                    ✓ Transferred
                                                                 </span>
                                                             )}
                                                             {isRejected && (
                                                                 <span style={{
-                                                                    fontSize: '0.7rem',
+                                                                    fontSize: '0.68rem',
                                                                     fontWeight: 700,
                                                                     color: '#ef4444',
                                                                     background: 'rgba(239, 68, 68, 0.15)',
@@ -767,24 +774,26 @@ export default function WalletModal() {
                                                                     borderRadius: '12px',
                                                                     border: '1px solid rgba(239, 68, 68, 0.3)'
                                                                 }}>
-                                                                    ✕ Rejected (Refunded)
+                                                                    ✕ Rejected
                                                                 </span>
                                                             )}
                                                         </div>
                                                         <strong style={{
-                                                            fontSize: '0.98rem',
+                                                            fontSize: '1rem',
                                                             color: isPending ? '#fbbf24' : isApproved ? '#34d399' : '#94a3b8'
                                                         }}>
                                                             ₹{Number(w.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                                         </strong>
                                                     </div>
 
-                                                    <div style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+                                                    {/* Row 2: Destination */}
+                                                    <div style={{ fontSize: '0.78rem', color: '#cbd5e1', wordBreak: 'break-all' }}>
                                                         <span style={{ color: '#94a3b8' }}>To: </span>
                                                         <strong>{w.payoutDestination}</strong>
                                                     </div>
 
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                                                    {/* Row 3: Meta & Timestamp */}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
                                                         <span>{timeStr}</span>
                                                         {isApproved && w.transactionRef && (
                                                             <span style={{ color: '#34d399', fontFamily: 'monospace' }}>
@@ -803,14 +812,14 @@ export default function WalletModal() {
                                     </div>
                                 )
                             ) : (
-                                /* All Transactions List */
+                                /* Cashier Ledger (Deposits, Withdrawals, Refunds Only - Game Bets are displayed in individual game history) */
                                 <div className="amrat-tx-list">
-                                    {transactions.length === 0 ? (
+                                    {cashierTransactions.length === 0 ? (
                                         <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b', fontSize: '0.85rem' }}>
-                                            No transaction activity recorded yet.
+                                            No deposit or withdrawal ledger records yet.
                                         </div>
                                     ) : (
-                                        transactions.slice(0, 30).map((tx) => {
+                                        cashierTransactions.slice(0, 30).map((tx) => {
                                             const isPos = tx.amount >= 0
                                             const timeStr = tx.timestamp instanceof Date
                                                 ? tx.timestamp.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
@@ -823,8 +832,6 @@ export default function WalletModal() {
                                                             {tx.type === 'deposit' && '💰 Deposit'}
                                                             {tx.type === 'withdrawal' && '🏧 Withdrawal'}
                                                             {tx.type === 'refund' && '↩️ Refund'}
-                                                            {tx.type === 'bet' && '🎲 Game Bet'}
-                                                            {tx.type === 'win' && '🏆 Game Win'}
                                                             {tx.status === 'pending' && ' ⏳ (Pending)'}
                                                             {tx.utrNumber ? ` (UTR: ${tx.utrNumber})` : ''}
                                                         </span>

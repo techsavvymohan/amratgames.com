@@ -17,6 +17,7 @@ import casinoAudio from '../../utils/casinoAudio'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import CoinParticles from './CoinParticles'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CoinTossGame.css'
 
 const MULTIPLIER = 1.98 // 99% RTP / 1% House Edge
@@ -604,12 +605,13 @@ export default function CoinTossGame() {
                         </div>
                     </div>
 
-                    {/* Choose Heads or Tails with Rich Playable Assets */}
+                    {/* Choose Heads or Tails - Clean & Crisp */}
                     <div className="control-group">
-                        <label className="control-title">
-                            <span>1. SELECT PREDICTION</span>
-                            <span className="payout-pill">WIN 1.98X</span>
-                        </label>
+                        <div className="control-title-row">
+                            <label className="control-title">
+                                Select Prediction
+                            </label>
+                        </div>
                         <div className="side-selector-grid">
                             {/* Heads Prediction Card */}
                             <button
@@ -620,14 +622,12 @@ export default function CoinTossGame() {
                                 <div className="side-asset-avatar">
                                     <img
                                         src={HEADS_ASSET}
-                                        alt="Heads Medal"
+                                        alt="Heads Coin"
                                         className="side-asset-img"
                                     />
-                                    <span className="side-asset-glow" />
                                 </div>
                                 <div className="side-card-info">
                                     <span className="side-card-name">HEADS</span>
-                                    <span className="side-card-mult">Royal Crown • 1.98x</span>
                                 </div>
                                 {choice === 'heads' && (
                                     <CheckCircleFilled className="selection-badge-icon" />
@@ -643,14 +643,12 @@ export default function CoinTossGame() {
                                 <div className="side-asset-avatar">
                                     <img
                                         src={TAILS_ASSET}
-                                        alt="Tails Medal"
+                                        alt="Tails Coin"
                                         className="side-asset-img"
                                     />
-                                    <span className="side-asset-glow" />
                                 </div>
                                 <div className="side-card-info">
                                     <span className="side-card-name">TAILS</span>
-                                    <span className="side-card-mult">Imperial Eagle • 1.98x</span>
                                 </div>
                                 {choice === 'tails' && (
                                     <CheckCircleFilled className="selection-badge-icon" />
@@ -663,7 +661,7 @@ export default function CoinTossGame() {
                     <div className="control-group">
                         <div className="control-title-row">
                             <label className="control-title" htmlFor="coin-bet-amount">
-                                2. BET AMOUNT
+                                Bet Amount
                             </label>
                             <span className="balance-hint">
                                 Balance: {currencySymbol}{Number(balance || 0).toLocaleString('en-IN')}
@@ -725,17 +723,22 @@ export default function CoinTossGame() {
                         </div>
                     </div>
 
-                    {/* Return & Profit Preview */}
+                    {/* Return & Profit Preview with Multiplier in Bottom */}
                     <div className="payout-summary-card">
                         <div className="payout-summary-item">
-                            <span className="summary-lbl">Potential Win:</span>
+                            <span className="summary-lbl">Multiplier</span>
+                            <span className="summary-val mult-val">1.98×</span>
+                        </div>
+                        <div className="payout-summary-divider" />
+                        <div className="payout-summary-item">
+                            <span className="summary-lbl">Potential Win</span>
                             <span className="summary-val win-val">
                                 {currencySymbol}{potentialPayout.toLocaleString('en-IN')}
                             </span>
                         </div>
                         <div className="payout-summary-divider" />
                         <div className="payout-summary-item">
-                            <span className="summary-lbl">Net Profit:</span>
+                            <span className="summary-lbl">Net Profit</span>
                             <span className="summary-val profit-val">
                                 +{currencySymbol}{potentialProfit.toLocaleString('en-IN')}
                             </span>
@@ -762,7 +765,7 @@ export default function CoinTossGame() {
                                 <span>INSUFFICIENT BALANCE</span>
                             ) : (
                                 <span>
-                                    BET ON NEXT TOSS IN {roundCountdown}s ({currencySymbol}{betAmount.toLocaleString('en-IN')})
+                                    FLIP {choice.toUpperCase()} ({currencySymbol}{betAmount.toLocaleString('en-IN')})
                                 </span>
                             )}
                         </button>
@@ -779,6 +782,13 @@ export default function CoinTossGame() {
                     )}
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History (Scroll down to view) */}
+            <GameBottomHistory
+                gameKey="coin-toss"
+                gameTitle="Coin Toss"
+                localRounds={history}
+            />
 
             {/* Provably Fair Verifier Modal */}
             <ProvablyFairVerifierModal

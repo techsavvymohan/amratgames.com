@@ -12,6 +12,7 @@ import { useWallet } from '../../context/WalletContext'
 import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './LimboGame.css'
 
 const { Text } = Typography
@@ -597,6 +598,13 @@ function LimboGame() {
                     )}
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="limbo"
+                gameTitle="Limbo"
+                localRounds={history}
+            />
 
             {/* Provably Fair Modal */}
             <Modal

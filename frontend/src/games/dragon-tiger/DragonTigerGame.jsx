@@ -9,6 +9,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './DragonTigerGame.css'
 
 const { Text, Title } = Typography
@@ -478,6 +479,12 @@ function DragonTigerGame() {
                     </div>
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="dragon-tiger"
+                gameTitle="Dragon Tiger"
+            />
 
             {/* Provably Fair Modal */}
             <Modal

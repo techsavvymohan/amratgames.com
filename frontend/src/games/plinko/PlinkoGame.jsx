@@ -43,6 +43,7 @@ import { ProvablyFair } from '../../utils/ProvablyFair';
 import { useWallet } from '../../context/WalletContext';
 import casinoAudio from '../../utils/casinoAudio';
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner';
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory';
 import './PlinkoGame.css';
 
 const { Text, Title, Paragraph } = Typography;
@@ -696,6 +697,12 @@ function PlinkoGame() {
                     </div>
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="plinko"
+                gameTitle="Plinko"
+            />
 
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (

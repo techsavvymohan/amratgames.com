@@ -265,221 +265,297 @@ export default function ProfilePage() {
 
     return (
         <div className="profile-page-container">
-            {/* Top Sub-Navigation Tabs */}
-            <div className="profile-subnav" role="tablist">
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('profile')}
-                >
-                    Profile
-                </button>
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'vip' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('vip')}
-                >
-                    👑 VIP Club
-                </button>
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'affiliate' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('affiliate')}
-                >
-                    💸 Affiliates (0.3%)
-                </button>
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'payments' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('payments')}
-                >
-                    Payments History
-                </button>
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'bets' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('bets')}
-                >
-                    Bets History
-                </button>
-                <button
-                    type="button"
-                    className={`profile-subnav-btn ${activeTab === 'support' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('support')}
-                >
-                    Support
-                </button>
+            {/* VIP Profile Hero Banner */}
+            <div className="profile-hero-banner">
+                <div className="profile-hero-avatar-wrap">
+                    <div className="profile-hero-avatar">
+                        {user.username ? user.username.charAt(0).toUpperCase() : '👤'}
+                    </div>
+                    <div className="profile-hero-badge" title="Verified Account">✓</div>
+                </div>
+                <div className="profile-hero-info">
+                    <div className="profile-hero-name-row">
+                        <h2 className="profile-hero-name">{user.username || 'Amrat VIP Player'}</h2>
+                        <span className="profile-hero-vip-tag">
+                            👑 {vipData?.name || 'Bronze VIP'}
+                        </span>
+                        {user.kycStatus === 'verified' ? (
+                            <span className="profile-hero-verified-tag">🛡️ Verified Level 2</span>
+                        ) : (
+                            <button
+                                type="button"
+                                className="profile-hero-unverified-tag"
+                                onClick={() => setShowKycModal(true)}
+                            >
+                                ⚡ Verify KYC
+                            </button>
+                        )}
+                    </div>
+                    <div className="profile-hero-meta">
+                        {user.phone && <span className="profile-meta-item">📱 +91 {user.phone}</span>}
+                        {user.email && <span className="profile-meta-item">✉️ {user.email}</span>}
+                        {user.id && <span className="profile-meta-item">🆔 ID: {String(user.id).slice(0, 8)}...</span>}
+                    </div>
+                </div>
+                <div className="profile-hero-balance-box">
+                    <div className="profile-hero-balance-label">Cash Wallet</div>
+                    <div className="profile-hero-balance-val">
+                        {currencySymbol}{(user.balances?.INR || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div className="profile-hero-sub-balance">
+                        Vault: {(user.balances?.AMRAT || 0).toLocaleString()} $AMRAT
+                    </div>
+                </div>
             </div>
 
-            {/* TAB 1: PROFILE */}
-            {activeTab === 'profile' && (
-                <>
-                    {/* Card 1: Phone Number */}
-                    <div className="profile-card">
-                        <div className="profile-card-title">Phone number</div>
-                        <div className="profile-verified-field">
-                            <div className="profile-flag-pill">
-                                <span>🇮🇳</span>
-                                <span>+91</span>
-                            </div>
-                            <input
-                                type="text"
-                                className="profile-verified-input"
-                                value={user.phone || '7470718282'}
-                                readOnly
-                            />
-                            <div className="profile-badge-check" title="Verified Phone Number">✓</div>
-                        </div>
+            <div className="profile-main-layout">
+                {/* Navigation Sidebar Rail */}
+                <aside className="profile-sidebar-rail">
+                    <div className="profile-subnav" role="tablist">
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('profile')}
+                        >
+                            <span>👤</span>
+                            <span>Profile Details</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'vip' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('vip')}
+                        >
+                            <span>👑</span>
+                            <span>VIP Club</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'affiliate' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('affiliate')}
+                        >
+                            <span>💸</span>
+                            <span>Affiliates (0.3%)</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'payments' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('payments')}
+                        >
+                            <span>💳</span>
+                            <span>Payments History</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'bets' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('bets')}
+                        >
+                            <span>🎲</span>
+                            <span>Bets History</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'support' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('support')}
+                        >
+                            <span>🎧</span>
+                            <span>24/7 Support</span>
+                        </button>
                     </div>
 
-                    {/* Card 2: Email */}
-                    <div className="profile-card">
-                        <div className="profile-card-title">Email</div>
-                        <div className="profile-verified-field">
-                            <input
-                                type="text"
-                                className="profile-verified-input"
-                                value={user.email || 'anuragsingh01321@gmail.com'}
-                                readOnly
-                            />
-                            <div className="profile-badge-check" title="Verified Email">✓</div>
-                        </div>
+                    <div className="profile-sidebar-logout-card">
+                        <button
+                            type="button"
+                            className="profile-btn-logout-sidebar"
+                            onClick={() => {
+                                if (window.confirm('Are you sure you want to log out?')) {
+                                    logout()
+                                    navigate('/')
+                                }
+                            }}
+                        >
+                            <span>🚪</span>
+                            <span>Log Out</span>
+                        </button>
                     </div>
+                </aside>
 
-                    {/* Card 3: Main Info */}
-                    <div className="profile-card">
-                        <div className="profile-card-title">Main Info</div>
+                {/* Main Content Area */}
+                <main className="profile-content-area">
+                    {/* TAB 1: PROFILE */}
+                    {activeTab === 'profile' && (
+                        <>
+                            {/* Cards: Phone & Email in 2-col on Laptop */}
+                            <div className="profile-cards-grid-2col">
+                                {/* Card 1: Phone Number */}
+                                <div className="profile-card">
+                                    <div className="profile-card-title">Phone number</div>
+                                    <div className="profile-verified-field">
+                                        <div className="profile-flag-pill">
+                                            <span>🇮🇳</span>
+                                            <span>+91</span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            className="profile-verified-input"
+                                            value={user.phone || '7470718282'}
+                                            readOnly
+                                        />
+                                        <div className="profile-badge-check" title="Verified Phone Number">✓</div>
+                                    </div>
+                                </div>
 
-                        <form onSubmit={handleUpdateData}>
-                            {/* UUID */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">UUID</label>
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type="text"
-                                        className="profile-text-input"
-                                        value={user.id}
-                                        readOnly
-                                        style={{ fontFamily: 'monospace', fontSize: '0.86rem', color: '#94a3b8' }}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="profile-icon-btn"
-                                        onClick={handleCopyUuid}
-                                        title="Copy UUID"
-                                    >
-                                        {copiedUuid ? '✓ Copied' : '📋'}
-                                    </button>
+                                {/* Card 2: Email */}
+                                <div className="profile-card">
+                                    <div className="profile-card-title">Email</div>
+                                    <div className="profile-verified-field">
+                                        <input
+                                            type="text"
+                                            className="profile-verified-input"
+                                            value={user.email || 'anuragsingh01321@gmail.com'}
+                                            readOnly
+                                        />
+                                        <div className="profile-badge-check" title="Verified Email">✓</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Name */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">Name</label>
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type="text"
-                                        className="profile-text-input"
-                                        value={firstName}
-                                        onChange={(e) => setFirstName(e.target.value)}
-                                        placeholder="Your first name"
-                                    />
-                                    <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
-                                </div>
-                            </div>
+                            {/* Card 3: Main Info */}
+                            <div className="profile-card">
+                                <div className="profile-card-title">Main Info</div>
 
-                            {/* Surname */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">Surname</label>
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type="text"
-                                        className="profile-text-input"
-                                        value={lastName}
-                                        onChange={(e) => setLastName(e.target.value)}
-                                        placeholder="Your surname"
-                                    />
-                                    <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
-                                </div>
-                            </div>
+                                <form onSubmit={handleUpdateData}>
+                                    {/* UUID */}
+                                    <div className="profile-input-group">
+                                        <label className="profile-input-label">UUID</label>
+                                        <div className="profile-input-wrapper">
+                                            <input
+                                                type="text"
+                                                className="profile-text-input"
+                                                value={user.id}
+                                                readOnly
+                                                style={{ fontFamily: 'monospace', fontSize: '0.86rem', color: '#94a3b8' }}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="profile-icon-btn"
+                                                onClick={handleCopyUuid}
+                                                title="Copy UUID"
+                                            >
+                                                {copiedUuid ? '✓ Copied' : '📋'}
+                                            </button>
+                                        </div>
+                                    </div>
 
-                            {/* Date of Birth */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">Date of Birth</label>
-                                <div className="profile-dob-row">
-                                    <select
-                                        className="profile-select"
-                                        value={dobDay}
-                                        onChange={(e) => setDobDay(e.target.value)}
-                                    >
-                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                            <option key={d} value={d}>{d}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        className="profile-select"
-                                        value={dobMonth}
-                                        onChange={(e) => setDobMonth(e.target.value)}
-                                    >
-                                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                            <option key={m} value={m}>{m}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        className="profile-select"
-                                        value={dobYear}
-                                        onChange={(e) => setDobYear(e.target.value)}
-                                    >
-                                        {Array.from({ length: 58 }, (_, i) => 2007 - i).map(y => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+                                    {/* Name & Surname 2-Col on Laptop */}
+                                    <div className="profile-form-grid-2col">
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Name</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type="text"
+                                                    className="profile-text-input"
+                                                    value={firstName}
+                                                    onChange={(e) => setFirstName(e.target.value)}
+                                                    placeholder="Your first name"
+                                                />
+                                                <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
+                                            </div>
+                                        </div>
 
-                            {/* Gender */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">Gender</label>
-                                <select
-                                    className="profile-select"
-                                    value={gender}
-                                    onChange={(e) => setGender(e.target.value)}
-                                >
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Surname</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type="text"
+                                                    className="profile-text-input"
+                                                    value={lastName}
+                                                    onChange={(e) => setLastName(e.target.value)}
+                                                    placeholder="Your surname"
+                                                />
+                                                <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            {/* Country */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">Country</label>
-                                <select
-                                    className="profile-select"
-                                    value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
-                                >
-                                    <option value="India">India</option>
-                                    <option value="United Arab Emirates">United Arab Emirates</option>
-                                    <option value="United Kingdom">United Kingdom</option>
-                                    <option value="Canada">Canada</option>
-                                </select>
-                            </div>
+                                    {/* Date of Birth & Gender 2-Col on Laptop */}
+                                    <div className="profile-form-grid-2col">
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Date of Birth</label>
+                                            <div className="profile-dob-row">
+                                                <select
+                                                    className="profile-select"
+                                                    value={dobDay}
+                                                    onChange={(e) => setDobDay(e.target.value)}
+                                                >
+                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                                                        <option key={d} value={d}>{d}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    className="profile-select"
+                                                    value={dobMonth}
+                                                    onChange={(e) => setDobMonth(e.target.value)}
+                                                >
+                                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    className="profile-select"
+                                                    value={dobYear}
+                                                    onChange={(e) => setDobYear(e.target.value)}
+                                                >
+                                                    {Array.from({ length: 58 }, (_, i) => 2007 - i).map(y => (
+                                                        <option key={y} value={y}>{y}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
 
-                            {/* City */}
-                            <div className="profile-input-group">
-                                <label className="profile-input-label">City</label>
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type="text"
-                                        className="profile-text-input"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        placeholder="City name"
-                                    />
-                                    <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
-                                </div>
-                            </div>
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Gender</label>
+                                            <select
+                                                className="profile-select"
+                                                value={gender}
+                                                onChange={(e) => setGender(e.target.value)}
+                                            >
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Country & City 2-Col on Laptop */}
+                                    <div className="profile-form-grid-2col">
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Country</label>
+                                            <select
+                                                className="profile-select"
+                                                value={country}
+                                                onChange={(e) => setCountry(e.target.value)}
+                                            >
+                                                <option value="India">India</option>
+                                                <option value="United Arab Emirates">United Arab Emirates</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                                <option value="Canada">Canada</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">City</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type="text"
+                                                    className="profile-text-input"
+                                                    value={city}
+                                                    onChange={(e) => setCity(e.target.value)}
+                                                    placeholder="City name"
+                                                />
+                                                <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
+                                            </div>
+                                        </div>
+                                    </div>
 
                             {/* Newsletter Checkbox */}
                             <label className="profile-checkbox-row">
@@ -1203,6 +1279,8 @@ export default function ProfilePage() {
                     </div>
                 </div>
             )}
+                </main>
+            </div>
 
             {/* KYC VERIFICATION MODAL */}
             {showKycModal && (

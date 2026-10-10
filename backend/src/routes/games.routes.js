@@ -24,8 +24,16 @@ router.use('/coin-toss', coinTossRoutes)
 router.get('/recent', (req, res) => {
     try {
         const limit = parseInt(req.query.limit, 10) || 20
-        const bets = db.getRecentBets(limit)
-        res.json({ success: true, bets })
+        const game = req.query.game ? String(req.query.game).toLowerCase().trim() : null
+        let bets = db.getRecentBets(100)
+        if (game) {
+            const target = game.replace(/[^a-z0-9]/g, '')
+            bets = bets.filter(b => {
+                const bg = String(b.game || b.gameName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+                return bg.includes(target) || target.includes(bg)
+            })
+        }
+        res.json({ success: true, bets: bets.slice(0, limit) })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
     }

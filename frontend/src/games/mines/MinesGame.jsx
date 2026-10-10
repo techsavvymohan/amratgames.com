@@ -24,6 +24,7 @@ import { CurrencyIcon } from '../../components/Header'
 import ProvablyFair from '../../utils/ProvablyFair'
 import MobileBetSheet from '../../components/MobileBetSheet'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './MinesGame.css'
 
 const HOUSE_EDGE = 0.99; // 1% edge
@@ -879,6 +880,12 @@ function MinesGame() {
                     </div>
                 </div>
             </div>
+
+            {/* In-Window Game Specific Round History */}
+            <GameBottomHistory
+                gameKey="mines"
+                gameTitle="Mines"
+            />
 
             <Modal
                 title={

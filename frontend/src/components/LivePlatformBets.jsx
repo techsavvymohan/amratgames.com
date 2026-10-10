@@ -15,6 +15,8 @@ const GAME_META = {
     crash: { name: 'Crash 1000x', icon: '🚀', color: '#ef4444' },
     plinko: { name: 'Plinko', icon: '🔴', color: '#ec4899' },
     limbo: { name: 'Limbo', icon: '🎲', color: '#8b5cf6' },
+    'coin-toss': { name: 'Coin Toss', icon: '🪙', color: '#f59e0b' },
+    cointoss: { name: 'Coin Toss', icon: '🪙', color: '#f59e0b' },
     'dragon-tiger': { name: 'Dragon Tiger', icon: '🐉', color: '#eab308' },
     'color-match': { name: 'Color Match', icon: '🎨', color: '#10b981' },
     dino: { name: 'Dino Run', icon: '🦖', color: '#06b6d4' }
@@ -131,8 +133,11 @@ export default function LivePlatformBets() {
                             </tr>
                         ) : (
                             filteredBets.slice(0, 12).map((bet) => {
-                                const gameKey = String(bet.game || '').toLowerCase()
-                                const meta = GAME_META[gameKey] || { name: bet.gameName || 'Casino Game', icon: '🎰', color: '#3b82f6' }
+                                const rawGame = String(bet.game || '').toLowerCase().trim()
+                                const gameKey = rawGame.replace(/_/g, '-')
+                                let rawName = bet.gameName || 'Casino Game'
+                                if (rawName.includes('(')) rawName = rawName.split('(')[0].trim()
+                                const meta = GAME_META[gameKey] || GAME_META[rawGame] || { name: rawName, icon: '🎰', color: '#3b82f6' }
                                 const won = Boolean(bet.won && bet.payout > 0)
                                 const symbol = bet.currency === 'INR' ? '₹' : (bet.currency === 'BTC' ? '₿' : (bet.currency === 'AMRAT' ? '👑' : '$'))
 

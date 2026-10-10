@@ -1,81 +1,314 @@
 /* ==========================================================================
-   ProfilePage.css — Modern Casino Profile Page matching 4raBET standard
+   ProfilePage.css — Fully Responsive VIP Casino Profile
+   Mobile Phones (320px-768px) & Laptops/Desktops (1024px-1920px)
    ========================================================================== */
 
 .profile-page-container {
-    max-width: 680px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 16px 14px 40px;
+    padding: 24px 20px 60px;
     color: #e2e8f0;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
-/* ── Sub Navigation Tabs ────────────────────────────────────────────── */
-.profile-subnav {
+/* ── VIP Profile Hero Banner ────────────────────────────────────────── */
+.profile-hero-banner {
     display: flex;
     align-items: center;
-    gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 8px;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
 }
 
-.profile-subnav::-webkit-scrollbar {
-    display: none;
+.profile-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.profile-hero-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-hero-avatar {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+
+.profile-hero-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #10b981;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 900;
+    border: 2px solid #0f172a;
+}
+
+.profile-hero-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-hero-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.profile-hero-name {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-hero-vip-tag {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.2) 0%, rgba(241, 39, 17, 0.2) 100%);
+    border: 1px solid rgba(245, 175, 25, 0.4);
+    color: #fbbf24;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-hero-verified-tag {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.profile-hero-unverified-tag {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    color: #0f172a;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.profile-hero-unverified-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5);
+}
+
+.profile-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+.profile-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.profile-hero-balance-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    padding: 14px 20px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.profile-hero-balance-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+}
+
+.profile-hero-balance-val {
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: #4ade80;
+    margin: 2px 0;
+    letter-spacing: -0.5px;
+}
+
+.profile-hero-sub-balance {
+    font-size: 0.76rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+/* ── Main Layout (Laptop 2-Col Grid vs Mobile Single Col) ────────────── */
+.profile-main-layout {
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.profile-sidebar-rail {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    position: sticky;
+    top: 84px;
+}
+
+.profile-content-area {
+    min-width: 0;
+    width: 100%;
+}
+
+/* ── Navigation Tabs ────────────────────────────────────────────────── */
+.profile-subnav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
 }
 
 .profile-subnav-btn {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: #94a3b8;
     font-size: 0.92rem;
     font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 11px 16px;
+    border-radius: 10px;
     cursor: pointer;
-    white-space: nowrap;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     transition: all 0.2s ease;
-    position: relative;
+    box-sizing: border-box;
+}
+
+.profile-subnav-btn span:first-child {
+    font-size: 1.15rem;
 }
 
 .profile-subnav-btn:hover {
     color: #f8fafc;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .profile-subnav-btn.active {
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.16) 0%, rgba(37, 99, 235, 0.12) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    font-weight: 700;
 }
 
-.profile-subnav-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -9px;
-    left: 10%;
-    right: 10%;
-    height: 3px;
-    background: #3b82f6;
-    border-radius: 3px;
+.profile-sidebar-logout-card {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 12px;
+}
+
+.profile-btn-logout-sidebar {
+    width: 100%;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    color: #f87171;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.profile-btn-logout-sidebar:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
 }
 
 /* ── Section Cards ─────────────────────────────────────────────────── */
 .profile-card {
     background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 .profile-card-title {
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #f8fafc;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
+    letter-spacing: -0.2px;
+}
+
+/* ── Responsive Grid Layouts (Cards & Form Fields) ──────────────────── */
+.profile-cards-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 4px;
+}
+
+.profile-form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
 }
 
 /* ── Verified Input Fields (Phone & Email) ─────────────────────────── */
@@ -87,6 +320,8 @@
     border-radius: 10px;
     padding: 10px 14px;
     gap: 10px;
+    min-height: 44px;
+    box-sizing: border-box;
 }
 
 .profile-flag-pill {
@@ -108,6 +343,7 @@
     font-size: 0.95rem;
     font-weight: 600;
     outline: none;
+    min-width: 0;
 }
 
 .profile-verified-input::placeholder {
@@ -131,15 +367,15 @@
 
 /* ── Main Info Inputs ──────────────────────────────────────────────── */
 .profile-input-group {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .profile-input-label {
     display: block;
     font-size: 0.76rem;
     color: #94a3b8;
-    margin-bottom: 4px;
-    font-weight: 600;
+    margin-bottom: 6px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -151,7 +387,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 10px 14px;
-    transition: border-color 0.2s ease;
+    min-height: 44px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .profile-input-wrapper:focus-within {
@@ -164,9 +402,10 @@
     background: transparent;
     border: none;
     color: #f8fafc;
-    font-size: 0.92rem;
+    font-size: 0.94rem;
     font-weight: 600;
     outline: none;
+    min-width: 0;
 }
 
 .profile-icon-btn {
@@ -177,9 +416,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    border-radius: 4px;
+    padding: 6px 8px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    font-size: 0.82rem;
+    font-weight: 700;
 }
 
 .profile-icon-btn:hover {
@@ -201,8 +442,10 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     padding: 10px 12px;
+    min-height: 44px;
+    box-sizing: border-box;
     color: #f8fafc;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 600;
     outline: none;
     appearance: none;
@@ -225,7 +468,7 @@
     gap: 10px;
     margin: 16px 0;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     color: #cbd5e1;
     line-height: 1.4;
 }
@@ -233,7 +476,7 @@
 .profile-checkbox {
     width: 18px;
     height: 18px;
-    margin-top: 1px;
+    margin-top: 2px;
     accent-color: #10b981;
     cursor: pointer;
 }
@@ -242,8 +485,8 @@
 .profile-support-notice {
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    padding: 12px 14px;
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -252,35 +495,38 @@
 }
 
 .profile-support-text {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #94a3b8;
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
 .profile-support-btn {
     background: #2563eb;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     color: white;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, transform 0.15s ease;
 }
 
 .profile-support-btn:hover {
     background: #1d4ed8;
+    transform: scale(1.05);
 }
 
 /* ── Action Buttons ────────────────────────────────────────────────── */
 .profile-btn-primary {
     width: 100%;
-    padding: 12px;
-    background: #2563eb;
+    padding: 13px 18px;
+    min-height: 44px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -289,21 +535,27 @@
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-btn-primary:hover {
-    background: #1d4ed8;
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
 }
 
 .profile-btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* ── Profile Verification Card ─────────────────────────────────────── */
 .profile-verify-card {
     text-align: center;
-    padding: 24px 18px;
+    padding: 28px 20px;
 }
 
 .profile-verify-badges {
@@ -315,8 +567,8 @@
 }
 
 .profile-avatar-circle {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: #064e3b;
     border: 2px solid #10b981;
@@ -324,12 +576,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .profile-shield-circle {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: #78350f;
     border: 2px solid #f59e0b;
@@ -337,29 +589,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    margin-left: -10px;
+    font-size: 20px;
+    margin-left: -12px;
 }
 
 .profile-verify-title {
-    font-size: 1.15rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 800;
     color: #f8fafc;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .profile-verify-desc {
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     color: #94a3b8;
-    max-width: 380px;
-    margin: 0 auto 18px;
-    line-height: 1.45;
+    max-width: 420px;
+    margin: 0 auto 20px;
+    line-height: 1.5;
 }
 
 .profile-verify-btn {
     width: 100%;
-    padding: 13px;
-    background: #2563eb;
+    padding: 14px;
+    min-height: 46px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -372,12 +625,13 @@
 }
 
 .profile-verify-btn:hover {
-    background: #1d4ed8;
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
 }
 
 .profile-btn-logout {
     width: 100%;
     padding: 13px;
+    min-height: 44px;
     background: #1e293b;
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 10px;
@@ -396,27 +650,36 @@
 /* ── History Tables ────────────────────────────────────────────────── */
 .profile-history-card {
     background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .profile-history-filters {
     display: flex;
     gap: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+}
+
+.profile-history-filters::-webkit-scrollbar {
+    display: none;
 }
 
 .profile-filter-pill {
-    padding: 6px 14px;
+    padding: 7px 16px;
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     color: #94a3b8;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+    font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
     transition: all 0.2s ease;
 }
 
@@ -430,7 +693,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 10px;
+    padding: 14px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -439,7 +702,7 @@
 }
 
 .profile-status-badge {
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 700;
@@ -474,35 +737,176 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.78);
     backdrop-filter: blur(8px);
     z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
+    box-sizing: border-box;
 }
 
 .profile-kyc-modal {
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
+    border-radius: 18px;
     width: 100%;
     max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 24px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
 }
 
-@media (max-width: 640px) {
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE & TABLET RESPONSIVENESS (< 992px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 991px) {
     .profile-page-container {
-        padding: 12px 10px calc(var(--mobile-nav-space, 64px) + 24px);
+        padding: 12px 12px calc(var(--mobile-nav-space, 64px) + 24px);
     }
+
+    .profile-hero-banner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+        gap: 16px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+    }
+
+    .profile-hero-avatar-wrap {
+        align-self: flex-start;
+    }
+
+    .profile-hero-avatar {
+        width: 58px;
+        height: 58px;
+        font-size: 1.5rem;
+    }
+
+    .profile-hero-info {
+        width: 100%;
+    }
+
+    .profile-hero-name {
+        font-size: 1.2rem;
+    }
+
+    .profile-hero-balance-box {
+        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+    }
+
+    .profile-hero-balance-val {
+        font-size: 1.25rem;
+    }
+
+    /* Collapse 2-Col into single column */
+    .profile-main-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Transform Sidebar Rail into Horizontal Chip Slider */
+    .profile-sidebar-rail {
+        background: transparent;
+        border: none;
+        padding: 0;
+        position: static;
+        box-shadow: none;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .profile-subnav {
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 8px;
+        padding: 4px 2px 12px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .profile-subnav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .profile-subnav-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 9px 14px;
+        font-size: 0.86rem;
+        border-radius: 24px;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .profile-subnav-btn.active {
+        background: #3b82f6;
+        color: #ffffff;
+        border-color: #60a5fa;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    }
+
+    .profile-sidebar-logout-card {
+        display: none; /* Shown in profile details tab */
+    }
+
+    .profile-cards-grid-2col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .profile-form-grid-2col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
     .profile-card {
         padding: 16px 14px;
-        border-radius: 12px;
+        border-radius: 14px;
+        margin-bottom: 14px;
     }
-    .profile-field-value {
-        font-size: 0.88rem;
+
+    /* Prevent mobile browser zoom on inputs by ensuring font-size is at least 16px */
+    .profile-text-input,
+    .profile-verified-input,
+    .profile-select {
+        font-size: 16px;
     }
 }
 
+@media (max-width: 480px) {
+    .profile-page-container {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .profile-hero-balance-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .profile-hero-sub-balance {
+        font-size: 0.72rem;
+    }
+
+    .profile-dob-row {
+        gap: 6px;
+    }
+
+    .profile-select {
+        padding: 10px 8px;
+        font-size: 15px;
+    }
+}
