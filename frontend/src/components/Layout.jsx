@@ -5,7 +5,6 @@ import Sidebar from './Sidebar'
 import MobileNavigation from './MobileNavigation'
 import AuthModal from './Auth/AuthModal'
 import WalletModal from './Wallet/WalletModal'
-import ChatDrawer from './Chat/ChatDrawer'
 import DailyWagerRaceModal from './Tournament/DailyWagerRaceModal'
 import ProvablyFairVerifierModal from './ProvablyFair/ProvablyFairVerifierModal'
 import SEOManager from './SEO/SEOManager'
@@ -13,7 +12,6 @@ import SEOManager from './SEO/SEOManager'
 function Layout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-    const [isChatOpen, setIsChatOpen] = useState(false)
     const [isRaceOpen, setIsRaceOpen] = useState(false)
     const [isVerifierOpen, setIsVerifierOpen] = useState(false)
     const [verifierInitialData, setVerifierInitialData] = useState(null)
@@ -38,8 +36,6 @@ function Layout() {
                     menuOpen={isMobileMenuOpen}
                     menuButtonRef={mobileMenuButtonRef}
                     onMenuClick={() => setIsMobileMenuOpen(true)}
-                    onToggleChat={() => setIsChatOpen((o) => !o)}
-                    isChatOpen={isChatOpen}
                     onOpenRace={() => setIsRaceOpen(true)}
                     onOpenVerifier={handleOpenVerifier}
                 />
@@ -51,13 +47,6 @@ function Layout() {
                 drawerOpen={isMobileMenuOpen}
                 onClose={closeMobileMenu}
                 returnFocusRef={mobileMenuButtonRef}
-                onToggleChat={() => setIsChatOpen((o) => !o)}
-                isChatOpen={isChatOpen}
-            />
-            <ChatDrawer
-                isOpen={isChatOpen}
-                onClose={() => setIsChatOpen(false)}
-                onOpenVerifier={handleOpenVerifier}
             />
             <DailyWagerRaceModal
                 isOpen={isRaceOpen}

@@ -39,8 +39,6 @@ function Header({
     menuOpen,
     menuButtonRef,
     onMenuClick,
-    onToggleChat,
-    isChatOpen,
     onOpenRace,
     onOpenVerifier
 }) {
@@ -248,37 +246,6 @@ function Header({
             </div>
 
             <div className="header-right">
-                {/* 💬 Community Live Chat Toggle (Desktop Only; Mobile Chat is inside Menu Drawer) */}
-                <button
-                    type="button"
-                    className={`header-icon-btn desktop-only-control ${isChatOpen ? 'active' : ''}`}
-                    onClick={onToggleChat}
-                    title="Live Community Chat"
-                    style={{
-                        position: 'relative',
-                        background: isChatOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                        border: isChatOpen ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        width: '34px',
-                        height: '34px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <span style={{ fontSize: '15px' }}>💬</span>
-                    <span style={{
-                        position: 'absolute',
-                        top: '5px',
-                        right: '5px',
-                        width: '7px',
-                        height: '7px',
-                        borderRadius: '50%',
-                        background: '#10b981',
-                        boxShadow: '0 0 6px #10b981'
-                    }} />
-                </button>
 
                 {/* ⚖️ Provably Fair Verifier Button */}
                 <button

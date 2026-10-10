@@ -102,7 +102,7 @@ const primaryRoutes = [
 
 const comingSoon = ['Favourites', 'Recent', 'Challenges', 'My Bets']
 
-function MobileNavigation({ drawerOpen, onClose, returnFocusRef, onToggleChat, isChatOpen }) {
+function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
     const navigate = useNavigate()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
@@ -308,47 +308,6 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef, onToggleChat, i
                         </div>
                     )}
 
-                    {/* 💬 Community Live Chat Button inside Menu Drawer */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            onClose();
-                            if (onToggleChat) onToggleChat();
-                        }}
-                        style={{
-                            width: '100%',
-                            marginTop: '10px',
-                            padding: '12px 14px',
-                            background: isChatOpen ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                            border: isChatOpen ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.12)',
-                            borderRadius: '12px',
-                            color: '#f8fafc',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isChatOpen ? '0 0 14px rgba(16, 185, 129, 0.25)' : 'none'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '18px' }}>💬</span>
-                            <div style={{ textAlign: 'left' }}>
-                                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f8fafc' }}>Community Live Chat</div>
-                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Connect with active players</div>
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: '#10b981',
-                                boxShadow: '0 0 8px #10b981'
-                            }} />
-                            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 800 }}>LIVE</span>
-                        </div>
-                    </button>
                 </div>
 
                 <label className="mobile-drawer-field">
@@ -397,7 +356,7 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef, onToggleChat, i
                     </select>
                 </label>
                 <div className="mobile-drawer-actions" aria-label="Account shortcuts">
-                    {['Profile', 'Notifications', 'Chat'].map(label => (
+                    {['Profile', 'Notifications'].map(label => (
                         <button
                             key={label}
                             type="button"
@@ -409,9 +368,6 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef, onToggleChat, i
                                 } else if (label === 'Notifications') {
                                     onClose()
                                     navigate('/profile?tab=transactions')
-                                } else if (label === 'Chat') {
-                                    onClose()
-                                    if (onToggleChat) onToggleChat()
                                 }
                             }}
                         >
