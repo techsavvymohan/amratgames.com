@@ -15,6 +15,7 @@ import { antiFraudService } from '../src/services/AntiFraudService.js'
 import { redisPubSub } from '../src/services/RedisPubSubService.js'
 import { dinoEngine } from '../src/games/dino/dino.engine.js'
 import { bankrollRisk } from '../src/services/BankrollRiskService.js'
+import { automatedSettlement } from '../src/services/AutomatedSettlementService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -958,6 +959,101 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
             currency: 'INR'
         })
         assert.equal(safeCheck.valid, true, 'Properly sized bet within cap must be accepted')
+    })
+
+    it('verifies Pillar 3 deterministic crypto deposit address and memo tag generation', () => {
+        const userIdA = 'usr_player_alpha_99'
+        const userIdB = 'usr_player_beta_88'
+
+        const coordsA = automatedSettlement.getDepositCoordinates(userIdA, { currency: 'USDT', network: 'TRC20' })
+        const coordsB = automatedSettlement.getDepositCoordinates(userIdB, { currency: 'USDT', network: 'TRC20' })
+
+        assert.equal(coordsA.currency, 'USDT')
+        assert.equal(coordsA.network, 'TRC20')
+        assert.ok(coordsA.address.length > 20, 'Crypto address must be non-empty')
+        assert.ok(coordsA.memoTag.startsWith('AG-'), 'Memo tag must have platform AG- prefix')
+        assert.notEqual(coordsA.memoTag, coordsB.memoTag, 'Distinct user IDs must generate distinct memo tags')
+        assert.ok(coordsA.qrPayload.includes(coordsA.memoTag), 'QR payload must embed user memo tag')
+    })
+
+    it('verifies Pillar 3 automated instant payout qualification and risk heuristics', () => {
+        // Player 1: Has not deposited minimum ₹300 -> REJECTED
+        const underDepositedUser = { id: 'usr_new', totalDeposited: 100, totalWagered: 200 }
+        const res1 = automatedSettlement.evaluateWithdrawal({ amount: 100, currency: 'INR' }, underDepositedUser, [])
+        assert.equal(res1.canProceed, false)
+        assert.equal(res1.reason, 'MIN_DEPOSIT_REQUIRED')
+
+        // Player 2: Has not completed 1.0x AML turnover -> REJECTED
+        const amlViolatingUser = { id: 'usr_aml', totalDeposited: 1000, totalWagered: 400 }
+        const res2 = automatedSettlement.evaluateWithdrawal({ amount: 500, currency: 'INR' }, amlViolatingUser, [])
+        assert.equal(res2.canProceed, false)
+        assert.equal(res2.reason, 'AML_TURNOVER_REQUIRED')
+
+        // Player 3: Clean, met AML, low-risk amount (₹2,500 <= ₹10,000) -> AUTO APPROVED INSTANTLY
+        const cleanUser = { id: 'usr_clean', totalDeposited: 1000, totalWagered: 1500, antiSybilRiskScore: 5 }
+        const res3 = automatedSettlement.evaluateWithdrawal({ amount: 2500, currency: 'INR' }, cleanUser, [])
+        assert.equal(res3.qualified, true)
+        assert.equal(res3.instantPayout, true)
+        assert.equal(res3.status, 'approved')
+        assert.equal(res3.reason, 'AUTO_APPROVED_LOW_RISK')
+        assert.ok(res3.dispatchRef.startsWith('APO_'))
+
+        // Player 4: High-roller amount (₹25,000 > ₹10,000 threshold) -> QUEUED FOR CASHIER
+        const highRollerUser = { id: 'usr_whale', totalDeposited: 50000, totalWagered: 60000, antiSybilRiskScore: 0 }
+        const res4 = automatedSettlement.evaluateWithdrawal({ amount: 25000, currency: 'INR' }, highRollerUser, [])
+        assert.equal(res4.qualified, true)
+        assert.equal(res4.instantPayout, false)
+        assert.equal(res4.status, 'pending')
+        assert.equal(res4.reason, 'HIGH_VALUE_THRESHOLD')
+
+        // Player 5: Suspicious user with elevated anti-sybil risk score -> QUEUED FOR COMPLIANCE
+        const suspiciousUser = { id: 'usr_suspicious', totalDeposited: 2000, totalWagered: 3000, antiSybilRiskScore: 45 }
+        const res5 = automatedSettlement.evaluateWithdrawal({ amount: 1000, currency: 'INR' }, suspiciousUser, [])
+        assert.equal(res5.qualified, true)
+        assert.equal(res5.instantPayout, false)
+        assert.equal(res5.status, 'pending')
+        assert.equal(res5.reason, 'RISK_SCORE_ELEVATED')
+    })
+
+    it('verifies Pillar 3 automated blockchain ingress webhook credits balance and prevents replay attacks', async () => {
+        const cryptoPlayer = db.createUser({
+            username: 'crypto_whale_' + Date.now(),
+            email: `crypto_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const initialBal = cryptoPlayer.balances.INR
+        const coords = automatedSettlement.getDepositCoordinates(cryptoPlayer.id, { currency: 'USDT', network: 'TRC20' })
+        const fakeTxHash = '0x_tx_hash_simulated_' + Date.now()
+
+        // 1. Process simulated incoming USDT deposit (10 USDT @ 90 INR/USDT = ₹900 INR)
+        const creditResult = await automatedSettlement.processCryptoDepositWebhook({
+            txHash: fakeTxHash,
+            network: 'TRC20',
+            currency: 'USDT',
+            amount: 10.0,
+            creditCurrency: 'INR',
+            memoTag: coords.memoTag
+        }, db)
+
+        assert.equal(creditResult.success, true)
+        assert.equal(creditResult.creditedAmount, 900)
+        assert.equal(cryptoPlayer.balances.INR, initialBal + 900)
+        assert.equal(cryptoPlayer.totalDeposited >= 900, true)
+
+        // 2. Prevent replay attacks: duplicate txHash must be safely recognized and rejected
+        const replayResult = await automatedSettlement.processCryptoDepositWebhook({
+            txHash: fakeTxHash,
+            network: 'TRC20',
+            currency: 'USDT',
+            amount: 10.0,
+            creditCurrency: 'INR',
+            memoTag: coords.memoTag
+        }, db)
+
+        assert.equal(replayResult.duplicate, true)
+        // Balance must not change on duplicate
+        assert.equal(cryptoPlayer.balances.INR, initialBal + 900)
     })
 
     after(() => {

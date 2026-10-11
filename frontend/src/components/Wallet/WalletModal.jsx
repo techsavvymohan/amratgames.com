@@ -34,6 +34,12 @@ export default function WalletModal() {
     const [utrNumber, setUtrNumber] = useState('')
     const [isDepositing, setIsDepositing] = useState(false)
     const [depositSuccess, setDepositSuccess] = useState(null)
+    const [depositChannel, setDepositChannel] = useState('UPI') // 'UPI' | 'CRYPTO'
+    const [cryptoNetwork, setCryptoNetwork] = useState('TRC20') // 'TRC20' | 'TON'
+    const [cryptoCoords, setCryptoCoords] = useState(null)
+    const [loadingCrypto, setLoadingCrypto] = useState(false)
+    const [cryptoCopied, setCryptoCopied] = useState(false)
+    const [tagCopied, setTagCopied] = useState(false)
 
     // Withdraw State
     const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -55,6 +61,32 @@ export default function WalletModal() {
             refreshWithdrawals?.()
         }
     }, [walletModalTab, isWalletModalOpen, refreshWithdrawals])
+
+    // Fetch deterministic crypto deposit coordinates
+    useEffect(() => {
+        if (activeTab === 'deposit' && depositChannel === 'CRYPTO' && isWalletModalOpen) {
+            let isCancelled = false
+            const fetchCoords = async () => {
+                setLoadingCrypto(true)
+                try {
+                    const token = localStorage.getItem('amrat_auth_token') || ''
+                    const res = await fetch(`/api/wallet/crypto-deposit-info?currency=USDT&network=${cryptoNetwork}`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    })
+                    const data = await res.json()
+                    if (!isCancelled && data.success) {
+                        setCryptoCoords(data)
+                    }
+                } catch (err) {
+                    console.error('[CRYPTO COORDS ERROR]', err)
+                } finally {
+                    if (!isCancelled) setLoadingCrypto(false)
+                }
+            }
+            fetchCoords()
+            return () => { isCancelled = true }
+        }
+    }, [activeTab, depositChannel, cryptoNetwork, isWalletModalOpen])
 
     // Close on Escape key
     useEffect(() => {
@@ -78,6 +110,28 @@ export default function WalletModal() {
             setTimeout(() => setCopied(false), 2500)
         } catch {
             showToast?.('info', 'UPI ID', OFFICIAL_UPI_ID)
+        }
+    }
+
+    const handleCopyCrypto = async (addr) => {
+        try {
+            await navigator.clipboard.writeText(addr)
+            setCryptoCopied(true)
+            showToast?.('success', 'Address Copied', 'USDT Deposit Address copied to clipboard!')
+            setTimeout(() => setCryptoCopied(false), 2500)
+        } catch {
+            showToast?.('info', 'Address', addr)
+        }
+    }
+
+    const handleCopyTag = async (tag) => {
+        try {
+            await navigator.clipboard.writeText(tag)
+            setTagCopied(true)
+            showToast?.('success', 'Memo Tag Copied', `Memo Tag ${tag} copied!`)
+            setTimeout(() => setTagCopied(false), 2500)
+        } catch {
+            showToast?.('info', 'Memo Tag', tag)
         }
     }
 
@@ -168,7 +222,10 @@ export default function WalletModal() {
                 amount: amt,
                 destination,
                 id: res?.withdrawal?.id || null,
-                status: 'pending'
+                status: res?.status || res?.withdrawal?.status || 'pending',
+                instantPayout: Boolean(res?.instantPayout || res?.withdrawal?.status === 'approved'),
+                dispatchRef: res?.dispatchRef || res?.withdrawal?.transactionRef || null,
+                estimatedArrival: res?.estimatedArrival || (res?.instantPayout ? 'Instant (60s)' : '10-30 minutes')
             })
             setWithdrawAmount('')
             refreshWithdrawals?.()
@@ -294,99 +351,203 @@ export default function WalletModal() {
                                 </button>
                             </div>
                         ) : (
-                            <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                {/* UPI ID Box with One-Click Copy */}
-                                <div className="amrat-upi-box">
-                                    <div className="amrat-upi-details">
-                                        <span className="amrat-upi-lbl">Official Deposit UPI ID (INR)</span>
-                                        <span className="amrat-upi-val">{OFFICIAL_UPI_ID}</span>
-                                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                {/* Channel Selector: UPI vs Crypto */}
+                                <div className="amrat-channel-switcher">
                                     <button
                                         type="button"
-                                        className={`amrat-copy-btn ${copied ? 'copied' : ''}`}
-                                        onClick={handleCopyUpi}
+                                        className={`amrat-channel-btn ${depositChannel === 'UPI' ? 'active' : ''}`}
+                                        onClick={() => setDepositChannel('UPI')}
                                     >
-                                        {copied ? '✓ Copied' : '📋 Copy UPI'}
+                                        <span>🇮🇳</span>
+                                        <span>UPI Instant (INR)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`amrat-channel-btn ${depositChannel === 'CRYPTO' ? 'active' : ''}`}
+                                        onClick={() => setDepositChannel('CRYPTO')}
+                                    >
+                                        <span>🌐</span>
+                                        <span>USDT Crypto (TRC-20)</span>
                                     </button>
                                 </div>
 
-                                {/* QR Code Card */}
-                                <div className="amrat-qr-container">
-                                    <img
-                                        src={QR_IMAGE_PATH}
-                                        alt="PhonePe UPI QR Code"
-                                        className="amrat-qr-img"
-                                    />
-                                    <span className="amrat-qr-caption">
-                                        <span>📲</span>
-                                        <span>Scan with PhonePe / GPay / Paytm / BHIM</span>
-                                    </span>
-                                </div>
+                                {depositChannel === 'CRYPTO' ? (
+                                    <div className="amrat-crypto-card">
+                                        <div className="amrat-crypto-header">
+                                            <span className="amrat-crypto-badge">
+                                                <span>⚡</span>
+                                                <span>Zero Freeze Risk · Direct Ingress</span>
+                                            </span>
+                                            <div className="amrat-crypto-network-toggle">
+                                                <button
+                                                    type="button"
+                                                    className={`amrat-crypto-net-btn ${cryptoNetwork === 'TRC20' ? 'active' : ''}`}
+                                                    onClick={() => setCryptoNetwork('TRC20')}
+                                                >
+                                                    TRC-20
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`amrat-crypto-net-btn ${cryptoNetwork === 'TON' ? 'active' : ''}`}
+                                                    onClick={() => setCryptoNetwork('TON')}
+                                                >
+                                                    TON
+                                                </button>
+                                            </div>
+                                        </div>
 
-                                {/* Step 1: Amount Selection */}
-                                <div className="amrat-field-group">
-                                    <label className="amrat-field-lbl">
-                                        <span>1. Deposit Amount (INR ₹)</span>
-                                        <span className="accent">Min ₹100</span>
-                                    </label>
-                                    <div className="amrat-presets-grid">
-                                        {PRESET_AMOUNTS.map((amt) => (
+                                        {loadingCrypto ? (
+                                            <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                                Generating secure deterministic deposit address...
+                                            </div>
+                                        ) : cryptoCoords ? (
+                                            <>
+                                                {/* Deposit Vault Address */}
+                                                <div className="amrat-crypto-address-box">
+                                                    <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                        {cryptoCoords.currency} ({cryptoCoords.network}) Deposit Vault Address
+                                                    </span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                        <span className="amrat-crypto-address-val">{cryptoCoords.address}</span>
+                                                        <button
+                                                            type="button"
+                                                            className={`amrat-copy-btn ${cryptoCopied ? 'copied' : ''}`}
+                                                            style={{ flexShrink: 0, padding: '6px 10px', fontSize: '0.72rem' }}
+                                                            onClick={() => handleCopyCrypto(cryptoCoords.address)}
+                                                        >
+                                                            {cryptoCopied ? '✓' : '📋 Copy'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Memo Tag */}
+                                                <div className="amrat-crypto-memo-box">
+                                                    <div>
+                                                        <div style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 800 }}>
+                                                            ⚠️ REQUIRED MEMO / REFERENCE TAG:
+                                                        </div>
+                                                        <div className="amrat-crypto-memo-val">
+                                                            {cryptoCoords.memoTag}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className={`amrat-copy-btn ${tagCopied ? 'copied' : ''}`}
+                                                        style={{ flexShrink: 0, padding: '6px 10px', fontSize: '0.72rem' }}
+                                                        onClick={() => handleCopyTag(cryptoCoords.memoTag)}
+                                                    >
+                                                        {tagCopied ? '✓' : '📋 Copy Tag'}
+                                                    </button>
+                                                </div>
+
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: '#cbd5e1' }}>
+                                                    <span>Peg Rate: <strong>1 USDT = ₹{cryptoCoords.rateInr} INR</strong></span>
+                                                    <span>Min Deposit: <strong>{cryptoCoords.minDeposit} USDT</strong></span>
+                                                </div>
+
+                                                <div style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: '6px', lineHeight: 1.4 }}>
+                                                    ℹ️ Transfers from Binance, Bybit, Trust Wallet or Telegram Wallet are confirmed automatically. Funds credit instantly to your INR balance within 60 seconds.
+                                                </div>
+                                            </>
+                                        ) : null}
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                        {/* UPI ID Box with One-Click Copy */}
+                                        <div className="amrat-upi-box">
+                                            <div className="amrat-upi-details">
+                                                <span className="amrat-upi-lbl">Official Deposit UPI ID (INR)</span>
+                                                <span className="amrat-upi-val">{OFFICIAL_UPI_ID}</span>
+                                            </div>
                                             <button
-                                                key={amt}
                                                 type="button"
-                                                className={`amrat-preset-btn ${parseFloat(depositAmount) === amt ? 'active' : ''}`}
-                                                onClick={() => setDepositAmount(String(amt))}
+                                                className={`amrat-copy-btn ${copied ? 'copied' : ''}`}
+                                                onClick={handleCopyUpi}
                                             >
-                                                ₹{amt.toLocaleString('en-IN')}
+                                                {copied ? '✓ Copied' : '📋 Copy UPI'}
                                             </button>
-                                        ))}
-                                    </div>
-                                    <div className="amrat-input-wrap" style={{ marginTop: '6px' }}>
-                                        <span className="amrat-input-prefix">₹</span>
-                                        <input
-                                            type="number"
-                                            className="amrat-field-input has-prefix"
-                                            placeholder="Enter custom amount"
-                                            value={depositAmount}
-                                            min="100"
-                                            step="1"
-                                            onChange={(e) => setDepositAmount(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                                        </div>
 
-                                {/* Step 2: 12-Digit UTR Input */}
-                                <div className="amrat-field-group">
-                                    <label className="amrat-field-lbl">
-                                        <span>2. Enter 12-Digit UPI Ref / UTR No.</span>
-                                        <span className="accent">{utrNumber.length}/12</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="amrat-field-input"
-                                        placeholder="e.g. 429381928374 (From UPI receipt)"
-                                        maxLength={12}
-                                        value={utrNumber}
-                                        onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, ''))}
-                                        required
-                                    />
-                                    <span className="amrat-field-hint">
-                                        After paying via PhonePe or any UPI app, copy the 12-digit UTR/Ref number from your payment receipt and enter it above.
-                                    </span>
-                                </div>
+                                        {/* QR Code Card */}
+                                        <div className="amrat-qr-container">
+                                            <img
+                                                src={QR_IMAGE_PATH}
+                                                alt="PhonePe UPI QR Code"
+                                                className="amrat-qr-img"
+                                            />
+                                            <span className="amrat-qr-caption">
+                                                <span>📲</span>
+                                                <span>Scan with PhonePe / GPay / Paytm / BHIM</span>
+                                            </span>
+                                        </div>
 
-                                {/* Submit Button */}
-                                <button
-                                    type="submit"
-                                    className="amrat-submit-deposit-btn"
-                                    disabled={isDepositing || !depositAmount || parseFloat(depositAmount) <= 0}
-                                >
-                                    {isDepositing
-                                        ? 'Verifying & Adding Funds…'
-                                        : `Submit Deposit of ₹${Number(depositAmount || 0).toLocaleString('en-IN')}`}
-                                </button>
-                            </form>
+                                        {/* Step 1: Amount Selection */}
+                                        <div className="amrat-field-group">
+                                            <label className="amrat-field-lbl">
+                                                <span>1. Deposit Amount (INR ₹)</span>
+                                                <span className="accent">Min ₹100</span>
+                                            </label>
+                                            <div className="amrat-presets-grid">
+                                                {PRESET_AMOUNTS.map((amt) => (
+                                                    <button
+                                                        key={amt}
+                                                        type="button"
+                                                        className={`amrat-preset-btn ${parseFloat(depositAmount) === amt ? 'active' : ''}`}
+                                                        onClick={() => setDepositAmount(String(amt))}
+                                                    >
+                                                        ₹{amt.toLocaleString('en-IN')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="amrat-input-wrap" style={{ marginTop: '6px' }}>
+                                                <span className="amrat-input-prefix">₹</span>
+                                                <input
+                                                    type="number"
+                                                    className="amrat-field-input has-prefix"
+                                                    placeholder="Enter custom amount"
+                                                    value={depositAmount}
+                                                    min="100"
+                                                    step="1"
+                                                    onChange={(e) => setDepositAmount(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Step 2: 12-Digit UTR Input */}
+                                        <div className="amrat-field-group">
+                                            <label className="amrat-field-lbl">
+                                                <span>2. Enter 12-Digit UPI Ref / UTR No.</span>
+                                                <span className="accent">{utrNumber.length}/12</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="amrat-field-input"
+                                                placeholder="e.g. 429381928374 (From UPI receipt)"
+                                                maxLength={12}
+                                                value={utrNumber}
+                                                onChange={(e) => setUtrNumber(e.target.value.replace(/\D/g, ''))}
+                                                required
+                                            />
+                                            <span className="amrat-field-hint">
+                                                After paying via PhonePe or any UPI app, copy the 12-digit UTR/Ref number from your payment receipt and enter it above.
+                                            </span>
+                                        </div>
+
+                                        {/* Submit Button */}
+                                        <button
+                                            type="submit"
+                                            className="amrat-submit-deposit-btn"
+                                            disabled={isDepositing || !depositAmount || parseFloat(depositAmount) <= 0}
+                                        >
+                                            {isDepositing
+                                                ? 'Verifying & Adding Funds…'
+                                                : `Submit Deposit of ₹${Number(depositAmount || 0).toLocaleString('en-IN')}`}
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
                         )
                     )}
 
@@ -396,27 +557,33 @@ export default function WalletModal() {
                     {activeTab === 'withdraw' && (
                         withdrawSuccess ? (
                             <div className="amrat-success-card">
-                                <div className="amrat-success-icon" style={{ borderColor: '#f59e0b', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.2)' }}>
-                                    ⏳
+                                <div className="amrat-success-icon" style={{ borderColor: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', color: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', background: withdrawSuccess.instantPayout ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)' }}>
+                                    {withdrawSuccess.instantPayout ? '⚡' : '⏳'}
                                 </div>
-                                <h3 style={{ margin: 0, color: '#f59e0b', fontSize: '1.25rem' }}>Withdrawal Request Submitted!</h3>
+                                <h3 style={{ margin: 0, color: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', fontSize: '1.25rem' }}>
+                                    {withdrawSuccess.instantPayout ? 'Instant Settlement Dispatched!' : 'Withdrawal Request Submitted!'}
+                                </h3>
                                 <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                                    Your request for ₹{withdrawSuccess.amount.toLocaleString('en-IN')} has been sent to our cashier team.
+                                    {withdrawSuccess.instantPayout ? (
+                                        <>₹{withdrawSuccess.amount.toLocaleString('en-IN')} approved automatically via high-speed settlement rails.</>
+                                    ) : (
+                                        <>Your request for ₹{withdrawSuccess.amount.toLocaleString('en-IN')} has been sent to our cashier team.</>
+                                    )}
                                     <br />
                                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                                         Destination: <strong>{withdrawSuccess.destination}</strong>
                                     </span>
-                                    {withdrawSuccess.id && (
+                                    {withdrawSuccess.dispatchRef && (
                                         <>
                                             <br />
-                                            <span style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'monospace' }}>
-                                                Request ID: <strong>#{withdrawSuccess.id}</strong>
+                                            <span style={{ fontSize: '0.75rem', color: '#34d399', fontFamily: 'monospace' }}>
+                                                Settlement Ref: <strong>{withdrawSuccess.dispatchRef}</strong>
                                             </span>
                                         </>
                                     )}
                                     <br />
-                                    <span style={{ fontSize: '0.74rem', color: '#fbbf24', marginTop: '6px', display: 'inline-block' }}>
-                                        Status: <strong>Pending Admin Review &amp; Transfer</strong> (5 to 15 mins)
+                                    <span style={{ fontSize: '0.74rem', color: withdrawSuccess.instantPayout ? '#34d399' : '#fbbf24', marginTop: '6px', display: 'inline-block' }}>
+                                        Status: <strong>{withdrawSuccess.instantPayout ? 'Auto-Approved (Sub-60s Transfer)' : 'Priority Cashier Queue (' + (withdrawSuccess.estimatedArrival || '10 to 20 mins') + ')'}</strong>
                                     </span>
                                 </p>
                                 <button
@@ -507,6 +674,11 @@ export default function WalletModal() {
                                 <div className="amrat-unlocked-card">
                                     <span>✓</span>
                                     <span>Payouts Unlocked (Deposited: ₹{totalDeposited} · Rollover: 100% Completed)</span>
+                                </div>
+
+                                <div className="amrat-settlement-tier-badge">
+                                    <span>⚡</span>
+                                    <span>Instant Settlement Active: Requests under ₹10,000 are auto-approved &amp; disbursed in 60s.</span>
                                 </div>
 
                                 {/* Amount Input */}

@@ -914,6 +914,9 @@ export function WalletProvider({ children }) {
             newBal = setStoredBalance(balanceRef.current - amt)
         }
 
+        const finalStatus = data?.status || (data?.instantPayout ? 'approved' : 'pending')
+        const isInstant = Boolean(data?.instantPayout || data?.withdrawal?.status === 'approved')
+
         setTransactions(txs => [{
             id: Date.now(),
             type: 'withdrawal',
@@ -922,12 +925,25 @@ export function WalletProvider({ children }) {
             amount: -amt,
             balance: newBal,
             payoutDestination,
-            status: 'pending',
+            status: finalStatus,
             timestamp: new Date(),
         }, ...txs].slice(0, 100))
 
-        showToast('success', 'Withdrawal Requested', `Withdrawal for ${currencySymbol}${amt.toLocaleString('en-IN')} has been submitted!`)
-        return { success: true, balance: newBal, withdrawal: data?.withdrawal }
+        if (isInstant) {
+            showToast('success', '⚡ Instant Settlement Dispatched', `₹${amt.toLocaleString('en-IN')} auto-approved via high-speed settlement rails!`)
+        } else {
+            showToast('success', 'Withdrawal Requested', `Withdrawal for ${currencySymbol}${amt.toLocaleString('en-IN')} submitted successfully!`)
+        }
+
+        return {
+            success: true,
+            balance: newBal,
+            withdrawal: data?.withdrawal,
+            instantPayout: isInstant,
+            status: finalStatus,
+            dispatchRef: data?.dispatchRef || data?.withdrawal?.transactionRef || null,
+            estimatedArrival: data?.estimatedArrival || (isInstant ? 'Instant (60s)' : '10-30 minutes')
+        }
     }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 
     const notifyWin = useCallback((amount, mult) => {

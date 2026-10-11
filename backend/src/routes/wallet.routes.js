@@ -4,6 +4,7 @@ import { db } from '../db/db.js'
 import { CONFIG } from '../config.js'
 import { requireAuth } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
+import { automatedSettlement } from '../services/AutomatedSettlementService.js'
 
 const router = express.Router()
 
@@ -26,6 +27,20 @@ router.get('/balance', requireAuth, (req, res) => {
             remainingTurnover,
             minDepositRequired: 300,
             canWithdraw
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// GET /api/wallet/crypto-deposit-info
+router.get('/crypto-deposit-info', requireAuth, (req, res) => {
+    try {
+        const { currency = 'USDT', network = 'TRC20' } = req.query
+        const info = automatedSettlement.getDepositCoordinates(req.user.id, { currency, network })
+        res.json({
+            success: true,
+            ...info
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -131,16 +146,42 @@ router.post('/withdraw', requireAuth, async (req, res) => {
                 bankDetails
             })
 
+            // ── Pillar 3: Automated Settlement & Risk Evaluation ──
+            const evaluation = automatedSettlement.evaluateWithdrawal(
+                { currency, amount: parsedAmount, payoutMethod },
+                user,
+                db.data.withdrawals || []
+            )
+
+            let finalWithdrawal = withdrawalResult.withdrawal
+            let instantPayout = false
+
+            if (evaluation.instantPayout) {
+                finalWithdrawal = automatedSettlement.dispatchInstantPayout(finalWithdrawal, db, evaluation)
+                instantPayout = true
+            }
+
             return {
                 ...withdrawalResult,
+                withdrawal: finalWithdrawal,
+                evaluation,
+                instantPayout,
                 totalDeposited,
                 totalWagered
             }
         })
 
+        const statusMsg = result.instantPayout
+            ? `⚡ Instant Settlement Dispatched! ₹${parsedAmount.toLocaleString('en-IN')} approved automatically via high-speed settlement rails.`
+            : `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! ${result.evaluation?.reviewReason || 'Your request is in priority review queue.'}`
+
         res.json({
             success: true,
-            message: `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! Your request is pending admin cashier review.`,
+            message: statusMsg,
+            status: result.withdrawal.status,
+            instantPayout: result.instantPayout,
+            dispatchRef: result.withdrawal.transactionRef || null,
+            estimatedArrival: result.evaluation?.eta || '10-30 minutes',
             balances: result.user.balances,
             totalDeposited: result.totalDeposited,
             totalWagered: result.totalWagered,
@@ -294,4 +335,16 @@ router.post('/webhook', async (req, res) => {
     }
 })
 
+// POST /api/wallet/crypto-webhook
+// Autonomous Blockchain Ingress & Instant Settlement Webhook
+router.post('/crypto-webhook', async (req, res) => {
+    try {
+        const result = await automatedSettlement.processCryptoDepositWebhook(req.body, db)
+        res.json({ success: true, ...result })
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message })
+    }
+})
+
 export default router
+
