@@ -1,0 +1,470 @@
+/* ==========================================================================
+   AmratGames — Social Arcade 1v1 PvP Coin Toss Arena Styles
+   ========================================================================== */
+
+.pvp-arena-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    color: #f1f5f9;
+}
+
+/* Header & Stats Banner */
+.pvp-hero-banner {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.12) 0%, rgba(20, 30, 48, 0.7) 100%);
+    border: 1px solid rgba(245, 175, 25, 0.25);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pvp-hero-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pvp-hero-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+.pvp-hero-title span.badge {
+    background: linear-gradient(135deg, #f5af19, #e65c00);
+    color: #0c111a;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.pvp-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pvp-stat-pill {
+    background: rgba(10, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.pvp-stat-pill strong {
+    color: #f8fafc;
+    font-weight: 800;
+}
+
+.pvp-stat-pill strong.accent-gold {
+    color: #fbbf24;
+}
+
+.pvp-stat-pill strong.accent-green {
+    color: #34d399;
+}
+
+/* Arena Grid: Create Duel on Left, Live Lobby on Right */
+.pvp-arena-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 900px) {
+    .pvp-arena-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card Container */
+.pvp-card {
+    background: #0f1622;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pvp-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 10px;
+}
+
+.pvp-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Side Selector: Heads vs Tails */
+.pvp-side-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.pvp-side-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.pvp-side-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f1f5f9;
+}
+
+.pvp-side-btn.active.heads {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(245, 175, 25, 0.08));
+    border-color: #f5af19;
+    color: #fbbf24;
+    box-shadow: 0 0 16px rgba(245, 175, 25, 0.2);
+}
+
+.pvp-side-btn.active.tails {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.08));
+    border-color: #3b82f6;
+    color: #60a5fa;
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.pvp-side-icon {
+    font-size: 1.5rem;
+}
+
+/* Pot & Math Preview Box */
+.pvp-pot-preview {
+    background: rgba(10, 15, 25, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.pvp-pot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pvp-pot-row.winner-row {
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 6px;
+    margin-top: 2px;
+    color: #34d399;
+    font-weight: 800;
+    font-size: 0.88rem;
+}
+
+.pvp-create-btn {
+    background: linear-gradient(135deg, #f5af19 0%, #e65c00 100%);
+    border: none;
+    border-radius: 10px;
+    color: #0c111a;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.35);
+}
+
+.pvp-create-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 175, 25, 0.45);
+}
+
+.pvp-create-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Open Challenges Lobby */
+.pvp-lobby-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.pvp-challenge-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.18s ease;
+}
+
+.pvp-challenge-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(245, 175, 25, 0.3);
+}
+
+.pvp-challenge-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pvp-challenge-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.pvp-challenge-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pvp-challenge-username {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.pvp-challenge-choice-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pvp-challenge-choice-badge.heads {
+    color: #fbbf24;
+}
+
+.pvp-challenge-choice-badge.tails {
+    color: #60a5fa;
+}
+
+.pvp-challenge-pot-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.pvp-challenge-stake {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.pvp-challenge-winner-pot {
+    font-size: 0.72rem;
+    color: #34d399;
+    font-weight: 700;
+}
+
+.pvp-fight-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.pvp-fight-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+}
+
+.pvp-cancel-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pvp-cancel-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* Battle Overlay Modal */
+.pvp-battle-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(4, 8, 16, 0.88);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: pvpFadeIn 0.2s ease;
+}
+
+@keyframes pvpFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.pvp-battle-modal {
+    background: linear-gradient(180deg, #131a26 0%, #0c111a 100%);
+    border: 2px solid rgba(245, 175, 25, 0.4);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(245, 175, 25, 0.2);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+.pvp-battle-versus-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 10px;
+}
+
+.pvp-combatant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.pvp-combatant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: #1e293b;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.pvp-combatant-avatar.winner {
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.5);
+}
+
+.pvp-vs-badge {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(245, 175, 25, 0.6);
+}
+
+.pvp-battle-coin-stage {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.pvp-battle-coin {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border: 3px solid #fff;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    transition: transform 0.1s linear;
+}
+
+.pvp-battle-coin.spinning {
+    animation: pvpCoinSpin 0.3s linear infinite;
+}
+
+@keyframes pvpCoinSpin {
+    0% { transform: rotateY(0deg) scale(1.05); }
+    50% { transform: rotateY(180deg) scale(0.95); }
+    100% { transform: rotateY(360deg) scale(1.05); }
+}
+
+.pvp-empty-lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 10px;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-align: center;
+    gap: 8px;
+}

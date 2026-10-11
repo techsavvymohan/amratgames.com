@@ -17,6 +17,7 @@ import gamesRoutes from './routes/games.routes.js'
 import affiliateRoutes from './routes/affiliate.routes.js'
 import vipRoutes from './routes/vip.routes.js'
 import communityRoutes from './routes/community.routes.js'
+import pvpRoutes from './routes/pvp.routes.js'
 import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
@@ -100,6 +101,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminPanelModule.getRouter())
 app.use('/api/wallet', checkPlatformMaintenance, walletRoutes)
 app.use('/api/games', checkPlatformMaintenance, gamesRoutes)
+app.use('/api/pvp', checkPlatformMaintenance, pvpRoutes)
 app.use('/api/affiliate', affiliateRoutes)
 app.use('/api/vip', vipRoutes)
 app.use('/api/community', communityRoutes)

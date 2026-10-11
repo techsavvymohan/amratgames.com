@@ -27,12 +27,12 @@ conn.on('ready', () => {
         }
 
         console.log(`Uploading ${BUNDLE_PATH} -> ${REMOTE_BUNDLE}...`)
-        const readStream = fs.createReadStream(BUNDLE_PATH)
-        const writeStream = sftp.createWriteStream(REMOTE_BUNDLE)
-
-        readStream.pipe(writeStream)
-
-        writeStream.on('close', () => {
+        sftp.fastPut(BUNDLE_PATH, REMOTE_BUNDLE, (putErr) => {
+            if (putErr) {
+                console.error('fastPut error:', putErr.message)
+                conn.end()
+                process.exit(1)
+            }
             console.log('✓ deploy_update.bundle uploaded successfully to VPS /tmp!')
 
             const cmd = `cd ${REMOTE_DIR} && git pull /tmp/deploy_update.bundle main && rm -f /tmp/deploy_update.bundle && bash scripts/deploy-vps.sh`
@@ -63,14 +63,6 @@ conn.on('ready', () => {
                 })
             })
         })
-
-        writeStream.on('error', (wErr) => {
-            console.error('Write error:', wErr.message)
-            conn.end()
-            process.exit(1)
-        })
-
-        readStream.pipe(writeStream)
     })
 })
 

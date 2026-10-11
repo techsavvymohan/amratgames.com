@@ -18,6 +18,7 @@ import casinoAudio from '../../utils/casinoAudio'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import CoinParticles from './CoinParticles'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
+import PvPDuelsArena from './PvPDuelsArena'
 import './CoinTossGame.css'
 
 const MULTIPLIER = 1.98 // 99% RTP / 1% House Edge
@@ -30,6 +31,9 @@ const TAILS_ASSET = '/images/coin-toss/tails.jpg'
 
 export default function CoinTossGame() {
     const { balance, currencySymbol, executeGameBet, showToast } = useWallet()
+
+    // Game Mode Selection
+    const [gameMode, setGameMode] = useState('solo') // 'solo' | 'pvp'
 
     // Betting selections
     const [choice, setChoice] = useState('heads') // 'heads' | 'tails'
@@ -289,6 +293,7 @@ export default function CoinTossGame() {
     // Keyboard Shortcuts
     useEffect(() => {
         const handleKeyDown = (e) => {
+            if (gameMode !== 'solo') return
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return
             if (e.key === 'h' || e.key === 'H') {
                 handleSelectChoice('heads')
@@ -301,7 +306,7 @@ export default function CoinTossGame() {
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [handleSelectChoice])
+    }, [handleSelectChoice, gameMode])
 
     // History statistics
     const stats = useMemo(() => {
@@ -389,8 +394,91 @@ export default function CoinTossGame() {
                 </div>
             </header>
 
-            {/* Main Stage Grid */}
-            <div className="coin-toss-arena">
+            {/* Mode Selector Bar: Solo vs House vs PvP Duels Arena */}
+            <div
+                style={{
+                    display: 'flex',
+                    gap: 10,
+                    margin: '10px 0 16px 0',
+                    width: '100%'
+                }}
+            >
+                <button
+                    type="button"
+                    style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        borderRadius: 10,
+                        border: gameMode === 'solo' ? '1px solid #f5af19' : '1px solid rgba(255,255,255,0.08)',
+                        background:
+                            gameMode === 'solo'
+                                ? 'linear-gradient(135deg, rgba(245, 175, 25, 0.2), rgba(20, 30, 48, 0.7))'
+                                : 'rgba(255,255,255,0.03)',
+                        color: gameMode === 'solo' ? '#fbbf24' : '#94a3b8',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        transition: 'all 0.2s ease'
+                    }}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setGameMode('solo')
+                    }}
+                >
+                    <span>🎲 Solo vs House (1.98x Payout)</span>
+                </button>
+
+                <button
+                    type="button"
+                    style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        borderRadius: 10,
+                        border: gameMode === 'pvp' ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.08)',
+                        background:
+                            gameMode === 'pvp'
+                                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(20, 30, 48, 0.7))'
+                                : 'rgba(255,255,255,0.03)',
+                        color: gameMode === 'pvp' ? '#60a5fa' : '#94a3b8',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        transition: 'all 0.2s ease'
+                    }}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setGameMode('pvp')
+                    }}
+                >
+                    <span>⚔️ 1v1 PvP Duels Arena (Multiplayer)</span>
+                    <span
+                        style={{
+                            background: '#3b82f6',
+                            color: '#fff',
+                            fontSize: '0.68rem',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontWeight: 900
+                        }}
+                    >
+                        HOT
+                    </span>
+                </button>
+            </div>
+
+            {gameMode === 'pvp' ? (
+                <PvPDuelsArena />
+            ) : (
+                /* Main Stage Grid */
+                <div className="coin-toss-arena">
                 {/* 3D Coin Canvas / Flip Zone */}
                 <div
                     className="coin-stage-card"
@@ -697,6 +785,7 @@ export default function CoinTossGame() {
                     )}
                 </div>
             </div>
+            )}
 
             {/* Slide-out Game Specific Round History Drawer */}
             <Drawer

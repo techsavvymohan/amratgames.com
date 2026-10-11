@@ -16,6 +16,7 @@ import { redisPubSub } from '../src/services/RedisPubSubService.js'
 import { dinoEngine } from '../src/games/dino/dino.engine.js'
 import { bankrollRisk } from '../src/services/BankrollRiskService.js'
 import { automatedSettlement } from '../src/services/AutomatedSettlementService.js'
+import { pvpService } from '../src/services/PvPService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -1054,6 +1055,127 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.equal(replayResult.duplicate, true)
         // Balance must not change on duplicate
         assert.equal(cryptoPlayer.balances.INR, initialBal + 900)
+    })
+
+    it('verifies Pillar 4 PvP duel creation locks creator balance and initializes Provably Fair seeds', async () => {
+        const creator = db.createUser({
+            username: 'pvp_creator_' + Date.now(),
+            email: `pvp_c_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        db.updateUserBalance(creator.id, 'INR', 1000, 'Test Deposit')
+        const balanceBefore = creator.balances.INR
+
+        const createRes = await pvpService.createDuel({
+            userId: creator.id,
+            stake: 500,
+            choice: 'heads',
+            currency: 'INR'
+        })
+
+        assert.equal(createRes.success, true)
+        assert.equal(createRes.duel.stake, 500)
+        assert.equal(createRes.duel.creatorChoice, 'heads')
+        assert.equal(createRes.duel.status, 'open')
+        assert.ok(createRes.duel.provablyFair.serverSeedHash, 'Secret seed hash must be published')
+        assert.equal(createRes.duel.provablyFair.serverSeed, undefined, 'Raw secret seed must NOT be revealed before resolution')
+
+        // Creator balance must be locked/deducted by stake amount
+        assert.equal(creator.balances.INR, balanceBefore - 500)
+    })
+
+    it('verifies Pillar 4 PvP duel acceptance resolves outcome, credits winner 97%, and extracts 3% zero-risk house rake', async () => {
+        const p1 = db.createUser({
+            username: 'player_one_' + Date.now(),
+            email: `p1_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const p2 = db.createUser({
+            username: 'player_two_' + Date.now(),
+            email: `p2_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        const p1Initial = p1.balances.INR
+        const p2Initial = p2.balances.INR
+        db.updateUserBalance(p1.id, 'INR', 1000, 'Test Deposit')
+        db.updateUserBalance(p2.id, 'INR', 1000, 'Test Deposit')
+
+        // P1 creates duel for ₹500
+        const duelRes = await pvpService.createDuel({
+            userId: p1.id,
+            stake: 500,
+            choice: 'heads',
+            currency: 'INR'
+        })
+        const duelId = duelRes.duel.id
+
+        // Self-join must be blocked
+        await assert.rejects(
+            async () => await pvpService.joinDuel({ duelId, userId: p1.id }),
+            /cannot challenge your own duel/
+        )
+
+        // P2 joins duel
+        const joinRes = await pvpService.joinDuel({
+            duelId,
+            userId: p2.id,
+            clientSeed: 'challenger-seed-123'
+        })
+
+        assert.equal(joinRes.success, true)
+        assert.ok(joinRes.outcome === 'heads' || joinRes.outcome === 'tails')
+        assert.ok(joinRes.winnerId === p1.id || joinRes.winnerId === p2.id)
+
+        // Pot = 500 * 2 = 1000. 3% Rake = 30. Winner payout = 970.
+        assert.equal(joinRes.houseRakeAmount, 30.00, 'Platform must collect exactly 3% risk-free house rake')
+        assert.equal(joinRes.winnerPayout, 970.00, 'Winner must receive 97% of the total pot')
+
+        // Verify winner balance
+        const winner = db.findUserById(joinRes.winnerId)
+        const loser = db.findUserById(joinRes.winnerId === p1.id ? p2.id : p1.id)
+
+        const expectedWinner = (joinRes.winnerId === p1.id ? p1Initial : p2Initial) + 1000 - 500 + 970
+        const expectedLoser = (joinRes.winnerId === p1.id ? p2Initial : p1Initial) + 1000 - 500
+
+        assert.equal(winner.balances.INR, expectedWinner)
+        assert.equal(loser.balances.INR, expectedLoser)
+
+        // Provably Fair seed must now be revealed
+        assert.ok(joinRes.duel.provablyFair.serverSeed, 'Secret server seed must be revealed after resolution')
+    })
+
+    it('verifies Pillar 4 duel cancellation immediately refunds creator stake', async () => {
+        const creator = db.createUser({
+            username: 'pvp_canceller_' + Date.now(),
+            email: `pvp_canc_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const initialCreatorBal = creator.balances.INR
+        db.updateUserBalance(creator.id, 'INR', 2000, 'Test Deposit')
+
+        // Create duel for ₹1,000
+        const createRes = await pvpService.createDuel({
+            userId: creator.id,
+            stake: 1000,
+            choice: 'tails',
+            currency: 'INR'
+        })
+        assert.equal(creator.balances.INR, initialCreatorBal + 2000 - 1000)
+
+        // Cancel duel
+        const cancelRes = await pvpService.cancelDuel({
+            duelId: createRes.duel.id,
+            userId: creator.id
+        })
+        assert.equal(cancelRes.success, true)
+
+        // Balance must be fully restored
+        assert.equal(creator.balances.INR, initialCreatorBal + 2000)
     })
 
     after(() => {

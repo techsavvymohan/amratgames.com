@@ -58,6 +58,28 @@ export class ChatService {
             .slice(0, 250) // Enforce 250 max characters
     }
 
+    postSystemAnnouncement(text, metadata = {}) {
+        const now = Date.now()
+        const messageObj = {
+            id: 'msg_sys_' + now.toString(36) + crypto.randomBytes(3).toString('hex'),
+            userId: 'SYSTEM',
+            username: '👑 Royal Arena',
+            vipTier: 'System',
+            text: String(text).slice(0, 300),
+            type: 'announcement',
+            metadata,
+            createdAt: new Date(now).toISOString()
+        }
+
+        this.messages.push(messageObj)
+        if (this.messages.length > 60) {
+            this.messages.shift()
+        }
+
+        broadcastEvent('NEW_CHAT_MESSAGE', messageObj)
+        return messageObj
+    }
+
     async postMessage({ user, text }) {
         if (!user || !user.id) {
             const err = new Error('Authentication required to send chat messages')
