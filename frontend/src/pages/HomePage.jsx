@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { GAMES } from '../games'
 import { useWallet } from '../context/WalletContext'
+import { useAuth } from '../context/AuthContext'
 import LivePlatformBets from '../components/LivePlatformBets'
 import '../styles/home.css'
 
@@ -200,6 +201,7 @@ const HERO_SLIDES = [
 
 function HomePage() {
     const { openWalletModal } = useWallet()
+    const { user, openAuthModal } = useAuth() || {}
     const [activeCategory, setActiveCategory] = useState('all')
     const [searchQuery, setSearchQuery] = useState('')
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
@@ -280,7 +282,13 @@ function HomePage() {
                                     <button
                                         type="button"
                                         className="hero-secondary-button"
-                                        onClick={() => openWalletModal('deposit')}
+                                        onClick={() => {
+                                            if (!user) {
+                                                openAuthModal?.('login')
+                                            } else {
+                                                openWalletModal('deposit')
+                                            }
+                                        }}
                                     >
                                         <span>{currentSlide.secondaryCta.icon}</span>
                                         <span>{currentSlide.secondaryCta.label}</span>
@@ -375,7 +383,13 @@ function HomePage() {
                                             key={amt}
                                             type="button"
                                             className="preset-btn"
-                                            onClick={() => openWalletModal('deposit')}
+                                            onClick={() => {
+                                                if (!user) {
+                                                    openAuthModal?.('login')
+                                                } else {
+                                                    openWalletModal('deposit')
+                                                }
+                                            }}
                                         >
                                             +₹{amt.toLocaleString('en-IN')}
                                         </button>
@@ -384,7 +398,13 @@ function HomePage() {
                                 <button
                                     type="button"
                                     className="showcase-cta-btn"
-                                    onClick={() => openWalletModal('deposit')}
+                                    onClick={() => {
+                                        if (!user) {
+                                            openAuthModal?.('login')
+                                        } else {
+                                            openWalletModal('deposit')
+                                        }
+                                    }}
                                 >
                                     <span>⚡</span> <span>Instant UPI Deposit</span>
                                 </button>

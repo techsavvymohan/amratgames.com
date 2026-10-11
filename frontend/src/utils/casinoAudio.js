@@ -18,15 +18,16 @@ class CasinoAudioEngine {
             this.isMuted = false
         }
 
-        // Auto-resume on first interaction
+        // Auto-resume existing suspended context on genuine user interaction (click / touchend / keydown)
         if (typeof window !== 'undefined') {
-            const unlock = () => {
-                this.initContext()
-                window.removeEventListener('pointerdown', unlock)
-                window.removeEventListener('keydown', unlock)
+            const resumeIfSuspended = () => {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {})
+                }
             }
-            window.addEventListener('pointerdown', unlock, { once: true, passive: true })
-            window.addEventListener('keydown', unlock, { once: true, passive: true })
+            window.addEventListener('click', resumeIfSuspended, { passive: true })
+            window.addEventListener('touchend', resumeIfSuspended, { passive: true })
+            window.addEventListener('keydown', resumeIfSuspended, { passive: true })
         }
     }
 
@@ -34,10 +35,14 @@ class CasinoAudioEngine {
         if (!this.ctx && typeof window !== 'undefined') {
             const AudioCtx = window.AudioContext || window.webkitAudioContext
             if (AudioCtx) {
-                this.ctx = new AudioCtx()
-                this.masterGain = this.ctx.createGain()
-                this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.45, this.ctx.currentTime)
-                this.masterGain.connect(this.ctx.destination)
+                try {
+                    this.ctx = new AudioCtx()
+                    this.masterGain = this.ctx.createGain()
+                    this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.45, this.ctx.currentTime)
+                    this.masterGain.connect(this.ctx.destination)
+                } catch {
+                    return null
+                }
             }
         }
         if (this.ctx && this.ctx.state === 'suspended') {

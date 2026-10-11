@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '../../context/WalletContext'
+import { useAuth } from '../../context/AuthContext'
 import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
@@ -24,6 +25,9 @@ export default function WalletModal() {
         refreshWithdrawals,
         showToast,
     } = useWallet()
+
+    const { user, token: authToken, openAuthModal } = useAuth() || {}
+    const effectiveToken = authToken || (typeof window !== 'undefined' ? localStorage.getItem('amrat_auth_token') : '') || ''
 
     const [activeTab, setActiveTab] = useState('deposit')
     const [historySubTab, setHistorySubTab] = useState('withdrawals') // 'withdrawals' | 'all'
@@ -70,14 +74,22 @@ export default function WalletModal() {
     // Fetch deterministic crypto deposit coordinates
     useEffect(() => {
         if (activeTab === 'deposit' && depositChannel === 'CRYPTO' && isWalletModalOpen) {
+            const token = effectiveToken
+            if (!token) {
+                setLoadingCrypto(false)
+                setCryptoCoords(null)
+                return
+            }
             let isCancelled = false
             const fetchCoords = async () => {
                 setLoadingCrypto(true)
                 try {
-                    const token = localStorage.getItem('amrat_auth_token') || ''
                     const res = await fetch(`/api/wallet/crypto-deposit-info?currency=USDT&network=${cryptoNetwork}`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                        headers: { Authorization: `Bearer ${token}` }
                     })
+                    if (res.status === 401) {
+                        return
+                    }
                     const data = await res.json()
                     if (!isCancelled && data.success) {
                         setCryptoCoords(data)
@@ -91,7 +103,7 @@ export default function WalletModal() {
             fetchCoords()
             return () => { isCancelled = true }
         }
-    }, [activeTab, depositChannel, cryptoNetwork, isWalletModalOpen])
+    }, [activeTab, depositChannel, cryptoNetwork, isWalletModalOpen, effectiveToken])
 
     // Close on Escape key
     useEffect(() => {
@@ -143,6 +155,12 @@ export default function WalletModal() {
     // Submit Deposit
     const handleDepositSubmit = async (e) => {
         e?.preventDefault()
+        if (!effectiveToken) {
+            showToast?.('error', 'Login Required', 'Please log in or register before submitting a deposit')
+            closeWalletModal()
+            openAuthModal?.('login')
+            return
+        }
         const amt = parseFloat(depositAmount)
         if (isNaN(amt) || amt < 100) {
             showToast?.('error', 'Invalid Amount', 'Minimum deposit is ₹100')
@@ -177,6 +195,12 @@ export default function WalletModal() {
     // Submit Withdrawal
     const handleWithdrawSubmit = async (e) => {
         e?.preventDefault()
+        if (!effectiveToken) {
+            showToast?.('error', 'Login Required', 'Please log in to withdraw funds')
+            closeWalletModal()
+            openAuthModal?.('login')
+            return
+        }
         const amt = parseFloat(withdrawAmount)
         if (isNaN(amt) || amt <= 0) {
             showToast?.('error', 'Invalid Amount', 'Please enter a valid withdrawal amount')
@@ -397,7 +421,28 @@ export default function WalletModal() {
                                             </div>
                                         </div>
 
-                                        {loadingCrypto ? (
+                                        {!effectiveToken ? (
+                                            <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                                                <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>🔐</div>
+                                                <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.95rem', marginBottom: '6px' }}>
+                                                    Login Required
+                                                </div>
+                                                <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '14px', lineHeight: 1.4 }}>
+                                                    Please log in or register to view your personal USDT deposit address.
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    className="amrat-submit-deposit-btn"
+                                                    style={{ maxWidth: '220px', margin: '0 auto' }}
+                                                    onClick={() => {
+                                                        closeWalletModal()
+                                                        openAuthModal?.('login')
+                                                    }}
+                                                >
+                                                    Login / Register
+                                                </button>
+                                            </div>
+                                        ) : loadingCrypto ? (
                                             <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8', fontSize: '0.85rem' }}>
                                                 Generating secure deterministic deposit address...
                                             </div>

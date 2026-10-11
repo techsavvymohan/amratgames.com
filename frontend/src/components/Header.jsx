@@ -109,7 +109,13 @@ function Header({
                         id="header-mobile-wallet-btn"
                         className="mobile-wallet-balance"
                         aria-label={`Open wallet, balance ${currencySymbol}${formattedBalance}`}
-                        onClick={() => openWalletModal('deposit')}
+                        onClick={() => {
+                            if (!user) {
+                                openAuthModal('login')
+                            } else {
+                                openWalletModal('deposit')
+                            }
+                        }}
                         title="1-Tap Deposit & Withdraw"
                     >
                         <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
@@ -121,7 +127,13 @@ function Header({
                             <div
                                 id="header-wallet-balance-display"
                                 className="wallet-balance-display"
-                                onClick={() => openWalletModal('deposit')}
+                                onClick={() => {
+                                    if (!user) {
+                                        openAuthModal('login')
+                                    } else {
+                                        openWalletModal('deposit')
+                                    }
+                                }}
                                 style={{ cursor: 'pointer' }}
                                 title="Click to Open Wallet / Cashier"
                             >
@@ -132,7 +144,11 @@ function Header({
                                     className="wallet-dropdown-toggle"
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        openWalletModal('deposit')
+                                        if (!user) {
+                                            openAuthModal('login')
+                                        } else {
+                                            openWalletModal('deposit')
+                                        }
                                     }}
                                     title="Open Cashier"
                                 >
@@ -144,7 +160,13 @@ function Header({
                             <button
                                 id="header-wallet-modal-btn"
                                 className="wallet-btn"
-                                onClick={() => openWalletModal('deposit')}
+                                onClick={() => {
+                                    if (!user) {
+                                        openAuthModal('login')
+                                    } else {
+                                        openWalletModal('deposit')
+                                    }
+                                }}
                             >
                                 Wallet
                             </button>
