@@ -9,6 +9,7 @@ import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.j
 import { broadcastEvent } from '../websocket.js'
 import { userLockManager } from './UserLockManager.js'
 import { bankrollRisk } from '../services/BankrollRiskService.js'
+import { houseVaultService } from '../services/HouseVaultService.js'
 
 export function normalizePhone(phone) {
     if (!phone) return ''
@@ -479,11 +480,22 @@ class Database {
         const candidateCode = userData.referredBy || userData.referralCode
         if (candidateCode) {
             const cleanCode = String(candidateCode).trim().toUpperCase()
-            const referrer = this.data.users.find(u => u.referralCode && u.referralCode.toUpperCase() === cleanCode)
+            const referrer = this.data.users.find(u => (u.referralCode && u.referralCode.toUpperCase() === cleanCode) || u.id === candidateCode)
             if (referrer && referrer.id !== id) {
                 referredBy = referrer.id
                 if (!referrer.affiliateStats) {
-                    referrer.affiliateStats = { totalReferred: 0, totalTurnover: 0, totalEarned: 0, unclaimedEarnings: 0 }
+                    referrer.affiliateStats = {
+                        totalReferred: 0,
+                        totalTurnover: 0,
+                        totalEarned: 0,
+                        unclaimedEarnings: 0,
+                        tier1Turnover: 0,
+                        tier2Turnover: 0,
+                        tier3Turnover: 0,
+                        tier1Earned: 0,
+                        tier2Earned: 0,
+                        tier3Earned: 0
+                    }
                 }
                 referrer.affiliateStats.totalReferred += 1
             }
@@ -637,19 +649,94 @@ class Database {
         user.unclaimedRakeback = parseFloat(((user.unclaimedRakeback || 0) + rakeback).toFixed(4))
         user.totalRakebackEarned = parseFloat(((user.totalRakebackEarned || 0) + rakeback).toFixed(4))
 
-        // 2. Affiliate Commission Accumulation for Referrer (0.3% turnover)
+        // 2. Multi-Tier Viral Affiliate Hierarchy (Tier 1: 0.30%, Tier 2: 0.10%, Tier 3: 0.05%)
         if (user.referredBy) {
-            const referrer = this.findUserById(user.referredBy)
-            if (referrer) {
-                if (!referrer.affiliateStats) {
-                    referrer.affiliateStats = { totalReferred: 0, totalTurnover: 0, totalEarned: 0, unclaimedEarnings: 0 }
+            // Tier 1: Direct Referrer (0.30%)
+            const tier1User = this.findUserById(user.referredBy)
+            if (tier1User) {
+                if (!tier1User.affiliateStats) {
+                    tier1User.affiliateStats = {
+                        totalReferred: 0,
+                        totalTurnover: 0,
+                        totalEarned: 0,
+                        unclaimedEarnings: 0,
+                        tier1Turnover: 0,
+                        tier2Turnover: 0,
+                        tier3Turnover: 0,
+                        tier1Earned: 0,
+                        tier2Earned: 0,
+                        tier3Earned: 0
+                    }
                 }
-                const comm = parseFloat((betAmount * 0.003).toFixed(4))
-                referrer.affiliateStats.totalTurnover = parseFloat(((referrer.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
-                referrer.affiliateStats.totalEarned = parseFloat(((referrer.affiliateStats.totalEarned || 0) + comm).toFixed(4))
-                referrer.affiliateStats.unclaimedEarnings = parseFloat(((referrer.affiliateStats.unclaimedEarnings || 0) + comm).toFixed(4))
+                const comm1 = parseFloat((betAmount * 0.003).toFixed(4))
+                tier1User.affiliateStats.totalTurnover = parseFloat(((tier1User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
+                tier1User.affiliateStats.tier1Turnover = parseFloat(((tier1User.affiliateStats.tier1Turnover || 0) + betAmount).toFixed(2))
+                tier1User.affiliateStats.totalEarned = parseFloat(((tier1User.affiliateStats.totalEarned || 0) + comm1).toFixed(4))
+                tier1User.affiliateStats.tier1Earned = parseFloat(((tier1User.affiliateStats.tier1Earned || 0) + comm1).toFixed(4))
+                tier1User.affiliateStats.unclaimedEarnings = parseFloat(((tier1User.affiliateStats.unclaimedEarnings || 0) + comm1).toFixed(4))
+
+                // Tier 2: Sub-Affiliate Referrer (0.10%)
+                if (tier1User.referredBy) {
+                    const tier2User = this.findUserById(tier1User.referredBy)
+                    if (tier2User && tier2User.id !== user.id) {
+                        if (!tier2User.affiliateStats) {
+                            tier2User.affiliateStats = {
+                                totalReferred: 0,
+                                totalTurnover: 0,
+                                totalEarned: 0,
+                                unclaimedEarnings: 0,
+                                tier1Turnover: 0,
+                                tier2Turnover: 0,
+                                tier3Turnover: 0,
+                                tier1Earned: 0,
+                                tier2Earned: 0,
+                                tier3Earned: 0
+                            }
+                        }
+                        const comm2 = parseFloat((betAmount * 0.001).toFixed(4))
+                        tier2User.affiliateStats.totalTurnover = parseFloat(((tier2User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
+                        tier2User.affiliateStats.tier2Turnover = parseFloat(((tier2User.affiliateStats.tier2Turnover || 0) + betAmount).toFixed(2))
+                        tier2User.affiliateStats.totalEarned = parseFloat(((tier2User.affiliateStats.totalEarned || 0) + comm2).toFixed(4))
+                        tier2User.affiliateStats.tier2Earned = parseFloat(((tier2User.affiliateStats.tier2Earned || 0) + comm2).toFixed(4))
+                        tier2User.affiliateStats.unclaimedEarnings = parseFloat(((tier2User.affiliateStats.unclaimedEarnings || 0) + comm2).toFixed(4))
+
+                        // Tier 3: Third Generation Network (0.05%)
+                        if (tier2User.referredBy) {
+                            const tier3User = this.findUserById(tier2User.referredBy)
+                            if (tier3User && tier3User.id !== user.id && tier3User.id !== tier1User.id) {
+                                if (!tier3User.affiliateStats) {
+                                    tier3User.affiliateStats = {
+                                        totalReferred: 0,
+                                        totalTurnover: 0,
+                                        totalEarned: 0,
+                                        unclaimedEarnings: 0,
+                                        tier1Turnover: 0,
+                                        tier2Turnover: 0,
+                                        tier3Turnover: 0,
+                                        tier1Earned: 0,
+                                        tier2Earned: 0,
+                                        tier3Earned: 0
+                                    }
+                                }
+                                const comm3 = parseFloat((betAmount * 0.0005).toFixed(4))
+                                tier3User.affiliateStats.totalTurnover = parseFloat(((tier3User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
+                                tier3User.affiliateStats.tier3Turnover = parseFloat(((tier3User.affiliateStats.tier3Turnover || 0) + betAmount).toFixed(2))
+                                tier3User.affiliateStats.totalEarned = parseFloat(((tier3User.affiliateStats.totalEarned || 0) + comm3).toFixed(4))
+                                tier3User.affiliateStats.tier3Earned = parseFloat(((tier3User.affiliateStats.tier3Earned || 0) + comm3).toFixed(4))
+                                tier3User.affiliateStats.unclaimedEarnings = parseFloat(((tier3User.affiliateStats.unclaimedEarnings || 0) + comm3).toFixed(4))
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        // 3. Yield to House Liquidity Vault (15% of mathematical house edge routed to community stakers)
+        try {
+            if (houseVaultService && houseVaultService.distributeGameYield) {
+                houseVaultService.distributeGameYield(betAmount)
+            }
+        } catch {}
     }
 
     isWebhookProcessed(id) {
@@ -670,23 +757,52 @@ class Database {
         const user = this.findUserById(userId)
         if (!user) return null
 
-        const referredUsers = (this.data.users || [])
-            .filter(u => u.referredBy === userId)
-            .map(u => ({
+        const users = this.data.users || []
+        const tier1Users = users.filter(u => u.referredBy === userId)
+        const tier1Ids = new Set(tier1Users.map(u => u.id))
+        const tier2Users = users.filter(u => tier1Ids.has(u.referredBy))
+        const tier2Ids = new Set(tier2Users.map(u => u.id))
+        const tier3Users = users.filter(u => tier2Ids.has(u.referredBy))
+
+        const totalReferred = tier1Users.length + tier2Users.length + tier3Users.length
+
+        return {
+            referralCode: user.referralCode || '',
+            referralLink: `https://amratgames.com/?ref=${user.referralCode || ''}`,
+            totalReferred,
+            totalTurnover: user.affiliateStats?.totalTurnover || 0,
+            totalEarned: user.affiliateStats?.totalEarned || 0,
+            unclaimedEarnings: user.affiliateStats?.unclaimedEarnings || 0,
+            canClaim: (user.affiliateStats?.unclaimedEarnings || 0) >= 10.0,
+            tiers: {
+                tier1: {
+                    count: tier1Users.length,
+                    turnover: user.affiliateStats?.tier1Turnover || (user.affiliateStats?.totalTurnover || 0),
+                    earned: user.affiliateStats?.tier1Earned || (user.affiliateStats?.totalEarned || 0),
+                    rate: '0.30%',
+                    rateNum: 0.003
+                },
+                tier2: {
+                    count: tier2Users.length,
+                    turnover: user.affiliateStats?.tier2Turnover || 0,
+                    earned: user.affiliateStats?.tier2Earned || 0,
+                    rate: '0.10%',
+                    rateNum: 0.001
+                },
+                tier3: {
+                    count: tier3Users.length,
+                    turnover: user.affiliateStats?.tier3Turnover || 0,
+                    earned: user.affiliateStats?.tier3Earned || 0,
+                    rate: '0.05%',
+                    rateNum: 0.0005
+                }
+            },
+            referredUsers: tier1Users.slice(0, 20).map(u => ({
                 id: u.id,
                 username: u.username ? (u.username.slice(0, 2) + '***' + u.username.slice(-1)) : 'Player',
                 totalWagered: u.totalWagered || 0,
                 createdAt: u.createdAt
             }))
-
-        return {
-            referralCode: user.referralCode || '',
-            referralLink: `https://amratgames.com/?ref=${user.referralCode || ''}`,
-            totalReferred: referredUsers.length,
-            totalTurnover: user.affiliateStats?.totalTurnover || 0,
-            totalEarned: user.affiliateStats?.totalEarned || 0,
-            unclaimedEarnings: user.affiliateStats?.unclaimedEarnings || 0,
-            referredUsers: referredUsers.slice(0, 20)
         }
     }
 

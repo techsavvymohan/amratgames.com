@@ -1,0 +1,264 @@
+/* ==========================================================================
+   AmratGames — "Be the House" Liquidity Vault Dashboard Styles
+   ========================================================================== */
+
+.vault-dashboard-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    color: #f1f5f9;
+}
+
+/* Hero Banner */
+.vault-hero-card {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.12) 0%, rgba(15, 23, 42, 0.75) 100%);
+    border: 1px solid rgba(245, 175, 25, 0.3);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vault-hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.vault-hero-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vault-hero-badge {
+    background: linear-gradient(135deg, #f5af19, #e65c00);
+    color: #0c111a;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.vault-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.vault-metric-box {
+    background: rgba(10, 15, 25, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vault-metric-lbl {
+    font-size: 0.74rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.vault-metric-val {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.vault-metric-val.accent-gold {
+    color: #fbbf24;
+}
+
+.vault-metric-val.accent-green {
+    color: #34d399;
+}
+
+/* Main Split Grid: User Staking Position on Left, Stake/Unstake on Right */
+.vault-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+@media (max-width: 860px) {
+    .vault-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.vault-card {
+    background: #0f1622;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.vault-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 12px;
+}
+
+.vault-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* User Position Breakdown */
+.vault-position-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vault-pos-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.vault-pos-row .lbl {
+    color: #94a3b8;
+}
+
+.vault-pos-row .val {
+    font-weight: 800;
+    color: #fff;
+}
+
+/* Claim Harvest Box */
+.vault-harvest-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(10, 15, 25, 0.8) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vault-harvest-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.vault-harvest-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+}
+
+.vault-harvest-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Action Card Tabs (Stake vs Unstake) */
+.vault-action-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.vault-tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.vault-tab-btn.active {
+    background: #1e293b;
+    color: #fbbf24;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.vault-input-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vault-action-btn {
+    background: linear-gradient(135deg, #f5af19, #e65c00);
+    border: none;
+    border-radius: 10px;
+    color: #0c111a;
+    font-size: 0.92rem;
+    font-weight: 800;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.35);
+}
+
+.vault-action-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 175, 25, 0.45);
+}
+
+.vault-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Transparency & Economics Box */
+.vault-info-banner {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.vault-info-banner strong {
+    color: #f1f5f9;
+}

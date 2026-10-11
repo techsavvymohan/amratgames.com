@@ -1,0 +1,384 @@
+/* ==========================================================================
+   AmratGames — Multi-Tier Viral Affiliate Dashboard Styles
+   ========================================================================== */
+
+.affiliate-dashboard-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    color: #f1f5f9;
+}
+
+/* Hero Stats Banner */
+.affiliate-hero-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(15, 23, 42, 0.7) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.affiliate-hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.affiliate-hero-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.affiliate-hero-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.affiliate-hero-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.affiliate-stat-box {
+    background: rgba(10, 15, 25, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.affiliate-stat-lbl {
+    font-size: 0.74rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.affiliate-stat-val {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.affiliate-stat-val.accent-green {
+    color: #34d399;
+}
+
+.affiliate-stat-val.accent-gold {
+    color: #fbbf24;
+}
+
+/* Multi-Tier Tree Cards */
+.affiliate-tiers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 860px) {
+    .affiliate-tiers-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.affiliate-tier-card {
+    background: #0f1622;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.affiliate-tier-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 175, 25, 0.35);
+}
+
+.affiliate-tier-card.tier-1 {
+    border-top: 3px solid #fbbf24;
+}
+
+.affiliate-tier-card.tier-2 {
+    border-top: 3px solid #60a5fa;
+}
+
+.affiliate-tier-card.tier-3 {
+    border-top: 3px solid #a78bfa;
+}
+
+.affiliate-tier-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.affiliate-tier-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
+.affiliate-tier-rate-badge {
+    font-size: 0.72rem;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.tier-1 .affiliate-tier-rate-badge {
+    background: rgba(245, 175, 25, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 175, 25, 0.4);
+}
+
+.tier-2 .affiliate-tier-rate-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.tier-3 .affiliate-tier-rate-badge {
+    background: rgba(167, 139, 250, 0.2);
+    color: #c4b5fd;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+}
+
+.affiliate-tier-desc {
+    font-size: 0.76rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.affiliate-tier-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 8px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.affiliate-tier-meta-row strong {
+    color: #fff;
+}
+
+/* Sharing & Referral Links Section */
+.affiliate-share-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 768px) {
+    .affiliate-share-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.affiliate-share-card {
+    background: #0f1622;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.affiliate-share-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.affiliate-copy-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.affiliate-copy-input {
+    flex: 1;
+    background: rgba(10, 15, 25, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: #fbbf24;
+    font-family: monospace;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.affiliate-copy-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #f1f5f9;
+    padding: 0 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.affiliate-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.affiliate-social-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.affiliate-social-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+}
+
+.affiliate-social-btn.whatsapp {
+    background: #25d366;
+    color: #0c111a;
+}
+
+.affiliate-social-btn.telegram {
+    background: #229ed9;
+    color: #fff;
+}
+
+.affiliate-social-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+}
+
+/* Commission Claim Card */
+.affiliate-claim-card {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1px solid rgba(245, 175, 25, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.affiliate-claim-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.affiliate-claim-amount {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fbbf24;
+}
+
+.affiliate-claim-btn {
+    background: linear-gradient(135deg, #f5af19, #e65c00);
+    border: none;
+    border-radius: 8px;
+    color: #0c111a;
+    font-size: 0.9rem;
+    font-weight: 900;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.35);
+}
+
+.affiliate-claim-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 175, 25, 0.5);
+}
+
+.affiliate-claim-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Referrals Table */
+.affiliate-table-card {
+    background: #0f1622;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.affiliate-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.affiliate-table-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #f1f5f9;
+}
+
+.affiliate-table-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.affiliate-table-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.affiliate-table-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+}

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useWallet } from '../context/WalletContext'
+import MultiTierAffiliateDashboard from '../components/Affiliate/MultiTierAffiliateDashboard'
+import HouseVaultDashboard from '../components/Vault/HouseVaultDashboard'
 import './ProfilePage.css'
 
 export default function ProfilePage() {
@@ -12,7 +14,7 @@ export default function ProfilePage() {
 
     const [activeTab, setActiveTab] = useState(() => {
         const t = searchParams.get('tab')
-        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
+        if (t && ['profile', 'vip', 'affiliate', 'vault', 'payments', 'bets', 'support'].includes(t)) {
             return t
         }
         return 'profile'
@@ -34,7 +36,7 @@ export default function ProfilePage() {
     // Sync tab when query param changes
     useEffect(() => {
         const t = searchParams.get('tab')
-        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
+        if (t && ['profile', 'vip', 'affiliate', 'vault', 'payments', 'bets', 'support'].includes(t)) {
             setActiveTab(t)
         }
     }, [searchParams])
@@ -334,7 +336,15 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('affiliate')}
                         >
                             <span>💸</span>
-                            <span>Affiliates (0.3%)</span>
+                            <span>Affiliates (3-Tier)</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-subnav-btn ${activeTab === 'vault' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('vault')}
+                        >
+                            <span>🏛️</span>
+                            <span>House Vault</span>
                         </button>
                         <button
                             type="button"
@@ -1129,156 +1139,11 @@ export default function ProfilePage() {
                 </div>
             )}
 
-            {/* TAB 6: AFFILIATES & REFERRALS */}
-            {activeTab === 'affiliate' && (
-                <div className="profile-affiliate-section">
-                    {/* Affiliate Hero & Referral Link */}
-                    <div className="profile-card" style={{
-                        background: 'linear-gradient(135deg, #0f172a 0%, #064e3b 100%)',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                        boxShadow: '0 8px 32px rgba(16, 185, 129, 0.15)'
-                    }}>
-                        <div style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>
-                            0.3% LIFETIME TURNOVER FLYWHEEL
-                        </div>
-                        <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc', marginBottom: 12 }}>
-                            Earn Commission on Every Bet Friends Make
-                        </div>
-                        <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: 16 }}>
-                            Share your link. When players join and wager in any game (Crash, Plinko, Mines, Limbo, etc.), you get 0.3% of their total bet volume instantly credited to your affiliate vault — win or lose!
-                        </p>
+            {/* TAB: MULTI-TIER VIRAL AFFILIATE TREE */}
+            {activeTab === 'affiliate' && <MultiTierAffiliateDashboard />}
 
-                        {/* Referral Link Box */}
-                        <div style={{
-                            background: '#0f172a',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
-                            borderRadius: '10px',
-                            padding: '8px 12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '10px'
-                        }}>
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem', color: '#67e8f9', fontFamily: 'monospace' }}>
-                                {affiliateData?.referralLink || `${window.location.origin}/?ref=${user?.referralCode || ''}`}
-                            </div>
-                            <button
-                                type="button"
-                                className="profile-btn-primary"
-                                style={{
-                                    maxWidth: '120px',
-                                    padding: '8px 12px',
-                                    fontSize: '0.8rem',
-                                    background: copiedRefLink ? '#10b981' : '#2563eb'
-                                }}
-                                onClick={handleCopyRefLink}
-                            >
-                                {copiedRefLink ? '✓ Copied' : 'Copy Link'}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* 4-Stat Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
-                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Referred Users</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc', marginTop: 4 }}>
-                                {affiliateData?.stats?.referredCount || 0}
-                            </div>
-                        </div>
-
-                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Network Turnover</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#60a5fa', marginTop: 4 }}>
-                                {currencySymbol}{parseFloat(affiliateData?.stats?.lifetimeTurnover || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                        </div>
-
-                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Earned</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f5af19', marginTop: 4 }}>
-                                {currencySymbol}{parseFloat(affiliateData?.stats?.totalTurnoverCommission || 0).toFixed(2)}
-                            </div>
-                        </div>
-
-                        <div className="profile-card" style={{ padding: '14px', textAlign: 'center', marginBottom: 0 }}>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Unclaimed Vault</div>
-                            <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#4ade80', marginTop: 4 }}>
-                                {currencySymbol}{parseFloat(affiliateData?.stats?.pendingCommission || 0).toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Claim Commission Card */}
-                    <div className="profile-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                            <div>
-                                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f8fafc' }}>
-                                    Pending Commission Payout
-                                </div>
-                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
-                                    Minimum claim threshold: ₹10. Directly credited to your main balance for playing or withdrawal.
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                className="profile-btn-primary"
-                                style={{
-                                    maxWidth: '180px',
-                                    background: (affiliateData?.stats?.pendingCommission || 0) >= 10 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
-                                    cursor: (affiliateData?.stats?.pendingCommission || 0) >= 10 ? 'pointer' : 'not-allowed'
-                                }}
-                                disabled={claimingCommission || (affiliateData?.stats?.pendingCommission || 0) < 10}
-                                onClick={handleClaimCommission}
-                            >
-                                {claimingCommission ? 'Claiming...' : 'Claim to Wallet'}
-                            </button>
-                        </div>
-
-                        {commissionMsg && (
-                            <div style={{
-                                marginTop: '12px',
-                                padding: '10px 14px',
-                                borderRadius: '8px',
-                                background: commissionMsg.startsWith('✓') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                                color: commissionMsg.startsWith('✓') ? '#4ade80' : '#f87171',
-                                fontSize: '0.82rem',
-                                fontWeight: 600
-                            }}>
-                                {commissionMsg}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* How It Works Infographic */}
-                    <div className="profile-card">
-                        <div className="profile-card-title">How the 0.3% Affiliate Model Works</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
-                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>1️⃣</div>
-                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Share Link</div>
-                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
-                                    Share your personalized link on WhatsApp, Telegram, or YouTube.
-                                </div>
-                            </div>
-                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
-                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>2️⃣</div>
-                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Friends Play</div>
-                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
-                                    When they deposit and wager in Crash, Mines, Plinko or any game.
-                                </div>
-                            </div>
-                            <div style={{ padding: '14px', background: '#1e293b', borderRadius: '10px' }}>
-                                <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>3️⃣</div>
-                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>Earn 0.3% Forever</div>
-                                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 4 }}>
-                                    0.3% of every wager automatically accumulates into your vault with 1-click claims!
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* TAB: BE THE HOUSE LIQUIDITY VAULT */}
+            {activeTab === 'vault' && <HouseVaultDashboard />}
                 </main>
             </div>
 

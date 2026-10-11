@@ -18,6 +18,7 @@ import affiliateRoutes from './routes/affiliate.routes.js'
 import vipRoutes from './routes/vip.routes.js'
 import communityRoutes from './routes/community.routes.js'
 import pvpRoutes from './routes/pvp.routes.js'
+import vaultRoutes from './routes/vault.routes.js'
 import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
@@ -103,6 +104,7 @@ app.use('/api/wallet', checkPlatformMaintenance, walletRoutes)
 app.use('/api/games', checkPlatformMaintenance, gamesRoutes)
 app.use('/api/pvp', checkPlatformMaintenance, pvpRoutes)
 app.use('/api/affiliate', affiliateRoutes)
+app.use('/api/vault', vaultRoutes)
 app.use('/api/vip', vipRoutes)
 app.use('/api/community', communityRoutes)
 

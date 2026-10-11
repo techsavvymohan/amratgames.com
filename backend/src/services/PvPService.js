@@ -8,6 +8,7 @@ import { db } from '../db/db.js'
 import { CONFIG } from '../config.js'
 import { broadcastEvent } from '../websocket.js'
 import { chatService } from './ChatService.js'
+import { houseVaultService } from './HouseVaultService.js'
 
 export class PvPService {
     constructor() {
@@ -235,6 +236,13 @@ export class PvPService {
         db.data.stats.totalPvpVolume = parseFloat(((db.data.stats.totalPvpVolume || 0) + totalPot).toFixed(2))
         db.data.stats.totalRakeCollected = parseFloat(((db.data.stats.totalRakeCollected || 0) + houseRakeAmount).toFixed(2))
         db.data.stats.totalDuelsResolved = (db.data.stats.totalDuelsResolved || 0) + 1
+
+        // Route house edge yield to Community House Vault
+        try {
+            if (houseVaultService && houseVaultService.distributeGameYield) {
+                houseVaultService.distributeGameYield(totalPot)
+            }
+        } catch {}
 
         // Finalize duel state
         duel.status = 'resolved'

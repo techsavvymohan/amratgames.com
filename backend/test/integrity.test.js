@@ -17,6 +17,7 @@ import { dinoEngine } from '../src/games/dino/dino.engine.js'
 import { bankrollRisk } from '../src/services/BankrollRiskService.js'
 import { automatedSettlement } from '../src/services/AutomatedSettlementService.js'
 import { pvpService } from '../src/services/PvPService.js'
+import { houseVaultService } from '../src/services/HouseVaultService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -1176,6 +1177,133 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         // Balance must be fully restored
         assert.equal(creator.balances.INR, initialCreatorBal + 2000)
+    })
+
+    it('verifies Pillar 5 Multi-Tier Viral Affiliate Hierarchy across 3 tiers (0.30%, 0.10%, 0.05%)', async () => {
+        // Master Agent A
+        const agentA = db.createUser({
+            username: 'agent_a_' + Date.now(),
+            email: `agent_a_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        // Sub-Agent B referred by A (Tier 1 of A)
+        const subAgentB = db.createUser({
+            username: 'sub_b_' + Date.now(),
+            email: `sub_b_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player',
+            referredBy: agentA.referralCode
+        })
+
+        // Player C referred by B (Tier 2 of A, Tier 1 of B)
+        const playerC = db.createUser({
+            username: 'play_c_' + Date.now(),
+            email: `play_c_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player',
+            referredBy: subAgentB.referralCode
+        })
+
+        // Player D referred by C (Tier 3 of A, Tier 2 of B, Tier 1 of C)
+        const playerD = db.createUser({
+            username: 'play_d_' + Date.now(),
+            email: `play_d_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player',
+            referredBy: playerC.referralCode
+        })
+
+        // Player D places a ₹10,000 bet
+        playerD.balances.INR = 20000
+        await db.executeAtomicBet({
+            userId: playerD.id,
+            currency: 'INR',
+            betAmount: 10000,
+            game: 'limbo',
+            gameName: 'Limbo',
+            evaluator: async () => ({ won: false, multiplier: 0, payout: 0 })
+        })
+
+        // Check commissions:
+        // Player C (Tier 1 direct) gets 0.30% of ₹10,000 = ₹30.00
+        assert.equal(playerC.affiliateStats.unclaimedEarnings, 30.00, 'Direct Tier 1 referrer must receive 0.30%')
+
+        // Sub-Agent B (Tier 2) gets 0.10% of ₹10,000 = ₹10.00
+        assert.equal(subAgentB.affiliateStats.unclaimedEarnings, 10.00, 'Sub-Agent Tier 2 must receive 0.10%')
+
+        // Master Agent A (Tier 3) gets 0.05% of ₹10,000 = ₹5.00
+        assert.equal(agentA.affiliateStats.unclaimedEarnings, 5.00, 'Master Agent Tier 3 must receive 0.05%')
+
+        // Verify Agent A's multi-tier breakdown stats
+        const statsA = db.getAffiliateStats(agentA.id)
+        assert.equal(statsA.tiers.tier1.count, 1)
+        assert.equal(statsA.tiers.tier2.count, 1)
+        assert.equal(statsA.tiers.tier3.count, 1)
+        assert.equal(statsA.totalReferred, 3)
+    })
+
+    it('verifies Pillar 5 "Be the House" Liquidity Vault staking, yield distribution, and unstake lifecycle', async () => {
+        const staker = db.createUser({
+            username: 'vault_staker_' + Date.now(),
+            email: `staker_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const stakerInitBal = staker.balances.INR
+        db.updateUserBalance(staker.id, 'INR', 5000, 'Vault Funding')
+
+        // 1. Stake ₹5,000 into the House Vault
+        const stakeRes = await houseVaultService.stake({
+            userId: staker.id,
+            amount: 5000
+        })
+        assert.equal(stakeRes.success, true)
+        assert.equal(staker.balances.INR, stakerInitBal) // 5000 added then 5000 staked
+        assert.equal(stakeRes.totalUserStaked, 5000)
+
+        // 2. Overview checks
+        const overview = houseVaultService.getOverview(staker.id)
+        assert.ok(overview.totalStakedINR >= 5000)
+        assert.ok(overview.dynamicApy > 0)
+        assert.ok(overview.userPosition.poolSharePct > 0)
+
+        // 3. Platform turnover distributes mathematical house yield to vault
+        const bettor = db.createUser({
+            username: 'bettor_' + Date.now(),
+            email: `bettor_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        bettor.balances.INR = 50000
+        await db.executeAtomicBet({
+            userId: bettor.id,
+            currency: 'INR',
+            betAmount: 20000,
+            game: 'crash',
+            gameName: 'Crash',
+            evaluator: async () => ({ won: false, multiplier: 0, payout: 0 })
+        })
+
+        // 4. Staker should have accrued dividend yield (15% of 1% on ₹20,000 = ₹30 total yield)
+        const updatedOverview = houseVaultService.getOverview(staker.id)
+        assert.ok(updatedOverview.userPosition.unclaimedDividendsINR > 0, 'Vault stakers must accrue real-time dividends from platform turnover')
+
+        // 5. Claim dividends directly to wallet
+        if (updatedOverview.userPosition.unclaimedDividendsINR >= 1.0) {
+            const claimRes = await houseVaultService.claimDividends({ userId: staker.id })
+            assert.equal(claimRes.success, true)
+            assert.ok(staker.balances.INR > stakerInitBal, 'Wallet balance must increase by claimed house dividends')
+        }
+
+        // 6. Unstake capital back to wallet
+        const unstakeRes = await houseVaultService.unstake({
+            userId: staker.id,
+            amount: 5000
+        })
+        assert.equal(unstakeRes.success, true)
+        assert.equal(unstakeRes.remainingStaked, 0)
     })
 
     after(() => {
