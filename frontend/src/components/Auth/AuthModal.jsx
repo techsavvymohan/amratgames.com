@@ -162,8 +162,12 @@ export default function AuthModal() {
             setErrorMsg('Username must be at least 3 characters')
             return
         }
-        if (!regPhone.trim() && !regEmail.trim()) {
-            setErrorMsg('Please provide either a mobile number or an email')
+        if (!regPhone.trim() || regPhone.trim().replace(/\D/g, '').length < 10) {
+            setErrorMsg('Please enter a valid 10-digit mobile number for your profile')
+            return
+        }
+        if (!regEmail.trim() || !regEmail.includes('@')) {
+            setErrorMsg('Please enter your email address to receive the verification OTP')
             return
         }
         if (!regPassword || regPassword.length < 6) {
@@ -171,7 +175,7 @@ export default function AuthModal() {
             return
         }
         if (!regOtp.trim() || regOtp.trim().length < 6) {
-            setErrorMsg('Please request and enter your 6-digit OTP code to complete registration')
+            setErrorMsg('Please enter the 6-digit verification OTP sent to your email')
             return
         }
 
@@ -331,28 +335,28 @@ export default function AuthModal() {
                 )}
 
                 {/* ══════════════════════════════════════════════════════════
-                    TAB 2: FAST OTP LOGIN (SMS or Email OTP)
+                    TAB 2: FAST EMAIL OTP LOGIN (100% Free Lifetime)
                    ══════════════════════════════════════════════════════════ */}
                 {mode === 'otp' && (
                     <form onSubmit={handleVerifyOtp} className="amrat-auth-form">
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Mobile or Email</span>
+                                <span>Email Address (Instant Free OTP)</span>
                             </label>
                             <div className="amrat-input-wrapper">
-                                {!otpIdentifier.includes('@') && otpIdentifier.length > 0 && (
-                                    <span className="amrat-input-prefix">+91</span>
-                                )}
                                 <input
-                                    type="text"
-                                    className={`amrat-input ${!otpIdentifier.includes('@') && otpIdentifier.length > 0 ? 'has-prefix' : ''}`}
-                                    placeholder="Mobile number or email"
+                                    type="email"
+                                    className="amrat-input"
+                                    placeholder="Enter your registered email"
                                     value={otpIdentifier}
                                     onChange={(e) => setOtpIdentifier(e.target.value)}
                                     autoFocus
                                     required
                                 />
                             </div>
+                            <small style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', marginTop: '4px', display: 'block' }}>
+                                💡 Free OTP will be delivered to your inbox. For Mobile login, use the <strong>Password</strong> tab.
+                            </small>
                         </div>
 
                         {!otpSent ? (
@@ -440,30 +444,32 @@ export default function AuthModal() {
 
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Mobile Number</span>
+                                <span>Mobile Number (Profile & Wallet Security)</span>
                             </label>
                             <div className="amrat-input-wrapper">
                                 <span className="amrat-input-prefix">+91</span>
                                 <input
                                     type="tel"
                                     className="amrat-input has-prefix"
-                                    placeholder="10-digit number"
+                                    placeholder="10-digit mobile number"
                                     value={regPhone}
                                     onChange={(e) => setRegPhone(e.target.value)}
+                                    required
                                 />
                             </div>
                         </div>
 
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Email (Optional)</span>
+                                <span>Email Address (For Free OTP Verification)</span>
                             </label>
                             <input
                                 type="email"
                                 className="amrat-input"
-                                placeholder="Email address"
+                                placeholder="name@example.com"
                                 value={regEmail}
                                 onChange={(e) => setRegEmail(e.target.value)}
+                                required
                             />
                         </div>
 
@@ -481,19 +487,19 @@ export default function AuthModal() {
                             />
                         </div>
 
-                        {/* Mandatory OTP Verification for registration */}
-                        {(regPhone.length >= 10 || (regEmail.includes('@') && regEmail.length >= 5)) && (
+                        {/* Mandatory Email OTP Verification for registration */}
+                        {regEmail.includes('@') && regEmail.length >= 5 && (
                             <div className="amrat-form-group" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                     <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600 }}>
-                                        Verify {regPhone.length >= 10 ? 'Mobile' : 'Email'} (OTP) *
+                                        Verify Email (OTP via support@amratgames.com) *
                                     </span>
                                     <button
                                         type="button"
                                         className="amrat-secondary-btn"
                                         style={{ padding: '3px 8px', fontSize: '0.72rem' }}
-                                        onClick={() => handleSendOtp(regPhone.trim() || regEmail.trim(), true)}
-                                        disabled={loading}
+                                        onClick={() => handleSendOtp(regEmail.trim(), true)}
+                                        disabled={loading || !regEmail.includes('@')}
                                     >
                                         {regOtpSent ? 'Resend' : 'Send OTP'}
                                     </button>

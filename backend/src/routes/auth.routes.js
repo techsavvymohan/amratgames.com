@@ -107,8 +107,23 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
             }).catch(e => {
                 console.warn('[AUTH] Notice sending OTP email:', e.message)
             })
+
+            return res.json({
+                success: true,
+                message: `Verification OTP has been sent to your email (${cleanId})`,
+                target,
+                expiresAt
+            })
         } else {
-            // Dispatch real carrier SMS via 2Factor / Mock through modular OtpAuthEngine
+            // Mobile SMS is frozen / paused until external SMS funds are enabled in future
+            if (CONFIG.SMS_GATEWAY_PROVIDER === 'frozen' || CONFIG.SMS_GATEWAY_PROVIDER === 'paused') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Mobile SMS OTP is currently paused. Please enter your email address to receive the verification OTP, or login using your password.'
+                })
+            }
+
+            // If un-frozen in the future, dispatch via modular OtpAuthEngine
             otpAuthEngine.provider.send({
                 rawPhone: normalizedPhone,
                 phone: `+91${normalizedPhone}`,
@@ -117,14 +132,14 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
             }).catch(e => {
                 console.warn('[AUTH] Notice sending SMS OTP:', e.message)
             })
-        }
 
-        res.json({
-            success: true,
-            message: `OTP sent to ${isEmail ? cleanId : '+91 ' + normalizedPhone}`,
-            target,
-            expiresAt
-        })
+            return res.json({
+                success: true,
+                message: `OTP sent to +91 ${normalizedPhone}`,
+                target,
+                expiresAt
+            })
+        }
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
     }
@@ -216,8 +231,25 @@ router.post('/register', registerRateLimiter, (req, res) => {
             return res.status(400).json({ success: false, error: 'Username and password are required' })
         }
 
-        if (!email && !phone) {
-            return res.status(400).json({ success: false, error: 'Either email or mobile number is required' })
+        // Mobile number is required for profile creation
+        if (!phone) {
+            return res.status(400).json({ success: false, error: 'Mobile number is required for profile creation' })
+        }
+        const cleanPhone = normalizePhone(phone)
+        if (!cleanPhone || cleanPhone.length < 10) {
+            return res.status(400).json({ success: false, error: 'Please enter a valid 10-digit mobile number' })
+        }
+        if (db.findUserByPhone(cleanPhone)) {
+            return res.status(400).json({ success: false, error: 'Mobile number is already registered' })
+        }
+
+        // Email address is required to receive the 100% free verification OTP
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email address is required for account verification' })
+        }
+        const cleanEmail = email.trim().toLowerCase()
+        if (db.findUserByEmail(cleanEmail)) {
+            return res.status(400).json({ success: false, error: 'Email is already registered' })
         }
 
         if (username.length < 3) {
@@ -232,41 +264,21 @@ router.post('/register', registerRateLimiter, (req, res) => {
             return res.status(400).json({ success: false, error: 'Username is already taken' })
         }
 
-        let cleanEmail = ''
-        if (email) {
-            cleanEmail = email.trim().toLowerCase()
-            if (db.findUserByEmail(cleanEmail)) {
-                return res.status(400).json({ success: false, error: 'Email is already registered' })
-            }
-        }
-
-        let cleanPhone = ''
-        if (phone) {
-            cleanPhone = normalizePhone(phone)
-            if (cleanPhone.length < 10) {
-                return res.status(400).json({ success: false, error: 'Please enter a valid 10-digit mobile number' })
-            }
-            if (db.findUserByPhone(cleanPhone)) {
-                return res.status(400).json({ success: false, error: 'Mobile number is already registered' })
-            }
-        }
-
-        // Enforce mandatory OTP verification to prevent bot registration & bonus farming
+        // Enforce mandatory OTP verification via Email
         if (!otp) {
-            return res.status(400).json({ success: false, error: 'OTP verification is required to complete registration' })
+            return res.status(400).json({ success: false, error: 'Email verification OTP is required to complete registration' })
         }
-        const idToCheck = cleanPhone || cleanEmail
-        if (!db.verifyOtp(idToCheck, otp)) {
+        if (!db.verifyOtp(cleanEmail, otp)) {
             return res.status(400).json({ success: false, error: 'Invalid or expired OTP verification code' })
         }
 
         const passwordHash = bcrypt.hashSync(password, 10)
         const newUser = db.createUser({
             username: username.trim(),
-            email: cleanEmail || `${username.trim()}@player.amratgames.com`,
-            phone: cleanPhone,
-            phoneVerified: Boolean(cleanPhone && otp),
-            emailVerified: Boolean(cleanEmail && otp),
+            email: cleanEmail,
+            phone: cleanPhone, // Stored in player profile!
+            phoneVerified: false,
+            emailVerified: true,
             passwordHash,
             role: 'player'
         })
