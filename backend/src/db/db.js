@@ -233,7 +233,7 @@ class Database {
         let tempFile = null
         try {
             tempFile = `${this.filePath}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}.tmp`
-            const serialized = JSON.stringify(this.data, null, 2)
+            const serialized = CONFIG.isProduction ? JSON.stringify(this.data) : JSON.stringify(this.data, null, 2)
             await fs.promises.writeFile(tempFile, serialized, 'utf-8')
             try {
                 await fs.promises.rename(tempFile, this.filePath)
@@ -259,7 +259,8 @@ class Database {
         let tempFile = null
         try {
             tempFile = `${this.filePath}.${Date.now()}.tmp`
-            fs.writeFileSync(tempFile, JSON.stringify(this.data, null, 2), 'utf-8')
+            const serialized = CONFIG.isProduction ? JSON.stringify(this.data) : JSON.stringify(this.data, null, 2)
+            fs.writeFileSync(tempFile, serialized, 'utf-8')
             try {
                 fs.renameSync(tempFile, this.filePath)
             } catch (renameErr) {
@@ -552,16 +553,30 @@ class Database {
     updateUser(id, updates) {
         const index = this.data.users.findIndex(u => u.id === id)
         if (index === -1) return null
-        this.data.users[index] = { ...this.data.users[index], ...updates }
-        this._rebuildUserIndexes()
+        const oldUser = this.data.users[index]
+
+        if (updates.email && updates.email !== oldUser.email) {
+            this._usersByEmail.delete(String(oldUser.email).toLowerCase())
+        }
+        if (updates.username && updates.username !== oldUser.username) {
+            this._usersByUsername.delete(String(oldUser.username).toLowerCase())
+        }
+        if (updates.phone && updates.phone !== oldUser.phone) {
+            const oldNorm = normalizePhone(oldUser.phone)
+            if (oldNorm) this._usersByPhone.delete(oldNorm)
+        }
+
+        const updated = { ...oldUser, ...updates }
+        this.data.users[index] = updated
+        this._indexUser(updated)
         this.updateTreasurySupply()
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(this.data.users[index]).catch(() => {})
+            supabaseSync.syncUser(updated).catch(() => {})
         }
 
-        return this.data.users[index]
+        return updated
     }
 
     updateUserBalance(userId, currency, delta, note = '') {
