@@ -52,6 +52,7 @@ import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
+import { useWebSocket } from '../../context/WebSocketContext'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CrashGame.css'
@@ -72,6 +73,7 @@ const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: l
 
 function CrashGame() {
     const { user } = useAuth()
+    const { subscribe, sendJson } = useWebSocket()
     const {
         balance,
         startCrashRound,
@@ -88,7 +90,6 @@ function CrashGame() {
     const activeRoundIdRef = useRef(null)
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
     const [roomBets, setRoomBets] = useState([])
-    const wsRef = useRef(null)
     const roomRoundIdRef = useRef(null)
     const [phase, setPhase] = useState(PHASE.WAITING)
     const [multiplier, setMultiplier] = useState(1.00)
@@ -538,149 +539,127 @@ function CrashGame() {
         }
     }, [user, currencySymbol, currency])
 
-    // Real-Time Multiplayer Room WebSocket Connection
+    // Real-Time Multiplayer Room WebSocket Connection via centralized WebSocketContext
     useEffect(() => {
         if (gameMode !== 'arena') return
 
         let isMounted = true
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${protocol}//${window.location.host}/ws`
 
-        let ws = null
-        const connectWs = () => {
-            try {
-                ws = new WebSocket(wsUrl)
-                wsRef.current = ws
-
-                ws.onopen = () => {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({ type: 'GET_CRASH_ROOM_STATE' }))
-                    }
-                }
-
-                ws.onmessage = (event) => {
-                    if (!isMounted) return
-                    try {
-                        const data = JSON.parse(event.data)
-                        const { type, payload } = data
-
-                        if (type === 'CRASH_ROOM_STATE' && payload) {
-                            syncRoomState(payload)
-                        } else if (type === 'CRASH_ROOM_TICK' && payload) {
-                            if (payload.state === 'WAITING') {
-                                setPhase(PHASE.WAITING)
-                                setCountdown(payload.countdown || 0)
-                                setMultiplier(1.00)
-                                setElapsedTime(0)
-                                multiplierRef.current = 1.00
-                                elapsedTimeRef.current = 0
-                                startTimeRef.current = null
-                                setFlightStartTime(null)
-                                roomRoundIdRef.current = payload.roundId
-                            } else if (payload.state === 'FLYING') {
-                                setPhase(PHASE.RUNNING)
-                                setSpectatorMissedWin(null)
-                                setMultiplier(payload.multiplier || 1.00)
-                                multiplierRef.current = payload.multiplier || 1.00
-                                if (!startTimeRef.current || roomRoundIdRef.current !== payload.roundId) {
-                                    roomRoundIdRef.current = payload.roundId
-                                    const initialSecs = (payload.multiplier && payload.multiplier > 1.02)
-                                        ? (Math.log(payload.multiplier) / CRASH_GROWTH_RATE) * 1000
-                                        : 0
-                                    const fStart = Date.now() - initialSecs
-                                    startTimeRef.current = fStart
-                                    setFlightStartTime(fStart)
-                                }
-                                const elapsed = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
-                                setElapsedTime(elapsed)
-                                elapsedTimeRef.current = elapsed
-                            }
-                        } else if (type === 'CRASH_ROOM_BUST' && payload) {
-                            setPhase(PHASE.CRASHED)
-                            const bustPoint = payload.crashPoint || 1.00
-                            setMultiplier(bustPoint)
-                            multiplierRef.current = bustPoint
-                            startTimeRef.current = null
-                            setFlightStartTime(null)
-                            roomRoundIdRef.current = payload.roundId
-                            if (payload.history && Array.isArray(payload.history)) {
-                                setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
-                            } else {
-                                setHistory(prev => [bustPoint, ...prev.slice(0, 19)])
-                            }
-                            casinoAudio.playCrash?.()
-
-                            if (betPlaced) {
-                                setBetPlaced(false)
-                                setUserBetData(prev => prev ? { ...prev, active: false, profit: '0.00' } : null)
-                                showToast('loss', 'Crashed!', `Flight busted at ${bustPoint.toFixed(2)}×`, 3000)
-                            } else {
-                                if (bustPoint >= 1.5) {
-                                    setSpectatorMissedWin({
-                                        outcome: `${bustPoint.toFixed(2)}x`,
-                                        multiplier: Math.min(bustPoint, 2.0).toFixed(2),
-                                        amount: betAmount || 100,
-                                        payout: ((betAmount || 100) * Math.min(bustPoint, 2.0)).toFixed(0)
-                                    })
-                                }
-                            }
-                            startTimeRef.current = null
-                        } else if (type === 'CRASH_ROOM_BET' && payload) {
-                            if (payload.bet) {
-                                setRoomBets(prev => {
-                                    const existing = prev.filter(b => b.userId !== payload.bet.userId)
-                                    return [...existing, payload.bet]
-                                })
-                            }
-                        } else if (type === 'CRASH_ROOM_CASHOUT' && payload) {
-                            setRoomBets(prev => prev.map(b => {
-                                if (b.userId === payload.userId) {
-                                    return { ...b, cashedOut: true, multiplier: payload.multiplier, payout: payload.payout }
-                                }
-                                return b
-                            }))
-
-                            if (user && payload.userId === user.id && betPlaced) {
-                                setBetPlaced(false)
-                                setUserBetData(prev => prev ? {
-                                    ...prev,
-                                    active: false,
-                                    cashoutAt: payload.multiplier.toFixed(2),
-                                    profit: payload.payout.toFixed(2)
-                                } : null)
-                                showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}×`, 4000)
-                                casinoAudio.playCashout?.()
-                            }
-                        }
-                    } catch { /* ignore non-json messages */ }
-                }
-
-                ws.onerror = () => {}
-                ws.onclose = () => {
-                    if (isMounted && gameMode === 'arena') {
-                        setTimeout(connectWs, 3000)
-                    }
-                }
-            } catch { /* fallback to http */ }
-        }
-
-        connectWs()
-
-        // Fetch initial room state via HTTP
+        // Request initial room state via WebSocket & HTTP
+        sendJson({ type: 'GET_CRASH_ROOM_STATE' })
         getRoomCrashState().then(room => {
             if (room && isMounted) {
                 syncRoomState(room)
             }
         })
 
+        const unsubs = [
+            subscribe('CRASH_ROOM_STATE', (payload) => {
+                if (!isMounted || !payload) return
+                syncRoomState(payload)
+            }),
+            subscribe('CRASH_ROOM_TICK', (payload) => {
+                if (!isMounted || !payload) return
+                if (payload.state === 'WAITING') {
+                    setPhase(PHASE.WAITING)
+                    setCountdown(payload.countdown || 0)
+                    setMultiplier(1.00)
+                    setElapsedTime(0)
+                    multiplierRef.current = 1.00
+                    elapsedTimeRef.current = 0
+                    startTimeRef.current = null
+                    setFlightStartTime(null)
+                    roomRoundIdRef.current = payload.roundId
+                } else if (payload.state === 'FLYING') {
+                    setPhase(PHASE.RUNNING)
+                    setSpectatorMissedWin(null)
+                    setMultiplier(payload.multiplier || 1.00)
+                    multiplierRef.current = payload.multiplier || 1.00
+                    if (!startTimeRef.current || roomRoundIdRef.current !== payload.roundId) {
+                        roomRoundIdRef.current = payload.roundId
+                        const initialSecs = (payload.multiplier && payload.multiplier > 1.02)
+                            ? (Math.log(payload.multiplier) / CRASH_GROWTH_RATE) * 1000
+                            : 0
+                        const fStart = Date.now() - initialSecs
+                        startTimeRef.current = fStart
+                        setFlightStartTime(fStart)
+                    }
+                    const elapsed = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
+                    setElapsedTime(elapsed)
+                    elapsedTimeRef.current = elapsed
+                }
+            }),
+            subscribe('CRASH_ROOM_BUST', (payload) => {
+                if (!isMounted || !payload) return
+                setPhase(PHASE.CRASHED)
+                const bustPoint = payload.crashPoint || 1.00
+                setMultiplier(bustPoint)
+                multiplierRef.current = bustPoint
+                startTimeRef.current = null
+                setFlightStartTime(null)
+                roomRoundIdRef.current = payload.roundId
+                if (payload.history && Array.isArray(payload.history)) {
+                    setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
+                } else {
+                    setHistory(prev => [bustPoint, ...prev.slice(0, 19)])
+                }
+                casinoAudio.playCrash?.()
+
+                if (betPlaced) {
+                    setBetPlaced(false)
+                    setUserBetData(prev => prev ? { ...prev, active: false, profit: '0.00' } : null)
+                    showToast('loss', 'Crashed!', `Flight busted at ${bustPoint.toFixed(2)}×`, 3000)
+                } else {
+                    if (bustPoint >= 1.5) {
+                        setSpectatorMissedWin({
+                            outcome: `${bustPoint.toFixed(2)}x`,
+                            multiplier: Math.min(bustPoint, 2.0).toFixed(2),
+                            amount: betAmount || 100,
+                            payout: ((betAmount || 100) * Math.min(bustPoint, 2.0)).toFixed(0)
+                        })
+                    }
+                }
+                startTimeRef.current = null
+            }),
+            subscribe('CRASH_ROOM_BET', (payload) => {
+                if (!isMounted || !payload) return
+                if (payload.bet) {
+                    setRoomBets(prev => {
+                        const existing = prev.filter(b => b.userId !== payload.bet.userId)
+                        return [...existing, payload.bet]
+                    })
+                }
+            }),
+            subscribe('CRASH_ROOM_CASHOUT', (payload) => {
+                if (!isMounted || !payload) return
+                setRoomBets(prev => prev.map(b => {
+                    if (b.userId === payload.userId) {
+                        return { ...b, cashedOut: true, multiplier: payload.multiplier, payout: payload.payout }
+                    }
+                    return b
+                }))
+
+                if (user && payload.userId === user.id && betPlaced) {
+                    setBetPlaced(false)
+                    setUserBetData(prev => prev ? {
+                        ...prev,
+                        active: false,
+                        cashoutAt: payload.multiplier.toFixed(2),
+                        profit: payload.payout.toFixed(2)
+                    } : null)
+                    showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}×`, 4000)
+                    casinoAudio.playCashout?.()
+                }
+            })
+        ]
+
         return () => {
             isMounted = false
-            if (wsRef.current) {
-                try { wsRef.current.close() } catch { /* ignore */ }
-                wsRef.current = null
-            }
+            unsubs.forEach(unsub => {
+                if (typeof unsub === 'function') unsub()
+            })
         }
-    }, [gameMode, syncRoomState, betPlaced, user, currencySymbol, getRoomCrashState, showToast])
+    }, [gameMode, syncRoomState, betPlaced, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, betAmount])
 
     // OPTIMIZED Solo Game loop: only active when playing solo
     useEffect(() => {

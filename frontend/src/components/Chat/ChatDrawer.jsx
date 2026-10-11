@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useWebSocket } from '../../context/WebSocketContext'
 import './ChatDrawer.css'
 
 export default function ChatDrawer({ isOpen, onClose, onOpenVerifier }) {
     const { user, token, openAuthModal } = useAuth()
+    const { chatMessages: sharedChatMessages, subscribe } = useWebSocket()
     const [messages, setMessages] = useState([])
     const [inputText, setInputText] = useState('')
     const [cooldown, setCooldown] = useState(0)
@@ -15,7 +17,6 @@ export default function ChatDrawer({ isOpen, onClose, onOpenVerifier }) {
     const [isSharingBet, setIsSharingBet] = useState(false)
 
     const messagesEndRef = useRef(null)
-    const wsRef = useRef(null)
     const cooldownTimerRef = useRef(null)
 
     // Scroll chat to bottom
@@ -25,7 +26,15 @@ export default function ChatDrawer({ isOpen, onClose, onOpenVerifier }) {
         }
     }, [])
 
-    // Fetch initial chat messages via REST
+    // Sync from shared WebSocket context
+    useEffect(() => {
+        if (Array.isArray(sharedChatMessages) && sharedChatMessages.length > 0) {
+            setMessages(sharedChatMessages)
+            setTimeout(() => scrollToBottom(false), 50)
+        }
+    }, [sharedChatMessages, scrollToBottom])
+
+    // Fetch initial chat messages via REST fallback
     const fetchChatMessages = useCallback(async () => {
         try {
             const res = await fetch('/api/community/chat/messages?limit=50')
@@ -41,47 +50,35 @@ export default function ChatDrawer({ isOpen, onClose, onOpenVerifier }) {
         }
     }, [scrollToBottom])
 
-    // WebSocket connection for real-time streaming
+    // Real-time message streaming via shared WebSocket
     useEffect(() => {
         fetchChatMessages()
 
-        let ws = null
-        try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-            const wsUrl = `${protocol}//${window.location.host}/ws`
-            ws = new WebSocket(wsUrl)
-            wsRef.current = ws
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data)
-                    if (data.type === 'RECENT_CHAT_HISTORY' && Array.isArray(data.payload)) {
-                        setMessages(data.payload)
-                        setTimeout(() => scrollToBottom(false), 50)
-                    } else if (data.type === 'NEW_CHAT_MESSAGE' && data.payload) {
-                        setMessages((prev) => {
-                            if (prev.some((m) => m.id === data.payload.id)) return prev
-                            return [...prev, data.payload].slice(-60)
-                        })
-                        setTimeout(() => scrollToBottom(true), 50)
-                    }
-                } catch {
-                    // Ignore non-chat events
-                }
+        const unsubMessage = subscribe('NEW_CHAT_MESSAGE', (payload) => {
+            if (payload) {
+                setMessages((prev) => {
+                    if (prev.some((m) => m.id === payload.id)) return prev
+                    return [...prev, payload].slice(-60)
+                })
+                setTimeout(() => scrollToBottom(true), 50)
             }
-        } catch {
-            // Fallback to polling
-        }
+        })
 
-        const pollInterval = setInterval(fetchChatMessages, 8000)
+        const unsubHistory = subscribe('RECENT_CHAT_HISTORY', (payload) => {
+            if (Array.isArray(payload)) {
+                setMessages(payload)
+                setTimeout(() => scrollToBottom(false), 50)
+            }
+        })
+
+        const pollInterval = setInterval(fetchChatMessages, 15000)
 
         return () => {
             clearInterval(pollInterval)
-            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-                try { ws.close() } catch { /* ignore */ }
-            }
+            unsubMessage()
+            unsubHistory()
         }
-    }, [fetchChatMessages, scrollToBottom])
+    }, [fetchChatMessages, scrollToBottom, subscribe])
 
     // Cooldown timer ticker
     useEffect(() => {

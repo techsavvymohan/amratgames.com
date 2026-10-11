@@ -26,8 +26,11 @@ function sendLocalClients(type, payload) {
 export function initWebSocketServer(server) {
     wss = new WebSocketServer({ server, path: '/ws' })
 
-    // Start synchronized multiplayer Crash room loop
-    crashRoomService.start()
+    // Start synchronized multiplayer Crash room loop (only on primary worker instance)
+    const isPrimaryInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0'
+    if (isPrimaryInstance) {
+        crashRoomService.start()
+    }
 
     // Subscribe to cross-instance Redis event channels
     redisPubSub.subscribe(redisPubSub.CHANNELS.EVENTS, (msg) => {

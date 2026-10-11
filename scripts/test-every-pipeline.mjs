@@ -66,8 +66,10 @@ async function executeAllPipelines() {
     logHeader('1. Core Backend CI Integrity & Automated Test Suite')
     try {
         const testRes = await runCommand('node', ['--test', 'test/integrity.test.js', 'test/otpEngine.test.js'], path.join(rootDir, 'backend'))
-        const allPassed = testRes.code === 0 && testRes.stdout.includes('# pass 39') && testRes.stdout.includes('# fail 0')
-        recordStep('P1_BACKEND_CI', 'Node Native Test Runner (39/39 Passing)', allPassed, 'Integrity & OTP engine test suites')
+        const passMatch = testRes.stdout.match(/# pass (\d+)/)
+        const passCount = passMatch ? parseInt(passMatch[1], 10) : 0
+        const allPassed = testRes.code === 0 && passCount >= 39 && testRes.stdout.includes('# fail 0')
+        recordStep('P1_BACKEND_CI', `Node Native Test Runner (${passCount}/${passCount} Passing)`, allPassed, 'Integrity & OTP engine test suites')
         recordStep('P1_BACKEND_CI', 'Zero Test Failures & Clean Exit Code 0', testRes.code === 0)
     } catch (err) {
         recordStep('P1_BACKEND_CI', 'Backend Test Suite Execution', false, err.message)

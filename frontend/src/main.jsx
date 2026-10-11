@@ -5,6 +5,7 @@ import { ConfigProvider } from 'antd'
 import { ThemeProvider, useThemeSettings } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { WalletProvider } from './context/WalletContext'
+import { WebSocketProvider } from './context/WebSocketContext'
 import App from './App'
 import './styles/index.css'
 
@@ -16,7 +17,9 @@ function ThemedApp() {
             <BrowserRouter>
                 <AuthProvider>
                     <WalletProvider>
-                        <App />
+                        <WebSocketProvider>
+                            <App />
+                        </WebSocketProvider>
                     </WalletProvider>
                 </AuthProvider>
             </BrowserRouter>

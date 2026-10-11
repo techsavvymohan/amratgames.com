@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useWebSocket } from '../../context/WebSocketContext'
 import './GameBottomHistory.css'
 
 export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = 'Coin Toss', localRounds = [] }) {
     const { user, token } = useAuth()
+    const { subscribe } = useWebSocket()
     const [activeTab, setActiveTab] = useState('my_bets') // 'my_bets' | 'all_players'
     const [serverMyBets, setServerMyBets] = useState([])
     const [allPlayersBets, setAllPlayersBets] = useState([])
     const [loading, setLoading] = useState(false)
-    const wsRef = useRef(null)
 
     // Normalize game key comparison (e.g. 'coin-toss', 'cointoss')
     const normalizedKey = useMemo(() => {
@@ -48,44 +49,22 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
         fetchMyBets()
         fetchAllBets()
 
-        // Real-time WebSocket updates
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '3001'
-            ? `${protocol}//${window.location.hostname}:3001/ws`
-            : `${protocol}//${window.location.host}/ws`
-
-        let ws = null
-        try {
-            ws = new WebSocket(wsUrl)
-            wsRef.current = ws
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data)
-                    if (data.type === 'NEW_BET' && data.payload) {
-                        const bet = data.payload
-                        const betGame = String(bet.game || bet.gameName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-                        if (betGame.includes(normalizedKey) || normalizedKey.includes(betGame)) {
-                            setAllPlayersBets((prev) => [bet, ...prev.filter((b) => b.id !== bet.id)].slice(0, 30))
-                            if (user?.id && (bet.userId === user.id || bet.username === user.username)) {
-                                setServerMyBets((prev) => [bet, ...prev.filter((b) => b.id !== bet.id)].slice(0, 30))
-                            }
-                        }
-                    }
-                } catch {
-                    // ignore
+        // Real-time WebSocket updates via centralized provider
+        const unsubscribe = subscribe('NEW_BET', (bet) => {
+            if (!bet) return
+            const betGame = String(bet.game || bet.gameName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+            if (betGame.includes(normalizedKey) || normalizedKey.includes(betGame)) {
+                setAllPlayersBets((prev) => [bet, ...prev.filter((b) => b.id !== bet.id)].slice(0, 30))
+                if (user?.id && (bet.userId === user.id || bet.username === user.username)) {
+                    setServerMyBets((prev) => [bet, ...prev.filter((b) => b.id !== bet.id)].slice(0, 30))
                 }
             }
-        } catch {
-            // fallback
-        }
+        })
 
         return () => {
-            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-                ws.close()
-            }
+            unsubscribe()
         }
-    }, [gameKey, normalizedKey, token, user?.id, user?.username])
+    }, [gameKey, normalizedKey, token, user?.id, user?.username, subscribe])
 
     // Merge local session rounds with fetched bets for instantaneous zero-latency updates
     const displayedMyBets = useMemo(() => {

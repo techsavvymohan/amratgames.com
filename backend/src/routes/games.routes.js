@@ -8,6 +8,7 @@ import { checkGameMaintenance } from '../middleware/circuitBreaker.js'
 import { minesRoutes } from '../games/mines/index.js'
 import { crashRoutes } from '../games/crash/index.js'
 import { coinTossRoutes } from '../games/coin-toss/index.js'
+import { dinoRoutes } from '../games/dino/index.js'
 
 const router = express.Router()
 
@@ -18,6 +19,7 @@ router.use(checkGameMaintenance)
 router.use('/mines', minesRoutes)
 router.use('/crash', crashRoutes)
 router.use('/coin-toss', coinTossRoutes)
+router.use('/dino', dinoRoutes)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
 // GET /api/games/recent

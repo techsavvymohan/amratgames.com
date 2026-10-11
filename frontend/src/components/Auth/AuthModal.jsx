@@ -11,7 +11,9 @@ export default function AuthModal() {
         login,
         sendOtp,
         verifyOtp,
-        register
+        register,
+        forgotPassword,
+        resetPassword
     } = useAuth()
 
     // ── Mode Switch & Reset ──
@@ -39,6 +41,13 @@ export default function AuthModal() {
     const [regOtp, setRegOtp] = useState('')
     const [regOtpSent, setRegOtpSent] = useState(false)
     const [regOtpNotice, setRegOtpNotice] = useState(null)
+
+    // 4. Forgot Password
+    const [forgotId, setForgotId] = useState('')
+    const [forgotEmail, setForgotEmail] = useState('')
+    const [forgotOtp, setForgotOtp] = useState('')
+    const [forgotNewPassword, setForgotNewPassword] = useState('')
+    const [forgotStep, setForgotStep] = useState(1) // 1: send OTP, 2: verify & set new pass
 
     // Global Status
     const [loading, setLoading] = useState(false)
@@ -196,6 +205,63 @@ export default function AuthModal() {
         }
     }
 
+    // ── Handle Request Reset Password OTP ──
+    const handleRequestResetOtp = async (e) => {
+        if (e) e.preventDefault()
+        setErrorMsg(null)
+        setSuccessMsg(null)
+
+        if (!forgotId.trim()) {
+            setErrorMsg('Please enter your email, mobile number, or username')
+            return
+        }
+
+        try {
+            setLoading(true)
+            const res = await forgotPassword(forgotId.trim())
+            setForgotEmail(res.email)
+            setForgotStep(2)
+            setSuccessMsg(res.message || 'Password reset OTP sent to your registered email!')
+        } catch (err) {
+            setErrorMsg(err.message || 'Could not find account. Please check details.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // ── Handle Reset Password Submit ──
+    const handleResetPasswordSubmit = async (e) => {
+        if (e) e.preventDefault()
+        setErrorMsg(null)
+        setSuccessMsg(null)
+
+        if (!forgotOtp.trim() || forgotOtp.trim().length < 6) {
+            setErrorMsg('Please enter the 6-digit OTP sent to your email')
+            return
+        }
+        if (!forgotNewPassword || forgotNewPassword.length < 6) {
+            setErrorMsg('New password must be at least 6 characters')
+            return
+        }
+
+        try {
+            setLoading(true)
+            const res = await resetPassword(forgotEmail, forgotOtp.trim(), forgotNewPassword)
+            setSuccessMsg(res.message || 'Password reset successfully! Please sign in.')
+            setTimeout(() => {
+                setAuthModalMode('login')
+                setForgotStep(1)
+                setForgotId('')
+                setForgotOtp('')
+                setForgotNewPassword('')
+            }, 2000)
+        } catch (err) {
+            setErrorMsg(err.message || 'Password reset failed. Please verify the OTP code.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="amrat-auth-overlay" onClick={closeAuthModal} role="dialog" aria-modal="true">
             <div className="amrat-auth-card" onClick={(e) => e.stopPropagation()}>
@@ -322,7 +388,14 @@ export default function AuthModal() {
                             {loading ? 'Signing in...' : 'Sign In'}
                         </button>
 
-                        <div style={{ textAlign: 'center', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                            <button
+                                type="button"
+                                onClick={() => { setAuthModalMode('forgot-password'); setForgotStep(1) }}
+                                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                Forgot Password?
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setAuthModalMode('otp')}
@@ -345,7 +418,7 @@ export default function AuthModal() {
                             </label>
                             <div className="amrat-input-wrapper">
                                 <input
-                                    type="email"
+                                    type="text"
                                     className="amrat-input"
                                     placeholder="Enter your registered email"
                                     value={otpIdentifier}
@@ -355,8 +428,22 @@ export default function AuthModal() {
                                 />
                             </div>
                             <small style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', marginTop: '4px', display: 'block' }}>
-                                💡 Free OTP will be delivered to your inbox. For Mobile login, use the <strong>Password</strong> tab.
+                                💡 Free OTP will be delivered to your email. For mobile numbers, sign in via the <strong>Password</strong> tab.
                             </small>
+
+                            {/* Intelligent UX Guidance: If mobile number entered */}
+                            {!otpIdentifier.includes('@') && otpIdentifier.replace(/\D/g, '').length >= 10 && (
+                                <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '8px', padding: '10px', marginTop: '8px', fontSize: '0.78rem', color: '#fbbf24' }}>
+                                    <div>📱 Mobile SMS is currently paused. Please use your email for OTP, or log in using your password.</div>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setLoginId(otpIdentifier); setAuthModalMode('login') }}
+                                        style={{ marginTop: '6px', background: '#f59e0b', color: '#000', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        Login with Password →
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {!otpSent ? (
@@ -529,6 +616,100 @@ export default function AuthModal() {
                             {loading ? 'Creating...' : 'Create Account'}
                         </button>
                     </form>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════
+                    TAB 4: FORGOT PASSWORD (EMAIL OTP RESET)
+                   ══════════════════════════════════════════════════════════ */}
+                {mode === 'forgot-password' && (
+                    <div className="amrat-auth-form">
+                        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>Reset Your Password</h3>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
+                                {forgotStep === 1 
+                                    ? 'Enter your email, phone, or username to receive a verification code' 
+                                    : `Enter the OTP sent to ${forgotEmail} and set your new password`}
+                            </p>
+                        </div>
+
+                        {forgotStep === 1 ? (
+                            <form onSubmit={handleRequestResetOtp}>
+                                <div className="amrat-form-group">
+                                    <label className="amrat-form-label">
+                                        <span>Registered Email, Phone, or Username</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="amrat-input"
+                                        placeholder="Email, phone or username"
+                                        value={forgotId}
+                                        onChange={(e) => setForgotId(e.target.value)}
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="amrat-submit-btn"
+                                    disabled={loading || !forgotId.trim()}
+                                >
+                                    {loading ? 'Sending OTP...' : 'Send Reset Code'}
+                                </button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleResetPasswordSubmit}>
+                                <div className="amrat-form-group">
+                                    <label className="amrat-form-label">
+                                        <span>6-Digit Verification OTP</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        className="amrat-otp-box"
+                                        style={{ fontSize: '1.2rem', letterSpacing: '8px', padding: '10px' }}
+                                        placeholder="••••••"
+                                        value={forgotOtp}
+                                        onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+
+                                <div className="amrat-form-group">
+                                    <label className="amrat-form-label">
+                                        <span>New Password (6+ characters)</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="amrat-input"
+                                        placeholder="Enter new password"
+                                        value={forgotNewPassword}
+                                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="amrat-submit-btn"
+                                    disabled={loading || forgotOtp.length < 6 || forgotNewPassword.length < 6}
+                                >
+                                    {loading ? 'Resetting Password...' : 'Reset Password & Sign In'}
+                                </button>
+                            </form>
+                        )}
+
+                        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                            <button
+                                type="button"
+                                onClick={() => { setAuthModalMode('login'); setForgotStep(1) }}
+                                style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                ← Back to Sign In
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

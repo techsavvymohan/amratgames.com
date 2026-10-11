@@ -269,6 +269,34 @@ export function AuthProvider({ children }) {
         }
     }
 
+    // Forgot Password (Request OTP via Email)
+    const forgotPassword = async (identifier) => {
+        const res = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to request password reset OTP')
+        }
+        return data
+    }
+
+    // Reset Password with Email + OTP
+    const resetPassword = async (email, otp, newPassword) => {
+        const res = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp, newPassword })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to reset password')
+        }
+        return data
+    }
+
     const value = {
         user,
         token,
@@ -287,6 +315,8 @@ export function AuthProvider({ children }) {
         logout,
         updateProfile,
         changePassword,
+        forgotPassword,
+        resetPassword,
         submitKycVerification,
         getBetsHistory,
         getPaymentsHistory,

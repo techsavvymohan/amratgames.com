@@ -366,6 +366,88 @@ router.post('/change-password', requireAuth, (req, res) => {
     }
 })
 
+// POST /api/auth/forgot-password
+router.post('/forgot-password', otpRateLimiter, (req, res) => {
+    try {
+        const { identifier } = req.body
+        if (!identifier) {
+            return res.status(400).json({ success: false, error: 'Email, mobile number, or username is required' })
+        }
+
+        const cleanId = String(identifier).trim()
+        const user = db.findUserByLogin(cleanId)
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'No account found matching this identifier' })
+        }
+        if (!user.email) {
+            return res.status(400).json({ success: false, error: 'No email address registered for this account. Please contact support.' })
+        }
+
+        const targetEmail = user.email.toLowerCase()
+        const { otp, expiresAt } = db.generateOtp(targetEmail)
+
+        emailService.sendOtpEmail({
+            to: targetEmail,
+            otp,
+            username: user.username,
+            subject: '👑 AmratGames — Password Reset Verification Code'
+        }).catch(e => {
+            console.warn('[AUTH] Error sending password reset email:', e.message)
+        })
+
+        // Mask email for privacy
+        const [userPart, domainPart] = targetEmail.split('@')
+        const maskedEmail = userPart.length > 2 
+            ? `${userPart.slice(0, 2)}***@${domainPart}`
+            : `${userPart}***@${domainPart}`
+
+        res.json({
+            success: true,
+            message: `Password reset OTP has been sent to your registered email (${maskedEmail})`,
+            email: targetEmail,
+            expiresAt
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
+// POST /api/auth/reset-password
+router.post('/reset-password', (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, error: 'Email, OTP, and new password are required' })
+        }
+
+        const cleanEmail = String(email).trim().toLowerCase()
+        if (String(newPassword).length < 6) {
+            return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' })
+        }
+
+        const isValid = db.verifyOtp(cleanEmail, otp)
+        if (!isValid) {
+            return res.status(400).json({ success: false, error: 'Invalid or expired OTP verification code' })
+        }
+
+        const user = db.findUserByEmail(cleanEmail)
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User account not found' })
+        }
+
+        const salt = bcrypt.genSaltSync(10)
+        const passwordHash = bcrypt.hashSync(String(newPassword), salt)
+        db.updateUser(user.id, { passwordHash })
+
+        res.json({
+            success: true,
+            message: '🎉 Password reset successfully! You can now sign in with your new password.'
+        })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
+})
+
 // POST /api/auth/verify-profile (KYC Verification)
 router.post('/verify-profile', requireAuth, (req, res) => {
     try {

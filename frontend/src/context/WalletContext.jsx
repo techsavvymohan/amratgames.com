@@ -554,6 +554,107 @@ export function WalletProvider({ children }) {
         }
     }, [token])
 
+    // Server-Authoritative Dino Runner Lifecycle Methods
+    const startDinoRound = useCallback(async ({ betAmount, difficulty = 'medium' }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play Dino Run' }
+        }
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/dino/start', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    betAmount,
+                    difficulty,
+                    currency: currencyRef.current
+                })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [user, authContext, token, setStoredBalance])
+
+    const jumpDinoRound = useCallback(async ({ roundId }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/dino/jump', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const cashoutDinoRound = useCallback(async ({ roundId }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/dino/cashout', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const bustDinoRound = useCallback(async ({ roundId }) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/dino/bust', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ roundId })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
+    const getActiveDinoRound = useCallback(async () => {
+        try {
+            const headers = {}
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/dino/active', { headers })
+            const data = await res.json()
+            return data.activeRound || null
+        } catch {
+            return null
+        }
+    }, [token])
+
     // Multiplayer Synchronized Crash Room Methods
     const placeRoomCrashBet = useCallback(async ({ betAmount, autoCashout }) => {
         if (!user) {
@@ -871,6 +972,11 @@ export function WalletProvider({ children }) {
         cashoutCrashRound,
         bustCrashRound,
         getActiveCrashRound,
+        startDinoRound,
+        jumpDinoRound,
+        cashoutDinoRound,
+        bustDinoRound,
+        getActiveDinoRound,
         placeRoomCrashBet,
         cashoutRoomCrash,
         getRoomCrashState,

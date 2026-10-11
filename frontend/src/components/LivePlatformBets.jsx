@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Tooltip, Modal, Tag, Typography } from 'antd'
 import {
     SafetyCertificateOutlined,
@@ -6,6 +6,7 @@ import {
     TrophyOutlined,
     CheckCircleOutlined
 } from '@ant-design/icons'
+import { useWebSocket } from '../context/WebSocketContext'
 import './LivePlatformBets.css'
 
 const { Text, Paragraph } = Typography
@@ -29,12 +30,28 @@ function maskUsername(username) {
 }
 
 export default function LivePlatformBets() {
+    const { recentBets: sharedBets, subscribe } = useWebSocket()
     const [bets, setBets] = useState([])
     const [activeTab, setActiveTab] = useState('all') // 'all' | 'high_rollers'
     const [selectedHash, setSelectedHash] = useState(null)
-    const wsRef = useRef(null)
 
-    // Initial fetch
+    // Sync from shared WebSocket context
+    useEffect(() => {
+        if (Array.isArray(sharedBets) && sharedBets.length > 0) {
+            setBets(prev => {
+                const combined = [...sharedBets, ...prev]
+                const seen = new Set()
+                return combined.filter(b => {
+                    const id = b.id || b.hash
+                    if (!id || seen.has(id)) return false
+                    seen.add(id)
+                    return true
+                }).slice(0, 30)
+            })
+        }
+    }, [sharedBets])
+
+    // Initial fetch and subscription
     useEffect(() => {
         let isMounted = true
 
@@ -51,33 +68,21 @@ export default function LivePlatformBets() {
         }
 
         fetchRecent()
-        const pollInterval = setInterval(fetchRecent, 5000)
+        const pollInterval = setInterval(fetchRecent, 15000)
 
-        // Real-time WebSocket connection
-        try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-            const wsUrl = `${protocol}//${window.location.host}/ws`
-            const ws = new WebSocket(wsUrl)
-            wsRef.current = ws
-
-            ws.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(event.data)
-                    if (msg.type === 'NEW_BET' && msg.payload && isMounted) {
-                        setBets((prev) => [msg.payload, ...prev.filter((b) => b.id !== msg.payload.id)].slice(0, 30))
-                    }
-                } catch { /* ignore */ }
+        // Real-time listener on shared WebSocket
+        const unsubscribe = subscribe('NEW_BET', (payload) => {
+            if (payload && isMounted) {
+                setBets((prev) => [payload, ...prev.filter((b) => b.id !== payload.id)].slice(0, 30))
             }
-        } catch { /* fallback to polling */ }
+        })
 
         return () => {
             isMounted = false
             clearInterval(pollInterval)
-            if (wsRef.current) {
-                try { wsRef.current.close() } catch { /* ignore */ }
-            }
+            unsubscribe()
         }
-    }, [])
+    }, [subscribe])
 
     const filteredBets = activeTab === 'high_rollers'
         ? bets.filter(b => (b.betAmount >= 500 || (b.payout >= 1000)))

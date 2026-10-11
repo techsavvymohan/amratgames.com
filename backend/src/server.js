@@ -43,7 +43,12 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({
+    limit: '1mb',
+    verify: (req, res, buf) => {
+        req.rawBody = buf
+    }
+}))
 app.use(authenticate)
 
 // Fast Health Check (Cached in Redis for 3s to handle high-frequency LB probes)

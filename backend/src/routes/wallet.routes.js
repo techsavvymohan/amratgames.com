@@ -215,7 +215,7 @@ router.post('/webhook', async (req, res) => {
 
         // Cryptographic HMAC-SHA256 signature verification if secret is configured in production
         if (secret && CONFIG.isProduction) {
-            const payload = JSON.stringify(req.body)
+            const payload = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body)
             const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
             if (!rawSignature || rawSignature !== expectedSig) {
                 return res.status(401).json({ success: false, error: 'Invalid or missing cryptographic webhook signature' })

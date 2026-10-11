@@ -122,7 +122,18 @@ class DinoGameInstance extends Phaser.Game {
 
 function DinoGame() {
     App.useApp();
-    const { balance, placeBet: walletPlaceBet, addWinnings, recordGameRound, showToast, currencySymbol, currency } = useWallet();
+    const {
+        balance,
+        showToast,
+        currencySymbol,
+        currency,
+        startDinoRound,
+        jumpDinoRound,
+        cashoutDinoRound,
+        bustDinoRound,
+        getActiveDinoRound
+    } = useWallet();
+    const roundIdRef = useRef(null);
     const [betAmount, setBetAmount] = useState(1);
     const [difficulty, setDifficulty] = useState('medium');
     const [gamePhase, setGamePhase] = useState('idle'); // idle | betting | running | waiting | crashed | cashed_out
@@ -296,15 +307,11 @@ function DinoGame() {
                                 amount: betAmountRef.current,
                             });
                             casinoAudio.playExplosion();
-                            recordGameRound({
-                                game: 'dino',
-                                gameName: 'Dino Run',
-                                betAmount: betAmountRef.current,
-                                multiplier: 0,
-                                won: false,
-                                obstaclesCleared: gameSceneRef.current?.obstaclesCleared || 0,
-                                difficulty: difficultyRef.current
-                            }).catch(() => {});
+
+                            if (roundIdRef.current) {
+                                bustDinoRound({ roundId: roundIdRef.current }).catch(() => {});
+                                roundIdRef.current = null;
+                            }
 
                             showToast('loss', 'Dino Crashed!', `-${currencySymbol}${betAmountRef.current.toFixed(2)}`, 3000);
                         }
@@ -330,14 +337,20 @@ function DinoGame() {
                 gameSceneRef.current = null;
             }
         };
-    }, [recordGameRound, currencySymbol]);
+    }, [bustDinoRound, currencySymbol, showToast]);
 
-    // Place bet
-    const placeBet = useCallback(() => {
+    // Place bet (Server-Authoritative)
+    const placeBet = useCallback(async () => {
         if (betAmount <= 0 || betAmount > balance) return;
 
-        if (!walletPlaceBet(betAmount)) return;
         casinoAudio.playBet();
+        const res = await startDinoRound({ betAmount, difficulty });
+        if (!res || !res.success) {
+            showToast('error', 'Bet Failed', res?.error || 'Unable to start round');
+            return;
+        }
+
+        roundIdRef.current = res.roundId;
         setTotalWagered(prev => prev + betAmount);
         setGamesPlayed(prev => prev + 1);
         setGamePhase('betting');
@@ -348,11 +361,9 @@ function DinoGame() {
 
         showToast('bet', 'Game Started', `${currencySymbol}${betAmount.toFixed(2)} — ${DIFFICULTIES[difficulty].label}`, 2500);
 
-        // Trigger game start immediately without spacebar
+        // Trigger game start immediately
         if (gameSceneRef.current) {
-            // Need to update ref synchronously so the listener catches it this tick
             gamePhaseRef.current = 'betting';
-
             const scene = gameSceneRef.current;
             if (scene.isInitialStart) {
                 scene.events.emit(CONFIG.EVENTS.GAME_START);
@@ -360,90 +371,73 @@ function DinoGame() {
                 scene.events.emit(CONFIG.EVENTS.GAME_RESTART);
             }
         }
-    }, [betAmount, balance, difficulty, showToast, walletPlaceBet]);
+    }, [betAmount, balance, difficulty, showToast, startDinoRound, currencySymbol]);
 
     // Keep placeBet ref updated for Phaser to call
     useEffect(() => {
         placeBetRef.current = placeBet;
     }, [placeBet]);
 
-    // Jump (gamble for next obstacle) - uses ProvablyFair
+    // Jump (gamble for next obstacle) - Server-Authoritative
     const handleJump = useCallback(async () => {
-        if (gamePhase !== 'waiting') return;
+        if (gamePhase !== 'waiting' || !roundIdRef.current) return;
         const gameScene = gameSceneRef.current;
         if (!gameScene) return;
 
-        const diff = DIFFICULTIES[difficultyRef.current];
-        const pf = fairnessRef.current;
+        try {
+            const jumpRes = await jumpDinoRound({ roundId: roundIdRef.current });
+            if (jumpRes && jumpRes.survived) {
+                gameScene.events.emit(CONFIG.EVENTS.JUMP_SUCCESS);
+                const newCleared = jumpRes.obstaclesCleared;
+                const newMult = jumpRes.currentMultiplier;
+                setObstaclesCleared(newCleared);
+                setCurrentMultiplier(newMult);
+                setPotentialWin(jumpRes.potentialWin || (betAmountRef.current * newMult));
+                setGamePhase('running');
 
-        let survived;
-        if (pf) {
-            // Use ProvablyFair HMAC-SHA256
-            const result = await pf.generateDinoStep(diff.survivalChance);
-            survived = result.survived;
-            console.log(`[DINO FAIR] roll=${result.roll.toFixed(4)}, survivalChance=${diff.survivalChance}, survived=${survived}, nonce=${pf.nonce}`);
-            // Update fairness data
-            const data = await pf.getFairnessData();
-            setFairnessData(data);
-        } else {
-            // Fallback
-            survived = Math.random() < diff.survivalChance;
-            console.log(`[DINO FAIR] fallback, survived=${survived}`);
-        }
+                if (newCleared > highScore) setHighScore(newCleared);
 
-        if (survived) {
-            // RNG says survive!
-            gameScene.events.emit(CONFIG.EVENTS.JUMP_SUCCESS);
-            const newCleared = obstaclesCleared + 1;
-            const newMult = getMultiplierForCleared(newCleared);
-            setObstaclesCleared(newCleared);
-            setCurrentMultiplier(newMult);
-            setPotentialWin(betAmountRef.current * newMult);
-            // Keep gamePhase as 'running' - the next WAITING_FOR_JUMP event
-            // will set it to 'waiting' when the next obstacle approaches
-            setGamePhase('running');
-
-            if (newCleared > highScore) setHighScore(newCleared);
-
-            casinoAudio.playGem(newCleared);
-            showToast('win', 'Obstacle Cleared!', `Jump ${newCleared} — ${newMult.toFixed(2)}×`, 1500);
-        } else {
-            // RNG says die!
+                casinoAudio.playGem(newCleared);
+                showToast('win', 'Obstacle Cleared!', `Jump ${newCleared} — ${newMult.toFixed(2)}×`, 1500);
+            } else {
+                roundIdRef.current = null;
+                gameScene.events.emit(CONFIG.EVENTS.JUMP_FAIL);
+            }
+        } catch {
             gameScene.events.emit(CONFIG.EVENTS.JUMP_FAIL);
-            // Don't change gamePhase here - GAME_OVER event from Phaser will handle it
         }
-    }, [gamePhase, obstaclesCleared, getMultiplierForCleared, highScore, showToast]);
+    }, [gamePhase, jumpDinoRound, highScore, showToast]);
 
-    // Cash out
-    const cashOut = useCallback(() => {
-        if (gamePhase !== 'waiting' && gamePhase !== 'running') return;
+    // Cash out (Server-Authoritative)
+    const cashOut = useCallback(async () => {
+        if ((gamePhase !== 'waiting' && gamePhase !== 'running') || !roundIdRef.current) return;
         const gameScene = gameSceneRef.current;
 
-        const winAmount = betAmountRef.current * currentMultiplier;
-        addWinnings(winAmount);
-        recordGameRound({
-            game: 'dino',
-            gameName: 'Dino Run',
-            betAmount: betAmountRef.current,
-            multiplier: currentMultiplier,
-            won: true,
-            obstaclesCleared,
-            difficulty: difficultyRef.current
-        }).catch(() => {});
+        const currentRoundId = roundIdRef.current;
+        roundIdRef.current = null;
 
+        const cashRes = await cashoutDinoRound({ roundId: currentRoundId });
+        if (!cashRes || !cashRes.success) {
+            showToast('error', 'Cashout Failed', cashRes?.error || 'Unable to cash out');
+            return;
+        }
+
+        const winAmount = cashRes.payout || (betAmountRef.current * cashRes.multiplier);
+        const settledMult = cashRes.multiplier || currentMultiplier;
         const profit = winAmount - betAmountRef.current;
+
         setTotalProfit(prev => prev + profit);
         setWinRecords(prev => [...prev, profit]);
         setLastResult({
             type: 'win',
-            obstaclesCleared,
-            multiplier: currentMultiplier,
+            obstaclesCleared: cashRes.obstaclesCleared || obstaclesCleared,
+            multiplier: settledMult,
             amount: winAmount,
         });
         setGamePhase('cashed_out');
-        gamePhaseRef.current = 'cashed_out'; // Immediate sync to prevent GAME_OVER listener from logging a loss
+        gamePhaseRef.current = 'cashed_out';
 
-        if (currentMultiplier >= 3) {
+        if (settledMult >= 3) {
             casinoAudio.playBigWin();
         } else {
             casinoAudio.playCashout();
@@ -455,8 +449,8 @@ function DinoGame() {
             gameScene.events.emit(CONFIG.EVENTS.GAME_OVER, gameScene.score, gameScene.highScore);
         }
 
-        showToast('win', 'Cashed Out!', `+${currencySymbol}${(winAmount - betAmountRef.current).toFixed(2)} at ${currentMultiplier.toFixed(2)}×`, 4000);
-    }, [gamePhase, currentMultiplier, obstaclesCleared, showToast, currencySymbol, recordGameRound]);
+        showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${settledMult.toFixed(2)}×`, 4000);
+    }, [gamePhase, cashoutDinoRound, currentMultiplier, obstaclesCleared, showToast, currencySymbol]);
 
     // Fullscreen
     const toggleFullscreen = useCallback(() => {

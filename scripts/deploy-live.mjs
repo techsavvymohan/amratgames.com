@@ -38,9 +38,11 @@ conn.on('ready', () => {
                 echo "Reloading Nginx..."
                 nginx -t && systemctl reload nginx
                 
-                echo "Reloading PM2 cluster..."
+                echo "Reloading PM2 service with updated config..."
                 cd /var/www/amratgames.com
-                pm2 reload ecosystem.config.cjs --update-env || true
+                pm2 delete all 2>/dev/null || true
+                pm2 start ecosystem.config.cjs
+                pm2 save
                 
                 echo "Checking health endpoint..."
                 curl -s http://127.0.0.1:3001/api/health

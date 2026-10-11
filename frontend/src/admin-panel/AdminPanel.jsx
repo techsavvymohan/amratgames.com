@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useWebSocket } from '../context/WebSocketContext'
 import { AdminApiClient } from './services/AdminApiClient'
 import { TreasuryModel, UserModel } from './models/AdminModels'
 
@@ -17,6 +18,7 @@ import './AdminPanel.css'
 
 export default function AdminPanel() {
     const { user, token, isAdmin, login, quickAdminLogin, logout, backendOnline } = useAuth()
+    const { subscribe } = useWebSocket()
 
     // Instantiate OOP Client
     const apiClient = useMemo(() => new AdminApiClient(() => token), [token])
@@ -66,68 +68,6 @@ export default function AdminPanel() {
         setTimeout(() => setToastMessage(null), 4000)
     }
 
-    // WebSocket real-time subscription
-    const wsRef = useRef(null)
-
-    useEffect(() => {
-        if (!isAdmin) return
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '3001'
-            ? `${protocol}//${window.location.hostname}:3001/ws`
-            : `${protocol}//${window.location.host}/ws`
-
-        let reconnectTimer = null
-        let ws = null
-
-        const connect = () => {
-            try {
-                ws = new WebSocket(wsUrl)
-                wsRef.current = ws
-
-                ws.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data)
-                        if (data.type === 'NEW_BET' && data.payload) {
-                            setLiveBets((prev) => [data.payload, ...prev].slice(0, 30))
-                        }
-                        if (data.type === 'NEW_WITHDRAWAL_REQUEST' && data.payload) {
-                            triggerToast(`🔔 New Withdrawal: ₹${data.payload.amount} requested by ${data.payload.username}!`)
-                            loadData()
-                        }
-                        if (data.type === 'WITHDRAWAL_STATUS_UPDATED') {
-                            loadData()
-                        }
-                        if (data.type === 'NEW_DEPOSIT_REQUEST' && data.payload) {
-                            triggerToast(`🔔 New Deposit: ₹${data.payload.amount} submitted by ${data.payload.username}!`)
-                            loadData()
-                        }
-                        if (data.type === 'DEPOSIT_STATUS_UPDATED') {
-                            loadData()
-                        }
-                    } catch {
-                        // ignore
-                    }
-                }
-
-                ws.onclose = () => {
-                    reconnectTimer = setTimeout(connect, 3000)
-                }
-            } catch {
-                reconnectTimer = setTimeout(connect, 5000)
-            }
-        }
-
-        connect()
-
-        return () => {
-            if (reconnectTimer) clearTimeout(reconnectTimer)
-            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-                ws.close()
-            }
-        }
-    }, [isAdmin])
-
     // Load Data via OOP API Client
     const loadData = useCallback(async () => {
         if (!isAdmin) return
@@ -172,6 +112,37 @@ export default function AdminPanel() {
             loadData()
         }
     }, [isAdmin, loadData])
+
+    // Real-time WebSocket subscriptions
+    useEffect(() => {
+        if (!isAdmin) return
+
+        const unsubs = [
+            subscribe('NEW_BET', (bet) => {
+                if (bet) setLiveBets((prev) => [bet, ...prev].slice(0, 30))
+            }),
+            subscribe('NEW_WITHDRAWAL_REQUEST', (payload) => {
+                if (payload) triggerToast(`🔔 New Withdrawal: ₹${payload.amount} requested by ${payload.username}!`)
+                loadData()
+            }),
+            subscribe('WITHDRAWAL_STATUS_UPDATED', () => {
+                loadData()
+            }),
+            subscribe('NEW_DEPOSIT_REQUEST', (payload) => {
+                if (payload) triggerToast(`🔔 New Deposit: ₹${payload.amount} submitted by ${payload.username}!`)
+                loadData()
+            }),
+            subscribe('DEPOSIT_STATUS_UPDATED', () => {
+                loadData()
+            })
+        ]
+
+        return () => {
+            unsubs.forEach((unsub) => {
+                if (typeof unsub === 'function') unsub()
+            })
+        }
+    }, [isAdmin, subscribe, loadData])
 
     // Handlers
     const handleLoginSubmit = async (e) => {
