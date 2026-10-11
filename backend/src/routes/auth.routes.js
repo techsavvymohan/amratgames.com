@@ -81,7 +81,7 @@ router.post('/login', loginRateLimiter, (req, res) => {
 // POST /api/auth/send-otp
 router.post('/send-otp', otpRateLimiter, (req, res) => {
     try {
-        const { identifier, channel } = req.body
+        const { identifier, channel, purpose = 'general' } = req.body
         if (!identifier) {
             return res.status(400).json({ success: false, error: 'Phone number or email is required' })
         }
@@ -95,6 +95,28 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
         }
 
         const target = isEmail ? cleanId.toLowerCase() : normalizedPhone
+
+        // Purpose-based validation guard
+        if (purpose === 'login') {
+            const existingUser = db.findUserByLogin(target)
+            if (!existingUser) {
+                return res.status(404).json({
+                    success: false,
+                    code: 'ACCOUNT_NOT_FOUND',
+                    error: `No registered account found with ${isEmail ? 'email ' + cleanId : 'mobile number +91 ' + normalizedPhone}. Please create an account in the Register tab.`
+                })
+            }
+        } else if (purpose === 'register') {
+            const existing = isEmail ? db.findUserByEmail(target) : db.findUserByPhone(target)
+            if (existing) {
+                return res.status(400).json({
+                    success: false,
+                    code: 'ACCOUNT_EXISTS',
+                    error: `An account is already registered with ${isEmail ? 'this email address' : 'this mobile number'}. Please sign in instead.`
+                })
+            }
+        }
+
         const { otp, expiresAt } = db.generateOtp(target)
 
         // Dispatch real email via support@amratgames.com if recipient is an email address
@@ -149,7 +171,7 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', (req, res) => {
     try {
-        const { identifier, otp, username } = req.body
+        const { identifier, otp, username, mode = 'login' } = req.body
         if (!identifier || !otp) {
             return res.status(400).json({ success: false, error: 'Phone/email and OTP are required' })
         }
@@ -179,7 +201,16 @@ router.post('/verify-otp', (req, res) => {
 
             user = db.updateUser(user.id, updates)
         } else {
-            // Auto-provision new player account
+            // If user was logging in, do NOT silently create a ghost account!
+            if (mode === 'login') {
+                return res.status(404).json({
+                    success: false,
+                    code: 'ACCOUNT_NOT_FOUND',
+                    error: 'No registered account found with this credential. Please register to create your account.'
+                })
+            }
+
+            // Explicit auto-provisioning for registration
             isNewUser = true
             const autoUsername = username && username.trim()
                 ? username.trim()

@@ -113,12 +113,12 @@ export function AuthProvider({ children }) {
     }
 
     // Send Verification OTP to Mobile Number or Email
-    const sendOtp = async (identifier, channel = 'sms') => {
+    const sendOtp = async (identifier, channel = 'sms', purpose = 'general') => {
         try {
             const res = await fetch('/api/auth/send-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier: String(identifier).trim(), channel })
+                body: JSON.stringify({ identifier: String(identifier).trim(), channel, purpose })
             })
             const data = await res.json()
             if (!res.ok || !data.success) {
@@ -130,8 +130,8 @@ export function AuthProvider({ children }) {
         }
     }
 
-    // Verify OTP & Fast Login / Auto-Provision Account
-    const verifyOtp = async (identifier, otp, username) => {
+    // Verify OTP & Sign In / Register
+    const verifyOtp = async (identifier, otp, username, mode = 'login') => {
         try {
             const res = await fetch('/api/auth/verify-otp', {
                 method: 'POST',
@@ -139,7 +139,8 @@ export function AuthProvider({ children }) {
                 body: JSON.stringify({
                     identifier: String(identifier).trim(),
                     otp: String(otp).trim(),
-                    username: username ? String(username).trim() : undefined
+                    username: username ? String(username).trim() : undefined,
+                    mode
                 })
             })
             const data = await res.json()
