@@ -6,8 +6,17 @@ import { CONFIG } from '../config.js'
 import { requireAuth, revokeToken } from '../middleware/auth.js'
 import { emailService } from '../services/EmailService.js'
 import { loginRateLimiter, otpRateLimiter, registerRateLimiter } from '../middleware/rateLimiter.js'
+import { createOtpAuthEngine } from '../modules/otp-auth-engine/index.js'
 
 const router = express.Router()
+
+// Modular In-House OTP Auth Engine
+export const otpAuthEngine = createOtpAuthEngine({
+    provider: CONFIG.SMS_GATEWAY_PROVIDER,
+    apiKey: CONFIG.SMS_GATEWAY_API_KEY,
+    masterBypassCode: CONFIG.DEMO_OTP_CODE,
+    enableBypass: CONFIG.DEMO_OTP_BYPASS_ENABLED
+})
 
 function generateToken(user) {
     return jwt.sign(
@@ -95,6 +104,16 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
                 username: user?.username || 'Player'
             }).catch(e => {
                 console.warn('[AUTH] Notice sending OTP email:', e.message)
+            })
+        } else {
+            // Dispatch real carrier SMS via 2Factor / Mock through modular OtpAuthEngine
+            otpAuthEngine.provider.send({
+                rawPhone: normalizedPhone,
+                phone: `+91${normalizedPhone}`,
+                otp,
+                template: CONFIG.TWOFACTOR_TEMPLATE
+            }).catch(e => {
+                console.warn('[AUTH] Notice sending SMS OTP:', e.message)
             })
         }
 
@@ -432,6 +451,16 @@ router.get('/support-info', (req, res) => {
         expectedResponseTime: '< 2 hours',
         smtpActive: emailService.isSmtpConfigured()
     })
+})
+
+// GET /api/auth/sms/health — Check SMS Gateway status & connectivity
+router.get('/sms/health', async (req, res) => {
+    try {
+        const health = await otpAuthEngine.checkHealth()
+        res.json({ success: true, ...health })
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message })
+    }
 })
 
 // ── 7. Secure Session Logout (Token Revocation) ──────────

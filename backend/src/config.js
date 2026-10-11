@@ -63,8 +63,9 @@ export const CONFIG = {
 
     // 5. SMS & OTP Verification Gateway
     SMS_GATEWAY_PROVIDER: process.env.SMS_GATEWAY_PROVIDER || 'mock',
-    SMS_GATEWAY_API_KEY: process.env.SMS_GATEWAY_API_KEY || '',
+    SMS_GATEWAY_API_KEY: process.env.TWOFACTOR_API_KEY || process.env.SMS_GATEWAY_API_KEY || '',
     SMS_GATEWAY_SENDER_ID: process.env.SMS_GATEWAY_SENDER_ID || 'AMRATG',
+    TWOFACTOR_TEMPLATE: process.env.TWOFACTOR_TEMPLATE || 'OTP1',
     DEMO_OTP_BYPASS_ENABLED: (process.env.NODE_ENV === 'production')
         ? (process.env.DEMO_OTP_BYPASS_ENABLED === 'true')
         : (process.env.DEMO_OTP_BYPASS_ENABLED !== 'false'),
