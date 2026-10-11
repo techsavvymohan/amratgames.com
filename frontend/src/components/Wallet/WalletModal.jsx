@@ -52,6 +52,11 @@ export default function WalletModal() {
     const [isWithdrawing, setIsWithdrawing] = useState(false)
     const [withdrawSuccess, setWithdrawSuccess] = useState(null)
 
+    // Filter out game bets and wins so Cashier Ledger only shows wallet movements (deposits, withdrawals, refunds)
+    const cashierTransactions = useMemo(() => {
+        return (transactions || []).filter((tx) => tx.type !== 'bet' && tx.type !== 'win')
+    }, [transactions])
+
     // Sync tab and refresh withdrawals when opened
     useEffect(() => {
         if (walletModalTab) {
@@ -238,18 +243,13 @@ export default function WalletModal() {
 
     const PRESET_AMOUNTS = [300, 500, 1000, 2500, 5000]
 
-    // Filter out game bets and wins so Cashier Ledger only shows wallet movements (deposits, withdrawals, refunds)
-    const cashierTransactions = useMemo(() => {
-        return (transactions || []).filter((tx) => tx.type !== 'bet' && tx.type !== 'win')
-    }, [transactions])
-
     return (
         <div className="amrat-wallet-overlay" onClick={closeWalletModal}>
             <div className="amrat-wallet-modal" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="amrat-wallet-header">
                     <div className="amrat-wallet-header-title">
-                        <span>👑</span>
+                        <img src="/amrat-logo.png" alt="AmratGames" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                         <span>Wallet &amp; Cashier</span>
                     </div>
                     <button
