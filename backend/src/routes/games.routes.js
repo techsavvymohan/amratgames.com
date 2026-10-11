@@ -163,6 +163,15 @@ router.post('/provably-fair/verify', (req, res) => {
                 floatVal,
                 multiplier: 1.98
             }
+        } else if (gameType === 'dino') {
+            const diffKey = ['easy', 'medium', 'hard', 'expert'].includes(req.body.difficulty) ? req.body.difficulty : 'medium'
+            const threshold = diffKey === 'easy' ? 0.96 : diffKey === 'medium' ? 0.92 : diffKey === 'hard' ? 0.85 : 0.70
+            result = {
+                game: 'dino',
+                difficulty: diffKey,
+                survived: floatVal < threshold,
+                floatVal
+            }
         } else {
             result = { game: gameType, floatVal, hash }
         }
