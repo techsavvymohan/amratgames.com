@@ -8,6 +8,7 @@ import { db } from '../db/db.js'
 import { CONFIG } from '../config.js'
 import { broadcastEvent } from '../websocket.js'
 import { gameEngine } from './GameEngine.js'
+import { bankrollRisk } from './BankrollRiskService.js'
 
 export class CrashRoomService {
     constructor() {
@@ -206,9 +207,17 @@ export class CrashRoomService {
         if (bet.cashedOut) return
         bet.cashedOut = true
         bet.won = true
-        bet.multiplier = targetMultiplier
-        const payout = parseFloat((bet.betAmount * targetMultiplier).toFixed(2))
+
+        const rawPayout = parseFloat((bet.betAmount * targetMultiplier).toFixed(2))
+        const capped = bankrollRisk.enforceWinCap({
+            betAmount: bet.betAmount,
+            multiplier: targetMultiplier,
+            rawPayout,
+            currency: bet.currency
+        })
+        const payout = capped.payout
         bet.payout = payout
+        bet.multiplier = capped.multiplier
 
         try {
             await db.withUserLock(userId, async () => {
@@ -271,6 +280,18 @@ export class CrashRoomService {
         const parsedAuto = autoCashout ? parseFloat(autoCashout) : null
         if (parsedAuto && parsedAuto < 1.01) {
             const err = new Error('Auto cashout must be at least 1.01x')
+            err.status = 400
+            throw err
+        }
+
+        const riskCheck = bankrollRisk.validateBetRisk({
+            betAmount: parsedAmount,
+            targetMultiplier: parsedAuto || 1.0,
+            currency,
+            game: 'crash-multiplayer'
+        })
+        if (!riskCheck.valid) {
+            const err = new Error(riskCheck.error)
             err.status = 400
             throw err
         }
@@ -357,9 +378,17 @@ export class CrashRoomService {
 
         bet.cashedOut = true
         bet.won = true
-        bet.multiplier = multiplier
-        const payout = parseFloat((bet.betAmount * multiplier).toFixed(2))
+
+        const rawPayout = parseFloat((bet.betAmount * multiplier).toFixed(2))
+        const capped = bankrollRisk.enforceWinCap({
+            betAmount: bet.betAmount,
+            multiplier,
+            rawPayout,
+            currency: bet.currency
+        })
+        const payout = capped.payout
         bet.payout = payout
+        bet.multiplier = capped.multiplier
 
         const updatedUser = await db.withUserLock(userId, async () => {
             db.updateUserBalance(userId, bet.currency, payout, `Crash Multiplayer Cashout (${multiplier}x)`)

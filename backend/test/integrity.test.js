@@ -14,6 +14,7 @@ import { chatService } from '../src/services/ChatService.js'
 import { antiFraudService } from '../src/services/AntiFraudService.js'
 import { redisPubSub } from '../src/services/RedisPubSubService.js'
 import { dinoEngine } from '../src/games/dino/dino.engine.js'
+import { bankrollRisk } from '../src/services/BankrollRiskService.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -914,6 +915,49 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         
         // Ensure OTP cannot be reused after burning
         assert.equal(db.verifyOtp(user.email, otp), false, 'OTP must be single-use only')
+    })
+
+    it('verifies Pillar 2 Bankroll Risk Management dynamically caps single-round payouts', () => {
+        const capped = bankrollRisk.enforceWinCap({
+            betAmount: 1000,
+            multiplier: 500,
+            rawPayout: 500000,
+            currency: 'INR'
+        })
+        assert.equal(capped.wasCapped, true, 'Win exceeding cap must be flagged as wasCapped')
+        assert.equal(capped.profit, 100000, 'Max win profit must be capped at ₹100,000')
+        assert.equal(capped.payout, 101000, 'Capped payout must equal stake + max profit cap')
+        assert.equal(capped.multiplier, 101, 'Effective multiplier must reflect capped payout')
+
+        // Normal win under cap must NOT be capped
+        const normal = bankrollRisk.enforceWinCap({
+            betAmount: 100,
+            multiplier: 2.0,
+            rawPayout: 200,
+            currency: 'INR'
+        })
+        assert.equal(normal.wasCapped, false)
+        assert.equal(normal.payout, 200)
+        assert.equal(normal.profit, 100)
+    })
+
+    it('verifies Pillar 2 Bet Sizer rejects outsized bets on extreme multipliers', () => {
+        // High multiplier with excessive bet: ₹5,000 at 100x -> potential profit ₹495,000 (> ₹100,000 cap)
+        const riskyCheck = bankrollRisk.validateBetRisk({
+            betAmount: 5000,
+            targetMultiplier: 100,
+            currency: 'INR'
+        })
+        assert.equal(riskyCheck.valid, false, 'Outsized bet on extreme multiplier must be rejected')
+        assert.ok(riskyCheck.error.includes('Maximum win profit is capped'))
+
+        // Safe scaled bet: ₹1,000 at 100x -> profit ₹99,000 (<= ₹100,000 cap)
+        const safeCheck = bankrollRisk.validateBetRisk({
+            betAmount: 1000,
+            targetMultiplier: 100,
+            currency: 'INR'
+        })
+        assert.equal(safeCheck.valid, true, 'Properly sized bet within cap must be accepted')
     })
 
     after(() => {

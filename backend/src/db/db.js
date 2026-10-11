@@ -8,6 +8,7 @@ import { durableOutbox } from './DurableOutboxService.js'
 import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.js'
 import { broadcastEvent } from '../websocket.js'
 import { userLockManager } from './UserLockManager.js'
+import { bankrollRisk } from '../services/BankrollRiskService.js'
 
 export function normalizePhone(phone) {
     if (!phone) return ''
@@ -806,9 +807,23 @@ class Database {
             // 2. Evaluate Provably Fair outcome
             const evaluation = await evaluator()
             const won = Boolean(evaluation.won)
-            const multiplier = evaluation.multiplier || 0
-            const payout = evaluation.payout || 0
-            const profit = payout - betAmount
+            let multiplier = evaluation.multiplier || 0
+            let payout = evaluation.payout || 0
+
+            // Apply Dynamic Bankroll Max Win Cap (Pillar 2)
+            if (won && payout > 0) {
+                const capped = bankrollRisk.enforceWinCap({
+                    betAmount,
+                    multiplier,
+                    rawPayout: payout,
+                    currency
+                })
+                payout = capped.payout
+                multiplier = capped.multiplier
+                evaluation.wasCapped = capped.wasCapped
+                evaluation.maxProfitCap = capped.maxProfitCap
+            }
+            const profit = won ? parseFloat((payout - betAmount).toFixed(2)) : -betAmount
 
             // 3. Credit payout if won
             if (won && payout > 0) {

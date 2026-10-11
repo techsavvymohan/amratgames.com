@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { bankrollRisk } from '../../services/BankrollRiskService.js'
 
 /**
  * Crash / Rocket Flight Engine (Server-Authoritative)
@@ -33,6 +34,15 @@ export class CrashEngine {
     }
 
     startRound({ userId, currency = 'INR', betAmount, autoCashout = null, clientSeed }) {
+        const riskCheck = bankrollRisk.validateBetRisk({
+            betAmount,
+            targetMultiplier: autoCashout || 1.0,
+            currency,
+            game: 'crash'
+        })
+        if (!riskCheck.valid) {
+            throw new Error(riskCheck.error)
+        }
         const nonce = provablyFairCore.getNextNonce(userId)
         const { hash, floatVal } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
@@ -78,15 +88,23 @@ export class CrashEngine {
 
         const won = requestedMultiplier <= session.crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
-        const payout = won ? parseFloat((session.betAmount * actualMultiplier).toFixed(2)) : 0
+        const rawPayout = won ? parseFloat((session.betAmount * actualMultiplier).toFixed(2)) : 0
+
+        const capped = won ? bankrollRisk.enforceWinCap({
+            betAmount: session.betAmount,
+            multiplier: actualMultiplier,
+            rawPayout,
+            currency: session.currency
+        }) : { payout: 0, multiplier: 0, wasCapped: false }
 
         return {
             roundId,
             won,
             currency: session.currency,
             betAmount: session.betAmount,
-            multiplier: actualMultiplier,
-            payout,
+            multiplier: capped.multiplier,
+            payout: capped.payout,
+            wasCapped: capped.wasCapped,
             crashPoint: session.crashPoint,
             hash: session.hash
         }

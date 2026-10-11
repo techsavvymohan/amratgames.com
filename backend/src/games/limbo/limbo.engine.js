@@ -1,4 +1,5 @@
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { bankrollRisk } from '../../services/BankrollRiskService.js'
 
 /**
  * Limbo Multiplier Engine (Server-Authoritative)
@@ -17,15 +18,23 @@ export class LimboEngine {
         roll = Math.max(1.00, Math.min(roll, 1000000.0))
 
         const won = roll >= target
-        const payout = won ? parseFloat((betAmount * target).toFixed(2)) : 0
+        const rawPayout = won ? parseFloat((betAmount * target).toFixed(2)) : 0
+
+        const capped = won ? bankrollRisk.enforceWinCap({
+            betAmount,
+            multiplier: target,
+            rawPayout,
+            currency: 'INR'
+        }) : { payout: 0, multiplier: 0, wasCapped: false }
 
         return {
             game: 'limbo',
             won,
             roll,
             targetMultiplier: target,
-            multiplier: won ? target : 0,
-            payout,
+            multiplier: won ? capped.multiplier : 0,
+            payout: capped.payout,
+            wasCapped: capped.wasCapped,
             hash
         }
     }

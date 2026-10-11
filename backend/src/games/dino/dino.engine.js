@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { bankrollRisk } from '../../services/BankrollRiskService.js'
 
 export const DINO_DIFFICULTIES = {
     easy: { label: 'Easy', survivalChance: 0.85, color: '#35d06f' },
@@ -26,6 +27,10 @@ export class DinoEngine {
     }
 
     startRound({ userId, currency = 'INR', betAmount, difficulty = 'medium', clientSeed = 'amrat-dino' }) {
+        const riskCheck = bankrollRisk.validateBetRisk({ betAmount, currency, game: 'dino' })
+        if (!riskCheck.valid) {
+            throw new Error(riskCheck.error)
+        }
         const diffKey = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium'
         const nonce = provablyFairCore.getNextNonce(userId)
         const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
@@ -116,15 +121,22 @@ export class DinoEngine {
         session.active = false
         this.activeDinoRounds.delete(roundId)
 
-        const payout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+        const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+        const capped = bankrollRisk.enforceWinCap({
+            betAmount: session.betAmount,
+            multiplier: session.currentMultiplier,
+            rawPayout,
+            currency: session.currency
+        })
 
         return {
             roundId,
             won: true,
             currency: session.currency,
             betAmount: session.betAmount,
-            multiplier: session.currentMultiplier,
-            payout,
+            multiplier: capped.multiplier,
+            payout: capped.payout,
+            wasCapped: capped.wasCapped,
             obstaclesCleared: session.obstaclesCleared,
             difficulty: session.difficulty,
             hash: session.hash

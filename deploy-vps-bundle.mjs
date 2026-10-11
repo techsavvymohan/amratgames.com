@@ -30,6 +30,8 @@ conn.on('ready', () => {
         const readStream = fs.createReadStream(BUNDLE_PATH)
         const writeStream = sftp.createWriteStream(REMOTE_BUNDLE)
 
+        readStream.pipe(writeStream)
+
         writeStream.on('close', () => {
             console.log('✓ deploy_update.bundle uploaded successfully to VPS /tmp!')
 

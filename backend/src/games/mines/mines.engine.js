@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { bankrollRisk } from '../../services/BankrollRiskService.js'
 
 /**
  * Mines Game Engine (Server-Side Session State)
@@ -20,6 +21,10 @@ export class MinesEngine {
     }
 
     startRound({ userId, currency = 'INR', betAmount, minesCount = 3, clientSeed }) {
+        const riskCheck = bankrollRisk.validateBetRisk({ betAmount, currency, game: 'mines' })
+        if (!riskCheck.valid) {
+            throw new Error(riskCheck.error)
+        }
         const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
         const nonce = provablyFairCore.getNextNonce(userId)
         const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
@@ -124,15 +129,22 @@ export class MinesEngine {
         session.active = false
         this.activeMinesRounds.delete(roundId)
 
-        const payout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+        const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+        const capped = bankrollRisk.enforceWinCap({
+            betAmount: session.betAmount,
+            multiplier: session.currentMultiplier,
+            rawPayout,
+            currency: session.currency
+        })
 
         return {
             won: true,
             currency: session.currency,
             betAmount: session.betAmount,
             gemsRevealed: session.revealedIndices.length,
-            multiplier: session.currentMultiplier,
-            payout,
+            multiplier: capped.multiplier,
+            payout: capped.payout,
+            wasCapped: capped.wasCapped,
             allMines: session.mineIndices
         }
     }

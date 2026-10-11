@@ -9,6 +9,7 @@ import { minesRoutes } from '../games/mines/index.js'
 import { crashRoutes } from '../games/crash/index.js'
 import { coinTossRoutes } from '../games/coin-toss/index.js'
 import { dinoRoutes } from '../games/dino/index.js'
+import { bankrollRisk } from '../services/BankrollRiskService.js'
 
 const router = express.Router()
 
@@ -355,8 +356,15 @@ router.post('/bet', authenticate, async (req, res) => {
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             return res.status(400).json({ success: false, error: 'Valid bet amount is required' })
         }
-        if (parsedAmount > 50000) {
-            return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000 per round' })
+        const targetMult = targetMultiplier || req.body.multiplier || claimedMultiplier || 1.0
+        const riskCheck = bankrollRisk.validateBetRisk({
+            betAmount: parsedAmount,
+            targetMultiplier: targetMult,
+            currency,
+            game
+        })
+        if (!riskCheck.valid) {
+            return res.status(400).json({ success: false, error: riskCheck.error })
         }
 
         if (!req.user) {
