@@ -66,6 +66,9 @@ export const CONFIG = {
     SMS_GATEWAY_API_KEY: process.env.TWOFACTOR_API_KEY || process.env.SMS_GATEWAY_API_KEY || '',
     SMS_GATEWAY_SENDER_ID: process.env.SMS_GATEWAY_SENDER_ID || 'AMRATG',
     TWOFACTOR_TEMPLATE: process.env.TWOFACTOR_TEMPLATE || 'OTP1',
+    OTP_EXPIRY_MINUTES: parseInt(process.env.OTP_EXPIRY_MINUTES, 10) || 5,
+    OTP_RESEND_COOLDOWN_SECONDS: parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS, 10) || 60,
+    OTP_MAX_ATTEMPTS: parseInt(process.env.OTP_MAX_ATTEMPTS, 10) || 5,
     DEMO_OTP_BYPASS_ENABLED: (process.env.NODE_ENV === 'production')
         ? (process.env.DEMO_OTP_BYPASS_ENABLED === 'true')
         : (process.env.DEMO_OTP_BYPASS_ENABLED !== 'false'),
@@ -151,7 +154,7 @@ export function logConfigSummary() {
     console.log(`🛡️  Admin Account:        ${CONFIG.ADMIN_DEFAULT_EMAIL} (Phone: +91 ${CONFIG.ADMIN_DEFAULT_PHONE})`)
     console.log(`📧 Support Email:        ${CONFIG.SUPPORT_EMAIL} (Sender: ${CONFIG.SMTP_FROM})`)
     console.log(`🔑 JWT Secret:           ${mask(CONFIG.JWT_SECRET)} (${CONFIG.JWT_EXPIRES_IN})`)
-    console.log(`📲 SMS Provider:         ${CONFIG.SMS_GATEWAY_PROVIDER.toUpperCase()} (Demo Bypass: ${CONFIG.DEMO_OTP_BYPASS_ENABLED ? 'ENABLED [' + CONFIG.DEMO_OTP_CODE + ']' : 'DISABLED'})`)
+    console.log(`📲 In-House OTP Engine:  ${CONFIG.SMS_GATEWAY_PROVIDER.toUpperCase()} (TTL: ${CONFIG.OTP_EXPIRY_MINUTES}m | Cooldown: ${CONFIG.OTP_RESEND_COOLDOWN_SECONDS}s | QA Bypass: ${CONFIG.DEMO_OTP_BYPASS_ENABLED ? 'ENABLED [' + CONFIG.DEMO_OTP_CODE + ']' : 'DISABLED'})`)
     console.log(`🇮🇳 UPI Merchant:         ${CONFIG.UPI_MERCHANT_VPA} (${CONFIG.UPI_MERCHANT_NAME})`)
     console.log(`💎 Platform Token:       $${CONFIG.TOKEN_SYMBOL} (${CONFIG.TOKEN_NAME})`)
     console.log(`🎲 Default Casino Odds:  RTP ${CONFIG.DEFAULT_RTP}% | House Edge ${CONFIG.HOUSE_EDGE}%`)

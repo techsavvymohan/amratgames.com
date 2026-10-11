@@ -10,10 +10,12 @@ import { createOtpAuthEngine } from '../modules/otp-auth-engine/index.js'
 
 const router = express.Router()
 
-// Modular In-House OTP Auth Engine
+// Modular In-House OTP Auth Engine — 100% In-House, Zero External API Key Required
 export const otpAuthEngine = createOtpAuthEngine({
     provider: CONFIG.SMS_GATEWAY_PROVIDER,
-    apiKey: CONFIG.SMS_GATEWAY_API_KEY,
+    otpExpiryMs: CONFIG.OTP_EXPIRY_MINUTES * 60 * 1000,
+    resendCooldownSec: CONFIG.OTP_RESEND_COOLDOWN_SECONDS,
+    maxAttempts: CONFIG.OTP_MAX_ATTEMPTS,
     masterBypassCode: CONFIG.DEMO_OTP_CODE,
     enableBypass: CONFIG.DEMO_OTP_BYPASS_ENABLED
 })
