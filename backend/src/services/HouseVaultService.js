@@ -34,6 +34,29 @@ export class HouseVaultService {
     }
 
     /**
+     * Seed baseline institutional house float if vault liquidity is uninitialized
+     */
+    seedTreasuryFloat(amount = 75000) {
+        this.ensureVaultStorage()
+        const vault = db.data.vault
+        if (!vault.totalStakedINR || vault.totalStakedINR < 50000) {
+            const treasuryId = 'usr_house_treasury'
+            if (!vault.stakers[treasuryId]) {
+                vault.stakers[treasuryId] = {
+                    stakedINR: 0,
+                    unclaimedDividendsINR: 0,
+                    totalClaimedINR: 0,
+                    stakedAt: new Date().toISOString()
+                }
+            }
+            vault.stakers[treasuryId].stakedINR = amount
+            vault.totalStakedINR = amount
+            vault.rollingVolume7d = Math.max(vault.rollingVolume7d || 0, 750000)
+            db.persist()
+        }
+    }
+
+    /**
      * Get aggregate vault metrics and user-specific staking position
      */
     getOverview(userId = null) {

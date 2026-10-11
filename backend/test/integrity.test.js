@@ -18,6 +18,7 @@ import { bankrollRisk } from '../src/services/BankrollRiskService.js'
 import { automatedSettlement } from '../src/services/AutomatedSettlementService.js'
 import { pvpService } from '../src/services/PvPService.js'
 import { houseVaultService } from '../src/services/HouseVaultService.js'
+import { floorActivityEngine, BOT_PERSONAS } from '../src/services/FloorActivityEngine.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -1304,6 +1305,102 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         })
         assert.equal(unstakeRes.success, true)
         assert.equal(unstakeRes.remainingStaked, 0)
+    })
+
+    it('verifies Floor Activity Engine seeds bot personas and provides active PvP market maker liquidity', async () => {
+        // 1. Ensure personas exist
+        floorActivityEngine.ensureBotPersonas()
+        for (const persona of BOT_PERSONAS) {
+            const user = db.findUserById(persona.id)
+            assert.ok(user, `Bot persona ${persona.username} must exist in db`)
+            assert.ok((user.balances.INR || 0) >= 50000, `Bot persona ${persona.username} must have ample liquidity reserves`)
+            assert.equal(user.isMarketMaker, true)
+        }
+
+        // 2. Maintain PvP liquidity
+        floorActivityEngine.isRunning = true
+        await floorActivityEngine.maintainPvPLiquidity()
+        const openDuels = pvpService.listDuels({ status: 'open' })
+        assert.ok(openDuels.length >= 3, 'Floor activity engine must maintain at least 3 open PvP challenges')
+
+        // 3. Human accepts a market-maker duel
+        const botDuel = openDuels.find(d => d.creatorId && d.creatorId.startsWith('usr_bot_'))
+        assert.ok(botDuel, 'At least one open duel must be hosted by a market maker bot')
+
+        const humanPlayer = db.createUser({
+            phone: '9988776655',
+            email: 'human_pvp_tester@test.com',
+            passwordHash: 'hash'
+        })
+        humanPlayer.balances.INR = 10000.0
+
+        const joinRes = await pvpService.joinDuel({
+            duelId: botDuel.id,
+            userId: humanPlayer.id,
+            clientSeed: 'human-verified-seed'
+        })
+
+        assert.equal(joinRes.success, true)
+        assert.ok(joinRes.duel.status === 'resolved', 'Duel must immediately resolve upon acceptance')
+        assert.ok(joinRes.outcome === 'heads' || joinRes.outcome === 'tails')
+        assert.ok(joinRes.winnerPayout > 0, 'Winner payout must be credited')
+        assert.ok(joinRes.houseRakeAmount > 0, 'House rake must be extracted')
+
+        // 4. Verify Provably Fair server seed was revealed post-resolution
+        assert.ok(joinRes.duel.provablyFair.serverSeed, 'Secret server seed must be revealed after resolution')
+    })
+
+    it('verifies Floor Activity Engine automatically matches waiting human PvP challenges', async () => {
+        const human = db.createUser({
+            phone: '9988776644',
+            email: 'human_waiter@test.com',
+            passwordHash: 'hash'
+        })
+        human.balances.INR = 5000.0
+
+        // Create human challenge
+        const createRes = await pvpService.createDuel({
+            userId: human.id,
+            stake: 100,
+            choice: 'heads',
+            currency: 'INR'
+        })
+        assert.equal(createRes.success, true)
+
+        const duel = pvpService.activeDuels.get(createRes.duel.id)
+        assert.ok(duel)
+
+        // Artificially simulate 25 seconds wait time
+        duel.createdAt = new Date(Date.now() - 25000).toISOString()
+
+        // Floor engine auto-matcher runs
+        floorActivityEngine.isRunning = true
+        await floorActivityEngine.matchHumanDuels()
+
+        const resolvedDuel = (db.data.pvpDuels || []).find(d => d.id === duel.id)
+        assert.equal(resolvedDuel.status, 'resolved', 'Human challenge waiting > 20s must be auto-matched by a bot')
+        assert.ok(resolvedDuel.opponentId.startsWith('usr_bot_'), 'Opponent must be a market maker bot persona')
+    })
+
+    it('verifies Floor Activity Engine generates live bet ticks and chat banter', () => {
+        const initialBetsCount = (db.data.bets || []).length
+        const initialChatCount = chatService.messages.length
+
+        floorActivityEngine.isRunning = true
+        floorActivityEngine.emitLiveBetTick()
+        floorActivityEngine.emitChatBanter()
+
+        assert.ok(db.data.bets.length >= initialBetsCount, 'Live bet ticker must append bet record')
+        const latestBet = db.data.bets[0]
+        assert.ok(latestBet.game, 'Latest bet must specify game')
+        assert.ok(latestBet.betAmount >= 50, 'Latest bet stake must be >= ₹50')
+
+        assert.ok(chatService.messages.length >= initialChatCount, 'Chat banter must dispatch community message')
+        const latestMsg = chatService.messages[chatService.messages.length - 1]
+        assert.ok(latestMsg.text.length > 0, 'Latest chat message must have text content')
+        assert.ok(latestMsg.vipTier, 'Chat message must contain VIP tier badge')
+
+        floorActivityEngine.stop()
     })
 
     after(() => {

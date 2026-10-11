@@ -80,6 +80,36 @@ export class ChatService {
         return messageObj
     }
 
+    postPersonaMessage({ userId, username, vipTier = 'Bronze', text }) {
+        const cleanText = this.sanitizeText(text)
+        if (!cleanText) return null
+
+        const now = Date.now()
+        const messageObj = {
+            id: 'msg_sim_' + now.toString(36) + crypto.randomBytes(3).toString('hex'),
+            userId: userId || ('usr_bot_' + crypto.randomBytes(3).toString('hex')),
+            username: username || 'Player',
+            vipTier: vipTier || 'Bronze',
+            text: cleanText,
+            type: 'text',
+            createdAt: new Date(now).toISOString()
+        }
+
+        this.messages.push(messageObj)
+        if (this.messages.length > 60) {
+            this.messages.shift()
+        }
+
+        this.activeChatters.set(messageObj.userId, {
+            userId: messageObj.userId,
+            username: messageObj.username,
+            lastSpokeAt: now
+        })
+
+        broadcastEvent('NEW_CHAT_MESSAGE', messageObj)
+        return messageObj
+    }
+
     async postMessage({ user, text }) {
         if (!user || !user.id) {
             const err = new Error('Authentication required to send chat messages')

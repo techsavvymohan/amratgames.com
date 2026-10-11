@@ -9,6 +9,7 @@ import { db } from './db/db.js'
 import { testSupabaseConnection } from './db/SupabaseClient.js'
 import { emailService } from './services/EmailService.js'
 import { redisCache } from './services/RedisCacheService.js'
+import { floorActivityEngine } from './services/FloorActivityEngine.js'
 
 import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
@@ -143,10 +144,17 @@ server.listen(PORT, CONFIG.HOST, () => {
     if (CONFIG.USE_SUPABASE) {
         db.hydrateFromSupabase().catch(() => {})
     }
+
+    // Start Floor Activity & Market Maker Engine on primary instance
+    const isPrimaryInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0'
+    if (isPrimaryInstance) {
+        floorActivityEngine.start()
+    }
 })
 
 process.on('SIGINT', () => {
     console.log('\n[SERVER] Gracefully shutting down...')
+    floorActivityEngine.stop()
     db.persist()
     process.exit(0)
 })
