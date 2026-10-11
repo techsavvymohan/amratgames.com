@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import GameAuthGuard from './components/Auth/GameAuthGuard'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const loadCrash = () => import('./games/crash')
@@ -81,14 +82,14 @@ function App() {
                         {/* Casino Games & Player Portal (Wrapped in Casino Layout) */}
                         <Route path="/" element={<Layout />}>
                             <Route index element={<HomePage />} />
-                            <Route path="crash" element={<CrashPage />} />
-                            <Route path="plinko" element={<PlinkoPage />} />
-                            <Route path="dino" element={<DinoPage />} />
-                            <Route path="mines" element={<MinesPage />} />
-                            <Route path="limbo" element={<LimboPage />} />
-                            <Route path="dragon-tiger" element={<DragonTigerPage />} />
-                            <Route path="color-match" element={<ColorMatchPage />} />
-                            <Route path="coin-toss" element={<CoinTossPage />} />
+                            <Route path="crash" element={<GameAuthGuard gameName="Crash (JetX)"><CrashPage /></GameAuthGuard>} />
+                            <Route path="plinko" element={<GameAuthGuard gameName="Plinko"><PlinkoPage /></GameAuthGuard>} />
+                            <Route path="dino" element={<GameAuthGuard gameName="Dino Run"><DinoPage /></GameAuthGuard>} />
+                            <Route path="mines" element={<GameAuthGuard gameName="Mines"><MinesPage /></GameAuthGuard>} />
+                            <Route path="limbo" element={<GameAuthGuard gameName="Limbo"><LimboPage /></GameAuthGuard>} />
+                            <Route path="dragon-tiger" element={<GameAuthGuard gameName="Dragon Tiger"><DragonTigerPage /></GameAuthGuard>} />
+                            <Route path="color-match" element={<GameAuthGuard gameName="Color Match"><ColorMatchPage /></GameAuthGuard>} />
+                            <Route path="coin-toss" element={<GameAuthGuard gameName="Coin Toss"><CoinTossPage /></GameAuthGuard>} />
                             <Route path="profile" element={<ProfilePage />} />
                         </Route>
 

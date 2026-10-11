@@ -348,93 +348,51 @@ router.post('/bet', authenticate, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000 per round' })
         }
 
-        if (req.user) {
-            // Atomic wager & settlement under exclusive user lock
-            const betResult = await db.executeAtomicBet({
-                userId: req.user.id,
-                currency,
-                betAmount: parsedAmount,
-                game,
-                gameName,
-                evaluator: async () => {
-                    const nonce = gameEngine.getNextNonce(req.user.id)
-                    return evaluateGameRound({
-                        game,
-                        parsedAmount,
-                        targetMultiplier,
-                        rows,
-                        risk,
-                        choice,
-                        claimedMultiplier,
-                        minesCount,
-                        hits,
-                        clientSeed,
-                        nonce,
-                        reqBody: req.body
-                    })
-                }
-            })
-
-            broadcastEvent('NEW_BET', betResult.bet)
-
-            return res.json({
-                success: true,
-                bet: betResult.bet,
-                evaluation: betResult.evaluation,
-                won: betResult.won,
-                payout: betResult.payout,
-                multiplier: betResult.multiplier,
-                balances: betResult.balances
-            })
-        } else {
-            // Guest player demo simulation
-            const nonce = gameEngine.getNextNonce('guest')
-            const evaluation = evaluateGameRound({
-                game,
-                parsedAmount,
-                targetMultiplier,
-                rows,
-                risk,
-                choice,
-                claimedMultiplier,
-                minesCount,
-                hits,
-                clientSeed,
-                nonce,
-                reqBody: req.body
-            })
-
-            const payout = evaluation.payout || 0
-            const won = Boolean(evaluation.won)
-            const finalMultiplier = evaluation.multiplier || 0
-            const profit = payout - parsedAmount
-
-            const betRecord = db.recordBet({
-                userId: null,
-                username: 'Player_' + crypto.randomBytes(2).toString('hex'),
-                game,
-                gameName,
-                currency,
-                betAmount: parsedAmount,
-                multiplier: finalMultiplier,
-                payout,
-                profit,
-                won,
-                hash: evaluation.hash || crypto.randomBytes(16).toString('hex')
-            })
-
-            broadcastEvent('NEW_BET', betRecord)
-
-            return res.json({
-                success: true,
-                bet: betRecord,
-                evaluation,
-                won,
-                payout,
-                multiplier: finalMultiplier,
-                balances: null
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'AUTH_REQUIRED',
+                error: 'Please sign up or sign in to play and place bets on AmratGames'
             })
         }
+
+        // Atomic wager & settlement under exclusive user lock
+        const betResult = await db.executeAtomicBet({
+            userId: req.user.id,
+            currency,
+            betAmount: parsedAmount,
+            game,
+            gameName,
+            evaluator: async () => {
+                const nonce = gameEngine.getNextNonce(req.user.id)
+                return evaluateGameRound({
+                    game,
+                    parsedAmount,
+                    targetMultiplier,
+                    rows,
+                    risk,
+                    choice,
+                    claimedMultiplier,
+                    minesCount,
+                    hits,
+                    clientSeed,
+                    nonce,
+                    reqBody: req.body
+                })
+            }
+        })
+
+        broadcastEvent('NEW_BET', betResult.bet)
+
+        return res.json({
+            success: true,
+            bet: betResult.bet,
+            evaluation: betResult.evaluation,
+            won: betResult.won,
+            payout: betResult.payout,
+            multiplier: betResult.multiplier,
+            balances: betResult.balances
+        })
     } catch (err) {
         const statusCode = err.status || (err.code === 'INSUFFICIENT_BALANCE' ? 400 : 500)
         res.status(statusCode).json({ success: false, error: err.message })

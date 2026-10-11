@@ -88,7 +88,10 @@ export function WalletProvider({ children }) {
     const token = authContext?.token
 
     const [currency, setCurrencyState] = useState(getStoredCurrency)
-    const [balance, setBalance] = useState(() => getStoredBalance(getStoredCurrency()))
+    const [balance, setBalance] = useState(() => {
+        if (!user) return 0.00
+        return getStoredBalance(getStoredCurrency())
+    })
     const [totalDeposited, setTotalDeposited] = useState(0)
     const [totalWagered, setTotalWagered] = useState(0)
     const [requiredTurnover, setRequiredTurnover] = useState(0)
@@ -186,6 +189,10 @@ export function WalletProvider({ children }) {
                 setRequiredTurnover(user.totalDeposited || 0)
                 setRemainingTurnover(Math.max(0, (user.totalDeposited || 0) - user.totalWagered))
             }
+        } else if (!user) {
+            balanceRef.current = 0.00
+            setBalance(0.00)
+            setTransactions([])
         }
         if (token) {
             refreshBalance()
@@ -247,6 +254,10 @@ export function WalletProvider({ children }) {
 
     // Place a bet (deduct from balance)
     const placeBet = useCallback((amount) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return false
+        }
         const amt = parseFloat(amount)
         if (isNaN(amt) || amt <= 0 || amt > balanceRef.current) return false
 
@@ -262,7 +273,7 @@ export function WalletProvider({ children }) {
         }, ...txs].slice(0, 100))
 
         return true
-    }, [setStoredBalance])
+    }, [user, authContext, setStoredBalance])
 
     // Add winnings to balance
     const addWinnings = useCallback((amount) => {
@@ -281,8 +292,12 @@ export function WalletProvider({ children }) {
         }, ...txs].slice(0, 100))
     }, [setStoredBalance])
 
-    // Record game round with backend (authenticated or guest)
+    // Record game round with backend (authenticated only)
     const recordGameRound = useCallback(async ({ game, gameName, betAmount, multiplier = 0, won = false, ...extra }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return null
+        }
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
@@ -312,10 +327,14 @@ export function WalletProvider({ children }) {
         } catch {
             return null
         }
-    }, [token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance])
 
-    // Execute server-authoritative bet (single-round games: Limbo, Plinko, Dragon Tiger, Color Match)
+    // Execute server-authoritative bet (single-round games: Limbo, Plinko, Dragon Tiger, Color Match, Coin Toss)
     const executeGameBet = useCallback(async (betPayload) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
+        }
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
@@ -346,10 +365,14 @@ export function WalletProvider({ children }) {
         } catch (err) {
             return { success: false, error: err.message }
         }
-    }, [token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance])
 
     // Server-Authoritative Mines Lifecycle Methods
     const startMinesRound = useCallback(async ({ betAmount, minesCount }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
+        }
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) headers.Authorization = `Bearer ${token}`
@@ -376,7 +399,7 @@ export function WalletProvider({ children }) {
         } catch (err) {
             return { success: false, error: err.message }
         }
-    }, [token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance])
 
     const revealMinesTile = useCallback(async ({ roundId, tileIndex }) => {
         try {
@@ -442,6 +465,10 @@ export function WalletProvider({ children }) {
 
     // Server-Authoritative Crash Lifecycle Methods
     const startCrashRound = useCallback(async ({ betAmount, autoCashout }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
+        }
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) headers.Authorization = `Bearer ${token}`
@@ -468,7 +495,7 @@ export function WalletProvider({ children }) {
         } catch (err) {
             return { success: false, error: err.message }
         }
-    }, [token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance])
 
     const cashoutCrashRound = useCallback(async ({ roundId, multiplier }) => {
         try {
@@ -529,6 +556,10 @@ export function WalletProvider({ children }) {
 
     // Multiplayer Synchronized Crash Room Methods
     const placeRoomCrashBet = useCallback(async ({ betAmount, autoCashout }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
+        }
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) headers.Authorization = `Bearer ${token}`
@@ -550,7 +581,7 @@ export function WalletProvider({ children }) {
         } catch (err) {
             return { success: false, error: err.message }
         }
-    }, [token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance])
 
     const cashoutRoomCrash = useCallback(async () => {
         try {

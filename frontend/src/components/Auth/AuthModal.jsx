@@ -250,7 +250,7 @@ export default function AuthModal() {
                 <div className="amrat-bonus-banner">
                     <span className="gift-icon">🎁</span>
                     <div>
-                        <strong>₹10,000 Free Bonus</strong> on registration
+                        <strong>₹100 Free Welcome Bonus</strong> credited instantly on registration!
                     </div>
                 </div>
 

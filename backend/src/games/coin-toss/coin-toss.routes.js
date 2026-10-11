@@ -22,77 +22,43 @@ router.post('/flip', authenticate, async (req, res) => {
 
         const selectedChoice = String(choice).toLowerCase().trim() === 'tails' ? 'tails' : 'heads'
 
-        if (req.user) {
-            const betResult = await db.executeAtomicBet({
-                userId: req.user.id,
-                currency,
-                betAmount: parsedAmount,
-                game: 'coin-toss',
-                gameName: 'Royal Coin Toss',
-                evaluator: async () => {
-                    const nonce = provablyFairCore.getNextNonce(req.user.id)
-                    return CoinTossEngine.evaluate({
-                        betAmount: parsedAmount,
-                        choice: selectedChoice,
-                        clientSeed,
-                        nonce
-                    })
-                }
-            })
-
-            broadcastEvent('NEW_BET', betResult.bet)
-
-            return res.json({
-                success: true,
-                outcome: betResult.evaluation.outcome,
-                won: betResult.won,
-                multiplier: betResult.multiplier,
-                payout: betResult.payout,
-                bet: betResult.bet,
-                evaluation: betResult.evaluation,
-                balances: betResult.balances
-            })
-        } else {
-            const nonce = provablyFairCore.getNextNonce('guest')
-            const evaluation = CoinTossEngine.evaluate({
-                betAmount: parsedAmount,
-                choice: selectedChoice,
-                clientSeed,
-                nonce
-            })
-
-            const payout = evaluation.payout || 0
-            const won = Boolean(evaluation.won)
-            const finalMultiplier = evaluation.multiplier || 0
-            const profit = payout - parsedAmount
-
-            const betRecord = db.recordBet({
-                userId: null,
-                username: 'Player_' + crypto.randomBytes(2).toString('hex'),
-                game: 'coin-toss',
-                gameName: 'Royal Coin Toss',
-                currency,
-                betAmount: parsedAmount,
-                multiplier: finalMultiplier,
-                payout,
-                profit,
-                won,
-                hash: evaluation.hash
-            })
-
-            broadcastEvent('NEW_BET', betRecord)
-
-            return res.json({
-                success: true,
-                outcome: evaluation.outcome,
-                won,
-                multiplier: finalMultiplier,
-                payout,
-                bet: betRecord,
-                evaluation,
-                balances: null
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'AUTH_REQUIRED',
+                error: 'Please sign up or sign in to play Coin Toss on AmratGames'
             })
         }
+
+        const betResult = await db.executeAtomicBet({
+            userId: req.user.id,
+            currency,
+            betAmount: parsedAmount,
+            game: 'coin-toss',
+            gameName: 'Royal Coin Toss',
+            evaluator: async () => {
+                const nonce = provablyFairCore.getNextNonce(req.user.id)
+                return CoinTossEngine.evaluate({
+                    betAmount: parsedAmount,
+                    choice: selectedChoice,
+                    clientSeed,
+                    nonce
+                })
+            }
+        })
+
+        broadcastEvent('NEW_BET', betResult.bet)
+
+        return res.json({
+            success: true,
+            outcome: betResult.evaluation.outcome,
+            won: betResult.won,
+            multiplier: betResult.multiplier,
+            payout: betResult.payout,
+            bet: betResult.bet,
+            evaluation: betResult.evaluation,
+            balances: betResult.balances
+        })
     } catch (err) {
         const statusCode = err.status || (err.code === 'INSUFFICIENT_BALANCE' ? 400 : 500)
         res.status(statusCode).json({ success: false, error: err.message })

@@ -32,51 +32,41 @@ router.post('/start', authenticate, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Maximum bet limit is ₹50,000' })
         }
 
-        const effectiveUserId = req.user ? req.user.id : (req.headers['x-guest-session'] || 'guest_demo')
-
-        if (req.user) {
-            const session = await db.withUserLock(req.user.id, async () => {
-                const user = db.findUserById(req.user.id)
-                const currentBal = user.balances?.[currency] || 0
-                if (parsedAmount > currentBal + 0.0001) {
-                    const err = new Error(`Insufficient ${currency} balance`)
-                    err.status = 400
-                    throw err
-                }
-
-                // Deduct bet amount immediately upon flight launch under lock
-                db.updateUserBalance(user.id, currency, -parsedAmount, 'Crash Bet (Launch)')
-
-                return crashEngine.startRound({
-                    userId: user.id,
-                    currency,
-                    betAmount: parsedAmount,
-                    autoCashout,
-                    clientSeed: clientSeed || user.id
-                })
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'AUTH_REQUIRED',
+                error: 'Please sign up or sign in to play Crash on AmratGames'
             })
+        }
 
-            const updatedUser = db.findUserById(req.user.id)
-            return res.json({
-                success: true,
-                ...session,
-                balances: updatedUser.balances
-            })
-        } else {
-            // Guest demo session
-            const session = crashEngine.startRound({
-                userId: effectiveUserId,
+        const session = await db.withUserLock(req.user.id, async () => {
+            const user = db.findUserById(req.user.id)
+            const currentBal = user.balances?.[currency] || 0
+            if (parsedAmount > currentBal + 0.0001) {
+                const err = new Error(`Insufficient ${currency} balance`)
+                err.status = 400
+                throw err
+            }
+
+            // Deduct bet amount immediately upon flight launch under lock
+            db.updateUserBalance(user.id, currency, -parsedAmount, 'Crash Bet (Launch)')
+
+            return crashEngine.startRound({
+                userId: user.id,
                 currency,
                 betAmount: parsedAmount,
                 autoCashout,
-                clientSeed: clientSeed || 'guest_seed'
+                clientSeed: clientSeed || user.id
             })
-            return res.json({
-                success: true,
-                ...session,
-                balances: null
-            })
-        }
+        })
+
+        const updatedUser = db.findUserById(req.user.id)
+        return res.json({
+            success: true,
+            ...session,
+            balances: updatedUser.balances
+        })
     } catch (err) {
         res.status(err.status || 400).json({ success: false, error: err.message })
     }
@@ -90,63 +80,55 @@ router.post('/cashout', authenticate, async (req, res) => {
             return res.status(400).json({ success: false, error: 'roundId is required' })
         }
 
-        const effectiveUserId = req.user ? req.user.id : (req.headers['x-guest-session'] || 'guest_demo')
-
-        if (req.user) {
-            const result = await db.withUserLock(req.user.id, async () => {
-                const cashoutResult = crashEngine.cashout({
-                    userId: req.user.id,
-                    roundId,
-                    multiplier
-                })
-
-                const currency = cashoutResult.currency || 'INR'
-                const betAmount = cashoutResult.betAmount || 0
-
-                if (cashoutResult.won && cashoutResult.payout > 0) {
-                    db.updateUserBalance(req.user.id, currency, cashoutResult.payout, `Crash Cashout (${cashoutResult.multiplier}x)`)
-                }
-
-                const betRecord = db.recordBet({
-                    userId: req.user.id,
-                    username: req.user.username,
-                    game: 'crash',
-                    gameName: 'Crash Rocket',
-                    currency,
-                    betAmount,
-                    multiplier: cashoutResult.multiplier,
-                    payout: cashoutResult.payout,
-                    profit: cashoutResult.payout - betAmount,
-                    won: cashoutResult.won,
-                    hash: cashoutResult.hash
-                })
-
-                if (cashoutResult.won) {
-                    broadcastEvent('NEW_BET', betRecord)
-                }
-
-                return cashoutResult
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'AUTH_REQUIRED',
+                error: 'Please sign up or sign in to play Crash on AmratGames'
             })
+        }
 
-            const user = db.findUserById(req.user.id)
-            return res.json({
-                success: true,
-                ...result,
-                balances: user.balances
-            })
-        } else {
-            // Guest demo cashout
-            const result = crashEngine.cashout({
-                userId: effectiveUserId,
+        const result = await db.withUserLock(req.user.id, async () => {
+            const cashoutResult = crashEngine.cashout({
+                userId: req.user.id,
                 roundId,
                 multiplier
             })
-            return res.json({
-                success: true,
-                ...result,
-                balances: null
+
+            const currency = cashoutResult.currency || 'INR'
+            const betAmount = cashoutResult.betAmount || 0
+
+            if (cashoutResult.won && cashoutResult.payout > 0) {
+                db.updateUserBalance(req.user.id, currency, cashoutResult.payout, `Crash Cashout (${cashoutResult.multiplier}x)`)
+            }
+
+            const betRecord = db.recordBet({
+                userId: req.user.id,
+                username: req.user.username,
+                game: 'crash',
+                gameName: 'Crash Rocket',
+                currency,
+                betAmount,
+                multiplier: cashoutResult.multiplier,
+                payout: cashoutResult.payout,
+                profit: cashoutResult.payout - betAmount,
+                won: cashoutResult.won,
+                hash: cashoutResult.hash
             })
-        }
+
+            if (cashoutResult.won) {
+                broadcastEvent('NEW_BET', betRecord)
+            }
+
+            return cashoutResult
+        })
+
+        const user = db.findUserById(req.user.id)
+        return res.json({
+            success: true,
+            ...result,
+            balances: user.balances
+        })
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
     }
@@ -160,51 +142,45 @@ router.post('/bust', authenticate, async (req, res) => {
             return res.status(400).json({ success: false, error: 'roundId is required' })
         }
 
-        const effectiveUserId = req.user ? req.user.id : (req.headers['x-guest-session'] || 'guest_demo')
-
-        if (req.user) {
-            const result = await db.withUserLock(req.user.id, async () => {
-                const bustResult = crashEngine.bust({
-                    userId: req.user.id,
-                    roundId
-                })
-
-                if (!bustResult.alreadyClosed) {
-                    db.recordBet({
-                        userId: req.user.id,
-                        username: req.user.username,
-                        game: 'crash',
-                        gameName: 'Crash Rocket',
-                        currency: bustResult.currency || 'INR',
-                        betAmount: bustResult.betAmount || 0,
-                        multiplier: 0,
-                        payout: 0,
-                        profit: -(bustResult.betAmount || 0),
-                        won: false,
-                        hash: bustResult.hash || crypto.randomBytes(16).toString('hex')
-                    })
-                }
-
-                return bustResult
-            })
-
-            const user = db.findUserById(req.user.id)
-            return res.json({
-                success: true,
-                ...result,
-                balances: user.balances
-            })
-        } else {
-            const result = crashEngine.bust({
-                userId: effectiveUserId,
-                roundId
-            })
-            return res.json({
-                success: true,
-                ...result,
-                balances: null
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'AUTH_REQUIRED',
+                error: 'Please sign up or sign in to play Crash on AmratGames'
             })
         }
+
+        const result = await db.withUserLock(req.user.id, async () => {
+            const bustResult = crashEngine.bust({
+                userId: req.user.id,
+                roundId
+            })
+
+            if (!bustResult.alreadyClosed) {
+                db.recordBet({
+                    userId: req.user.id,
+                    username: req.user.username,
+                    game: 'crash',
+                    gameName: 'Crash Rocket',
+                    currency: bustResult.currency || 'INR',
+                    betAmount: bustResult.betAmount || 0,
+                    multiplier: 0,
+                    payout: 0,
+                    profit: -(bustResult.betAmount || 0),
+                    won: false,
+                    hash: bustResult.hash || crypto.randomBytes(16).toString('hex')
+                })
+            }
+
+            return bustResult
+        })
+
+        const user = db.findUserById(req.user.id)
+        return res.json({
+            success: true,
+            ...result,
+            balances: user.balances
+        })
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
     }

@@ -107,7 +107,7 @@ const HERO_SLIDES = [
             { label: 'Google Pay, PhonePe, Paytm', value: 'Instant UPI', icon: '🇮🇳' },
             { label: 'Direct to Bank 24/7', value: 'Fast Payouts', icon: '💸' },
             { label: 'Genuine & Honest Games', value: '100% Safe', icon: '🛡️' },
-            { label: 'Free Demo Money', value: '₹10,000 Cash', icon: '🎁' },
+            { label: 'Free Welcome Bonus', value: '₹100 Instant', icon: '🎁' },
         ],
         showcase: {
             type: 'deposit',
@@ -127,7 +127,7 @@ const HERO_SLIDES = [
         titleHighlight: 'Cash Out Before It Crashes!',
         description: 'Watch the rocket fly higher and multiply your money: 2x, 5x, 10x, 100x! Click Cash Out anytime to collect your profit before it blasts. Quick rounds and big wins!',
         primaryCta: { label: 'Play Rocket Now', icon: '🚀', to: '/crash' },
-        secondaryCta: { label: 'Free Practice Game', icon: '🎮', to: '/crash' },
+        secondaryCta: { label: 'Claim ₹100 & Play', icon: '🎮', to: '/crash' },
         navLabel: 'Rocket Crash Game',
         stats: [
             { label: 'Big Win Multipliers', value: 'Up to 1,000x', icon: '⚡' },
