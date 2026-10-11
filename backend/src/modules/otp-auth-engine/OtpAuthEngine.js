@@ -40,10 +40,10 @@ export class OtpAuthEngine {
         } else {
             const providerName = typeof options.provider === 'string'
                 ? options.provider
-                : (process.env.SMS_GATEWAY_PROVIDER || 'mock')
+                : (process.env.SMS_GATEWAY_PROVIDER || 'in-house')
 
             this.provider = createSmsProvider(providerName, {
-                apiKey: options.apiKey || process.env.TWOFACTOR_API_KEY || process.env.SMS_GATEWAY_API_KEY,
+                apiKey: options.apiKey || process.env.TWOFACTOR_API_KEY || process.env.SMS_GATEWAY_API_KEY || '',
                 ...options
             })
         }

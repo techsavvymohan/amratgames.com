@@ -127,4 +127,19 @@ describe('Modular OtpAuthEngine Test Suite', () => {
         assert.equal(verify.valid, true)
         assert.equal(verify.bypassed, true)
     })
+
+    it('operates seamlessly with InHouseOtpProvider with zero API keys', async () => {
+        const engine = createOtpAuthEngine({
+            provider: 'in-house',
+            resendCooldownSec: 2
+        })
+
+        const send = await engine.sendOtp('9876543219')
+        assert.equal(send.success, true)
+        assert.equal(send.provider, 'in-house')
+
+        const health = await engine.checkHealth()
+        assert.equal(health.provider, 'in-house')
+        assert.equal(health.providerHealth.requiresApiKey, false)
+    })
 })

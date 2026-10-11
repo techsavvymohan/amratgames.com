@@ -2,6 +2,7 @@ import { OtpAuthEngine } from './OtpAuthEngine.js'
 import { createOtpRouter } from './routes/expressRouter.js'
 import { MemoryOtpStore } from './storage/MemoryOtpStore.js'
 import { RedisOtpStore } from './storage/RedisOtpStore.js'
+import { InHouseOtpProvider } from './providers/InHouseOtpProvider.js'
 import { TwoFactorSmsProvider } from './providers/TwoFactorSmsProvider.js'
 import { Fast2SmsProvider } from './providers/Fast2SmsProvider.js'
 import { MockSmsProvider } from './providers/MockSmsProvider.js'
@@ -12,6 +13,7 @@ export {
     createOtpRouter,
     MemoryOtpStore,
     RedisOtpStore,
+    InHouseOtpProvider,
     TwoFactorSmsProvider,
     Fast2SmsProvider,
     MockSmsProvider,
