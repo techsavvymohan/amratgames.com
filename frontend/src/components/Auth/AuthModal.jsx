@@ -282,11 +282,11 @@ export default function AuthModal() {
 
                 {/* Header */}
                 <div className="amrat-auth-header">
-                    <div className="amrat-auth-crown">👑</div>
-                    <h2 className="amrat-auth-title">AmratGames.com</h2>
-                    <p className="amrat-auth-subtitle">
-                        {mode === 'register' ? 'Create your player account' : 'Sign in to access your casino wallet'}
-                    </p>
+                    <img
+                        src="/amrat-logo.png"
+                        alt="AmratGames"
+                        className="amrat-auth-logo"
+                    />
                 </div>
 
                 {/* Navigation Tabs — Exactly 2 Clear Tabs: Sign In & Register */}

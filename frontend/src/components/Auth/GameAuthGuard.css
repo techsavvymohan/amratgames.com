@@ -32,10 +32,12 @@
     }
 }
 
-.amrat-gate-crown {
-    font-size: 3rem;
+.amrat-gate-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
     margin-bottom: 12px;
-    filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.5));
+    filter: drop-shadow(0 0 20px rgba(245, 175, 25, 0.5));
     animation: crownFloat 3s ease-in-out infinite;
 }
 

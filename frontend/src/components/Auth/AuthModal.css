@@ -80,36 +80,23 @@
 /* Header */
 .amrat-auth-header {
     text-align: center;
-    margin-bottom: 20px;
-}
-
-.amrat-auth-crown {
-    display: inline-flex;
-    align-items: center;
+    margin-bottom: 18px;
+    display: flex;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(212, 145, 16, 0.08));
-    border: 1px solid rgba(245, 175, 25, 0.5);
-    font-size: 26px;
-    margin-bottom: 10px;
-    box-shadow: 0 0 20px rgba(245, 175, 25, 0.25);
+    align-items: center;
 }
 
-.amrat-auth-title {
-    margin: 0;
-    font-size: 1.35rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fff3cc 0%, #f5af19 50%, #d49110 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.amrat-auth-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 16px rgba(245, 175, 25, 0.45));
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
 }
 
-.amrat-auth-subtitle {
-    margin: 4px 0 0;
-    font-size: 0.82rem;
-    color: #94a3b8;
+.amrat-auth-logo:hover {
+    transform: scale(1.05);
 }
 
 /* Mode Tabs */

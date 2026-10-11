@@ -27,7 +27,7 @@ export function GameAuthGuard({ children, gameName = 'this game' }) {
     return (
         <div className="amrat-game-gate">
             <div className="amrat-gate-card">
-                <div className="amrat-gate-crown">👑</div>
+                <img src="/amrat-logo.png" alt="AmratGames" className="amrat-gate-logo" />
                 <div className="amrat-gate-badge">AUTHENTICATION REQUIRED</div>
                 
                 <h1 className="amrat-gate-title">Create Account to Play</h1>
