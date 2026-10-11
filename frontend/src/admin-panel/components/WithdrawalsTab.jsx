@@ -1,4 +1,14 @@
 import { useState, useMemo } from 'react'
+import { QRCode } from 'antd'
+import {
+    sanitizeUpiId,
+    isValidUpiId,
+    formatUpiAmount,
+    buildUpiPayUri,
+    buildAppUpiUris,
+    isMobileDevice,
+    launchUpiApp
+} from '../../utils/upiIntent'
 
 export default function WithdrawalsTab({
     withdrawals = [],
@@ -17,6 +27,7 @@ export default function WithdrawalsTab({
     const [transferRef, setTransferRef] = useState('')
     const [approvalNote, setApprovalNote] = useState('')
     const [isSubmittingApproval, setIsSubmittingApproval] = useState(false)
+    const [showDesktopQr, setShowDesktopQr] = useState(true)
 
     // Modal state for Rejection
     const [rejectingItem, setRejectingItem] = useState(null)
@@ -32,6 +43,37 @@ export default function WithdrawalsTab({
         } catch {
             triggerToast?.(`${label}: ${text}`)
         }
+    }
+
+    // 1-Click UPI Pay Launcher
+    const handleOneClickUpi = (w) => {
+        const uris = buildAppUpiUris({
+            upiId: w.payoutDestination,
+            amount: w.amount,
+            payeeName: w.username || 'Amrat Player',
+            transactionNote: `AmratGames Cashout #${w.id}`
+        })
+
+        // On mobile devices, immediately trigger the UPI intent chooser
+        if (isMobileDevice() && uris?.universal) {
+            launchUpiApp(uris.universal)
+            triggerToast?.('⚡ Opening UPI App...')
+        }
+
+        // Open approval modal pre-populated
+        setApprovingItem(w)
+        setTransferRef('')
+        setApprovalNote(isMobileDevice() ? 'Dispatched via 1-Click Mobile UPI' : 'Dispatched via UPI Intent / QR')
+    }
+
+    // 1-Click Copy All Bank Details for NetBanking
+    const handleCopyAllBank = (w) => {
+        const holder = w.bankDetails?.holder || w.username || 'Player'
+        const acc = w.bankDetails?.accountNumber || '—'
+        const ifsc = w.bankDetails?.ifsc || '—'
+        const amt = Number(w.amount || 0).toFixed(2)
+        const summary = `Beneficiary: ${holder}\nAccount Number: ${acc}\nIFSC Code: ${ifsc}\nAmount: ₹${amt}`
+        handleCopy(summary, 'All Bank Transfer Details')
     }
 
     // Filtered withdrawals
@@ -80,7 +122,7 @@ export default function WithdrawalsTab({
 
     // Handle Confirm Approval
     const handleConfirmApprove = async (e) => {
-        e.preventDefault()
+        e?.preventDefault?.()
         if (!approvingItem) return
 
         try {
@@ -98,6 +140,19 @@ export default function WithdrawalsTab({
             setIsSubmittingApproval(false)
         }
     }
+
+    // Compute active UPI URIs for currently approving item
+    const activeUpiUris = useMemo(() => {
+        if (!approvingItem || approvingItem.payoutMethod === 'BANK' || !approvingItem.payoutDestination) {
+            return null
+        }
+        return buildAppUpiUris({
+            upiId: approvingItem.payoutDestination,
+            amount: approvingItem.amount,
+            payeeName: approvingItem.username || 'Amrat Player',
+            transactionNote: `AmratGames Cashout #${approvingItem.id}`
+        })
+    }, [approvingItem])
 
     // Handle Confirm Rejection
     const handleConfirmReject = async (e) => {
@@ -544,14 +599,37 @@ export default function WithdrawalsTab({
                                                             {w.payoutDestination}
                                                         </div>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        className="btn-action gold"
-                                                        onClick={() => handleCopy(w.payoutDestination, 'UPI ID')}
-                                                        style={{ padding: '8px 14px', fontSize: '0.8rem', fontWeight: 700 }}
-                                                    >
-                                                        📋 Copy UPI
-                                                    </button>
+                                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-action gold"
+                                                            onClick={() => handleCopy(w.payoutDestination, 'UPI ID')}
+                                                            style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 700 }}
+                                                        >
+                                                            📋 Copy
+                                                        </button>
+                                                        {isPending && (
+                                                            <button
+                                                                type="button"
+                                                                className="btn-action gold"
+                                                                onClick={() => handleOneClickUpi(w)}
+                                                                style={{
+                                                                    padding: '8px 14px',
+                                                                    fontSize: '0.8rem',
+                                                                    fontWeight: 800,
+                                                                    background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                                                                    color: '#000',
+                                                                    border: 'none',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px',
+                                                                    boxShadow: '0 2px 10px rgba(245, 158, 11, 0.35)'
+                                                                }}
+                                                            >
+                                                                <span>⚡</span> <span>1-Click Pay</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -563,33 +641,64 @@ export default function WithdrawalsTab({
                                             display: 'flex',
                                             justifyContent: 'flex-end',
                                             alignItems: 'center',
-                                            gap: '12px',
+                                            gap: '10px',
                                             marginTop: '6px',
                                             paddingTop: '12px',
                                             borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                                             flexWrap: 'wrap'
                                         }}>
                                             <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginRight: 'auto' }}>
-                                                💡 Transfer funds manually, then record approval below.
+                                                💡 Use 1-Click UPI to send payment instantly, then confirm below.
                                             </span>
 
                                             <button
                                                 type="button"
                                                 className="btn-action danger"
-                                                style={{ padding: '9px 18px', fontSize: '0.85rem' }}
+                                                style={{ padding: '9px 16px', fontSize: '0.84rem' }}
                                                 onClick={() => {
                                                     setRejectingItem(w)
                                                     setRejectionReason('')
                                                     setRejectionNote('')
                                                 }}
                                             >
-                                                ✕ Reject &amp; Refund Player
+                                                ✕ Reject &amp; Refund
                                             </button>
+
+                                            {w.payoutMethod === 'BANK' ? (
+                                                <button
+                                                    type="button"
+                                                    className="btn-action"
+                                                    style={{ padding: '9px 16px', fontSize: '0.84rem' }}
+                                                    onClick={() => handleCopyAllBank(w)}
+                                                >
+                                                    📋 Copy Bank Info
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="btn-action gold"
+                                                    style={{
+                                                        padding: '9px 18px',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: 800,
+                                                        background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                                                        color: '#000',
+                                                        border: 'none',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)'
+                                                    }}
+                                                    onClick={() => handleOneClickUpi(w)}
+                                                >
+                                                    <span>⚡</span> <span>Instant UPI Pay</span>
+                                                </button>
+                                            )}
 
                                             <button
                                                 type="button"
                                                 className="btn-airdrop-launch"
-                                                style={{ padding: '9px 22px', fontSize: '0.85rem', fontWeight: 800 }}
+                                                style={{ padding: '9px 20px', fontSize: '0.85rem', fontWeight: 800 }}
                                                 onClick={() => {
                                                     setApprovingItem(w)
                                                     setTransferRef('')
@@ -652,15 +761,15 @@ export default function WithdrawalsTab({
             </div>
 
             {/* ══════════════════════════════════════════════════════════
-                MODAL 1: APPROVE WITHDRAWAL CONFIRMATION
+                MODAL 1: APPROVE WITHDRAWAL CONFIRMATION & 1-CLICK DISPATCH
                ══════════════════════════════════════════════════════════ */}
             {approvingItem && (
                 <div className="admin-modal-overlay" onClick={() => !isSubmittingApproval && setApprovingItem(null)}>
-                    <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+                    <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '560px' }}>
                         <div className="modal-header">
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>✅</span>
-                                <span>Confirm Payout Transfer</span>
+                                <span>⚡</span>
+                                <span>{activeUpiUris ? '1-Click Instant UPI Payout' : 'Confirm Payout Transfer'}</span>
                             </h3>
                             <button
                                 className="modal-close-btn"
@@ -671,34 +780,232 @@ export default function WithdrawalsTab({
                         </div>
 
                         <form onSubmit={handleConfirmApprove}>
-                            <div style={{
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                borderRadius: '10px',
-                                padding: '14px 16px',
-                                marginBottom: '18px'
-                            }}>
-                                <div style={{ fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '8px' }}>
-                                    You are marking this payout as completed. Please ensure you have transferred the funds from your account.
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                    <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Player: {approvingItem.username}</span>
-                                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>
-                                        ₹{Number(approvingItem.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    </span>
-                                </div>
+                            {activeUpiUris ? (
                                 <div style={{
-                                    marginTop: '8px',
-                                    padding: '6px 10px',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    borderRadius: '6px',
-                                    fontSize: '0.82rem',
-                                    color: '#ffd700',
-                                    fontFamily: 'monospace'
+                                    background: 'rgba(245, 158, 11, 0.08)',
+                                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                                    borderRadius: '12px',
+                                    padding: '16px',
+                                    marginBottom: '18px'
                                 }}>
-                                    {approvingItem.payoutDestination}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                        <span style={{ fontSize: '0.76rem', textTransform: 'uppercase', color: '#fbbf24', fontWeight: 800, letterSpacing: '0.05em' }}>
+                                            ⚡ Verified Player Cashout
+                                        </span>
+                                        <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                                            Zero Gateway Fee
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                                        <span style={{ fontSize: '0.88rem', color: '#cbd5e1' }}>Player: <strong>{approvingItem.username}</strong></span>
+                                        <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fbbf24', letterSpacing: '-0.02em' }}>
+                                            ₹{Number(approvingItem.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '8px 12px',
+                                        background: 'rgba(0, 0, 0, 0.4)',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                                        marginBottom: '14px'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Target UPI ID</div>
+                                            <div style={{ fontFamily: 'monospace', fontSize: '0.96rem', color: '#ffd700', fontWeight: 700 }}>
+                                                {approvingItem.payoutDestination}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-action"
+                                            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
+                                            onClick={() => handleCopy(approvingItem.payoutDestination, 'UPI ID')}
+                                        >
+                                            📋 Copy UPI
+                                        </button>
+                                    </div>
+
+                                    {/* 1-Tap App Launcher Buttons */}
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <div style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, marginBottom: '8px' }}>
+                                            1-Tap Pay via Installed Mobile App
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(115px, 1fr))', gap: '8px' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-action gold"
+                                                style={{
+                                                    padding: '9px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 800,
+                                                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                                    color: '#000',
+                                                    border: 'none',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '4px'
+                                                }}
+                                                onClick={() => launchUpiApp(activeUpiUris.universal)}
+                                            >
+                                                <span>⚡</span> <span>Any UPI App</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-action"
+                                                style={{
+                                                    padding: '9px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 700,
+                                                    background: 'rgba(103, 58, 183, 0.25)',
+                                                    border: '1px solid #7c3aed',
+                                                    color: '#c4b5fd',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '4px'
+                                                }}
+                                                onClick={() => launchUpiApp(activeUpiUris.phonepe)}
+                                            >
+                                                <span>🟣</span> <span>PhonePe</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-action"
+                                                style={{
+                                                    padding: '9px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 700,
+                                                    background: 'rgba(2, 136, 209, 0.25)',
+                                                    border: '1px solid #0288d1',
+                                                    color: '#7dd3fc',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '4px'
+                                                }}
+                                                onClick={() => launchUpiApp(activeUpiUris.paytm)}
+                                            >
+                                                <span>🔷</span> <span>Paytm</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-action"
+                                                style={{
+                                                    padding: '9px 8px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 700,
+                                                    background: 'rgba(59, 130, 246, 0.2)',
+                                                    border: '1px solid #3b82f6',
+                                                    color: '#93c5fd',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '4px'
+                                                }}
+                                                onClick={() => launchUpiApp(activeUpiUris.gpay)}
+                                            >
+                                                <span>🔵</span> <span>Google Pay</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Desktop QR Code Scanner */}
+                                    <div style={{
+                                        background: 'rgba(0, 0, 0, 0.35)',
+                                        borderRadius: '10px',
+                                        padding: '12px 14px',
+                                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.76rem', color: '#cbd5e1', fontWeight: 600 }}>
+                                                📷 Scan to Pay with Phone (Auto-fills ₹{formatUpiAmount(approvingItem.amount)})
+                                            </span>
+                                            <button
+                                                type="button"
+                                                style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '0.72rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                                onClick={() => setShowDesktopQr(!showDesktopQr)}
+                                            >
+                                                {showDesktopQr ? 'Hide QR' : 'Show QR'}
+                                            </button>
+                                        </div>
+
+                                        {showDesktopQr && (
+                                            <div style={{
+                                                padding: '10px',
+                                                background: '#ffffff',
+                                                borderRadius: '10px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                boxShadow: '0 4px 16px rgba(0,0,0,0.5)'
+                                            }}>
+                                                <QRCode
+                                                    value={activeUpiUris.universal}
+                                                    size={150}
+                                                    bgColor="#ffffff"
+                                                    color="#000000"
+                                                    bordered={false}
+                                                />
+                                                <div style={{ fontSize: '0.68rem', color: '#334155', fontWeight: 700, marginTop: '4px' }}>
+                                                    Scan with PhonePe, GPay, or Paytm
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div style={{
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    borderRadius: '10px',
+                                    padding: '14px 16px',
+                                    marginBottom: '18px'
+                                }}>
+                                    <div style={{ fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '8px' }}>
+                                        You are marking this bank payout as completed. Please ensure funds are transferred via NetBanking/IMPS.
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Player: {approvingItem.username}</span>
+                                        <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>
+                                            ₹{Number(approvingItem.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div style={{
+                                        marginTop: '8px',
+                                        padding: '8px 10px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        borderRadius: '6px',
+                                        fontSize: '0.82rem',
+                                        color: '#ffd700',
+                                        fontFamily: 'monospace'
+                                    }}>
+                                        {approvingItem.payoutDestination}
+                                    </div>
+                                    {approvingItem.bankDetails && (
+                                        <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-action"
+                                                style={{ fontSize: '0.76rem', padding: '6px 12px' }}
+                                                onClick={() => handleCopyAllBank(approvingItem)}
+                                            >
+                                                📋 Copy All NetBanking Details
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="form-group" style={{ marginBottom: '14px' }}>
                                 <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '6px' }}>
@@ -707,13 +1014,13 @@ export default function WithdrawalsTab({
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder="e.g. 429381928374 (From your banking app)"
+                                    placeholder="e.g. 429381928374 (From UPI payment receipt)"
                                     value={transferRef}
                                     onChange={(e) => setTransferRef(e.target.value)}
                                     autoFocus
                                 />
                                 <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                                    This reference will be visible to the player in their cashier history.
+                                    This reference will be visible to the player in their cashier ledger.
                                 </span>
                             </div>
 
@@ -724,7 +1031,7 @@ export default function WithdrawalsTab({
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder="e.g. Sent via HDFC Business Netbanking"
+                                    placeholder="e.g. Sent via PhonePe Instant UPI"
                                     value={approvalNote}
                                     onChange={(e) => setApprovalNote(e.target.value)}
                                 />
