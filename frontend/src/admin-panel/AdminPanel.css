@@ -37,17 +37,17 @@
     gap: 14px;
 }
 
-.admin-crown-badge {
+.admin-logo-badge {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #ffd700, #f5af19, #d49110);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 4px 16px rgba(245, 175, 25, 0.4);
+    object-fit: contain;
+    filter: drop-shadow(0 0 12px rgba(245, 175, 25, 0.45));
     flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+
+.admin-logo-badge:hover {
+    transform: scale(1.06);
 }
 
 .admin-header h1 {
@@ -606,9 +606,23 @@
     box-sizing: border-box;
 }
 
-.admin-lock-icon {
-    font-size: 44px;
-    margin-bottom: 12px;
+.admin-lock-logo-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.admin-lock-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 16px rgba(245, 175, 25, 0.45));
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-lock-logo:hover {
+    transform: scale(1.06);
 }
 
 .btn-quick-admin {
@@ -669,11 +683,9 @@
         gap: 12px;
     }
 
-    .admin-crown-badge {
-        width: 42px;
-        height: 42px;
-        font-size: 20px;
-        border-radius: 10px;
+    .admin-logo-badge {
+        width: 38px;
+        height: 38px;
     }
 
     .admin-header h1 {
@@ -839,8 +851,9 @@
         border-radius: 16px;
     }
 
-    .admin-lock-icon {
-        font-size: 40px;
+    .admin-lock-logo {
+        width: 54px;
+        height: 54px;
     }
 
     .admin-lock-screen h2 {

@@ -365,7 +365,11 @@ export default function AdminPanel() {
             {/* Header */}
             <div className="admin-header">
                 <div className="admin-title-area">
-                    <div className="admin-crown-badge">👑</div>
+                    <img
+                        src="/amrat-logo.png"
+                        alt="AmratGames"
+                        className="admin-logo-badge"
+                    />
                     <div>
                         <h1>Admin Dashboard</h1>
                         <p className="admin-subtitle">Platform Controls &amp; Operations</p>

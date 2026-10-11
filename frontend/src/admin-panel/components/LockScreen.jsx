@@ -33,7 +33,13 @@ export default function LockScreen({
                 <span style={{ fontSize: '0.75rem', color: '#64748b' }}>AmratGames</span>
             </div>
 
-            <div className="admin-lock-icon">👑</div>
+            <div className="admin-lock-logo-wrapper">
+                <img
+                    src="/amrat-logo.png"
+                    alt="AmratGames"
+                    className="admin-lock-logo"
+                />
+            </div>
             <h2 style={{ margin: '0 0 6px', color: '#ffd700', fontSize: '1.4rem' }}>
                 Admin Login
             </h2>
