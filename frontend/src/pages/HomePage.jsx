@@ -101,7 +101,7 @@ const HERO_SLIDES = [
         titleHighlight: 'Withdraw Directly to Bank.',
         description: 'Add money using Google Pay, PhonePe, or Paytm with zero extra fees. When you win, get your cash directly in your bank account within minutes.',
         primaryCta: { label: 'Play Rocket Game', icon: '🚀', to: '/crash' },
-        secondaryCta: { label: 'Add Money via UPI', icon: '⚡', action: 'deposit' },
+        secondaryCta: null,
         navLabel: 'UPI & Fast Withdrawals',
         stats: [
             { label: 'Google Pay, PhonePe, Paytm', value: 'Instant UPI', icon: '🇮🇳' },
@@ -116,7 +116,7 @@ const HERO_SLIDES = [
             subtitle: 'Pay directly from your phone in 5 seconds',
             gateways: ['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI'],
             quickAmounts: [100, 500, 1000],
-            cta: 'Add Money via UPI',
+            cta: 'Instant Deposit',
             action: 'deposit'
         }
     },
@@ -275,20 +275,27 @@ function HomePage() {
                                 </a>
                             )}
 
-                            {currentSlide.secondaryCta.action === 'deposit' ? (
-                                <button
-                                    type="button"
-                                    className="hero-secondary-button"
-                                    onClick={() => openWalletModal('deposit')}
-                                >
-                                    <span>{currentSlide.secondaryCta.icon}</span>
-                                    <span>{currentSlide.secondaryCta.label}</span>
-                                </button>
-                            ) : currentSlide.secondaryCta.to ? (
-                                <Link to={currentSlide.secondaryCta.to} className="hero-secondary-button">
-                                    <span>{currentSlide.secondaryCta.icon}</span>
-                                    <span>{currentSlide.secondaryCta.label}</span>
-                                </Link>
+                            {currentSlide.secondaryCta ? (
+                                currentSlide.secondaryCta.action === 'deposit' ? (
+                                    <button
+                                        type="button"
+                                        className="hero-secondary-button"
+                                        onClick={() => openWalletModal('deposit')}
+                                    >
+                                        <span>{currentSlide.secondaryCta.icon}</span>
+                                        <span>{currentSlide.secondaryCta.label}</span>
+                                    </button>
+                                ) : currentSlide.secondaryCta.to ? (
+                                    <Link to={currentSlide.secondaryCta.to} className="hero-secondary-button">
+                                        <span>{currentSlide.secondaryCta.icon}</span>
+                                        <span>{currentSlide.secondaryCta.label}</span>
+                                    </Link>
+                                ) : currentSlide.secondaryCta.hash ? (
+                                    <a href={currentSlide.secondaryCta.hash} onClick={focusGames} className="hero-secondary-button">
+                                        <span>{currentSlide.secondaryCta.icon}</span>
+                                        <span>{currentSlide.secondaryCta.label}</span>
+                                    </a>
+                                ) : null
                             ) : null}
                         </div>
 
