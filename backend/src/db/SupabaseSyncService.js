@@ -1,4 +1,9 @@
 import { getSupabaseClient, isSupabaseConfigured } from './SupabaseClient.js'
+import crypto from 'node:crypto'
+import bcrypt from 'bcryptjs'
+
+// Deterministic fallback hash for phone-OTP accounts that don't have passwords
+const PHONE_AUTH_HASH_PLACEHOLDER = '$2a$10$PhoneAuthUserZeroPasswordKey1234567890123456789012'
 
 /**
  * SupabaseSyncService — Bridges AmratGames OOP Database with Supabase Cloud
@@ -11,6 +16,16 @@ export class SupabaseSyncService {
     getClient() {
         if (!this.client) this.client = getSupabaseClient()
         return this.client
+    }
+
+    _resolvePasswordHash(user) {
+        if (user.passwordHash && typeof user.passwordHash === 'string' && user.passwordHash.length > 5) {
+            return user.passwordHash
+        }
+        if (user.phone) {
+            return PHONE_AUTH_HASH_PLACEHOLDER
+        }
+        return bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10)
     }
 
     /**
@@ -26,16 +41,22 @@ export class SupabaseSyncService {
                 username: user.username,
                 email: user.email || null,
                 phone: user.phone || null,
-                password_hash: user.passwordHash,
+                password_hash: this._resolvePasswordHash(user),
                 role: user.role || 'player',
                 status: user.status || 'active',
                 is_banned: Boolean(user.isBanned),
                 kyc_status: user.kycStatus || 'unverified',
                 phone_verified: Boolean(user.phoneVerified),
                 email_verified: Boolean(user.emailVerified),
+                avatar: user.avatar || '👤',
                 balances: {
                     ...(user.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }),
-                    totalDeposited: typeof user.totalDeposited === 'number' ? user.totalDeposited : (parseFloat(user.totalDeposited) || 0)
+                    totalDeposited: typeof user.totalDeposited === 'number' ? user.totalDeposited : (parseFloat(user.totalDeposited) || 0),
+                    totalWagered: typeof user.totalWagered === 'number' ? user.totalWagered : (parseFloat(user.totalWagered) || 0),
+                    referralCode: user.referralCode || null,
+                    referredBy: user.referredBy || null,
+                    unclaimedRakeback: typeof user.unclaimedRakeback === 'number' ? user.unclaimedRakeback : 0,
+                    totalRakebackEarned: typeof user.totalRakebackEarned === 'number' ? user.totalRakebackEarned : 0
                 },
                 last_login_at: user.lastLoginAt || new Date().toISOString()
             }
@@ -56,22 +77,25 @@ export class SupabaseSyncService {
                         .single()
                     if (!updateErr) return updated
                 }
+                console.warn(`[SUPABASE] syncUser failed for ${user.username}:`, error.message)
                 return null
             }
 
             // Sync relational user_balances table
             if (user.balances && typeof user.balances === 'object') {
-                const balanceEntries = Object.entries(user.balances).map(([curr, bal]) => ({
-                    user_id: user.id,
-                    currency: curr,
-                    balance: typeof bal === 'number' ? bal : (parseFloat(bal) || 0),
-                    updated_at: new Date().toISOString()
-                }))
+                const balanceEntries = Object.entries(user.balances)
+                    .filter(([curr]) => ['INR', 'BTC', 'USDT', 'AMRAT'].includes(curr))
+                    .map(([curr, bal]) => ({
+                        user_id: user.id,
+                        currency: curr,
+                        balance: typeof bal === 'number' ? bal : (parseFloat(bal) || 0),
+                        updated_at: new Date().toISOString()
+                    }))
 
                 if (balanceEntries.length > 0) {
                     try {
                         await client.from('user_balances').upsert(balanceEntries, { onConflict: 'user_id,currency' })
-                    } catch {
+                    } catch (balErr) {
                         // non-fatal
                     }
                 }
@@ -79,6 +103,7 @@ export class SupabaseSyncService {
 
             return data
         } catch (err) {
+            console.warn(`[SUPABASE] syncUser exception for ${user.username}:`, err.message)
             return null
         }
     }
@@ -110,7 +135,7 @@ export class SupabaseSyncService {
 
             const { data, error } = await client
                 .from('bets')
-                .insert([payload])
+                .upsert(payload, { onConflict: 'id' })
                 .select()
                 .single()
 
@@ -119,15 +144,17 @@ export class SupabaseSyncService {
                     payload.user_id = null
                     const retry = await client
                         .from('bets')
-                        .insert([payload])
+                        .upsert(payload, { onConflict: 'id' })
                         .select()
                         .single()
                     if (!retry.error) return retry.data
                 }
+                console.warn(`[SUPABASE] syncBet failed for ${bet.id}:`, error.message)
                 return null
             }
             return data
         } catch (err) {
+            console.warn(`[SUPABASE] syncBet exception for ${bet.id}:`, err.message)
             return null
         }
     }
@@ -170,10 +197,12 @@ export class SupabaseSyncService {
                         .single()
                     if (!retry.error) return retry.data
                 }
+                console.warn(`[SUPABASE] syncTransaction failed for ${tx.id}:`, error.message)
                 return null
             }
             return data
         } catch (err) {
+            console.warn(`[SUPABASE] syncTransaction exception for ${tx.id}:`, err.message)
             return null
         }
     }
@@ -305,7 +334,7 @@ export class SupabaseSyncService {
     }
 
     /**
-     * Run full migration from local JSON database to Supabase
+     * Run full high-speed batch migration from local JSON database to Supabase
      */
     async migrateLocalToSupabase(localData) {
         const client = this.getClient()
@@ -315,6 +344,7 @@ export class SupabaseSyncService {
 
         const report = {
             usersMigrated: 0,
+            balancesMigrated: 0,
             betsMigrated: 0,
             transactionsMigrated: 0,
             airdropsMigrated: 0,
@@ -328,12 +358,70 @@ export class SupabaseSyncService {
             if (sRes) report.settingsMigrated = true
         }
 
-        // 2. Users
+        // 2. Users (batch chunks of 50)
         if (Array.isArray(localData.users)) {
-            for (const user of localData.users) {
-                const res = await this.syncUser(user)
-                if (res) report.usersMigrated++
-                else report.errors.push(`Failed to migrate user ${user.username}`)
+            const userPayloads = localData.users.map(u => ({
+                id: u.id,
+                username: u.username,
+                email: u.email || null,
+                phone: u.phone || null,
+                password_hash: this._resolvePasswordHash(u),
+                role: u.role || 'player',
+                status: u.status || 'active',
+                is_banned: Boolean(u.isBanned),
+                kyc_status: u.kycStatus || 'unverified',
+                phone_verified: Boolean(u.phoneVerified),
+                email_verified: Boolean(u.emailVerified),
+                avatar: u.avatar || '👤',
+                balances: {
+                    ...(u.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }),
+                    totalDeposited: typeof u.totalDeposited === 'number' ? u.totalDeposited : (parseFloat(u.totalDeposited) || 0),
+                    totalWagered: typeof u.totalWagered === 'number' ? u.totalWagered : (parseFloat(u.totalWagered) || 0),
+                    referralCode: u.referralCode || null,
+                    referredBy: u.referredBy || null,
+                    unclaimedRakeback: typeof u.unclaimedRakeback === 'number' ? u.unclaimedRakeback : 0,
+                    totalRakebackEarned: typeof u.totalRakebackEarned === 'number' ? u.totalRakebackEarned : 0
+                },
+                last_login_at: u.lastLoginAt || new Date().toISOString()
+            }))
+
+            for (let i = 0; i < userPayloads.length; i += 50) {
+                const chunk = userPayloads.slice(i, i + 50)
+                const { error } = await client.from('users').upsert(chunk, { onConflict: 'id' })
+                if (!error) {
+                    report.usersMigrated += chunk.length
+                } else {
+                    report.errors.push(`User chunk ${i}-${i + chunk.length} error: ${error.message}`)
+                    // Retry items individually in failing chunk
+                    for (const single of chunk) {
+                        const { error: sErr } = await client.from('users').upsert(single, { onConflict: 'id' })
+                        if (!sErr) report.usersMigrated++
+                        else report.errors.push(`User ${single.username} error: ${sErr.message}`)
+                    }
+                }
+            }
+
+            // Sync relational user_balances in chunks
+            const allBalances = []
+            for (const u of localData.users) {
+                if (u.balances && typeof u.balances === 'object') {
+                    for (const [curr, bal] of Object.entries(u.balances)) {
+                        if (['INR', 'BTC', 'USDT', 'AMRAT'].includes(curr)) {
+                            allBalances.push({
+                                user_id: u.id,
+                                currency: curr,
+                                balance: typeof bal === 'number' ? bal : (parseFloat(bal) || 0),
+                                updated_at: new Date().toISOString()
+                            })
+                        }
+                    }
+                }
+            }
+
+            for (let i = 0; i < allBalances.length; i += 100) {
+                const chunk = allBalances.slice(i, i + 100)
+                const { error } = await client.from('user_balances').upsert(chunk, { onConflict: 'user_id,currency' })
+                if (!error) report.balancesMigrated += chunk.length
             }
         }
 
@@ -356,8 +444,15 @@ export class SupabaseSyncService {
             for (let i = 0; i < validTxs.length; i += 50) {
                 const chunk = validTxs.slice(i, i + 50)
                 const { error } = await client.from('transactions').upsert(chunk, { onConflict: 'id' })
-                if (!error) report.transactionsMigrated += chunk.length
-                else report.errors.push(`Tx chunk error: ${error.message}`)
+                if (!error) {
+                    report.transactionsMigrated += chunk.length
+                } else {
+                    // Retry with nullified user_id if foreign key violation
+                    const nullifiedChunk = chunk.map(c => ({ ...c, user_id: null }))
+                    const { error: retryErr } = await client.from('transactions').upsert(nullifiedChunk, { onConflict: 'id' })
+                    if (!retryErr) report.transactionsMigrated += chunk.length
+                    else report.errors.push(`Tx chunk ${i} error: ${error.message}`)
+                }
             }
         }
 
@@ -383,8 +478,14 @@ export class SupabaseSyncService {
             for (let i = 0; i < validBets.length; i += 50) {
                 const chunk = validBets.slice(i, i + 50)
                 const { error } = await client.from('bets').upsert(chunk, { onConflict: 'id' })
-                if (!error) report.betsMigrated += chunk.length
-                else report.errors.push(`Bets chunk error: ${error.message}`)
+                if (!error) {
+                    report.betsMigrated += chunk.length
+                } else {
+                    const nullifiedChunk = chunk.map(c => ({ ...c, user_id: null }))
+                    const { error: retryErr } = await client.from('bets').upsert(nullifiedChunk, { onConflict: 'id' })
+                    if (!retryErr) report.betsMigrated += chunk.length
+                    else report.errors.push(`Bets chunk ${i} error: ${error.message}`)
+                }
             }
         }
 
@@ -401,3 +502,4 @@ export class SupabaseSyncService {
 }
 
 export const supabaseSync = new SupabaseSyncService()
+

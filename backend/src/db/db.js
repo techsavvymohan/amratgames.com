@@ -4,6 +4,7 @@ import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { CONFIG } from '../config.js'
 import { supabaseSync } from './SupabaseSyncService.js'
+import { durableOutbox } from './DurableOutboxService.js'
 import { isSupabaseConfigured, testSupabaseConnection } from './SupabaseClient.js'
 import { broadcastEvent } from '../websocket.js'
 import { userLockManager } from './UserLockManager.js'
@@ -387,7 +388,7 @@ class Database {
         console.log(`======================================================\n`)
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncOtp(key, otp, expiresAt).catch(() => {})
+            durableOutbox.enqueue('syncOtp', { identifier: key, otp, expiresAt })
         }
 
         return { otp, expiresAt }
@@ -406,7 +407,7 @@ class Database {
             if (codeStr === String(CONFIG.DEMO_OTP_CODE)) {
                 this.otps.delete(key)
                 if (CONFIG.USE_SUPABASE) {
-                    supabaseSync.deleteOtp(key).catch(() => {})
+                    durableOutbox.enqueue('deleteOtp', { identifier: key })
                 }
                 return true
             }
@@ -418,7 +419,7 @@ class Database {
         if (Date.now() > record.expiresAt) {
             this.otps.delete(key)
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.deleteOtp(key).catch(() => {})
+                durableOutbox.enqueue('deleteOtp', { identifier: key })
             }
             return false
         }
@@ -427,7 +428,7 @@ class Database {
         if (record.attempts > 5) {
             this.otps.delete(key)
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.deleteOtp(key).catch(() => {})
+                durableOutbox.enqueue('deleteOtp', { identifier: key })
             }
             return false
         }
@@ -435,7 +436,7 @@ class Database {
         if (record.otp === codeStr) {
             this.otps.delete(key)
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.deleteOtp(key).catch(() => {})
+                durableOutbox.enqueue('deleteOtp', { identifier: key })
             }
             return true
         }
@@ -543,8 +544,8 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(newUser).catch(() => {})
-            supabaseSync.syncTransaction(bonusTx).catch(() => {})
+            durableOutbox.enqueue('syncUser', newUser)
+            durableOutbox.enqueue('syncTransaction', bonusTx)
         }
 
         return newUser
@@ -573,7 +574,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(updated).catch(() => {})
+            durableOutbox.enqueue('syncUser', updated)
         }
 
         return updated
@@ -614,8 +615,8 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(user).catch(() => {})
-            supabaseSync.syncTransaction(tx).catch(() => {})
+            durableOutbox.enqueue('syncUser', user)
+            durableOutbox.enqueue('syncTransaction', tx)
         }
 
         return { user, transaction: tx }
@@ -857,9 +858,9 @@ class Database {
             this.persist()
 
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.syncUser(user).catch(() => {})
-                supabaseSync.syncTransaction(tx).catch(() => {})
-                supabaseSync.syncBet(betRecord).catch(() => {})
+                durableOutbox.enqueue('syncUser', user)
+                durableOutbox.enqueue('syncTransaction', tx)
+                durableOutbox.enqueue('syncBet', betRecord)
             }
 
             return {
@@ -940,8 +941,8 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(user).catch(() => {})
-            supabaseSync.syncTransaction(tx).catch(() => {})
+            durableOutbox.enqueue('syncUser', user)
+            durableOutbox.enqueue('syncTransaction', tx)
         }
 
         broadcastEvent('NEW_WITHDRAWAL_REQUEST', withdrawal)
@@ -999,7 +1000,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE && tx) {
-            supabaseSync.syncTransaction(tx).catch(() => {})
+            durableOutbox.enqueue('syncTransaction', tx)
         }
 
         broadcastEvent('WITHDRAWAL_STATUS_UPDATED', w)
@@ -1047,8 +1048,8 @@ class Database {
             this.updateTreasurySupply()
 
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.syncUser(user).catch(() => {})
-                supabaseSync.syncTransaction(refundTx).catch(() => {})
+                durableOutbox.enqueue('syncUser', user)
+                durableOutbox.enqueue('syncTransaction', refundTx)
             }
         }
 
@@ -1058,7 +1059,7 @@ class Database {
             tx.status = 'rejected'
             tx.note = `Withdrawal Rejected (${w.rejectionReason}) [Balance Refunded]`
             if (CONFIG.USE_SUPABASE) {
-                supabaseSync.syncTransaction(tx).catch(() => {})
+                durableOutbox.enqueue('syncTransaction', tx)
             }
         }
 
@@ -1163,7 +1164,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncTransaction(tx).catch(() => {})
+            durableOutbox.enqueue('syncTransaction', tx)
         }
 
         broadcastEvent('NEW_DEPOSIT_REQUEST', depositRecord)
@@ -1235,8 +1236,8 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncUser(user).catch(() => {})
-            if (tx) supabaseSync.syncTransaction(tx).catch(() => {})
+            durableOutbox.enqueue('syncUser', user)
+            if (tx) durableOutbox.enqueue('syncTransaction', tx)
         }
 
         broadcastEvent('DEPOSIT_STATUS_UPDATED', deposit)
@@ -1344,7 +1345,7 @@ class Database {
         if (CONFIG.USE_SUPABASE) {
             supabaseSync.syncAirdrop(airdropRecord).catch(() => {})
             for (const user of recipients) {
-                supabaseSync.syncUser(user).catch(() => {})
+                durableOutbox.enqueue('syncUser', user)
             }
         }
 
@@ -1383,7 +1384,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncBet(bet).catch(() => {})
+            durableOutbox.enqueue('syncBet', bet)
         }
 
         return bet
@@ -1450,7 +1451,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncSettings(this.data.settings).catch(() => {})
+            durableOutbox.enqueue('syncSettings', this.data.settings)
         }
 
         return {
@@ -1464,7 +1465,7 @@ class Database {
         this.persist()
 
         if (CONFIG.USE_SUPABASE) {
-            supabaseSync.syncSettings(this.data.settings).catch(() => {})
+            durableOutbox.enqueue('syncSettings', this.data.settings)
         }
 
         return this.data.settings
@@ -1522,6 +1523,12 @@ class Database {
                         ? balances.totalDeposited
                         : (parseFloat(balances.totalDeposited) || parseFloat(u.total_deposited) || 0)
 
+                    const referralCode = u.referral_code || balances.referralCode || (u.username || 'PLAYER').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10).toUpperCase()
+                    const referredBy = u.referred_by || balances.referredBy || null
+                    const totalWagered = typeof balances.totalWagered === 'number' ? balances.totalWagered : (parseFloat(u.total_wagered) || 0)
+                    const unclaimedRakeback = typeof balances.unclaimedRakeback === 'number' ? balances.unclaimedRakeback : (parseFloat(u.unclaimed_rakeback) || 0)
+                    const totalRakebackEarned = typeof balances.totalRakebackEarned === 'number' ? balances.totalRakebackEarned : (parseFloat(u.total_rakeback_earned) || 0)
+
                     return {
                         id: u.id,
                         username: u.username,
@@ -1537,6 +1544,17 @@ class Database {
                         avatar: u.avatar || '👤',
                         balances,
                         totalDeposited,
+                        totalWagered,
+                        referralCode,
+                        referredBy,
+                        affiliateStats: {
+                            totalReferred: 0,
+                            totalTurnover: 0,
+                            totalEarned: 0,
+                            unclaimedEarnings: 0
+                        },
+                        unclaimedRakeback,
+                        totalRakebackEarned,
                         createdAt: u.created_at,
                         lastLoginAt: u.last_login_at
                     }
