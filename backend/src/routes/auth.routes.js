@@ -98,12 +98,19 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
 
         // Purpose-based validation guard
         if (purpose === 'login') {
+            if (!isEmail) {
+                return res.status(400).json({
+                    success: false,
+                    code: 'SMS_OTP_UNAVAILABLE',
+                    error: 'Mobile SMS OTP is currently unavailable. Please enter your registered email address to receive your login verification OTP, or log in with your password.'
+                })
+            }
             const existingUser = db.findUserByLogin(target)
             if (!existingUser) {
                 return res.status(404).json({
                     success: false,
                     code: 'ACCOUNT_NOT_FOUND',
-                    error: `No registered account found with ${isEmail ? 'email ' + cleanId : 'mobile number +91 ' + normalizedPhone}. Please create an account in the Register tab.`
+                    error: `No registered account found with email ${cleanId}. Please check the spelling or create an account in the Register tab.`
                 })
             }
         } else if (purpose === 'register') {

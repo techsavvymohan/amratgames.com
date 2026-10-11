@@ -119,8 +119,12 @@ export default function AuthModal() {
         setErrorMsg(null)
         setSuccessMsg(null)
 
+        if (purpose === 'login' && (!targetId || !targetId.includes('@'))) {
+            setErrorMsg('Please enter your registered email address. Mobile SMS OTP is currently unavailable.')
+            return
+        }
         if (!targetId || targetId.trim().length < 3) {
-            setErrorMsg('Please enter a valid mobile number or email address')
+            setErrorMsg('Please enter a valid email address')
             return
         }
 
@@ -148,8 +152,8 @@ export default function AuthModal() {
         setErrorMsg(null)
         setSuccessMsg(null)
 
-        if (!otpIdentifier.trim()) {
-            setErrorMsg('Please enter your registered mobile number or email')
+        if (!otpIdentifier.trim() || !otpIdentifier.includes('@')) {
+            setErrorMsg('Please enter your registered email address')
             return
         }
         if (!otpCode.trim() || otpCode.trim().length < 6) {
@@ -159,7 +163,7 @@ export default function AuthModal() {
 
         try {
             setLoading(true)
-            const res = await verifyOtp(otpIdentifier.trim(), otpCode.trim(), undefined, 'login')
+            const res = await verifyOtp(otpIdentifier.trim().toLowerCase(), otpCode.trim(), undefined, 'login')
             setSuccessMsg(res.message || 'OTP verified successfully!')
         } catch (err) {
             setErrorMsg(err.message || 'Invalid or expired OTP code')
@@ -376,7 +380,7 @@ export default function AuthModal() {
                                     transition: 'all 0.2s'
                                 }}
                             >
-                                ⚡ Fast OTP Login
+                                ⚡ Fast Email OTP
                             </button>
                         </div>
 
@@ -456,13 +460,13 @@ export default function AuthModal() {
                             <form onSubmit={handleVerifyOtpLogin} className="amrat-auth-form">
                                 <div className="amrat-form-group">
                                     <label className="amrat-form-label">
-                                        <span>Registered Email or Phone Number</span>
+                                        <span>Registered Email Address</span>
                                     </label>
                                     <div className="amrat-input-wrapper">
                                         <input
-                                            type="text"
+                                            type="email"
                                             className="amrat-input"
-                                            placeholder="Enter your registered email or phone"
+                                            placeholder="Enter your registered email address"
                                             value={otpIdentifier}
                                             onChange={(e) => setOtpIdentifier(e.target.value)}
                                             autoFocus
@@ -470,7 +474,7 @@ export default function AuthModal() {
                                         />
                                     </div>
                                     <small style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', marginTop: '4px', display: 'block' }}>
-                                        💡 OTP will only be sent if this mobile or email is already registered.
+                                        💡 A 6-digit verification code will be sent to your registered email.
                                     </small>
                                 </div>
 
@@ -487,7 +491,7 @@ export default function AuthModal() {
                                     <>
                                         <div className="amrat-form-group">
                                             <label className="amrat-form-label">
-                                                <span>Enter 6-Digit OTP</span>
+                                                <span>Enter 6-Digit Email OTP</span>
                                                 {resendCountdown > 0 ? (
                                                     <small>Resend in {resendCountdown}s</small>
                                                 ) : (
@@ -518,7 +522,7 @@ export default function AuthModal() {
                                             className="amrat-submit-btn"
                                             disabled={loading || otpCode.length < 6}
                                         >
-                                            {loading ? 'Verifying...' : 'Sign In with OTP'}
+                                            {loading ? 'Verifying...' : 'Sign In with Email OTP'}
                                         </button>
                                     </>
                                 )}
