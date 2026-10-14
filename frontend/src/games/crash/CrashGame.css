@@ -1214,11 +1214,11 @@
     .crash-bet-sheet .crash-sidebar {
         width: 100% !important;
         min-width: 0 !important;
-        padding: 6px 10px 8px !important;
+        padding: 8px 12px 10px !important;
         background: #0f131c !important;
         border: 0 !important;
         border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4) !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
     }
 
     .crash-bet-sheet .sidebar-footer {
@@ -1226,13 +1226,17 @@
     }
 
     .crash-bet-sheet .betting-panel-3d {
-        gap: 4px !important;
+        gap: 6px !important;
+    }
+
+    .crash-bet-sheet .bet-mode-tabs {
+        display: none !important;
     }
 
     .crash-bet-sheet .bet-form {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 6px !important;
+        gap: 8px !important;
     }
 
     .crash-bet-sheet .bet-form > .form-group {
@@ -1244,56 +1248,221 @@
         grid-column: span 2 !important;
     }
 
-    .crash-bet-sheet .bet-mode-tabs {
-        display: none !important;
-    }
-
-    .crash-bet-sheet .form-group {
-        margin-bottom: 0 !important;
-    }
-
+    /* Form Headers */
     .crash-bet-sheet .form-header {
-        margin-bottom: 2px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 4px !important;
+        height: 18px !important;
     }
 
     .crash-bet-sheet .form-label {
         font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #94a3b8 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
     }
 
+    /* Hide redundant secondary amount text next to label on mobile to prevent header text collision */
+    .crash-bet-sheet .form-group .form-header .ant-typography-secondary,
+    .crash-bet-sheet .form-group .form-header .ant-typography {
+        display: none !important;
+    }
+
+    /* Clean, Flat, Modern Inputs (remove chunky 3D transforms & shadows on mobile) */
+    .crash-bet-sheet .ant-space-compact,
+    .crash-bet-sheet .ant-space-addon,
+    .crash-bet-sheet .ant-input-number,
+    .crash-bet-sheet .ant-input-number-group-addon,
+    .crash-bet-sheet .ant-input-number-addon,
+    .crash-bet-sheet .ant-input-number-group-wrapper,
+    .crash-bet-sheet .ant-btn-group,
+    .crash-bet-sheet .ant-btn {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* ========================================================
+       UNIFIED TWIN INPUT CARDS (Bet Amount & Auto Cashout)
+       Both cards share identical height (38px), background (#161f2e),
+       border (1px solid rgba(255,255,255,0.1)), and border-radius (8px)
+       ======================================================== */
+
+    /* Card 1: Bet Amount Box */
     .crash-bet-sheet .input-row {
+        display: flex !important;
+        align-items: center !important;
+        background: #161f2e !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        padding: 2px 4px 2px 8px !important;
         gap: 4px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        box-sizing: border-box !important;
+    }
+
+    .crash-bet-sheet .input-row:focus-within {
+        border-color: var(--primary, #f59e0b) !important;
+        box-shadow: 0 0 0 1px var(--primary, #f59e0b) !important;
+    }
+
+    .crash-bet-sheet .input-row .ant-space-compact,
+    .crash-bet-sheet .input-row .ant-input-number-group-wrapper {
+        flex: 1 !important;
+        min-width: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        background: transparent !important;
+        border: none !important;
+        height: 100% !important;
+        box-shadow: none !important;
+    }
+
+    .crash-bet-sheet .input-row .ant-space-addon,
+    .crash-bet-sheet .input-row .ant-input-number-group-addon {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 4px 0 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
     }
 
     .crash-bet-sheet .input-row .ant-input-number {
-        height: 36px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        flex: 1 !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
     }
 
     .crash-bet-sheet .input-row .ant-input-number-input {
-        height: 34px !important;
-        font-size: 13px !important;
+        background: transparent !important;
+        color: #ffffff !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        height: 100% !important;
+        padding: 0 !important;
     }
 
-    .crash-bet-sheet .input-row .ant-btn {
-        height: 36px !important;
-        padding: 0 8px !important;
-        font-size: 12px !important;
+    /* 1/2 and 2x Quick Chips */
+    .crash-bet-sheet .input-row .ant-btn-group {
+        display: flex !important;
+        gap: 3px !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin-left: 2px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .crash-bet-sheet .input-row .ant-btn-group .ant-btn {
+        height: 28px !important;
+        min-width: 26px !important;
+        padding: 0 6px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #94a3b8 !important;
+        border: none !important;
+        border-radius: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .crash-bet-sheet .input-row .ant-btn-group .ant-btn:active {
+        background: rgba(255, 255, 255, 0.18) !important;
+        color: #ffffff !important;
+    }
+
+    /* Card 2: Auto Cashout Box */
+    .crash-bet-sheet .crash-cashout-group .ant-space-compact,
+    .crash-bet-sheet .crash-cashout-group .ant-input-number-group-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        background: #161f2e !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        padding: 2px 10px 2px 8px !important;
+        width: 100% !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        box-sizing: border-box !important;
+        box-shadow: none !important;
+    }
+
+    .crash-bet-sheet .crash-cashout-group:focus-within .ant-space-compact,
+    .crash-bet-sheet .crash-cashout-group:focus-within .ant-input-number-group-wrapper {
+        border-color: var(--primary, #f59e0b) !important;
+        box-shadow: 0 0 0 1px var(--primary, #f59e0b) !important;
     }
 
     .crash-bet-sheet .crash-cashout-group .ant-input-number {
-        height: 36px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        flex: 1 !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
     }
 
     .crash-bet-sheet .crash-cashout-group .ant-input-number-input {
-        height: 34px !important;
-        font-size: 13px !important;
+        background: transparent !important;
+        color: #ffffff !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        height: 100% !important;
+        padding: 0 !important;
     }
 
+    .crash-bet-sheet .crash-cashout-group .ant-space-addon,
+    .crash-bet-sheet .crash-cashout-group .ant-input-number-group-addon {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        color: var(--primary, #f59e0b) !important;
+        font-weight: 800 !important;
+        font-size: 15px !important;
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
+    }
+
+    /* Auto Cashout toggle switch */
+    .crash-bet-sheet .crash-switch {
+        background: #334155 !important;
+    }
+
+    .crash-bet-sheet .crash-switch.ant-switch-checked {
+        background: var(--primary, #f59e0b) !important;
+    }
+
+    /* Cashout disabled state */
+    .crash-bet-sheet .crash-cashout-group:has(.ant-input-number-disabled) .ant-space-compact,
+    .crash-bet-sheet .crash-cashout-group:has(.ant-input-number-disabled) .ant-input-number-group-wrapper {
+        opacity: 0.38 !important;
+        background: rgba(15, 23, 42, 0.4) !important;
+    }
+
+    /* Place Bet Action Button */
     .crash-bet-sheet .bet-button {
-        min-height: 42px !important;
-        height: 42px !important;
+        min-height: 44px !important;
+        height: 44px !important;
         font-size: 15px !important;
         font-weight: 800 !important;
-        margin-top: 2px !important;
+        border-radius: 8px !important;
+        margin-top: 4px !important;
+        letter-spacing: 0.5px !important;
     }
 
     .crash-mobile-tabs {

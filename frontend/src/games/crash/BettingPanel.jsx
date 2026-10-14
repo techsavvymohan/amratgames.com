@@ -156,6 +156,7 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
                             step={0.1}
                             precision={2}
                             disabled={!autoCashout}
+                            controls={false}
                             style={{ width: '100%' }}
                             addonAfter={<span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>×</span>}
                         />
