@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useCallback } from 'react'
+import React, { useRef, useEffect, useMemo, useCallback } from 'react'
 import { Tag, Typography, Badge } from 'antd'
 import { WifiOutlined } from '@ant-design/icons'
 
@@ -11,6 +11,7 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
     const rocketRef = useRef(null)
     const exhaustRef = useRef(null)
     const explosionRef = useRef(null)
+    const explosionTimeoutRef = useRef(null)
     const multiplierTextRef = useRef(null)
     const multiplierNumberRef = useRef(null)
     const totalTimeTextRef = useRef(null)
@@ -119,15 +120,15 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
         ctx.stroke()
         ctx.setLineDash([])
 
-        const isFlying = (phaseRef.current === 'running' || phaseRef.current === 'crashed' || isCrashed) && curElapsed > 0
+        const isFlying = (phaseRef.current === 'running' || phaseRef.current === 'crashed' || isCrashed) && (curElapsed > 0 || isCrashed)
 
         if (isFlying) {
             // Adaptive sample points along exponential curve
-            const numPoints = Math.min(180, Math.max(30, Math.floor(curElapsed * 15)))
+            const numPoints = Math.max(1, Math.min(180, Math.floor(curElapsed * 15)))
             const points = new Array(numPoints + 1)
 
             for (let i = 0; i <= numPoints; i++) {
-                const ptTime = (i / numPoints) * curElapsed
+                const ptTime = curElapsed > 0 ? (i / numPoints) * curElapsed : 0
                 const ptMult = Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * ptTime))
                 const x = timeToX(ptTime)
                 const y = Math.max(padding.top, multiplierToY(ptMult))
@@ -204,11 +205,18 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             ctx.lineJoin = 'round'
             ctx.stroke()
 
-            // 5. Exact Mathematical Tangent Angle along curve (zero wobble, zero jitter)
-            const prevPt = (points && numPoints > 0) ? points[numPoints - 1] : { x: endX - 1, y: endY + 0.5 }
-            const dx = endX - prevPt.x
-            const dy = endY - prevPt.y
-            const angle = Math.atan2(dy, dx)
+            // 5. Continuous Mathematical Tangent Angle along curve (zero discrete step jitter)
+            let angle = -0.785398 // Default ~ -45deg
+            if (curElapsed > 0.001) {
+                const prevDt = Math.min(0.04, curElapsed * 0.1)
+                const prevTime = Math.max(0, curElapsed - prevDt)
+                const prevX = timeToX(prevTime)
+                const prevMult = Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * prevTime))
+                const prevY = multiplierToY(prevMult)
+                const dx = Math.max(0.0001, endX - prevX)
+                const dy = endY - prevY
+                angle = Math.atan2(dy, dx)
+            }
 
             // 6. Direct GPU Transform Updates (translate3d, zero reflow)
             if (rocketRef.current) {
@@ -235,13 +243,18 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                     if (explosionRef.current.style.display !== 'block') {
                         explosionRef.current.style.display = 'block'
                         explosionRef.current.style.transform = `translate3d(${endX}px, ${endY}px, 0) translate(-50%, -50%)`
-                        explosionRef.current.src = '/images/explosions/normal_explosion.gif?' + Date.now()
-                        setTimeout(() => {
+                        explosionRef.current.src = '/images/explosions/normal_explosion.gif'
+                        if (explosionTimeoutRef.current) clearTimeout(explosionTimeoutRef.current)
+                        explosionTimeoutRef.current = setTimeout(() => {
                             if (explosionRef.current) explosionRef.current.style.display = 'none'
                         }, 1400)
                     }
                 } else {
                     explosionRef.current.style.display = 'none'
+                    if (explosionTimeoutRef.current) {
+                        clearTimeout(explosionTimeoutRef.current)
+                        explosionTimeoutRef.current = null
+                    }
                 }
             }
 
@@ -334,8 +347,8 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             }
             activeFlightStartRef.current = null
             maxElapsedRef.current = 0
-            const crashMult = multiplier > 1.0 ? multiplier : lastRenderedRef.current.multiplier
-            const crashElapsed = Math.log(Math.max(1.0, crashMult)) / CRASH_GROWTH_RATE
+            const crashMult = typeof multiplier === 'number' && multiplier >= 1.0 ? multiplier : (lastRenderedRef.current.multiplier || 1.00)
+            const crashElapsed = crashMult > 1.0 ? Math.log(crashMult) / CRASH_GROWTH_RATE : 0
             drawScene(crashElapsed, crashMult, true)
         } else {
             // idle or waiting
@@ -500,4 +513,17 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
     )
 }
 
-export default GameChart
+export default React.memo(GameChart, (prevProps, nextProps) => {
+    // If phase changes, always re-render
+    if (prevProps.phase !== nextProps.phase) return false
+    // If waiting countdown changes, re-render HUD
+    if (nextProps.phase === 'waiting' && prevProps.countdown !== nextProps.countdown) return false
+    // If new flight anchor time initialized, re-render
+    if (prevProps.flightStartTime !== nextProps.flightStartTime) return false
+    // If crashed multiplier updates, re-render
+    if (nextProps.phase === 'crashed' && prevProps.multiplier !== nextProps.multiplier) return false
+    // While actively flying, RAF manages canvas, rocket, exhaust, and HUD DOM updates directly at 60-120fps.
+    // Suppressing 10Hz React DOM re-renders completely eliminates visual text and transform stutter.
+    if (nextProps.phase === 'running') return true
+    return false
+})

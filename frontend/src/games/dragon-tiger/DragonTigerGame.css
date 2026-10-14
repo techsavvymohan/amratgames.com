@@ -833,18 +833,19 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     }
 
     .dt-chip-btn {
-        width: 38px !important;
-        height: 38px !important;
-        min-width: 38px !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
         border-radius: 50% !important;
-        font-size: 11px !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
     }
 
     .dt-deal-btn {
-        height: 42px !important;
-        min-height: 42px !important;
-        font-size: 15px !important;
-        font-weight: 800 !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        font-size: 16px !important;
+        font-weight: 900 !important;
         margin-top: 4px !important;
     }
 

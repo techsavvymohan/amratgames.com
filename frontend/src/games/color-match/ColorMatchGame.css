@@ -1468,10 +1468,12 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         height: 48px !important;
     }
     .cm-time-num {
-        font-size: 10px !important;
+        font-size: 11px !important;
     }
     .cm-time-lbl {
-        font-size: 7px !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
     }
     .cm-period-id {
         font-size: 11px !important;
@@ -1484,8 +1486,8 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         padding: 6px 4px !important;
     }
     .cm-gem-frame {
-        width: 26px !important;
-        height: 26px !important;
+        width: 28px !important;
+        height: 28px !important;
         font-size: 14px !important;
     }
     .cm-crystal-title {
@@ -1503,13 +1505,15 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         font-size: 14px !important;
     }
     .cm-sphere-payout {
-        font-size: 9px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
     }
     .casino-chip {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        font-size: 10px !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        font-size: 12px !important;
+        font-weight: 800 !important;
     }
     .cm-history-panel {
         display: none !important;
@@ -1521,9 +1525,9 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
     .cm-deal-button {
-        height: 42px !important;
-        min-height: 42px !important;
-        font-size: 14px !important;
-        font-weight: 800 !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        font-size: 15px !important;
+        font-weight: 900 !important;
     }
 }

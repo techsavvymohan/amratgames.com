@@ -499,6 +499,18 @@ function Header({
                     )}
                 </div>
 
+                {!user && (
+                    <button
+                        type="button"
+                        id="header-mobile-auth-btn"
+                        className="mobile-auth-btn"
+                        onClick={() => openAuthModal('login')}
+                        aria-label="Sign In or Register"
+                    >
+                        Sign In
+                    </button>
+                )}
+
                 <button
                     ref={menuButtonRef}
                     type="button"

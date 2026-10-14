@@ -221,6 +221,73 @@
     gap: 8px;
 }
 
+.bet-input-box {
+    display: flex;
+    align-items: center;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 4px 6px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.bet-input-box:focus-within {
+    border-color: #f5af19;
+    box-shadow: 0 0 0 3px rgba(245, 175, 25, 0.15);
+}
+
+.input-currency {
+    padding-left: 10px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f5af19;
+}
+
+.bet-input-field {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 800;
+    padding: 8px 10px;
+    outline: none;
+    width: 100%;
+}
+
+.preset-chips-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.preset-chip {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 8px 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 52px;
+}
+
+.preset-chip:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.preset-chip.active {
+    background: rgba(245, 175, 25, 0.18);
+    color: #fbbf24;
+    border-color: #f5af19;
+}
+
 .vault-action-btn {
     background: linear-gradient(135deg, #f5af19, #e65c00);
     border: none;
@@ -261,4 +328,47 @@
 
 .vault-info-banner strong {
     color: #f1f5f9;
+}
+
+@media (max-width: 480px) {
+    .vault-hero-card {
+        padding: 14px 12px;
+        gap: 12px;
+    }
+    .vault-hero-title {
+        font-size: 1.1rem;
+    }
+    .vault-metrics-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+    .vault-metric-box {
+        padding: 10px 10px;
+        gap: 2px;
+    }
+    .vault-metric-lbl {
+        font-size: 0.68rem;
+    }
+    .vault-metric-val {
+        font-size: 1.15rem;
+    }
+    .vault-card {
+        padding: 14px 12px;
+        gap: 10px;
+    }
+    .vault-action-btn {
+        min-height: 46px;
+        font-size: 1rem;
+    }
+    .bet-input-field {
+        font-size: 16px; /* Prevents auto-zoom in iOS Safari */
+    }
+    .preset-chips-row {
+        gap: 4px;
+    }
+    .preset-chip {
+        padding: 8px 2px;
+        font-size: 0.72rem;
+        min-height: 38px;
+    }
 }

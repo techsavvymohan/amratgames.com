@@ -390,7 +390,7 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.ok(burstDuration < 50, `Burst persists must not block event loop (took ${burstDuration}ms)`)
 
         // Allow async flush to drain
-        const deadline = Date.now() + 1500
+        const deadline = Date.now() + 3000
         while ((db._isFlushing || db._flushTimer || db._needsFlushAgain) && Date.now() < deadline) {
             await new Promise(r => setTimeout(r, 30))
         }

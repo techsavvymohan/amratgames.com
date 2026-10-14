@@ -476,14 +476,45 @@
 }
 
 @media (max-width: 480px) {
+    .amrat-auth-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
+
     .amrat-auth-card {
-        padding: 20px 16px;
-        border-radius: 14px;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: calc(100dvh - 20px) !important;
+        border-radius: 20px 20px 0 0 !important;
+        border-bottom: none !important;
+        padding: 20px 16px calc(20px + env(safe-area-inset-bottom)) !important;
+        animation: authSheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
+
+    @keyframes authSheetSlideUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
     .amrat-auth-tabs {
-        font-size: 0.74rem;
+        font-size: 0.8rem;
     }
+
     .amrat-auth-tab-btn {
-        padding: 8px 4px;
+        padding: 10px 6px;
+        min-height: 42px;
+    }
+
+    .amrat-input {
+        font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+    }
+
+    .amrat-submit-btn {
+        min-height: 46px !important;
+        font-size: 1rem !important;
     }
 }

@@ -50,8 +50,8 @@ test('Home uses compact mobile hero, category rail, and adaptive card grid', asy
 
 test('Mines keeps the square board ahead of a collapsible betting sheet', async () => {
     const [component, css] = await sources([
-        './src/components/MinesGame/MinesGame.jsx',
-        './src/components/MinesGame/MinesGame.css',
+        './src/games/mines/MinesGame.jsx',
+        './src/games/mines/MinesGame.css',
     ])
     assert.match(component, /<MobileBetSheet[^>]*title="Mines bet controls"/)
     assert.match(component, /mines-bet-sheet/)
@@ -66,10 +66,10 @@ test('Mines keeps the square board ahead of a collapsible betting sheet', async 
 
 test('Crash prioritizes chart, cashout, and mobile player tabs', async () => {
     const [game, panel, history, css] = await sources([
-        './src/components/CrashGame/CrashGame.jsx',
-        './src/components/CrashGame/BettingPanel.jsx',
-        './src/components/CrashGame/GameHistory.jsx',
-        './src/components/CrashGame/CrashGame.css',
+        './src/games/crash/CrashGame.jsx',
+        './src/games/crash/BettingPanel.jsx',
+        './src/games/crash/GameHistory.jsx',
+        './src/games/crash/CrashGame.css',
     ])
     assert.match(game, /<MobileBetSheet[^>]*title="Crash bet controls"/)
     assert.match(game, /mobileDataTab/)
@@ -83,8 +83,8 @@ test('Crash prioritizes chart, cashout, and mobile player tabs', async () => {
 
 test('Dino keeps Phaser and live actions ahead of secondary controls', async () => {
     const [component, css] = await sources([
-        './src/components/DinoGame/DinoGame.jsx',
-        './src/components/DinoGame/DinoGame.css',
+        './src/games/dino/DinoGame.jsx',
+        './src/games/dino/DinoGame.css',
     ])
     assert.match(component, /<MobileBetSheet[^>]*title="Dino bet controls"/)
     assert.match(component, /collapseOn=\{gamePhase === 'running' \|\| gamePhase === 'waiting'\}/)
@@ -96,12 +96,12 @@ test('Dino keeps Phaser and live actions ahead of secondary controls', async () 
 
 test('Plinko mobile presentation preserves board ratio and critical controls', async () => {
     const [game, sidebar, board, gameCss, sidebarCss, boardCss] = await sources([
-        './src/components/PlinkoGame/PlinkoGame.jsx',
-        './src/components/PlinkoGame/Sidebar.jsx',
-        './src/components/PlinkoGame/Plinko.jsx',
-        './src/components/PlinkoGame/PlinkoGame.css',
-        './src/components/PlinkoGame/Sidebar.css',
-        './src/components/PlinkoGame/Plinko.css',
+        './src/games/plinko/PlinkoGame.jsx',
+        './src/games/plinko/Sidebar.jsx',
+        './src/games/plinko/Plinko.jsx',
+        './src/games/plinko/PlinkoGame.css',
+        './src/games/plinko/Sidebar.css',
+        './src/games/plinko/Plinko.css',
     ])
     assert.match(game, /<MobileBetSheet[^>]*title="Plinko bet controls"/)
     assert.match(game, /plinko-bet-sheet/)

@@ -89,11 +89,25 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+button,
+input,
+select,
+textarea,
+a {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-auth-btn {
+    display: none;
+}
+
 /* ===== App Layout ===== */
 .app {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     background: var(--bg-primary);
 }
 
@@ -1828,6 +1842,30 @@ body {
         line-height: 1;
         box-shadow: 0 2px 6px rgba(245, 175, 25, 0.4);
         flex-shrink: 0;
+    }
+
+    /* 👑 Guest Mobile Sign In CTA Button */
+    .mobile-auth-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #f5af19, #d49110);
+        color: #0b0f19 !important;
+        font-weight: 800;
+        font-size: 13px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(245, 175, 25, 0.4);
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+        margin-right: 4px;
+    }
+
+    .mobile-auth-btn:active {
+        transform: scale(0.96);
     }
 
     /* 👑 UI/UX Pro Max: Sleek Hamburger Menu Button */
