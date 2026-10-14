@@ -19,11 +19,17 @@ import { DinoEngine } from '../games/dino/index.js'
 export { PLINKO_PAYOUTS }
 
 class GameEngineService {
-    constructor() {
-        // Expose shared state maps for backwards compatibility
-        this.activeMinesRounds = minesEngine.activeMinesRounds
-        this.activeCrashRounds = crashEngine.activeCrashRounds
-        this.userNonces = provablyFairCore.userNonces
+    // Expose shared state maps for backwards compatibility via getters to prevent circular dependency TDZ
+    get activeMinesRounds() {
+        return minesEngine?.activeMinesRounds
+    }
+
+    get activeCrashRounds() {
+        return crashEngine?.activeCrashRounds
+    }
+
+    get userNonces() {
+        return provablyFairCore?.userNonces
     }
 
     // Cryptographic Entropy Helpers

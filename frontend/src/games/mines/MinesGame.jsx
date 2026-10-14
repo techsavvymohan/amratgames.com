@@ -21,6 +21,7 @@ import Chart from 'chart.js/auto'
 const { Title, Text, Paragraph } = Typography;
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
+import { useAuth } from '../../context/AuthContext'
 import { CurrencyIcon } from '../../components/Header'
 import ProvablyFair from '../../utils/ProvablyFair'
 import MobileBetSheet from '../../components/MobileBetSheet'
@@ -52,6 +53,7 @@ const StatsIcon = () => (
 )
 
 function MinesGame() {
+    const { user, openAuthModal } = useAuth();
     const {
         balance,
         showToast,
@@ -417,8 +419,10 @@ function MinesGame() {
     };
 
     const startGame = async () => {
-        if (demoTimeoutRef.current) clearTimeout(demoTimeoutRef.current);
-        setSpectatorMissedWin(null);
+        if (!user) {
+            openAuthModal?.('register');
+            return;
+        }
 
         if (betAmount <= 0) return;
         if (betAmount > balance) {
@@ -664,7 +668,7 @@ function MinesGame() {
                             {/* Action Buttons */}
                             {!isPlaying ? (
                                 <button id="mines-bet-btn" className="btn-bet-mines" onClick={startGame}>
-                                    Bet
+                                    {!user ? 'Sign In to Play' : 'Bet'}
                                 </button>
                             ) : (
                                 <>

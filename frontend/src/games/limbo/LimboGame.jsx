@@ -9,6 +9,7 @@ import {
     RedoOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
+import { useAuth } from '../../context/AuthContext'
 import ProvablyFair from '../../utils/ProvablyFair'
 import casinoAudio from '../../utils/casinoAudio'
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
@@ -25,7 +26,8 @@ const MIN_MULTIPLIER = 1.01
 const QUICK_PRESETS = [1.50, 2.00, 5.00, 10.00, 50.00, 100.00]
 
 function LimboGame() {
-    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
+    const { user, openAuthModal } = useAuth()
+    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss, showToast } = useWallet()
 
     // Provably fair engine instance
     const fairnessRef = useRef(null)
@@ -144,8 +146,18 @@ function LimboGame() {
     // Execute single roll using Server-Authoritative Provably Fair algorithm
     const executeRoll = useCallback(async () => {
         if (isRolling) return
+        if (!user) {
+            openAuthModal?.('register')
+            return
+        }
         const currentBet = activeBetRef.current
-        if (currentBet > balance || currentBet <= 0) {
+        if (currentBet > balance) {
+            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${currentBet.toFixed(2)} to place this bet.`)
+            setIsAutoRunning(false)
+            autoRunningRef.current = false
+            return
+        }
+        if (currentBet <= 0) {
             setIsAutoRunning(false)
             autoRunningRef.current = false
             return
@@ -173,6 +185,7 @@ function LimboGame() {
             setIsRolling(false)
             setIsAutoRunning(false)
             autoRunningRef.current = false
+            showToast?.('error', 'Bet Failed', betResponse?.error || 'Failed to place bet')
             return
         }
 
@@ -252,7 +265,7 @@ function LimboGame() {
                 }
             }
         }, 28)
-    }, [isRolling, balance, targetMultiplier, executeGameBet, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
+    }, [isRolling, user, openAuthModal, balance, showToast, currencySymbol, targetMultiplier, executeGameBet, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
 
     // Keep activeBetRef in sync with betAmount
     useEffect(() => {
@@ -275,7 +288,15 @@ function LimboGame() {
 
     // Start auto betting
     const startAutoBet = () => {
-        if (betAmount > balance || betAmount <= 0) return
+        if (!user) {
+            openAuthModal?.('register')
+            return
+        }
+        if (betAmount > balance) {
+            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)} to place this bet.`)
+            return
+        }
+        if (betAmount <= 0) return
         setBaseBetAmount(betAmount)
         activeBetRef.current = betAmount
         const count = autoBetCount === 0 ? 999999 : autoBetCount
@@ -470,10 +491,10 @@ function LimboGame() {
                         size="large"
                         block
                         onClick={executeRoll}
-                        disabled={isRolling || betAmount > balance || betAmount <= 0}
+                        disabled={isRolling || betAmount <= 0}
                         className="limbo-bet-btn"
                     >
-                        {isRolling ? 'Rolling…' : 'Play Limbo'}
+                        {!user ? 'Sign In to Play' : isRolling ? 'Rolling…' : 'Play Limbo'}
                     </Button>
                 </div>
             </div>
