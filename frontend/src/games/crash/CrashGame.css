@@ -341,18 +341,36 @@
     overflow: hidden;
 }
 
-/* Game History Bar - Full Width Scrollable */
-.crash-game .game-history-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 20;
+/* Mode Switcher Header */
+.crash-game .crash-mode-header {
     display: flex;
     align-items: center;
-    background: linear-gradient(180deg, rgba(15, 33, 46, 0.95) 0%, rgba(15, 33, 46, 0.8) 70%, transparent 100%);
-    padding: 10px 12px;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: linear-gradient(90deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border-radius: 10px;
+    margin: 12px 14px 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 5;
+    flex-shrink: 0;
+}
+
+/* Game History Bar - Full Width Scrollable */
+.crash-game .game-history-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 6px 12px;
+    margin: 0 14px 8px 14px;
     gap: 0;
+    flex-shrink: 0;
 }
 
 .crash-game .game-history-bar .history-pills-scroll {
@@ -451,11 +469,11 @@
 .crash-game .chart-container-antd {
     flex: 1;
     position: relative;
-    margin: 16px;
+    margin: 0 14px 14px 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 50px;
+    margin-top: 0;
 }
 
 .crash-game .chart-container-antd .crash-canvas {

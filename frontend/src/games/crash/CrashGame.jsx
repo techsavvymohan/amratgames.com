@@ -53,7 +53,6 @@ import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWebSocket } from '../../context/WebSocketContext'
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CrashGame.css'
 
@@ -953,17 +952,7 @@ function CrashGame() {
                 {/* Game Display */}
                 <div className="game-display" ref={gameDisplayRef}>
                     {/* Mode Switcher */}
-                    <div className="crash-mode-header" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 14px',
-                        background: 'linear-gradient(90deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%)',
-                        borderRadius: '10px',
-                        marginBottom: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
-                    }}>
+                    <div className="crash-mode-header">
                         <Radio.Group
                             value={gameMode}
                             onChange={(e) => {
@@ -1022,20 +1011,6 @@ function CrashGame() {
                         elapsedTime={elapsedTime}
                         countdown={countdown}
                         flightStartTime={flightStartTime}
-                    />
-
-                    {/* Spectator Missed Win FOMO Banner */}
-                    <MissedWinBanner
-                        visible={Boolean(spectatorMissedWin && phase === PHASE.CRASHED && !betPlaced)}
-                        outcome={spectatorMissedWin?.outcome}
-                        multiplier={spectatorMissedWin?.multiplier}
-                        amount={spectatorMissedWin?.amount}
-                        payout={spectatorMissedWin?.payout}
-                        currencySymbol={currencySymbol}
-                        countdown={countdown || 5}
-                        onAction={() => {
-                            setSpectatorMissedWin(null)
-                        }}
                     />
 
                     {/* Player Results (floating on chart) */}
