@@ -346,12 +346,11 @@ export default function CoinTossGame() {
             {/* Top Game Bar - Streamlined & Minimal */}
             <header className="coin-toss-header">
                 <div className="header-meta">
-                    <span className="badge-live-pulse">
-                        <span className="pulse-dot" /> PROVABLY FAIR
+                    <span className="coin-brand-pill">
+                        <span className="coin-brand-icon">🪙</span>
+                        <span className="coin-brand-name">COIN TOSS</span>
                     </span>
-                    <span className="badge-countdown">
-                        <CheckCircleFilled /> 99% RTP
-                    </span>
+                    <span className="badge-rtp-clean">99% RTP</span>
                 </div>
 
                 <div className="header-actions">
@@ -394,83 +393,29 @@ export default function CoinTossGame() {
                 </div>
             </header>
 
-            {/* Mode Selector Bar: Solo vs House vs PvP Duels Arena */}
-            <div
-                style={{
-                    display: 'flex',
-                    gap: 10,
-                    margin: '6px 0 10px 0',
-                    width: '100%'
-                }}
-            >
+            {/* Mode Selector: Segmented Pill */}
+            <div className="coin-mode-tabs">
                 <button
                     type="button"
-                    style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        borderRadius: 10,
-                        border: gameMode === 'solo' ? '1px solid #f5af19' : '1px solid rgba(255,255,255,0.08)',
-                        background:
-                            gameMode === 'solo'
-                                ? 'linear-gradient(135deg, rgba(245, 175, 25, 0.2), rgba(20, 30, 48, 0.7))'
-                                : 'rgba(255,255,255,0.03)',
-                        color: gameMode === 'solo' ? '#fbbf24' : '#94a3b8',
-                        fontWeight: 800,
-                        fontSize: '0.88rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        transition: 'all 0.2s ease'
-                    }}
+                    className={`coin-mode-tab ${gameMode === 'solo' ? 'active' : ''}`}
                     onClick={() => {
                         casinoAudio.playChip()
                         setGameMode('solo')
                     }}
                 >
-                    <span>🎲 Solo vs House (1.98x Payout)</span>
+                    <span>🎲 Solo Mode (1.98x)</span>
                 </button>
 
                 <button
                     type="button"
-                    style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        borderRadius: 10,
-                        border: gameMode === 'pvp' ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.08)',
-                        background:
-                            gameMode === 'pvp'
-                                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(20, 30, 48, 0.7))'
-                                : 'rgba(255,255,255,0.03)',
-                        color: gameMode === 'pvp' ? '#60a5fa' : '#94a3b8',
-                        fontWeight: 800,
-                        fontSize: '0.88rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        transition: 'all 0.2s ease'
-                    }}
+                    className={`coin-mode-tab ${gameMode === 'pvp' ? 'active' : ''}`}
                     onClick={() => {
                         casinoAudio.playChip()
                         setGameMode('pvp')
                     }}
                 >
-                    <span>⚔️ 1v1 PvP Duels Arena (Multiplayer)</span>
-                    <span
-                        style={{
-                            background: '#3b82f6',
-                            color: '#fff',
-                            fontSize: '0.68rem',
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontWeight: 900
-                        }}
-                    >
-                        HOT
-                    </span>
+                    <span>⚔️ 1v1 PvP Arena</span>
+                    <span className="mode-badge-hot">HOT</span>
                 </button>
             </div>
 
@@ -564,28 +509,6 @@ export default function CoinTossGame() {
                         )}
 
                     </div>
-
-                    {/* Win Ratio Stats Bar */}
-                    <div className="stats-indicator-bar">
-                        <div className="stat-col">
-                            <span className="stat-name">HEADS</span>
-                            <span className="stat-val heads-color">{stats.headsPct}%</span>
-                        </div>
-                        <div className="stat-progress-bar">
-                            <div
-                                className="progress-heads"
-                                style={{ width: `${stats.headsPct}%` }}
-                            />
-                            <div
-                                className="progress-tails"
-                                style={{ width: `${stats.tailsPct}%` }}
-                            />
-                        </div>
-                        <div className="stat-col">
-                            <span className="stat-name">TAILS</span>
-                            <span className="stat-val tails-color">{stats.tailsPct}%</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Betting Control Panel */}
@@ -594,7 +517,6 @@ export default function CoinTossGame() {
                     <div className="coin-controls-top-row">
                         <div className="controls-badges">
                             <span className="badge-mult-pill">1.98X PAYOUT</span>
-                            <span className="badge-rtp-pill">🪙 99% RTP</span>
                         </div>
                         <div className="controls-toggles">
                             <button
