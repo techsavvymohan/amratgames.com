@@ -1062,9 +1062,18 @@
         flex-direction: column;
     }
 
+    .plinko-page .plinko-game-wrapper {
+        order: 1;
+    }
+
+    .plinko-page .plinko-bet-sheet {
+        order: 2;
+    }
+
     .plinko-page .plinko-sidebar-wrapper {
         border-right: none;
-        border-bottom: 1px solid var(--border-color);
+        border-top: 1px solid var(--border-color);
+        border-bottom: none;
     }
 
 
@@ -1118,6 +1127,7 @@
     }
 
     .plinko-page .plinko-game-wrapper {
+        order: 1 !important;
         width: 100% !important;
         flex: 1 1 auto !important;
         min-height: 0 !important;
@@ -1140,6 +1150,15 @@
 
     .plinko-page .hot-streak-banner {
         display: none !important;
+    }
+
+    .plinko-page .plinko-bet-sheet {
+        order: 2 !important;
+        width: 100% !important;
+        flex: 0 0 auto !important;
+        margin-top: auto !important;
+        position: relative !important;
+        z-index: 10 !important;
     }
 
     .plinko-bet-sheet .plinko-sidebar-wrapper,
