@@ -3,8 +3,64 @@
    Fully Mobile-Responsive & Touch-Optimized
    ========================================================================== */
 
+/* Enable native viewport scrolling for Admin Dashboard on both Desktop & Mobile */
+html.admin-page-active,
+body.admin-page-active,
+html:has(.admin-container),
+body:has(.admin-container) {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: auto !important;
+}
+
+html.admin-page-active #root,
+html.admin-page-active .ant-app,
+body.admin-page-active #root,
+body.admin-page-active .ant-app,
+#root:has(.admin-container),
+.ant-app:has(.admin-container) {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Obsidian cyber-luxury scrollbar for Admin */
+html.admin-page-active::-webkit-scrollbar,
+body.admin-page-active::-webkit-scrollbar,
+html:has(.admin-container)::-webkit-scrollbar,
+body:has(.admin-container)::-webkit-scrollbar {
+    width: 8px;
+}
+
+html.admin-page-active::-webkit-scrollbar-track,
+body.admin-page-active::-webkit-scrollbar-track,
+html:has(.admin-container)::-webkit-scrollbar-track,
+body:has(.admin-container)::-webkit-scrollbar-track {
+    background: #08080c;
+}
+
+html.admin-page-active::-webkit-scrollbar-thumb,
+body.admin-page-active::-webkit-scrollbar-thumb,
+html:has(.admin-container)::-webkit-scrollbar-thumb,
+body:has(.admin-container)::-webkit-scrollbar-thumb {
+    background: rgba(245, 175, 25, 0.35);
+    border-radius: 4px;
+}
+
+html.admin-page-active::-webkit-scrollbar-thumb:hover,
+body.admin-page-active::-webkit-scrollbar-thumb:hover,
+html:has(.admin-container)::-webkit-scrollbar-thumb:hover,
+body:has(.admin-container)::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 175, 25, 0.7);
+}
+
 .admin-container {
     min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     max-width: 1480px;
     margin: 0 auto;
@@ -525,6 +581,8 @@
     justify-content: center;
     z-index: 9999;
     padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-modal {
@@ -534,6 +592,11 @@
     padding: 24px;
     max-width: 500px;
     width: 100%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     box-sizing: border-box;
 }

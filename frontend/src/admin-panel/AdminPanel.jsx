@@ -20,8 +20,17 @@ export default function AdminPanel() {
     const { user, token, isAdmin, login, quickAdminLogin, logout, backendOnline } = useAuth()
     const { subscribe } = useWebSocket()
 
-    // Instantiate OOP Client
     const apiClient = useMemo(() => new AdminApiClient(() => token), [token])
+
+    // Ensure the page document is scrollable while on the Admin Panel
+    useEffect(() => {
+        document.documentElement.classList.add('admin-page-active')
+        document.body.classList.add('admin-page-active')
+        return () => {
+            document.documentElement.classList.remove('admin-page-active')
+            document.body.classList.remove('admin-page-active')
+        }
+    }, [])
 
     // Tabs & View State
     const [currentTab, setCurrentTab] = useState('overview') // 'overview' | 'withdrawals' | 'deposits' | 'users' | 'tokens' | 'settings'

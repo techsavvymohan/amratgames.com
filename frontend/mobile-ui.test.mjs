@@ -131,3 +131,30 @@ test('mobile bet sheet owns collapse, escape, focus, and scroll-lock behavior', 
     assert.match(css, /prefers-reduced-motion/)
 })
 
+test('admin panel enables full desktop and mobile scrolling without breaking casino zero-scroll', async () => {
+    const [adminPanelJsx, adminPanelCss, globalCss] = await sources([
+        './src/admin-panel/AdminPanel.jsx',
+        './src/admin-panel/AdminPanel.css',
+        './src/styles/index.css',
+    ])
+
+    // AdminPanel component activates and cleans up scrollable body class
+    assert.match(adminPanelJsx, /classList\.add\('admin-page-active'\)/)
+    assert.match(adminPanelJsx, /classList\.remove\('admin-page-active'\)/)
+
+    // Global CSS provides viewport scroll override for admin
+    assert.match(globalCss, /html\.admin-page-active[\s\S]*overflow-y:\s*auto\s*!important/)
+    assert.match(globalCss, /body\.admin-page-active[\s\S]*height:\s*auto\s*!important/)
+    assert.match(globalCss, /:has\(\.admin-container\)/)
+
+    // AdminPanel CSS provides scrollbar and modal scrolling
+    assert.match(adminPanelCss, /html\.admin-page-active[\s\S]*overflow-y:\s*auto\s*!important/)
+    assert.match(adminPanelCss, /\.admin-modal\s*\{[^}]*max-height:\s*90(?:vh|dvh)[^}]*overflow-y:\s*auto/s)
+    assert.match(adminPanelCss, /\.admin-table-wrapper\s*\{[^}]*overflow-x:\s*auto/s)
+
+    // Casino game zero-scroll isolation is preserved in globalCss
+    assert.match(globalCss, /html,\s*body\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden;/s)
+    assert.match(globalCss, /\.main-content:has\(\.crash-game\)/)
+})
+
+

@@ -80,6 +80,31 @@ body {
     overflow: hidden;
 }
 
+/* Dedicated Admin Page Viewport Override - enables natural desktop & mobile scrolling */
+html.admin-page-active,
+body.admin-page-active,
+html:has(.admin-container),
+body:has(.admin-container) {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: auto !important;
+}
+
+html.admin-page-active #root,
+html.admin-page-active .ant-app,
+body.admin-page-active #root,
+body.admin-page-active .ant-app,
+#root:has(.admin-container),
+.ant-app:has(.admin-container) {
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto !important;
+    overflow: visible !important;
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--bg-primary);
