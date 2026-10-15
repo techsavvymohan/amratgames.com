@@ -64,13 +64,21 @@
     }
 
     .cm-dial-wrapper {
-        width: 50px !important;
-        height: 50px !important;
+        width: 58px !important;
+        height: 58px !important;
     }
 
     .cm-dial-svg {
-        width: 50px !important;
-        height: 50px !important;
+        width: 58px !important;
+        height: 58px !important;
+    }
+
+    .cm-time-num {
+        font-size: 10.5px !important;
+    }
+
+    .cm-time-lbl {
+        font-size: 7px !important;
     }
 
     .cm-sphere-ball {
@@ -385,38 +393,59 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 /* Circular SVG Dial */
 .cm-dial-wrapper {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 76px;
+    height: 76px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.9) 75%);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7), 0 0 14px rgba(245, 158, 11, 0.2);
+    flex-shrink: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cm-dial-wrapper.is-drawing {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0.9) 75%);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7), 0 0 16px rgba(16, 185, 129, 0.25);
 }
 
 .cm-dial-svg {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     transform: rotate(-90deg);
+    pointer-events: none;
 }
 
 .cm-dial-bg {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.06);
-    stroke-width: 6;
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 4;
 }
 
 .cm-dial-progress {
     fill: none;
-    stroke: #ffd700;
-    stroke-width: 6;
+    stroke-width: 4.5;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
-    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.8));
+    transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
 }
 
-.cm-countdown-card.cm-urgent .cm-dial-progress {
-    stroke: #ff1744;
-    filter: drop-shadow(0 0 10px rgba(255, 23, 68, 0.9));
+.cm-dial-progress.drawing-active {
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.8));
+    animation: cmDialSpin 1.4s linear infinite;
+    transform-origin: 50px 50px;
+}
+
+@keyframes cmDialSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .cm-dial-time {
@@ -424,22 +453,60 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+    z-index: 2;
+    pointer-events: none;
+    gap: 1px;
+}
+
+.cm-time-status-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 6px #fbbf24;
+    margin-bottom: 2px;
+    animation: cmDotPulse 1.2s infinite alternate ease-in-out;
+}
+
+.cm-dial-wrapper.is-drawing .cm-time-status-dot {
+    background: #34d399;
+    box-shadow: 0 0 6px #34d399;
+}
+
+@keyframes cmDotPulse {
+    from {
+        transform: scale(0.8);
+        opacity: 0.6;
+    }
+    to {
+        transform: scale(1.3);
+        opacity: 1;
+    }
 }
 
 .cm-time-num {
-    font-size: 19px;
+    font-size: 12px;
     font-weight: 900;
     color: #ffffff;
-    font-family: monospace;
-    line-height: 1.1;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .cm-time-lbl {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
-    color: #ffd700;
-    letter-spacing: 0.5px;
+    color: #fbbf24;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.cm-dial-wrapper.is-drawing .cm-time-lbl {
+    color: #34d399;
 }
 
 .cm-countdown-card.cm-urgent {
@@ -1493,10 +1560,13 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-brand-title {
-        font-size: 12px !important;
+        font-size: 11px !important;
         font-weight: 900 !important;
         white-space: nowrap !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.3px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 80px !important;
     }
 
     .cm-brand-subtitle {
@@ -1559,24 +1629,24 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-dial-wrapper {
-        width: 44px !important;
-        height: 44px !important;
+        width: 50px !important;
+        height: 50px !important;
         flex-shrink: 0 !important;
     }
 
     .cm-dial-wrapper svg,
     .cm-dial-svg {
-        width: 44px !important;
-        height: 44px !important;
+        width: 50px !important;
+        height: 50px !important;
     }
 
     .cm-time-num {
-        font-size: 10px !important;
+        font-size: 9.5px !important;
     }
 
     .cm-time-lbl {
-        font-size: 8px !important;
-        letter-spacing: 0.3px !important;
+        font-size: 6.5px !important;
+        letter-spacing: 0.04em !important;
     }
 
     .cm-showcase-header {

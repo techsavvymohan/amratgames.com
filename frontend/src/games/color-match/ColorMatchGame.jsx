@@ -245,7 +245,7 @@ function ColorMatchGame() {
     }
 
     // Circular progress stroke for timer
-    const circleRadius = 38
+    const circleRadius = 42
     const circleCircumference = 2 * Math.PI * circleRadius
     const strokeDashoffset = circleCircumference - (timeLeft / maxTime) * circleCircumference
 
@@ -313,8 +313,18 @@ function ColorMatchGame() {
                                 <span className="cm-period-id">#{periodId}</span>
                             </div>
 
-                            <div className="cm-dial-wrapper">
-                                <svg className="cm-dial-svg" width="84" height="84" viewBox="0 0 100 100">
+                            <div className={`cm-dial-wrapper ${isDrawing ? 'is-drawing' : 'is-ready'}`}>
+                                <svg className="cm-dial-svg" viewBox="0 0 100 100">
+                                    <defs>
+                                        <linearGradient id="cmDialReadyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#fbbf24" />
+                                            <stop offset="100%" stopColor="#f59e0b" />
+                                        </linearGradient>
+                                        <linearGradient id="cmDialDrawingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#34d399" />
+                                            <stop offset="100%" stopColor="#059669" />
+                                        </linearGradient>
+                                    </defs>
                                     <circle
                                         className="cm-dial-bg"
                                         cx="50"
@@ -322,20 +332,23 @@ function ColorMatchGame() {
                                         r={circleRadius}
                                     />
                                     <circle
-                                        className="cm-dial-progress"
+                                        className={`cm-dial-progress ${isDrawing ? 'drawing-active' : ''}`}
                                         cx="50"
                                         cy="50"
                                         r={circleRadius}
                                         strokeDasharray={circleCircumference}
-                                        strokeDashoffset={isDrawing ? circleCircumference * 0.4 : 0}
-                                        style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+                                        strokeDashoffset={isDrawing ? circleCircumference * 0.35 : 0}
+                                        stroke={isDrawing ? 'url(#cmDialDrawingGrad)' : 'url(#cmDialReadyGrad)'}
                                     />
                                 </svg>
                                 <div className="cm-dial-time">
-                                    <span className="cm-time-num" style={{ fontSize: isDrawing ? 12 : 14, fontWeight: 900 }}>
+                                    <span className="cm-time-status-dot" />
+                                    <span className="cm-time-num">
                                         {isDrawing ? 'ROLL' : 'READY'}
                                     </span>
-                                    <span className="cm-time-lbl">{isDrawing ? 'DRAWING' : 'ROUND'}</span>
+                                    <span className="cm-time-lbl">
+                                        {isDrawing ? 'DRAWING' : 'ROUND'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
