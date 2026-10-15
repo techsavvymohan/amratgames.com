@@ -280,7 +280,7 @@ function ColorMatchGame() {
                     ))}
                 </div>
 
-                <div className="cm-top-right" style={{ display: 'flex', gap: '8px' }}>
+                <div className="cm-top-right">
                     <Button
                         type="text"
                         icon={<HistoryOutlined style={{ color: '#ffd700' }} />}
@@ -407,7 +407,6 @@ function ColorMatchGame() {
                     <div className="cm-bet-console">
                         <div className="cm-section-header">
                             <span>SELECT COLOR</span>
-                            <span className="cm-section-hint">Green 2x · Violet 4.5x · Red 2x</span>
                         </div>
 
                         <div className="cm-color-crystals">
@@ -476,9 +475,8 @@ function ColorMatchGame() {
                         </div>
 
                         {/* 2. 3D Lottery Number Balls Grid (0 to 9) */}
-                        <div className="cm-section-header" style={{ marginTop: 14 }}>
+                        <div className="cm-section-header" style={{ marginTop: 8 }}>
                             <span>SELECT NUMBER (9X PAYOUT)</span>
-                            <span className="cm-section-hint">High Multiplier Direct Hit</span>
                         </div>
 
                         <div className="cm-numbers-sphere-grid">
@@ -508,9 +506,8 @@ function ColorMatchGame() {
                         </div>
 
                         {/* 3. Big / Small Dual Bet Pockets */}
-                        <div className="cm-section-header" style={{ marginTop: 14 }}>
+                        <div className="cm-section-header" style={{ marginTop: 8 }}>
                             <span>BIG / SMALL (2X PAYOUT)</span>
-                            <span className="cm-section-hint">Big (5-9) · Small (0-4)</span>
                         </div>
 
                         <div className="cm-bigsmall-duo">

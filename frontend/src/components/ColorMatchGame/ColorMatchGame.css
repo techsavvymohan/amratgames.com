@@ -215,6 +215,10 @@
 }
 
 @media (max-width: 900px) {
+    .cm-top-left {
+        display: none !important;
+    }
+
     .cm-main-split {
         display: flex;
         flex-direction: column;
@@ -778,12 +782,12 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     position: relative;
     border: none;
     outline: none;
-    border-radius: 18px;
-    padding: 22px 14px 18px;
+    border-radius: 14px;
+    padding: 12px 8px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -821,8 +825,8 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 }
 
 .cm-gem-frame {
-    width: 44px;
-    height: 44px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
@@ -851,16 +855,16 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 }
 
 .cm-crystal-title {
-    font-size: 19px;
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: 1px;
+    letter-spacing: 0.6px;
 }
 
 .cm-crystal-badge {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 900;
-    padding: 3px 12px;
-    border-radius: 12px;
+    padding: 2px 8px;
+    border-radius: 8px;
     background: rgba(0, 0, 0, 0.35);
     color: #ffffff;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -1564,7 +1568,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-top-bar {
-        padding: 6px 8px !important;
+        padding: 5px 8px !important;
         border-radius: 12px !important;
         gap: 6px !important;
         display: flex !important;
@@ -1573,55 +1577,62 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         flex-wrap: nowrap !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        background: linear-gradient(135deg, rgba(20, 26, 40, 0.95), rgba(11, 15, 25, 0.98)) !important;
+        border: 1px solid rgba(255, 215, 0, 0.2) !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
     }
 
-    .cm-top-left {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        min-width: 0 !important;
-    }
-
-    .cm-brand-title {
-        font-size: 11px !important;
-        font-weight: 900 !important;
-        white-space: nowrap !important;
-        letter-spacing: 0.3px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 80px !important;
-    }
-
-    .cm-brand-subtitle {
+    .cm-top-bar::-webkit-scrollbar {
         display: none !important;
     }
 
-    .cm-vip-crown {
-        font-size: 15px !important;
+    .cm-top-left {
+        display: none !important;
     }
 
     .cm-speed-tabs {
         display: flex !important;
-        gap: 2px !important;
-        flex-shrink: 0 !important;
+        gap: 4px !important;
+        flex: 1 !important;
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+    }
+
+    .cm-speed-tabs::-webkit-scrollbar {
+        display: none !important;
     }
 
     .cm-speed-tab {
-        padding: 3px 6px !important;
-        font-size: 10px !important;
-        border-radius: 6px !important;
+        padding: 4px 7px !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        border-radius: 8px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        gap: 3px !important;
+        transform: none !important;
+    }
+
+    .cm-speed-tab.active {
+        transform: none !important;
     }
 
     .cm-top-right {
         display: flex !important;
         gap: 4px !important;
         flex-shrink: 0 !important;
+        align-items: center !important;
     }
 
     .cm-fair-btn {
-        padding: 2px 6px !important;
-        height: 26px !important;
-        font-size: 10px !important;
+        padding: 2px 7px !important;
+        height: 28px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        white-space: nowrap !important;
     }
 
     .cm-stage-grid {
@@ -1733,10 +1744,19 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         overflow: visible !important;
     }
 
+    .cm-bet-console {
+        padding: 8px 10px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
     .cm-section-header {
-        margin: 6px 0 6px !important;
-        font-size: 11px !important;
-        font-weight: 900 !important;
+        margin: 4px 0 3px !important;
+        font-size: 10.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
     }
 
     .cm-section-header:first-child {
@@ -1744,96 +1764,113 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-section-hint {
-        font-size: 10px !important;
+        display: none !important;
     }
 
     .cm-color-crystals {
         display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
-        gap: 6px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-crystal-btn {
-        padding: 8px 4px !important;
-        border-radius: 12px !important;
-        gap: 3px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        min-width: 0 !important;
-    }
-
-    .cm-gem-frame {
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
-    }
-
-    .cm-crystal-title {
-        font-size: 12px !important;
-        font-weight: 900 !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    .cm-crystal-badge {
-        font-size: 10px !important;
-        padding: 2px 6px !important;
-        border-radius: 8px !important;
-    }
-
-    .cm-numbers-sphere-grid {
-        display: grid !important;
-        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 5px !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
-    .cm-num-sphere {
-        padding: 7px 0 !important;
+    .cm-crystal-btn {
+        padding: 4px 3px !important;
+        min-height: 46px !important;
+        max-height: 50px !important;
         border-radius: 10px !important;
+        gap: 1.5px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        min-width: 0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .cm-gem-frame {
+        width: 18px !important;
+        height: 18px !important;
+        min-width: 18px !important;
+        border-width: 1.5px !important;
+    }
+
+    .cm-crystal-title {
+        font-size: 10.5px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.3px !important;
+        line-height: 1.1 !important;
+    }
+
+    .cm-crystal-badge {
+        font-size: 8px !important;
+        padding: 1px 4px !important;
+        border-radius: 5px !important;
+        line-height: 1.1 !important;
+    }
+
+    .cm-staked-badge {
+        font-size: 8.5px !important;
+        padding: 1px 5px !important;
+        top: -6px !important;
+        right: -4px !important;
+    }
+
+    .cm-numbers-sphere-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .cm-num-sphere {
+        padding: 5px 0 !important;
+        border-radius: 9px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
     }
 
     .cm-sphere-text {
-        font-size: 17px !important;
+        font-size: 15px !important;
         font-weight: 900 !important;
     }
 
     .cm-bigsmall-duo {
         display: grid !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-        gap: 6px !important;
+        gap: 5px !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
     .cm-pocket-btn {
-        padding: 8px 10px !important;
-        border-radius: 12px !important;
+        padding: 5px 8px !important;
+        min-height: 42px !important;
+        border-radius: 10px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         min-width: 0 !important;
-        gap: 2px !important;
+        gap: 1px !important;
     }
 
     .cm-pocket-title {
-        font-size: 14px !important;
+        font-size: 12px !important;
         font-weight: 900 !important;
+        line-height: 1.1 !important;
     }
 
     .cm-pocket-sub {
-        font-size: 10px !important;
+        font-size: 9px !important;
         font-weight: 700 !important;
+        line-height: 1.1 !important;
     }
 
     .cm-pocket-mult {
-        font-size: 10px !important;
+        font-size: 9px !important;
         font-weight: 900 !important;
-        padding: 1px 8px !important;
+        padding: 1px 6px !important;
+        line-height: 1.1 !important;
     }
 
     .cm-chips-dock {
