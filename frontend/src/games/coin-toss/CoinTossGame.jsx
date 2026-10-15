@@ -399,7 +399,7 @@ export default function CoinTossGame() {
                 style={{
                     display: 'flex',
                     gap: 10,
-                    margin: '10px 0 16px 0',
+                    margin: '6px 0 10px 0',
                     width: '100%'
                 }}
             >
