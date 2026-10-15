@@ -21,6 +21,7 @@ export async function dropPlinkoBall({
         let binIndex = Math.floor(rowCount / 2);
 
         if (executeGameBet) {
+            if (engine.getActiveBallCount() >= MAX_ACTIVE_BALLS) return 'busy';
             const betRes = await executeGameBet({
                 game: 'plinko',
                 gameName: 'Plinko',
@@ -29,12 +30,13 @@ export async function dropPlinkoBall({
                 risk: riskLevel
             });
             if (!betRes || !betRes.success) {
-                return 'insufficient-funds';
+                return { success: false, error: betRes?.error || 'Failed to place bet', code: betRes?.code };
             }
             binIndex = betRes.binIndex ?? betRes.evaluation?.binIndex ?? binIndex;
         } else if (provablyFair) {
             const fairnessResult = await provablyFair.generatePlinkoPath(rowCount);
             if (isCancelled()) return 'cancelled';
+            if (engine.getActiveBallCount() >= MAX_ACTIVE_BALLS) return 'busy';
             if (!placeBet(betAmount)) return 'insufficient-funds';
             binIndex = fairnessResult.path.reduce((sum, direction) => sum + direction, 0);
         }

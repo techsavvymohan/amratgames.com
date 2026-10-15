@@ -5,6 +5,7 @@ import './Sidebar.css';
 import { Tooltip, Tag, InputNumber, Button, Typography } from 'antd';
 import { TrophyOutlined, StarOutlined, FireOutlined } from '@ant-design/icons';
 import { useWallet } from '../../context/WalletContext';
+import { useAuth } from '../../context/AuthContext';
 import { CurrencyIcon } from '../../components/Header';
 
 const { Text } = Typography;
@@ -33,14 +34,20 @@ function Sidebar({
     currentStreak,
     maxStreak,
 }) {
+    const { user, openAuthModal } = useAuth();
     const { currencySymbol, currency } = useWallet();
+    const minBet = currency === 'INR' ? 10 : 1;
 
     // Validation
-    const isBetAmountNegative = betAmount < 0;
-    const isBetExceedBalance = betAmount > balance;
-    const isDropBallDisabled = isBetAmountNegative || isBetExceedBalance;
+    const isBetAmountNegative = betAmount < minBet;
+    const isBetExceedBalance = Boolean(user && betAmount > balance);
+    const isDropBallDisabled = Boolean(user && (betAmount <= 0 || isBetAmountNegative || isBetExceedBalance));
 
     const handleBetClick = () => {
+        if (!user) {
+            openAuthModal?.('register');
+            return;
+        }
         onDropBall?.();
     };
 
@@ -64,8 +71,8 @@ function Sidebar({
                         id="betAmount"
                         value={betAmount}
                         onChange={(val) => setBetAmount(isNaN(Number(val)) ? 0 : Number(val))}
-                        min={0}
-                        step={0.01}
+                        min={minBet}
+                        step={1}
                         style={{ flex: 1 }}
                         controls={false}
                         formatter={(v) => `${v}`}
@@ -74,19 +81,19 @@ function Sidebar({
                     />
                     <Button.Group>
                         <Button
-                            onClick={() => setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))}
+                            onClick={() => setBetAmount(prev => Math.max(minBet, parseFloat((Number(prev || minBet) / 2).toFixed(2))))}
                         >
                             ½
                         </Button>
                         <Button
-                            onClick={() => setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)))}
+                            onClick={() => setBetAmount(prev => parseFloat((Number(prev || minBet) * 2).toFixed(2)))}
                         >
                             2×
                         </Button>
                     </Button.Group>
                 </div>
-                {isBetAmountNegative && (
-                    <p className="error-text">This must be greater than or equal to 0.</p>
+                {user && isBetAmountNegative && (
+                    <p className="error-text">Minimum bet is {currencySymbol}{minBet}.</p>
                 )}
                 {isBetExceedBalance && (
                     <p className="error-text">Can't bet more than your balance!</p>
@@ -133,7 +140,7 @@ function Sidebar({
                 onClick={handleBetClick}
                 disabled={isDropBallDisabled}
             >
-                Drop Ball
+                {!user ? 'Sign In to Play' : 'Drop Ball'}
             </button>
 
             {/* Footer */}

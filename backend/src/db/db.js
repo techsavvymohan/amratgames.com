@@ -927,7 +927,7 @@ class Database {
             let payout = evaluation.payout || 0
 
             // Apply Dynamic Bankroll Max Win Cap (Pillar 2)
-            if (won && payout > 0) {
+            if (payout > 0) {
                 const capped = bankrollRisk.enforceWinCap({
                     betAmount,
                     multiplier,
@@ -939,10 +939,10 @@ class Database {
                 evaluation.wasCapped = capped.wasCapped
                 evaluation.maxProfitCap = capped.maxProfitCap
             }
-            const profit = won ? parseFloat((payout - betAmount).toFixed(2)) : -betAmount
+            const profit = parseFloat((payout - betAmount).toFixed(2))
 
-            // 3. Credit payout if won
-            if (won && payout > 0) {
+            // 3. Credit payout whenever there is a return (including partial returns)
+            if (payout > 0) {
                 user.balances[currency] = parseFloat((user.balances[currency] + payout).toFixed(4))
             }
             const finalBal = user.balances[currency]
@@ -952,11 +952,11 @@ class Database {
                 id: 'tx_bet_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
                 userId: user.id,
                 username: user.username,
-                type: won ? 'win' : 'bet',
+                type: payout >= betAmount ? 'win' : 'bet',
                 currency,
                 amount: profit,
                 balanceAfter: finalBal,
-                note: `Bet on ${gameName} (${won ? `Won ${multiplier}x` : 'Lost'})`,
+                note: `Bet on ${gameName} (${won ? `Won ${multiplier}x` : payout > 0 ? `Returned ${multiplier}x` : 'Lost'})`,
                 timestamp: new Date().toISOString()
             }
             this.data.transactions.unshift(tx)

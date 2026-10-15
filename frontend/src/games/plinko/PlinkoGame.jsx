@@ -41,6 +41,7 @@ import { DEFAULT_BALANCE, getBinColors, BIN_PAYOUTS } from './constants';
 import { dropPlinkoBall } from './dropPlinkoBall';
 import { ProvablyFair } from '../../utils/ProvablyFair';
 import { useWallet } from '../../context/WalletContext';
+import { useAuth } from '../../context/AuthContext';
 import casinoAudio from '../../utils/casinoAudio';
 import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner';
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory';
@@ -113,15 +114,23 @@ const BALL_TYPES = {
 };
 
 function PlinkoGame() {
+    const { user, openAuthModal } = useAuth();
     // Shared Wallet
-    const { balance, placeBet, addWinnings, executeGameBet, currencySymbol, currency } = useWallet()
+    const { balance, placeBet, addWinnings, executeGameBet, currencySymbol, currency, notifyWin, notifyLoss, showToast } = useWallet();
+    const minBet = currency === 'INR' ? 10 : 1;
     // State
-    const [betAmount, setBetAmount] = useState(1);
+    const [betAmount, setBetAmount] = useState(() => (currency === 'INR' ? 10 : 1));
     const [rowCount, setRowCount] = useState(16);
     const [riskLevel, setRiskLevel] = useState('medium');
     const [winRecords, setWinRecords] = useState([]);
     const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
     const [selectedBallType, setSelectedBallType] = useState('normal');
+
+    // Ensure bet amount respects currency minimum
+    useEffect(() => {
+        const requiredMin = currency === 'INR' ? 10 : 1;
+        setBetAmount(prev => Math.max(requiredMin, prev || requiredMin));
+    }, [currency]);
 
     // Provably Fair System
     const [provablyFair] = useState(() => new ProvablyFair());
@@ -240,6 +249,12 @@ function PlinkoGame() {
         // Real bet placed & settled: clear spectator missed win prompt
         setSpectatorMissedWin(null);
 
+        if (finalMultiplier >= 1.0) {
+            notifyWin?.(finalPayout, finalMultiplier);
+        } else {
+            notifyLoss?.(currentEffectiveBet - finalPayout);
+        }
+
         const newRecord = {
             id: Date.now() + Math.random(),
             ...data,
@@ -266,7 +281,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-    }, [selectedBallType, calculateBonusMultiplier, maxStreak, betAmount]);
+    }, [selectedBallType, calculateBonusMultiplier, maxStreak, betAmount, minBet, notifyWin, notifyLoss]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -463,19 +478,41 @@ function PlinkoGame() {
     }, [isDebugMode, rowCount, provablyFair, winRecords]);
 
     // Drop ball (Server-Authoritative Provably Fair)
-    const handleDropBall = useCallback((isCancelled) => dropPlinkoBall({
-        engine: engineRef.current,
-        pendingDrops: pendingDropsRef,
-        provablyFair,
-        rowCount,
-        riskLevel,
-        betAmount: betAmount * currentBall.cost,
-        currentBall,
-        selectedBallType,
-        placeBet,
-        executeGameBet,
-        isCancelled,
-    }), [currentBall, rowCount, riskLevel, provablyFair, selectedBallType, betAmount, placeBet, executeGameBet]);
+    const handleDropBall = useCallback(async (isCancelled) => {
+        if (!user) {
+            openAuthModal?.('register');
+            return;
+        }
+        const effectiveBet = (betAmount || minBet) * currentBall.cost;
+        if (effectiveBet > balance) {
+            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${effectiveBet.toFixed(2)} to place this bet.`);
+            return;
+        }
+        if (effectiveBet < minBet) {
+            showToast?.('error', 'Minimum Bet Required', `Minimum bet for ${currency} is ${currencySymbol}${minBet}.`);
+            return;
+        }
+
+        const res = await dropPlinkoBall({
+            engine: engineRef.current,
+            pendingDrops: pendingDropsRef,
+            provablyFair,
+            rowCount,
+            riskLevel,
+            betAmount: effectiveBet,
+            currentBall,
+            selectedBallType,
+            placeBet,
+            executeGameBet,
+            isCancelled,
+        });
+
+        if (res && typeof res === 'object' && res.success === false) {
+            showToast?.('error', 'Bet Failed', res.error || 'Failed to place bet');
+        } else if (res === 'insufficient-funds') {
+            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${effectiveBet.toFixed(2)} to place this bet.`);
+        }
+    }, [user, openAuthModal, currentBall, minBet, betAmount, balance, showToast, currencySymbol, currency, rowCount, riskLevel, provablyFair, selectedBallType, placeBet, executeGameBet]);
 
     // Fullscreen toggle
     const toggleFullscreen = useCallback(() => {
