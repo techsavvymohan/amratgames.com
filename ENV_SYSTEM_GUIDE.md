@@ -1,6 +1,6 @@
-# AmratGames.com — Environment Variable (.env) Architecture & Operational Guide
+# 👑 AmratGames.com — Environment Variable (.env) Architecture & Operational Guide
 
-This document specifies the centralized environment variable architecture implemented for **AmratGames.com**, designed for secure local development and seamless **Ubuntu VPS (Nginx + PM2 + Docker)** deployment.
+This document specifies the centralized environment variable architecture implemented for **AmratGames.com**, designed for secure local development, continuous integration, and production **Ubuntu VPS (Nginx + PM2 + Docker)** deployment.
 
 ---
 
@@ -8,7 +8,7 @@ This document specifies the centralized environment variable architecture implem
 
 The project employs a three-tier environment configuration:
 
-```
+```text
 amratgames.com/
 │
 ├── .env.example              # [Master Template] Complete system variable blueprint
@@ -18,7 +18,7 @@ amratgames.com/
 │   └── setup-env.js          # [Provisioning CLI] Cryptographic secret generator & sync
 │
 ├── backend/
-│   ├── .env.example          # [Backend Template] Node.js & WebSocket service config
+│   ├── .env.example          # [Backend Template] Node.js, WebSocket & Bot Engine config
 │   ├── .env                  # [Backend Config] Active server variables
 │   └── src/
 │       ├── config.js         # Multi-candidate path resolver & validation engine
@@ -33,8 +33,8 @@ amratgames.com/
 
 > [!IMPORTANT]
 > **Strict Secret Isolation**:
-> Sensitive credentials (`JWT_SECRET`, `ADMIN_PASSWORD`, SMS provider tokens, crypto cold storage keys) **only** exist in backend/root `.env` files.
-> The frontend bundle only exposes variables prefixed with `VITE_` (per Vite specifications). Backend secrets are never bundled or transmitted to the client.
+> Sensitive credentials (`JWT_SECRET`, `ADMIN_PASSWORD`, database keys, SMTP secrets, and crypto receivers) **only** exist in backend/root `.env` files.
+> The frontend browser bundle only exposes variables prefixed with `VITE_`. Backend secrets are never bundled or transmitted to the client.
 
 ---
 
@@ -45,34 +45,50 @@ amratgames.com/
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
 | `NODE_ENV` | `development` | Set to `production` on Ubuntu VPS to enforce security guards |
-| `PORT` | `3001` | Express & WebSocket HTTP listening port |
+| `PORT` | `5000` | Express & WebSocket HTTP listening port (proxied via Vite / Nginx) |
 | `HOST` | `0.0.0.0` | Bind IP (`0.0.0.0` binds all interfaces, suitable for VPS) |
-| `CLIENT_ORIGIN` | `http://localhost:5173` | Allowed CORS origins for browser AJAX & WebSockets |
+| `CORS_ORIGIN` | `*` / `http://localhost:5173` | Allowed CORS origins for browser AJAX & WebSockets |
 | `DATA_DIR` | `./data` | File-system path where JSON database and state persist |
 | `DB_FILE` | `amratgames_db.json` | Database filename |
+| `REDIS_URL` | *(optional)* | Redis connection string for multi-instance clusters and pub/sub |
+| `SUPABASE_URL` | *(optional)* | Supabase PostgreSQL cloud endpoint |
+| `SUPABASE_SERVICE_ROLE_KEY` | *(optional)* | Supabase backend service role key |
 | `JWT_SECRET` | *(64-char crypto hex)* | 256-bit cryptographically secure token signing key |
 | `JWT_EXPIRES_IN` | `7d` | Player session duration |
+| `ADMIN_API_KEY` | *(crypto hex)* | Internal microservice admin authentication key |
 | `ADMIN_DEFAULT_EMAIL` | `admin@amratgames.com`| Master Admin Portal root login |
 | `ADMIN_DEFAULT_PASSWORD` | *(Secure passphrase)* | Master Admin Portal root password |
 | `ADMIN_DEFAULT_PHONE` | `9876500001` | Master Admin Mobile Number |
-| `SMS_GATEWAY_PROVIDER` | `mock` | SMS Dispatcher (`mock`, `msg91`, `fast2sms`, `twilio`) |
+| `SMS_GATEWAY_PROVIDER` | `frozen` | SMS Gateway (`frozen` for in-house email/dev, `mock`, `msg91`, `fast2sms`) |
+| `OTP_EXPIRY_MINUTES` | `5` | Minutes before an OTP code expires |
+| `OTP_RESEND_COOLDOWN_SECONDS` | `60` | Cooldown period between OTP resend requests |
+| `OTP_MAX_ATTEMPTS` | `5` | Maximum failed verification attempts before OTP burn |
 | `DEMO_OTP_BYPASS_ENABLED` | `true` | Allows instant QA login via bypass code (`false` in production) |
-| `DEMO_OTP_CODE` | `777777` | Universal bypass verification OTP for fast testing |
+| `DEMO_OTP_CODE` | `777777` | Universal bypass verification OTP for rapid testing |
+| `SUPPORT_EMAIL` | `support@amratgames.com` | Primary outgoing email address |
+| `SMTP_HOST` | *(SMTP Server)* | SMTP host for OTP and transaction emails |
+| `SMTP_PORT` | `587` | SMTP port (`587` for STARTTLS, `465` for SSL) |
+| `SMTP_USER` | `support@amratgames.com` | SMTP username |
+| `SMTP_PASS` | *(Password)* | SMTP password |
 | `UPI_MERCHANT_VPA` | `amratgames@upi` | Indian Virtual Payment Address for instant deposits |
 | `UPI_MERCHANT_NAME` | `AmratGames India` | Merchant display title on PhonePe / GPay / Paytm |
-| `DEFAULT_RTP` | `99.0` | Default Return-To-Player casino percentage |
-| `HOUSE_EDGE` | `1.0` | House edge percentage |
+| `CRYPTO_RECEIVER_BTC` | *(BTC Address)* | Primary cold storage Bitcoin deposit address |
+| `CRYPTO_RECEIVER_USDT` | *(ERC20/TRC20)* | Primary cold storage Tether USDT deposit address |
+| `DEFAULT_RTP` | `99.00` | Default Return-To-Player casino percentage |
+| `HOUSE_EDGE` | `1.00` | Mathematical house edge percentage |
+| `MIN_BET_INR` | `10` | Platform minimum bet limit in INR |
+| `MAX_BET_INR` | `200000` | Platform maximum bet limit in INR |
 | `TOKEN_SYMBOL` | `AMRAT` | Native gaming token ticker |
 
 ### 2.2 Frontend (Vite) Environment Variables
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `VITE_API_URL` | `http://localhost:3001/api` | Base REST API URL |
-| `VITE_WS_URL` | `ws://localhost:3001/ws` | Live WebSocket endpoint (Bets, Chat, Ticker) |
+| `VITE_API_URL` | `/api` | Base REST API URL (proxied locally to `http://localhost:5000/api`) |
+| `VITE_WS_URL` | `ws://localhost:5000/ws` | Live WebSocket endpoint (Bets, PvP, Chat, Ticker) |
 | `VITE_APP_NAME` | `AmratGames.com` | Brand title displayed across the app |
-| `VITE_DEFAULT_CURRENCY` | `INR` | Default player display currency (`INR`, `USDT`, `AMRAT`) |
-| `VITE_UPI_ID` | `amratgames@upi` | UPI ID rendered in QR modal for deposits |
+| `VITE_DEFAULT_CURRENCY` | `INR` | Default player display currency (`INR`, `BTC`, `USDT`, `AMRAT`) |
+| `VITE_UPI_ID` | `amratgames@upi` | UPI ID rendered in QR modal and payment links |
 
 ---
 
@@ -83,8 +99,8 @@ To ensure reliability across varied deployment models (running from root, runnin
 1. `process.env.ENV_FILE` (Custom manual override)
 2. `path.resolve(process.cwd(), '.env.local')`
 3. `path.resolve(process.cwd(), '.env')`
-4. `path.resolve(__dirname, '../.env')`
-5. `path.resolve(__dirname, '../../.env')`
+4. `path.resolve(backendDir, '.env')`
+5. `path.resolve(rootDir, '.env')`
 
 ---
 
@@ -102,28 +118,32 @@ npm run setup:env -- --force
 
 ---
 
-## 5. Ubuntu VPS Production Checklist
+## 5. Production VPS Deployment Checklist
 
-When deploying to Ubuntu VPS:
+When deploying to Ubuntu VPS (`103.216.168.84`):
 
 1. **Clone Repository & Run Setup**:
    ```bash
-   git clone <repo-url> /var/www/amratgames.com
+   git clone https://github.com/techsavvymohan/amratgames.com.git /var/www/amratgames.com
    cd /var/www/amratgames.com
    npm run setup:env
    ```
 2. **Update Production Settings in `.env`**:
    - Set `NODE_ENV=production`
-   - Set `CLIENT_ORIGIN=https://amratgames.com`
+   - Set `CORS_ORIGIN=https://amratgames.com`
    - Set `DEMO_OTP_BYPASS_ENABLED=false`
-   - Set strong custom `ADMIN_PASSWORD`
-   - Configure real SMS API credentials (`MSG91_AUTH_KEY` or `FAST2SMS_API_KEY`)
+   - Set strong custom `ADMIN_PASSWORD` and `ADMIN_API_KEY`
+   - Configure live SMTP credentials for `support@amratgames.com`
 3. **Build Frontend**:
    ```bash
-   pnpm run build
+   cd frontend
+   npm run build
    ```
 4. **Launch Backend with PM2**:
    ```bash
-   pm2 start backend/src/server.js --name amrat-backend -i max
+   cd ../backend
+   pm2 start src/server.js --name amratgames-backend -i max
    pm2 save
    ```
+
+&copy; 2026 **AmratGames.com**. All Rights Reserved.

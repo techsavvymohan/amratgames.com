@@ -6,7 +6,7 @@ This document details the automated **Continuous Integration (CI)** and **Contin
 
 ## 1. Architecture Overview
 
-```
+```text
                       [ Developer Push / Pull Request ]
                                       │
                  ┌────────────────────┴────────────────────┐
@@ -18,10 +18,10 @@ This document details the automated **Continuous Integration (CI)** and **Contin
          ┌───────┴───────┐                         ┌───────┴───────┐
          ▼               ▼                         ▼               ▼
    Quality & Tests  Build Checks             CI Gatekeeper   Zero-Downtime VPS Deploy
-   • Syntax check   • Vite build             • Unit tests    • SSH to 103.216.168.84
-   • HMAC Fairness  • Docker test            • Build check   • Git reset origin/main
-   • UI unit tests                                           • pnpm install & build
-                                                             • PM2 zero-downtime reload
+   • 54 Backend CI  • Vite build             • Unit tests    • SSH to 103.216.168.84
+   • HMAC Fairness  • Syntax check           • Build check   • Git reset origin/main
+   • Floor Activity • Docker test                            • npm install & build
+   • 5 Pillars CI                                            • PM2 zero-downtime reload
                                                              • Nginx test & reload
                                                              • Live /api/health smoke check
 ```
@@ -30,7 +30,7 @@ This document details the automated **Continuous Integration (CI)** and **Contin
 
 ## 2. GitHub Secrets Configuration
 
-To enable automated deployments to your Ubuntu VPS, add the following secrets in your GitHub repository:
+To enable automated deployments to your Ubuntu VPS, configure the following secrets in your GitHub repository:
 
 👉 **Go to**: `GitHub Repository` ➔ **Settings** ➔ **Secrets and variables** ➔ **Actions** ➔ **New repository secret**
 
@@ -53,7 +53,7 @@ cat ~/.ssh/authorized_keys
 ```
 
 ### Step 2: (If creating a new dedicated deployment key)
-Generate an ED25519 key pair on your local machine or server:
+Generate an ED25519 key pair:
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-deploy@amratgames.com" -f ~/.ssh/amratgames_deploy
 ```
@@ -72,22 +72,27 @@ ssh-keygen -t ed25519 -C "github-actions-deploy@amratgames.com" -f ~/.ssh/amratg
 ### 🧪 1. Continuous Integration (`.github/workflows/ci.yml`)
 - **Triggers**: Every Pull Request to `main`/`dev`, pushes to non-main branches, or manual `workflow_dispatch`.
 - **Jobs**:
-  1. `code-quality`: Runs `pnpm run check` and environment generator validation.
-  2. `automated-tests`:
-     - **Backend**: Executes Provably Fair HMAC-SHA256 calculations and config tests (`pnpm run test:backend`).
-     - **Frontend**: Executes UI unit tests and Google Tag Manager checks (`pnpm run test:frontend`).
-  3. `build-validation`: Builds production Vite bundle (`pnpm run build:frontend`) and verifies bundle integrity.
-  4. `docker-validation`: Verifies `Dockerfile.backend` and `Dockerfile.frontend` build without regression.
+  1. `automated-tests`:
+     - Executes 54 backend unit and integration test suites:
+       - Cryptographic Provably Fair HMAC-SHA256 outcome formulas.
+       - Modular In-House OTP Auth Engine and brute-force defenses.
+       - Pillar 2 Bankroll Risk Management & Win Caps.
+       - Pillar 3 Crypto Settlement & Fast UPI Ingress.
+       - Pillar 4 PvP Duels Arena & 3% House Rake.
+       - Pillar 5 Multi-Tier Viral Affiliates & Liquidity Vault.
+       - Floor Activity Engine bot personas, market makers, and matchmakers.
+       - Anti-Sybil Sentinel device and IP collision heuristics.
+  2. `build-validation`: Builds production Vite bundle (`npm run build`) and verifies bundle output without errors.
 
 ### 🚀 2. Continuous Deployment (`.github/workflows/deploy.yml`)
 - **Triggers**: Automatically on every push/merge to `main`, or manual trigger.
 - **Workflow Steps**:
-  1. **Pre-Deployment CI Gate**: Ensures all tests pass before deploying.
-  2. **SSH Zero-Downtime Deployment**: Executes `scripts/deploy-vps.sh` on `/var/www/amratgames.com`:
+  1. **Pre-Deployment CI Gate**: Ensures all 54 tests pass before deploying.
+  2. **SSH Zero-Downtime Deployment**: Executes deployment script on `/var/www/amratgames.com`:
      - Syncs repository to latest `main` commit.
-     - Runs `pnpm install --frozen-lockfile`.
+     - Runs dependency installation (`npm install`).
      - Compiles production frontend bundle.
-     - Performs zero-downtime PM2 reload (`pm2 reload ecosystem.config.cjs`).
+     - Performs zero-downtime PM2 reload (`pm2 reload amratgames-backend`).
      - Validates and reloads Nginx.
      - Polls `/api/health` until HTTP 200 is confirmed.
   3. **Live Smoke Test & Summary**: Validates external HTTP connectivity and posts a rich summary report.
@@ -97,18 +102,21 @@ ssh-keygen -t ed25519 -C "github-actions-deploy@amratgames.com" -f ~/.ssh/amratg
 ## 5. Local Commands Reference
 
 ```bash
-# Run all workspace tests (backend + frontend)
-pnpm test
+# Run all backend unit & integration tests (54 suites)
+cd backend
+npm test
 
-# Run backend tests only
-pnpm run test:backend
+# Build production frontend bundle
+cd ../frontend
+npm run build
 
-# Run frontend tests only
-pnpm run test:frontend
+# Start local backend dev server
+cd ../backend
+npm run dev
 
-# Syntax check
-pnpm run check
-
-# Build production frontend
-pnpm run build:frontend
+# Start local frontend dev server
+cd ../frontend
+npm run dev
 ```
+
+&copy; 2026 **AmratGames.com**. All Rights Reserved.
