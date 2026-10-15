@@ -195,7 +195,7 @@ function Sidebar({
                                     style={{ backgroundImage: `url(${ball.image})`, backgroundSize: 'cover', backgroundColor: 'transparent' }}
                                 ></div>
                                 <div className="ball-type-content">
-                                    <div className="ball-type-name">{ball.name}</div>
+                                    <div className="ball-type-name">{ball.shortName || ball.name.replace(/\s+Coin$/i, '')}</div>
                                     <div className="ball-type-cost">{ball.cost}×</div>
                                 </div>
                             </div>

@@ -54,6 +54,7 @@ const BALL_TYPES = {
     normal: {
         id: 'normal',
         name: 'Basic Coin',
+        shortName: 'Basic',
         color: '#ff4d4f',
         multiplierBonus: 1,
         icon: '🪙',
@@ -64,6 +65,7 @@ const BALL_TYPES = {
     bronze: {
         id: 'bronze',
         name: 'Bronze Coin',
+        shortName: 'Bronze',
         color: '#cd7f32',
         multiplierBonus: 2,
         icon: '🟤',
@@ -74,6 +76,7 @@ const BALL_TYPES = {
     silver: {
         id: 'silver',
         name: 'Silver Coin',
+        shortName: 'Silver',
         color: '#bdc3c7',
         multiplierBonus: 3,
         icon: '⚪',
@@ -84,6 +87,7 @@ const BALL_TYPES = {
     emerald: {
         id: 'emerald',
         name: 'Emerald Coin',
+        shortName: 'Emerald',
         color: '#2ecc71',
         multiplierBonus: 5,
         icon: '🟢',
@@ -94,6 +98,7 @@ const BALL_TYPES = {
     ruby: {
         id: 'ruby',
         name: 'Ruby Coin',
+        shortName: 'Ruby',
         color: '#e74c3c',
         multiplierBonus: 10,
         icon: '🔴',
@@ -104,6 +109,7 @@ const BALL_TYPES = {
     sapphire: {
         id: 'sapphire',
         name: 'Sapphire Coin',
+        shortName: 'Sapphire',
         color: '#3498db',
         multiplierBonus: 20,
         icon: '🔵',
