@@ -10,8 +10,8 @@ function AviatorPlane({ isSpinning = true }) {
     return (
         <div className="aviator-plane-element">
             <svg
-                width="92"
-                height="48"
+                width="74"
+                height="38"
                 viewBox="0 0 160 80"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -132,8 +132,8 @@ function GameChart({
 
         const isMobile = width < 600
         const padding = isMobile
-            ? { left: 24, right: 16, top: 20, bottom: 24 }
-            : { left: 40, right: 28, top: 32, bottom: 36 }
+            ? { left: 16, right: 12, top: 12, bottom: 16 }
+            : { left: 32, right: 24, top: 20, bottom: 24 }
 
         const chartWidth = Math.max(10, width - padding.left - padding.right)
         const chartHeight = Math.max(10, height - padding.top - padding.bottom)
