@@ -573,6 +573,8 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
+    padding: 8px 4px 6px;
+    overflow: visible;
 }
 
 .dt-chip-btn {
@@ -600,13 +602,14 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 }
 
 .dt-chip-btn.selected {
-    transform: translateY(-5px) scale(1.12);
+    transform: translateY(-4px) scale(1.1);
     border-color: #ffd700;
     outline: 2px solid #ffd700;
     box-shadow: 
-        0 10px 20px rgba(0, 0, 0, 0.7),
+        0 8px 20px rgba(0, 0, 0, 0.7),
         0 0 16px rgba(255, 215, 0, 0.6),
         inset 0 2px 4px rgba(255, 255, 255, 0.6);
+    z-index: 2;
 }
 
 /* Denomination Gradients */
@@ -907,10 +910,12 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
     }
 
     .dt-chip-selector {
         width: 100% !important;
+        overflow: visible !important;
     }
 
     .dt-label {
@@ -922,20 +927,35 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     .dt-chips-row {
         display: flex !important;
         justify-content: space-between !important;
+        align-items: center !important;
         gap: 4px !important;
         width: 100% !important;
-        overflow-x: auto !important;
+        overflow: visible !important;
         scrollbar-width: none !important;
-        padding: 2px 0 !important;
+        padding: 10px 4px 6px !important;
+        margin-top: -2px !important;
+        box-sizing: border-box !important;
     }
 
     .dt-chip-btn {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
         border-radius: 50% !important;
         font-size: 11px !important;
         font-weight: 900 !important;
+        position: relative !important;
+    }
+
+    .dt-chip-btn.selected {
+        transform: translateY(-4px) scale(1.12) !important;
+        border-color: #ffd700 !important;
+        outline: 2px solid #ffd700 !important;
+        box-shadow: 
+            0 8px 18px rgba(0, 0, 0, 0.8),
+            0 0 14px rgba(255, 215, 0, 0.65),
+            inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
+        z-index: 2 !important;
     }
 
     .dt-controls-card .ant-input-number {
