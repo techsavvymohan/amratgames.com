@@ -4,7 +4,7 @@ import { WifiOutlined } from '@ant-design/icons'
 
 const { Text, Title } = Typography
 
-export const CRASH_GROWTH_RATE = 0.06
+export const CRASH_GROWTH_RATE = 0.16
 
 function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, flightStartTime = null }) {
     const canvasRef = useRef(null)

@@ -29,15 +29,6 @@ function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
     // Calculate profit
     const profit = betAmount * (cashoutAt - 1)
 
-    // Auto Cashout Logic
-    useEffect(() => {
-        if (phase === 'running' && betPlaced && autoCashout) {
-            if (multiplier >= cashoutAt) {
-                onCashout()
-            }
-        }
-    }, [multiplier, phase, betPlaced, autoCashout, cashoutAt, onCashout])
-
     const handleBetClick = () => {
         if (phase === 'idle' || phase === 'waiting') {
             if (betAmount > 0) {

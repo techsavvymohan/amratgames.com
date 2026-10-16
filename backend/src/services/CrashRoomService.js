@@ -73,9 +73,12 @@ export class CrashRoomService {
 
         // Generate Provably Fair outcome upfront for this round
         const serverSeed = db.data.settings?.currentServerSeed || CONFIG.PROVABLY_FAIR_DEFAULT_SERVER_SEED
+        this.serverSeed = serverSeed
+        this.serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
         const clientSeed = 'amrat_multiplayer_public'
         const hmac = crypto.createHmac('sha256', serverSeed).update(`${this.roundId}:${clientSeed}`).digest('hex')
-        this.hash = hmac
+        this.secretHash = hmac
+        this.hash = null // Kept strictly concealed until CRASHED phase
 
         // 52-bit float generation matching Provably Fair standard
         const hexSub = hmac.slice(0, 13)
@@ -104,6 +107,7 @@ export class CrashRoomService {
         this.state = 'CRASHED'
         this.crashTime = Date.now()
         this.currentMultiplier = this.crashPoint
+        this.hash = this.secretHash // Reveal HMAC digest post-crash for Provably Fair verification
 
         // Record losses for any players who did not cash out before the crash
         for (const [userId, bet] of this.activeBets.entries()) {
@@ -125,7 +129,7 @@ export class CrashRoomService {
                         payout: 0,
                         profit: -bet.betAmount,
                         won: false,
-                        hash: this.hash
+                        hash: this.secretHash
                     })
                 } catch (e) {
                     console.error('[CRASH ROOM] Error recording loss bet:', e.message)
@@ -137,7 +141,8 @@ export class CrashRoomService {
         this.history.unshift({
             roundId: this.roundId,
             crashPoint: this.crashPoint,
-            hash: this.hash,
+            hash: this.secretHash,
+            serverSeedHash: this.serverSeedHash,
             crashedAt: new Date().toISOString()
         })
         if (this.history.length > 30) this.history = this.history.slice(0, 30)
@@ -145,7 +150,8 @@ export class CrashRoomService {
         broadcastEvent('CRASH_ROOM_BUST', {
             roundId: this.roundId,
             crashPoint: this.crashPoint,
-            hash: this.hash,
+            hash: this.secretHash,
+            serverSeedHash: this.serverSeedHash,
             history: this.history.slice(0, 10)
         })
 
@@ -177,19 +183,22 @@ export class CrashRoomService {
             }
         } else if (this.state === 'FLYING') {
             const elapsed = (Date.now() - this.flightStartTime) / 1000
-            // Exponential multiplier curve: e^(0.06 * elapsed)
-            const raw = Math.pow(Math.E, 0.06 * elapsed)
-            this.currentMultiplier = Math.max(1.00, parseFloat(raw.toFixed(2)))
+            // Exponential multiplier curve: e^(0.16 * elapsed) - Standard Industry Dynamics
+            const raw = Math.pow(Math.E, 0.16 * elapsed)
+            const isCrashed = raw >= this.crashPoint
+            this.currentMultiplier = isCrashed ? this.crashPoint : Math.max(1.00, parseFloat(raw.toFixed(2)))
 
-            // Check auto-cashouts for active bets
+            // Check auto-cashouts for active bets strictly capped at crashPoint
             for (const [userId, bet] of this.activeBets.entries()) {
-                if (!bet.cashedOut && bet.autoCashout && this.currentMultiplier >= bet.autoCashout) {
-                    this.executeAutoCashout(userId, bet, bet.autoCashout)
+                if (!bet.cashedOut && bet.autoCashout) {
+                    if (this.currentMultiplier >= bet.autoCashout && bet.autoCashout <= this.crashPoint) {
+                        this.executeAutoCashout(userId, bet, bet.autoCashout)
+                    }
                 }
             }
 
             // Check if crashed
-            if (this.currentMultiplier >= this.crashPoint) {
+            if (isCrashed) {
                 this.handleCrashPhase()
             } else {
                 // Broadcast flight tick
@@ -233,7 +242,7 @@ export class CrashRoomService {
                     payout,
                     profit: payout - bet.betAmount,
                     won: true,
-                    hash: this.hash
+                    hash: this.secretHash || this.hash
                 })
                 broadcastEvent('NEW_BET', betRecord)
             })
@@ -403,7 +412,7 @@ export class CrashRoomService {
                 payout,
                 profit: payout - bet.betAmount,
                 won: true,
-                hash: this.hash
+                hash: this.secretHash || this.hash
             })
             broadcastEvent('NEW_BET', betRecord)
             return db.findUserById(userId)
@@ -449,7 +458,9 @@ export class CrashRoomService {
             currentMultiplier: this.currentMultiplier,
             countdown: Math.max(0, Math.ceil(this.countdown)),
             flightStartTime: this.flightStartTime,
-            hash: this.hash,
+            serverSeedHash: this.serverSeedHash,
+            hash: this.state === 'CRASHED' ? this.secretHash : null,
+            crashPoint: this.state === 'CRASHED' ? this.crashPoint : null,
             bets: this.getPublicBets(),
             history: this.history.slice(0, 10),
             serverTime: Date.now()

@@ -48,7 +48,7 @@ import GameChart from './GameChart'
 import GameHistory from './GameHistory'
 import PlayerBets from './PlayerBets'
 import PlayerResults from './PlayerResults'
-import ProvablyFair from '../../utils/ProvablyFair'
+import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
@@ -66,7 +66,7 @@ const PHASE = {
     CRASHED: 'crashed'
 }
 
-export const CRASH_GROWTH_RATE = 0.06
+export const CRASH_GROWTH_RATE = 0.16
 
 const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
@@ -87,6 +87,7 @@ function CrashGame() {
         currency
     } = useWallet()
     const activeRoundIdRef = useRef(null)
+    const autoCashoutTargetRef = useRef(null)
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
     const [roomBets, setRoomBets] = useState([])
     const roomRoundIdRef = useRef(null)
@@ -152,24 +153,25 @@ function CrashGame() {
     }, [gameRecords])
 
     // Provably Fair state
-    const fairnessRef = useRef(null)
+    const [clientSeedInput, setClientSeedInput] = useState(() =>
+        localStorage.getItem('amrat_crash_client_seed') || 'amrat-player'
+    )
     const [fairnessData, setFairnessData] = useState({
         serverSeedHash: 'Loading...',
-        clientSeed: 'Loading...',
-        nonce: 0,
+        clientSeed: localStorage.getItem('amrat_crash_client_seed') || 'amrat-player',
+        nonce: 1
     })
-    const [revealedSeed, setRevealedSeed] = useState(null)
-    const [clientSeedInput, setClientSeedInput] = useState('')
 
-    // Initialize ProvablyFair
+    // Fetch active server seed hash on mount
     useEffect(() => {
-        const pf = new ProvablyFair()
-        fairnessRef.current = pf
-        pf.waitReady().then(async () => {
-            const data = await pf.getFairnessData()
-            setFairnessData(data)
-            setClientSeedInput(data.clientSeed)
-        })
+        fetch('/api/games/provably-fair/seed')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.serverSeedHash) {
+                    setFairnessData(prev => ({ ...prev, serverSeedHash: data.serverSeedHash }))
+                }
+            })
+            .catch(() => {})
     }, [])
 
     const startTimeRef = useRef(null)
@@ -355,17 +357,6 @@ function CrashGame() {
         }
     }, [statsDrawerOpen, gameRecords]);
 
-    // Generate crash point using ProvablyFair
-    const generateCrashPoint = useCallback(async () => {
-        const pf = fairnessRef.current
-        if (!pf) return 2.00 // Fallback
-        const point = await pf.generateCrashPoint()
-        // Update fairness data for UI
-        const data = await pf.getFairnessData()
-        setFairnessData(data)
-        return point
-    }, [])
-
     // Reset to idle ready state
     const resetToIdle = useCallback(() => {
         setPhase(PHASE.IDLE)
@@ -386,36 +377,34 @@ function CrashGame() {
         let mounted = true
         getActiveCrashRound().then((active) => {
             if (!mounted || !active || !active.active) return
-            const elapsed = (Date.now() - active.startedAt) / 1000
-            const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
-            if (currentMultiplier < active.crashPoint) {
-                // Restore active flight in progress
-                activeRoundIdRef.current = active.roundId
-                setCrashPoint(active.crashPoint)
-                setBetAmount(active.betAmount)
-                setBetPlaced(true)
-                setUserBetData({
-                    name: 'You',
-                    amount: active.betAmount,
-                    currency: {
-                        symbol: currencySymbol,
-                        color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
-                        name: currency
-                    },
-                    active: true,
-                    cashoutAt: null,
-                    profit: null
-                })
-                startTimeRef.current = active.startedAt
-                setFlightStartTime(active.startedAt)
-                setPhase(PHASE.RUNNING)
-            } else {
-                // Flight already crashed while user was away
-                bustCrashRound({ roundId: active.roundId }).catch(() => {})
+            // Restore active flight in progress
+            activeRoundIdRef.current = active.roundId
+            setBetAmount(active.betAmount)
+            setBetPlaced(true)
+            if (active.autoCashout) {
+                autoCashoutTargetRef.current = parseFloat(active.autoCashout)
             }
+            if (active.serverSeedHash) {
+                setFairnessData(prev => ({ ...prev, serverSeedHash: active.serverSeedHash }))
+            }
+            setUserBetData({
+                name: 'You',
+                amount: active.betAmount,
+                currency: {
+                    symbol: currencySymbol,
+                    color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
+                    name: currency
+                },
+                active: true,
+                cashoutAt: null,
+                profit: null
+            })
+            startTimeRef.current = active.startedAt
+            setFlightStartTime(active.startedAt)
+            setPhase(PHASE.RUNNING)
         }).catch(() => {})
         return () => { mounted = false }
-    }, [getActiveCrashRound, bustCrashRound, currencySymbol, currency])
+    }, [getActiveCrashRound, currencySymbol, currency])
 
     // Handle crash (Server-Authoritative)
     const handleCrash = useCallback((crashMultiplier) => {
@@ -472,6 +461,81 @@ function CrashGame() {
             setPlayerCashouts(prev => [...prev, cashoutData])
         }
     }, [showPlayerResults])
+
+    // Handle cashout (Server-Authoritative)
+    const handleCashout = useCallback(async () => {
+        if (gameMode === 'arena') {
+            if (phase !== PHASE.RUNNING || !betPlaced) return
+            const res = await cashoutRoomCrash()
+            if (res && res.success) {
+                setBetPlaced(false)
+                const winAmount = res.payout
+                const profit = winAmount - betAmount
+                setUserBetData(prev => prev ? {
+                    ...prev,
+                    active: false,
+                    cashoutAt: res.multiplier.toFixed(2),
+                    profit: winAmount.toFixed(2)
+                } : null)
+
+                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
+                if (res.multiplier >= 3) {
+                    casinoAudio.playBigWin()
+                } else {
+                    casinoAudio.playCashout()
+                }
+
+                setGameRecords(prev => [...prev, {
+                    id: Date.now(),
+                    multiplier: res.multiplier,
+                    cashedOutAt: res.multiplier,
+                    bet: betAmount,
+                    profit
+                }])
+            } else {
+                showToast('error', 'Cashout Rejected', res?.error || 'Flight may have already crashed')
+            }
+            return
+        }
+
+        // Solo Provably Fair mode
+        if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
+            const currentRoundId = activeRoundIdRef.current
+            const targetMult = multiplierRef.current
+            const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
+
+            if (res && res.success && res.won) {
+                setBetPlaced(false)
+                activeRoundIdRef.current = null
+                const winAmount = res.payout
+                const profit = winAmount - betAmount
+                setUserBetData(prev => prev ? {
+                    ...prev,
+                    active: false,
+                    cashoutAt: res.multiplier.toFixed(2),
+                    profit: winAmount.toFixed(2)
+                } : null)
+
+                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
+                if (res.multiplier >= 3) {
+                    casinoAudio.playBigWin()
+                } else {
+                    casinoAudio.playCashout()
+                }
+
+                setGameRecords(prev => [...prev, {
+                    id: Date.now(),
+                    multiplier: res.multiplier,
+                    cashedOutAt: res.multiplier,
+                    bet: betAmount,
+                    profit
+                }])
+            } else if (res && !res.won) {
+                // Server rejected cashout because flight crashed earlier
+                handleCrash(res.crashPoint || targetMult)
+            }
+        }
+    }, [gameMode, phase, betPlaced, cashoutRoomCrash, betAmount, currencySymbol, showToast, cashoutCrashRound, handleCrash])
 
     // Synchronize Room State
     const syncRoomState = useCallback((room) => {
@@ -660,6 +724,23 @@ function CrashGame() {
         }
     }, [gameMode, syncRoomState, betPlaced, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, betAmount])
 
+    // Listen for Solo Flight Bust events from server
+    useEffect(() => {
+        const unsub = subscribe('CRASH_SOLO_BUST', (payload) => {
+            if (!payload) return
+            if (activeRoundIdRef.current && payload.roundId === activeRoundIdRef.current) {
+                const bustPoint = payload.crashPoint || 1.00
+                setPhase(PHASE.CRASHED)
+                setMultiplier(bustPoint)
+                multiplierRef.current = bustPoint
+                handleCrash(bustPoint)
+            }
+        })
+        return () => {
+            if (typeof unsub === 'function') unsub()
+        }
+    }, [subscribe, handleCrash])
+
     // OPTIMIZED Solo Game loop: only active when playing solo
     useEffect(() => {
         if (phase === PHASE.RUNNING && gameMode === 'solo') {
@@ -672,21 +753,20 @@ function CrashGame() {
                 multiplierRef.current = currentMultiplier
                 elapsedTimeRef.current = elapsed
 
-                if (currentMultiplier >= crashPoint) {
-                    // Crash! Update state immediately
-                    setMultiplier(crashPoint)
-                    setElapsedTime(elapsed)
-                    setPhase(PHASE.CRASHED)
-                    handleCrash(crashPoint)
-                } else {
-                    // Throttle React state updates to every ~50ms (20fps for UI labels, while Canvas runs 60-120fps)
-                    if (now - lastStateUpdateRef.current >= 50) {
-                        setMultiplier(currentMultiplier)
-                        setElapsedTime(elapsed)
-                        lastStateUpdateRef.current = now
-                    }
-                    animationRef.current = requestAnimationFrame(tick)
+                // Check auto-cashout in solo mode
+                if (betPlaced && autoCashoutTargetRef.current && currentMultiplier >= autoCashoutTargetRef.current) {
+                    autoCashoutTargetRef.current = null
+                    handleCashout()
+                    return
                 }
+
+                // Throttle React state updates to every ~50ms
+                if (now - lastStateUpdateRef.current >= 50) {
+                    setMultiplier(currentMultiplier)
+                    setElapsedTime(elapsed)
+                    lastStateUpdateRef.current = now
+                }
+                animationRef.current = requestAnimationFrame(tick)
             }
             lastStateUpdateRef.current = Date.now()
             animationRef.current = requestAnimationFrame(tick)
@@ -697,7 +777,7 @@ function CrashGame() {
                 }
             }
         }
-    }, [phase, crashPoint, handleCrash, gameMode])
+    }, [phase, betPlaced, gameMode, handleCrash, handleCashout])
 
     // Handle user betting and starting flight (Server-Authoritative)
     const handleBet = async (amount, autoCashoutTarget) => {
@@ -747,16 +827,20 @@ function CrashGame() {
             return
         }
 
-        const res = await startCrashRound({ betAmount: amount, autoCashout: autoCashoutTarget })
+        const res = await startCrashRound({
+            betAmount: amount,
+            autoCashout: autoCashoutTarget,
+            clientSeed: clientSeedInput || undefined
+        })
         if (!res || !res.success) {
             showToast('error', 'Launch Failed', res?.error || 'Unable to launch Crash flight')
             return
         }
 
         activeRoundIdRef.current = res.roundId
-        setCrashPoint(res.crashPoint)
         setBetAmount(amount)
         setBetPlaced(true)
+        autoCashoutTargetRef.current = autoCashoutTarget ? parseFloat(autoCashoutTarget) : null
         setUserBetData({
             name: 'You',
             amount: amount,
@@ -770,8 +854,8 @@ function CrashGame() {
             profit: null
         })
 
-        if (res.hash) {
-            setFairnessData(prev => ({ ...prev, serverSeedHash: res.hash }))
+        if (res.serverSeedHash) {
+            setFairnessData(prev => ({ ...prev, serverSeedHash: res.serverSeedHash }))
         }
 
         casinoAudio.playBet()
@@ -787,81 +871,6 @@ function CrashGame() {
         setPhase(PHASE.RUNNING)
     }
 
-    // Handle cashout (Server-Authoritative)
-    const handleCashout = async () => {
-        if (gameMode === 'arena') {
-            if (phase !== PHASE.RUNNING || !betPlaced) return
-            const res = await cashoutRoomCrash()
-            if (res && res.success) {
-                setBetPlaced(false)
-                const winAmount = res.payout
-                const profit = winAmount - betAmount
-                setUserBetData(prev => prev ? {
-                    ...prev,
-                    active: false,
-                    cashoutAt: res.multiplier.toFixed(2),
-                    profit: winAmount.toFixed(2)
-                } : null)
-
-                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
-                if (res.multiplier >= 3) {
-                    casinoAudio.playBigWin()
-                } else {
-                    casinoAudio.playCashout()
-                }
-
-                setGameRecords(prev => [...prev, {
-                    id: Date.now(),
-                    multiplier: res.multiplier,
-                    cashedOutAt: res.multiplier,
-                    bet: betAmount,
-                    profit
-                }])
-            } else {
-                showToast('error', 'Cashout Rejected', res?.error || 'Flight may have already crashed')
-            }
-            return
-        }
-
-        // Solo Provably Fair mode
-        if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
-            const currentRoundId = activeRoundIdRef.current
-            const targetMult = multiplierRef.current
-            const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
-
-            if (res && res.success && res.won) {
-                setBetPlaced(false)
-                activeRoundIdRef.current = null
-                const winAmount = res.payout
-                const profit = winAmount - betAmount
-                setUserBetData(prev => prev ? {
-                    ...prev,
-                    active: false,
-                    cashoutAt: res.multiplier.toFixed(2),
-                    profit: winAmount.toFixed(2)
-                } : null)
-
-                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
-                if (res.multiplier >= 3) {
-                    casinoAudio.playBigWin()
-                } else {
-                    casinoAudio.playCashout()
-                }
-
-                setGameRecords(prev => [...prev, {
-                    id: Date.now(),
-                    multiplier: res.multiplier,
-                    cashedOutAt: res.multiplier,
-                    bet: betAmount,
-                    profit
-                }])
-            } else if (res && !res.won) {
-                // Server rejected cashout because flight crashed earlier
-                handleCrash(res.crashPoint || targetMult)
-            }
-        }
-    }
-
     // Copy to clipboard
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text)
@@ -869,24 +878,14 @@ function CrashGame() {
     }
 
     // Handle client seed change
-    const handleChangeClientSeed = useCallback(async () => {
-        const pf = fairnessRef.current
-        if (!pf || !clientSeedInput) return
-        await pf.setClientSeed(clientSeedInput)
-        const data = await pf.getFairnessData()
-        setFairnessData(data)
+    const handleChangeClientSeed = useCallback((newSeed) => {
+        const seed = String(newSeed || clientSeedInput).trim()
+        if (!seed) return
+        localStorage.setItem('amrat_crash_client_seed', seed)
+        setClientSeedInput(seed)
+        setFairnessData(prev => ({ ...prev, clientSeed: seed }))
+        message.success('Client seed updated for future flights!')
     }, [clientSeedInput])
-
-    // Handle seed rotation (reveals current seed)
-    const handleRotateSeed = useCallback(async () => {
-        const pf = fairnessRef.current
-        if (!pf) return
-        const revealed = await pf.rotateSeed()
-        setRevealedSeed(revealed)
-        const data = await pf.getFairnessData()
-        setFairnessData(data)
-        setClientSeedInput(data.clientSeed)
-    }, [])
 
     return (
         <div className={`crash-game layout-${layout}`}>
@@ -1322,121 +1321,17 @@ function CrashGame() {
                 </div>
             </Modal>
 
-            {/* Fairness Modal */}
-            <Modal
-                title={
-                    <Space>
-                        <SafetyCertificateOutlined style={{ color: 'var(--primary)' }} />
-                        <span>Provably Fair</span>
-                    </Space>
-                }
-                open={fairnessModalOpen}
-                onCancel={() => setFairnessModalOpen(false)}
-                footer={null}
-                width={480}
-                rootClassName="crash-fairness-modal-portal mobile-game-modal"
-                className="fairness-modal"
-                centered
-            >
-                {/* Header Card */}
-                <div className="fairness-header">
-                    <Title level={5}>
-                        <CheckCircleOutlined style={{ marginRight: 8 }} />
-                        This game is provably fair
-                    </Title>
-                    <Paragraph>
-                        Uses HMAC-SHA256 to generate results from server seed + client seed + nonce.
-                        Rotate the seed to reveal and verify past results.
-                    </Paragraph>
-                </div>
-
-                {/* Active Seed Data */}
-                <div className="fairness-item">
-                    <span className="fairness-label">Server Seed (Hash)</span>
-                    <div className="fairness-value">
-                        <Text copyable={{ text: fairnessData.serverSeedHash }} style={{ fontSize: 11, wordBreak: 'break-all' }}>
-                            {fairnessData.serverSeedHash?.slice(0, 24)}...
-                        </Text>
-                    </div>
-                </div>
-
-                <div className="fairness-item">
-                    <span className="fairness-label">Client Seed</span>
-                    <div className="fairness-value" style={{ display: 'flex', gap: 6 }}>
-                        <Input
-                            size="small"
-                            value={clientSeedInput}
-                            onChange={e => setClientSeedInput(e.target.value)}
-                            style={{ background: '#2f4553', border: 'none', color: '#fff', flex: 1, fontSize: 12 }}
-                        />
-                        <Button size="small" onClick={handleChangeClientSeed} icon={<CheckCircleOutlined />} />
-                    </div>
-                </div>
-
-                <div className="fairness-item">
-                    <span className="fairness-label">Nonce</span>
-                    <div className="fairness-value">
-                        <Text style={{
-                            background: 'rgba(47, 69, 83, 0.5)',
-                            padding: '4px 12px',
-                            borderRadius: 6,
-                            color: '#fff'
-                        }}>
-                            {fairnessData.nonce}
-                        </Text>
-                    </div>
-                </div>
-
-                <div className="fairness-item">
-                    <span className="fairness-label">Last Result</span>
-                    <div className="fairness-value">
-                        <Tag
-                            color={(history[0] || 1) < 2 ? 'error' : (history[0] || 1) < 10 ? 'success' : 'gold'}
-                            style={{ margin: 0, fontSize: 14, fontWeight: 600 }}
-                        >
-                            {(history[0] || 1).toFixed(2)}×
-                        </Tag>
-                    </div>
-                </div>
-
-                <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
-
-                {/* Revealed Seed (after rotation) */}
-                {revealedSeed && (
-                    <div style={{ marginBottom: 12 }}>
-                        <Text type="secondary" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            Previous Server Seed (Revealed)
-                        </Text>
-                        <div className="fairness-item" style={{ marginTop: 6 }}>
-                            <span className="fairness-label">Seed</span>
-                            <div className="fairness-value">
-                                <Text copyable={{ text: revealedSeed.serverSeed }} style={{ fontSize: 10, wordBreak: 'break-all' }}>
-                                    {revealedSeed.serverSeed.slice(0, 20)}...
-                                </Text>
-                            </div>
-                        </div>
-                        <div className="fairness-item">
-                            <span className="fairness-label">Hash</span>
-                            <div className="fairness-value">
-                                <Text style={{ fontSize: 10, wordBreak: 'break-all', color: 'var(--primary)' }}>
-                                    {revealedSeed.serverSeedHash?.slice(0, 20)}...
-                                </Text>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Rotate Button */}
-                <Button
-                    type="primary"
-                    block
-                    className="fairness-verify-btn"
-                    icon={<SyncOutlined />}
-                    onClick={handleRotateSeed}
-                >
-                    Rotate Seed (Reveal Current)
-                </Button>
-            </Modal>
+            {/* Provably Fair Outcome Verifier Modal */}
+            <ProvablyFairVerifierModal
+                isOpen={fairnessModalOpen}
+                onClose={() => setFairnessModalOpen(false)}
+                initialData={{
+                    game: 'crash',
+                    serverSeedHash: fairnessData.serverSeedHash,
+                    clientSeed: clientSeedInput,
+                    nonce: fairnessData.nonce
+                }}
+            />
         </div>
     )
 }

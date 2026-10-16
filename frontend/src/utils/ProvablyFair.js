@@ -120,7 +120,7 @@ class ProvablyFair {
         if (result < houseEdge) return 1.00;
 
         // Formula: e = 99 / (1 - r)  =>  result in [1.00, ∞)
-        const e = Math.floor((100 / (1 - result))) / 100;
+        const e = Math.floor((99 / (1 - result))) / 100;
         return Math.max(1.00, Math.min(e, 1000.00));
     }
 
