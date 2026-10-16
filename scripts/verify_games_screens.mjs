@@ -79,8 +79,7 @@ async function main() {
             { key: 'mines', name: 'mines' },
             { key: 'limbo', name: 'limbo' },
             { key: 'dragon-tiger', name: 'dragon_tiger' },
-            { key: 'coin-toss', name: 'coin_toss' },
-            { key: 'dino', name: 'dino' }
+            { key: 'coin-toss', name: 'coin_toss' }
         ]
 
         for (const g of games) {

@@ -81,19 +81,6 @@ test('Crash prioritizes chart, cashout, and mobile player tabs', async () => {
     assert.match(css, /\.crash-mobile-tabs/)
 })
 
-test('Dino keeps Phaser and live actions ahead of secondary controls', async () => {
-    const [component, css] = await sources([
-        './src/games/dino/DinoGame.jsx',
-        './src/games/dino/DinoGame.css',
-    ])
-    assert.match(component, /<MobileBetSheet[^>]*title="Dino bet controls"/)
-    assert.match(component, /collapseOn=\{gamePhase === 'running' \|\| gamePhase === 'waiting'\}/)
-    assert.match(component, /dino-bet-sheet/)
-    assert.match(component, /mobile-sheet-secondary/)
-    assert.match(css, /\.phaser-container\s*\{[^}]*aspect-ratio:/s)
-    assert.match(css, /orientation:\s*landscape/)
-})
-
 test('Plinko mobile presentation preserves board ratio and critical controls', async () => {
     const [game, sidebar, board, gameCss, sidebarCss, boardCss] = await sources([
         './src/games/plinko/PlinkoGame.jsx',

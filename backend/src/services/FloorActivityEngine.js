@@ -26,7 +26,6 @@ const CHAT_SCRIPTS = [
     'Boom! Just cashed 6.8x on Crash 🚀',
     'Mines 5 diamonds safely cleared 💎💎💎',
     'Limbo 8x target hit! Aaj ka din sahi chal raha hai',
-    'Dino run 14x obstacle cleared let\'s gooo',
     'Coin toss Heads streak is crazy rn 🔥',
     'Withdrew ₹3,800 to UPI, credited in 35 seconds! Instant settlement is real',
     'Just hit 4.2x cashout on Crash room, taking profits',
@@ -55,7 +54,7 @@ const GAMES_CATALOG = [
     { game: 'crash', gameName: 'Crash 1000x' },
     { game: 'limbo', gameName: 'Limbo' },
     { game: 'mines', gameName: 'Mines Gold' },
-    { game: 'dino', gameName: 'Dino Run' },
+    { game: 'color-match', gameName: 'Color Match' },
     { game: 'coin-toss', gameName: 'Coin Toss 1v1' }
 ]
 

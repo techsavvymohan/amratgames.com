@@ -43,7 +43,7 @@ To guarantee a vibrant, high-energy gaming floor 24 hours a day, the backend ope
 - Duels resolve instantly with Provably Fair cryptographic outcomes, paying 97% to the winner and reserving 3% house rake.
 
 ### 4. Live Betting Feed Simulator
-- Generates periodic, organic betting tickets across all casino originals (Crash, Plinko, Mines, Dino, Coin Toss).
+- Generates periodic, organic betting tickets across all casino originals (Crash, Plinko, Mines, Limbo, Coin Toss).
 - Simulates realistic multipliers and win/loss ratios to provide social proof on the platform.
 
 ### 5. Community Chat Banter

@@ -7,7 +7,6 @@ export type SupportedCurrency = 'INR' | 'USDT' | 'BTC' | 'AMRAT'
 
 export type GameSlug = 
     | 'crash' 
-    | 'dino' 
     | 'color-match' 
     | 'dragon-tiger' 
     | 'coin-toss' 
@@ -71,19 +70,6 @@ export interface BetRecord {
     hash: string
     roundData?: Record<string, any>
     timestamp: string
-}
-
-export interface DinoRoundSession {
-    roundId: string
-    userId: string
-    currency: SupportedCurrency
-    betAmount: number
-    difficulty: 'easy' | 'medium' | 'hard'
-    obstaclesCleared: number
-    stepNonce: number
-    currentMultiplier: number
-    active: boolean
-    startedAt: number
 }
 
 export interface CrashRoundSession {

@@ -14,7 +14,6 @@ import { crashRoomService } from '../src/services/CrashRoomService.js'
 import { chatService } from '../src/services/ChatService.js'
 import { antiFraudService } from '../src/services/AntiFraudService.js'
 import { redisPubSub } from '../src/services/RedisPubSubService.js'
-import { dinoEngine } from '../src/games/dino/dino.engine.js'
 import { bankrollRisk } from '../src/services/BankrollRiskService.js'
 import { automatedSettlement } from '../src/services/AutomatedSettlementService.js'
 import { pvpService } from '../src/services/PvPService.js'
@@ -841,51 +840,6 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         if (evalTails.won) {
             assert.equal(evalTails.multiplier, 1.96)
             assert.equal(evalTails.payout, 392)
-        }
-    })
-
-    it('verifies Server-Authoritative Dino round lifecycle, Provably Fair jump steps, and cashout', async () => {
-        const user = db.createUser({
-            username: 'dino_runner_' + Date.now(),
-            email: `dino_${Date.now()}@test.com`,
-            passwordHash: 'dummy',
-            role: 'player'
-        })
-        user.balances.INR = 1000
-
-        // 1. Start round with ₹100
-        const startRes = await dinoEngine.startRound({
-            userId: user.id,
-            betAmount: 100,
-            currency: 'INR',
-            difficulty: 'medium',
-            clientSeed: 'custom-client-seed'
-        })
-        assert.equal(startRes.active, true)
-        assert.equal(startRes.currentMultiplier, 1.0)
-        assert.ok(startRes.roundId, 'Round ID must be generated')
-
-        // 2. Query active round
-        const active = dinoEngine.getActiveRound(user.id)
-        assert.ok(active, 'Must return active Dino round')
-        assert.equal(active.roundId, startRes.roundId)
-        assert.equal(active.obstaclesCleared, 0)
-
-        // 3. Jump step 1
-        const jumpRes = await dinoEngine.jump({ userId: user.id, roundId: startRes.roundId })
-        if (jumpRes.survived) {
-            assert.ok(jumpRes.obstaclesCleared >= 1)
-            assert.ok(jumpRes.currentMultiplier > 1.0)
-
-            // Cashout
-            const cashoutRes = await dinoEngine.cashout({ userId: user.id, roundId: startRes.roundId })
-            assert.equal(cashoutRes.won, true)
-            assert.ok(cashoutRes.payout > 100)
-            assert.equal(dinoEngine.getActiveRound(user.id), null, 'Round must terminate upon cashout')
-        } else {
-            // Bust
-            assert.equal(jumpRes.survived, false)
-            assert.equal(dinoEngine.getActiveRound(user.id), null, 'Round must terminate upon bust')
         }
     })
 

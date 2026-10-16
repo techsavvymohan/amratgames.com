@@ -8,7 +8,6 @@ import { checkGameMaintenance } from '../middleware/circuitBreaker.js'
 import { minesRoutes } from '../games/mines/index.js'
 import { crashRoutes } from '../games/crash/index.js'
 import { coinTossRoutes } from '../games/coin-toss/index.js'
-import { dinoRoutes } from '../games/dino/index.js'
 import { bankrollRisk } from '../services/BankrollRiskService.js'
 
 const router = express.Router()
@@ -20,7 +19,6 @@ router.use(checkGameMaintenance)
 router.use('/mines', minesRoutes)
 router.use('/crash', crashRoutes)
 router.use('/coin-toss', coinTossRoutes)
-router.use('/dino', dinoRoutes)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
 // GET /api/games/recent
@@ -74,8 +72,6 @@ router.post('/provably-fair/verify', (req, res) => {
         if (isMultiplayerCrash) {
             const roundId = req.body.roundId || 'room_default'
             message = `${roundId}:${cleanClientSeed}`
-        } else if (gameType === 'dino' && req.body.stepNonce) {
-            message = `${cleanClientSeed}:dino_jump_${parseInt(req.body.stepNonce, 10) || 1}:${cleanNonce}`
         }
 
         const hmac = crypto.createHmac('sha256', serverSeed)
@@ -178,22 +174,7 @@ router.post('/provably-fair/verify', (req, res) => {
                 game: 'coin-toss',
                 outcome,
                 floatVal,
-                multiplier: 1.98
-            }
-        } else if (gameType === 'dino') {
-            const diffKey = ['easy', 'medium', 'hard'].includes(req.body.difficulty) ? req.body.difficulty : 'medium'
-            const DINO_SURVIVAL = { easy: 0.85, medium: 0.65, hard: 0.45 }
-            const survivalChance = DINO_SURVIVAL[diffKey] || 0.65
-            const survived = floatVal < survivalChance
-            const cleared = parseInt(req.body.obstaclesCleared, 10) || (survived ? 1 : 0)
-            const pureMultiplier = cleared > 0 ? parseFloat((0.99 / Math.pow(survivalChance, cleared)).toFixed(2)) : 1.00
-            result = {
-                game: 'dino',
-                difficulty: diffKey,
-                survivalChance,
-                survived,
-                floatVal,
-                multiplier: survived ? pureMultiplier : 0
+                multiplier: 1.96
             }
         } else {
             result = { game: gameType, floatVal, hash }
@@ -284,12 +265,6 @@ function evaluateGameRound({
             })
             evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
             break
-        }
-
-        case 'dino': {
-            const err = new Error('Dino bets must be placed via the server-authoritative session routes at /api/games/dino/*')
-            err.status = 400
-            throw err
         }
 
         case 'mines': {

@@ -23,7 +23,6 @@ The active gaming web application for **AmratGames.com**, engineered with **Reac
    - Physical landing shockwaves on the pedestal floor.
    - Hot win streak banner notifications.
    - **1v1 PvP Duels Arena**: Real-time multiplayer lobby where players challenge each other or take on automated floor liquidity bots.
-8. **Dino Run**: Server-authoritative retro hurdle runner built on Phaser 3 with increasing jump-step multipliers and manual cashout.
 
 ---
 
@@ -57,8 +56,7 @@ frontend/
 │   ├── amrat-logo.png            # Official 3D Royal Gold crown logo
 │   ├── favicon.ico
 │   ├── manifest.json             # PWA Web Manifest
-│   ├── images/coin-toss/         # True minted Heads and Tails coin textures
-│   └── dino-assets/              # Phaser 3 runner spritesheets and atlases
+│   └── images/coin-toss/         # True minted Heads and Tails coin textures
 ├── src/
 │   ├── components/               # Global components and dialogs
 │   │   ├── Admin/                # Full Admin Dashboard (metrics, users, games, ledger)
@@ -79,7 +77,6 @@ frontend/
 │   │   ├── coin-toss/            # 3D Coin Toss, CoinParticles, PvP Duels Arena
 │   │   ├── color-match/          # Color Match Wheel
 │   │   ├── crash/                # Exponential trajectory Canvas Crash
-│   │   ├── dino/                 # Server-Authoritative Dino Run
 │   │   ├── dragon-tiger/         # 2-Card Asian Duel
 │   │   ├── limbo/                # Multiplier Target Limbo
 │   │   ├── mines/                # 5x5 Diamond Minefield

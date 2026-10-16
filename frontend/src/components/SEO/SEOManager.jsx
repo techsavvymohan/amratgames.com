@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom'
 const SEO_ROUTES = {
     '/': {
         title: "AmratGames.com — India's Premier Online Casino | Instant UPI & Bank Withdrawal",
-        description: "Play genuine online casino games in Indian Rupees (₹). Instant UPI deposits, 24/7 bank withdrawals, 99% Return to Player (RTP) across Rocket Crash, Plinko, Mines & Dino.",
+        description: "Play genuine online casino games in Indian Rupees (₹). Instant UPI deposits, 24/7 bank withdrawals, 99% Return to Player (RTP) across Rocket Crash, Plinko, Mines & Limbo.",
         canonical: 'https://amratgames.com/',
         heading: "India's Premier Online Casino & Provably Fair Gaming Platform",
         hasOwnH1: true,
@@ -63,22 +63,6 @@ const SEO_ROUTES = {
             "operatingSystem": "Web, iOS, Android, Windows, macOS",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
             "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "710" }
-        }
-    },
-    '/dino': {
-        title: "Dino Runner Casino Game — Jump & Cash Out | AmratGames",
-        description: "Guide the T-Rex over obstacles in the Dino Runner casino arcade. Multipliers increase with every jump, 99% RTP Provably Fair gaming.",
-        canonical: 'https://amratgames.com/dino',
-        heading: "Dino Runner — 99% RTP Arcade Obstacle Casino Game",
-        hasOwnH1: false,
-        schema: {
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "Amrat Dino Runner",
-            "applicationCategory": "GameApplication",
-            "operatingSystem": "Web, iOS, Android, Windows, macOS",
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-            "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "490" }
         }
     },
     '/limbo': {

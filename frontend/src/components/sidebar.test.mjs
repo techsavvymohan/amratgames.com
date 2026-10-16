@@ -7,7 +7,6 @@ const read = (file) => readFile(new URL(file, import.meta.url), 'utf8')
 const sidebarStyles = [
     './CrashGame/CrashGame.css',
     './PlinkoGame/Sidebar.css',
-    './DinoGame/DinoGame.css',
     './MinesGame/MinesGame.css',
 ]
 

@@ -14,7 +14,6 @@ import { DragonTigerEngine } from '../games/dragon-tiger/index.js'
 import { ColorMatchEngine } from '../games/color-match/index.js'
 import { MinesEngine, minesEngine } from '../games/mines/index.js'
 import { CoinTossEngine } from '../games/coin-toss/index.js'
-import { DinoEngine } from '../games/dino/index.js'
 
 export { PLINKO_PAYOUTS }
 
@@ -68,10 +67,6 @@ class GameEngineService {
 
     evaluateCoinToss(params) {
         return CoinTossEngine.evaluate(params)
-    }
-
-    evaluateDino(params) {
-        return DinoEngine.evaluate(params)
     }
 
     // Mines Lifecycle

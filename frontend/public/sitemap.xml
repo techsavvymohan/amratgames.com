@@ -42,16 +42,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://amratgames.com/dino</loc>
-    <lastmod>2026-10-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <image:image>
-      <image:loc>https://amratgames.com/images/dino.jpg</image:loc>
-      <image:title>Amrat Dino Run - Original Arcade Casino Game</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://amratgames.com/limbo</loc>
     <lastmod>2026-10-10</lastmod>
     <changefreq>daily</changefreq>

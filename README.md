@@ -16,7 +16,7 @@
 
 - **Zero Dollar ($) Policy**: No USD marks or hidden currency conversion fees. Players wager directly in **₹ INR**, **₿ Bitcoin**, or **₮ Tether USDT**.
 - **Instant Indian Payments**: Native support for **UPI (PhonePe, Google Pay, Paytm, BHIM, CRED)**, dynamic QR code generation, NetBanking, IMPS, and 1-Click Fast Manual UPI cashouts.
-- **8 Provably Fair Casino Originals**: Crash, Plinko, Mines, Limbo, Dragon Tiger, Color Match, Coin Toss (with 1v1 PvP Arena), and Dino Run.
+- **7 Provably Fair Casino Originals**: Crash, Plinko, Mines, Limbo, Dragon Tiger, Color Match, and Coin Toss (with 1v1 PvP Arena).
 - **Floor Activity Engine & Bot Personas**: Autonomous market-maker liquidity bots keep PvP duels active 24/7, auto-match waiting human challenges, generate real-time live bet feeds, and foster organic chat community banter.
 - **Social Arcade 1v1 PvP Duels Arena**: Player-vs-Player Coin Toss with zero house risk and a transparent 3% house rake.
 - **"Be the House" Liquidity Staking Vault**: Community players stake funds into the platform liquidity pool to earn passive yields derived from platform turnover and house rake.
@@ -30,7 +30,7 @@
 
 ---
 
-## 🎮 The Complete 8-Game Casino Suite
+## 🎮 The Complete 7-Game Casino Suite
 
 | Game | Engine / Technology | RTP | Max Multiplier | Key Mechanics & Features |
 | :--- | :--- | :--- | :--- | :--- |
@@ -41,7 +41,6 @@
 | **Dragon Tiger** | Standard Asian 52-Card PRNG Engine | **99.00%** | **11×** | Lightning-fast card duel; wager on Dragon (1:1), Tiger (1:1), or Tie (11:1) with live streak indicators. |
 | **Color Match** | 3-Zone Segmented Color Wheel | **99.00%** | **9×** | Vibrant prediction wheel with Red (2×), Green (2×), and Violet (9×) payout zones. |
 | **Coin Toss** | True 3D CSS Canvas + WebSockets | **99.00%** | **1.98×** | Authentic 3D gold coin assets, physical landing shockwaves, win streak indicators, and **1v1 PvP Duels Arena**. |
-| **Dino Run** | Phaser 3 Arcade Physics Engine | **99.00%** | **100×** | Server-authoritative retro runner with increasing jump-step multipliers and manual cashout before cactus crash. |
 
 ---
 
@@ -155,8 +154,7 @@ amratgames.com/
 ├── frontend/                     # React 18 + Vite Casino Web Application
 │   ├── public/                   # Static assets, logos, favicon, PWA manifest
 │   │   ├── amrat-logo.png        # Official AmratGames Royal Logo
-│   │   ├── images/               # Game artwork & 3D coin assets
-│   │   └── dino-assets/          # Phaser 3 runner sprites & atlases
+│   │   └── images/               # Game artwork & 3D coin assets
 │   ├── src/
 │   │   ├── components/           # Reusable UI components & modals
 │   │   │   ├── Admin/            # Full Admin Management Panel
@@ -169,7 +167,6 @@ amratgames.com/
 │   │   │   ├── coin-toss/        # 3D Coin Toss & PvP Duels Arena
 │   │   │   ├── color-match/      # Color Match Wheel Game
 │   │   │   ├── crash/            # Real-Time Crash Canvas & Multiplayer
-│   │   │   ├── dino/             # Phaser 3 Server-Authoritative Runner
 │   │   │   ├── dragon-tiger/     # Dragon Tiger 2-Card Game
 │   │   │   ├── limbo/            # High-Speed Multiplier Limbo
 │   │   │   ├── mines/            # 5x5 Mines Diamond Grid

@@ -78,7 +78,7 @@ describe('📐 Phase 3: TypeScript Financial Contracts & Type-Safety Suite', () 
         validateBetEvaluationResult(winResult)
 
         const lossResult = {
-            game: 'dino',
+            game: 'limbo',
             won: false,
             betAmount: 50,
             multiplier: 0,

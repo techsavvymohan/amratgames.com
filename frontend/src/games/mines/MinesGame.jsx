@@ -622,7 +622,7 @@ function MinesGame() {
                                             <CurrencyIcon symbol={currencySymbol} currency={currency} size={20} fontSize={12} />
                                         }
                                     />
-                                    <Button.Group className="dino-btn-group">
+                                    <Button.Group className="mines-btn-group">
                                         <Button
                                             onClick={handleBetAmountHalf}
                                             disabled={isPlaying}

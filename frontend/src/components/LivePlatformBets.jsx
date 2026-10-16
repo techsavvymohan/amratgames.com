@@ -19,8 +19,7 @@ const GAME_META = {
     'coin-toss': { name: 'Coin Toss', icon: '🪙', color: '#f59e0b' },
     cointoss: { name: 'Coin Toss', icon: '🪙', color: '#f59e0b' },
     'dragon-tiger': { name: 'Dragon Tiger', icon: '🐉', color: '#eab308' },
-    'color-match': { name: 'Color Match', icon: '🎨', color: '#10b981' },
-    dino: { name: 'Dino Run', icon: '🦖', color: '#06b6d4' }
+    'color-match': { name: 'Color Match', icon: '🎨', color: '#10b981' }
 }
 
 function maskUsername(username) {

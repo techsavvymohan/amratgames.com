@@ -34,12 +34,6 @@ const PlinkoIcon = () => (
     </svg>
 )
 
-const DinoIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 2h-6v2h-2v2h-2v4H8v2H6v2H4v-2H2v6h2v-2h2v4h2v2h2v2h2v-2h-2v-4h2v-2h2v4h2v-2h-2v-2h2v-2h2V8h2V6h-2V4h2V2h-4zm-4 4h-2V4h2v2z"/>
-    </svg>
-)
-
 const MinesIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="11" cy="13" r="7.5"/>
@@ -83,7 +77,6 @@ const CoinTossIcon = () => (
 const GAME_ICONS = {
     crash: CrashIcon,
     plinko: PlinkoIcon,
-    dino: DinoIcon,
     mines: MinesIcon,
     limbo: LimboIcon,
     'dragon-tiger': DragonTigerIcon,

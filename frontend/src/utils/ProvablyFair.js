@@ -1,6 +1,6 @@
 /**
  * Provably Fair System using HMAC-SHA256
- * Used by both Crash Game and Dino Game
+ * Used by Casino Originals
  * 
  * How it works:
  * 1. Server generates a serverSeed and hashes it (serverSeedHash)
@@ -153,40 +153,6 @@ class ProvablyFair {
             nonce: currentNonce,
             serverSeedHash: this.serverSeedHash,
             clientSeed: this.clientSeed
-        };
-    }
-
-    /**
-     * Generate survival result for Dino Game step
-     * @param {number} survivalChance - probability of surviving (0-1)
-     * @returns {Promise<{survived: boolean, roll: number}>}
-     */
-    async generateDinoStep(survivalChance) {
-        const roll = await this.getResult();
-        return {
-            survived: roll < survivalChance,
-            roll, // For transparency/verification
-        };
-    }
-
-    /**
-     * Peek at the generated Dino jump result for the CURRENT nonce without advancing it.
-     * Used for Debug Mode.
-     * @param {number} survivalChance 
-     * @returns {Promise<{survived: boolean, roll: number, nonce: number}>}
-     */
-    async peekDinoStep(survivalChance) {
-        await this._hashReady;
-        const message = `${this.clientSeed}:${this.nonce}`;
-        const hash = await hmacSHA256(this.serverSeed, message);
-
-        const int = parseInt(hash.substr(0, 8), 16);
-        const roll = int / 0x100000000;
-
-        return {
-            survived: roll < survivalChance,
-            roll,
-            nonce: this.nonce
         };
     }
 

@@ -18,7 +18,6 @@
         "clsx": "^2.1.1",
         "lucide-react": "^0.575.0",
         "matter-js": "^0.20.0",
-        "phaser": "^3.90.0",
         "radix-ui": "^1.4.3",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",

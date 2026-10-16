@@ -1942,8 +1942,7 @@ a {
     .main-content:has(.limbo-page),
     .main-content:has(.dragon-tiger-page),
     .main-content:has(.color-match-page),
-    .main-content:has(.coin-toss-wrapper),
-    .main-content:has(.dino-game-page) {
+    .main-content:has(.coin-toss-wrapper) {
         padding-bottom: 0 !important;
         overflow: hidden !important;
         height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;

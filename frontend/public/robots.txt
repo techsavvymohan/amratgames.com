@@ -6,7 +6,6 @@ Allow: /
 Allow: /crash
 Allow: /plinko
 Allow: /mines
-Allow: /dino
 Allow: /limbo
 Allow: /dragon-tiger
 Allow: /color-match

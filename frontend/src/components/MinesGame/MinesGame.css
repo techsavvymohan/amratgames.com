@@ -358,22 +358,6 @@
     align-items: center;
 }
 
-/* Currency Icon - Bitcoin Style like Plinko */
-.mines-game .mines-sidebar .dino-currency-icon {
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f7931a, #ffb347);
-    color: #fff;
-    font-weight: 800;
-    font-size: 13px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    transition: all 0.15s ease;
-}
-
 /* InputNumber styling - 3D Pushable Style */
 .mines-game .mines-sidebar .ant-input-number {
     flex: 1;
@@ -402,23 +386,6 @@
 + .ant-input-number-compact-last-item {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
-}
-
-/* Currency Icon inside addon - Bitcoin Style */
-.mines-game .mines-sidebar .ant-input-number-group-addon .dino-currency-icon,
-.mines-game .mines-sidebar .ant-input-number-addon .dino-currency-icon {
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f7931a, #ffb347) !important;
-    color: #fff !important;
-    font-weight: 800;
-    font-size: 13px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    transition: all 0.15s ease;
 }
 
 .mines-game .mines-sidebar .ant-input-number .ant-input-number-input {

@@ -444,7 +444,7 @@
     pointer-events: none;
 }
 
-/* Bet Button - Primary Action Button (3D Box Style like DinoGame) */
+/* Bet Button - Primary Action Button (3D Box Style) */
 .plinko-page .bet-button {
     width: 100%;
     padding: 12px 16px;
@@ -515,7 +515,7 @@
    CARD COMPONENTS
    ================================================================= */
 
-/* Base Card Styles (3D Box Style like DinoGame) */
+/* Base Card Styles (3D Box Style) */
 .plinko-page .sidebar-card {
     margin: var(--card-margin);
     padding: var(--card-padding);

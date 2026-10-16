@@ -8,7 +8,6 @@ import GameAuthGuard from './components/Auth/GameAuthGuard'
 const HomePage = lazy(() => import('./pages/HomePage'))
 const loadCrash = () => import('./games/crash')
 const loadPlinko = () => import('./games/plinko')
-const loadDino = () => import('./games/dino')
 const loadMines = () => import('./games/mines')
 const loadLimbo = () => import('./games/limbo')
 const loadDragonTiger = () => import('./games/dragon-tiger')
@@ -18,7 +17,6 @@ const loadAdmin = () => import('./admin-panel')
 
 const CrashPage = lazy(loadCrash)
 const PlinkoPage = lazy(loadPlinko)
-const DinoPage = lazy(loadDino)
 const MinesPage = lazy(loadMines)
 const LimboPage = lazy(loadLimbo)
 const DragonTigerPage = lazy(loadDragonTiger)
@@ -35,7 +33,6 @@ function App() {
                 window.requestIdleCallback(() => {
                     loadCrash()
                     loadPlinko()
-                    loadDino()
                     loadMines()
                     loadLimbo()
                     loadDragonTiger()
@@ -46,7 +43,6 @@ function App() {
                 setTimeout(() => {
                     loadCrash()
                     loadPlinko()
-                    loadDino()
                     loadMines()
                     loadLimbo()
                     loadDragonTiger()
@@ -84,7 +80,6 @@ function App() {
                             <Route index element={<HomePage />} />
                             <Route path="crash" element={<GameAuthGuard gameName="Crash (JetX)"><CrashPage /></GameAuthGuard>} />
                             <Route path="plinko" element={<GameAuthGuard gameName="Plinko"><PlinkoPage /></GameAuthGuard>} />
-                            <Route path="dino" element={<GameAuthGuard gameName="Dino Run"><DinoPage /></GameAuthGuard>} />
                             <Route path="mines" element={<GameAuthGuard gameName="Mines"><MinesPage /></GameAuthGuard>} />
                             <Route path="limbo" element={<GameAuthGuard gameName="Limbo"><LimboPage /></GameAuthGuard>} />
                             <Route path="dragon-tiger" element={<GameAuthGuard gameName="Dragon Tiger"><DragonTigerPage /></GameAuthGuard>} />

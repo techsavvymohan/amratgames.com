@@ -31,11 +31,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            phaser: path.resolve(__dirname, "./src/vendor/phaser-global.js"),
         },
-    },
-    optimizeDeps: {
-        exclude: ['phaser'],
     },
     server: {
         port: 5173,
