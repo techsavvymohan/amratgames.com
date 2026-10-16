@@ -442,6 +442,14 @@ function CrashGame() {
         }
     }
 
+    // Ensure page begins at the very top so the Aviator header and arena are immediately visible
+    useEffect(() => {
+        if (gameDisplayRef.current) {
+            gameDisplayRef.current.scrollTop = 0
+        }
+        window.scrollTo(0, 0)
+    }, [])
+
     const userBetSummary = useMemo(() => {
         if (!panel1.betPlaced && !panel2.betPlaced && !panel1.cashedOut && !panel2.cashedOut) return null
         return {
@@ -537,74 +545,82 @@ function CrashGame() {
                     </div>
                 </header>
 
-                {/* 2. MULTIPLIER HISTORY RIBBON */}
-                <GameHistory history={history} />
-
-                {/* 3. FLIGHT CANVAS ARENA */}
-                <GameChart
-                    phase={phase}
-                    multiplier={multiplier}
-                    elapsedTime={elapsedTime}
-                    countdown={countdown}
-                    flightStartTime={flightStartTime}
-                    onlinePlayersCount={roomBets.length > 0 ? roomBets.length * 42 + 1350 : 1385}
-                />
-
-                {/* 4. DUAL INDEPENDENT BETTING PANELS (Aviator signature UX) */}
-                <div className="aviator-dual-panels-wrap">
-                    {/* Panel 1 (Primary) */}
-                    <BettingPanel
-                        panelId={1}
-                        phase={phase}
-                        betPlaced={panel1.betPlaced}
-                        betAmount={panel1.amount}
-                        multiplier={multiplier}
-                        cashedOut={panel1.cashedOut}
-                        payout={panel1.payout}
-                        onBet={(amt, auto) => handleBet(amt, auto, 1)}
-                        onCancel={() => handleCancel(1)}
-                        onCashout={() => handleCashout(1)}
-                    />
-
-                    {/* Panel 2 (Secondary, can be minimized / expanded) */}
-                    {showSecondPanel ? (
-                        <BettingPanel
-                            panelId={2}
+                {/* Responsive Main Layout (2-Column on Laptop/Desktop, 1-Column on Mobile) */}
+                <div className="aviator-main-layout">
+                    {/* Left Column on Laptop / Bottom on Mobile: Social Bets Table */}
+                    <div className="aviator-bets-column">
+                        <PlayerBets
                             phase={phase}
-                            betPlaced={panel2.betPlaced}
-                            betAmount={panel2.amount}
                             multiplier={multiplier}
-                            cashedOut={panel2.cashedOut}
-                            payout={panel2.payout}
-                            canRemove={true}
-                            onRemove={() => setShowSecondPanel(false)}
-                            onBet={(amt, auto) => handleBet(amt, auto, 2)}
-                            onCancel={() => handleCancel(2)}
-                            onCashout={() => handleCashout(2)}
+                            userBetData={userBetSummary}
+                            roomBets={roomBets}
+                            isArena={gameMode === 'arena'}
+                            userHistory={gameRecords}
                         />
-                    ) : (
-                        <div className="aviator-add-second-bet-bar">
-                            <button
-                                type="button"
-                                className="add-second-bet-btn"
-                                onClick={() => setShowSecondPanel(true)}
-                            >
-                                <PlusOutlined style={{ marginRight: 6 }} />
-                                Add Second Bet
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    </div>
 
-                {/* 5. BOTTOM SOCIAL BETS / TURNOVER / PREVIOUS / TOP TABLE */}
-                <PlayerBets
-                    phase={phase}
-                    multiplier={multiplier}
-                    userBetData={userBetSummary}
-                    roomBets={roomBets}
-                    isArena={gameMode === 'arena'}
-                    userHistory={gameRecords}
-                />
+                    {/* Right Column on Laptop / Top on Mobile: Multipliers + Flight Arena + Dual Betting Consoles */}
+                    <div className="aviator-stage-column">
+                        {/* 2. MULTIPLIER HISTORY RIBBON */}
+                        <GameHistory history={history} />
+
+                        {/* 3. FLIGHT CANVAS ARENA */}
+                        <GameChart
+                            phase={phase}
+                            multiplier={multiplier}
+                            elapsedTime={elapsedTime}
+                            countdown={countdown}
+                            flightStartTime={flightStartTime}
+                            onlinePlayersCount={roomBets.length > 0 ? roomBets.length * 42 + 1350 : 1385}
+                        />
+
+                        {/* 4. DUAL INDEPENDENT BETTING PANELS (Aviator signature UX) */}
+                        <div className="aviator-dual-panels-wrap">
+                            {/* Panel 1 (Primary) */}
+                            <BettingPanel
+                                panelId={1}
+                                phase={phase}
+                                betPlaced={panel1.betPlaced}
+                                betAmount={panel1.amount}
+                                multiplier={multiplier}
+                                cashedOut={panel1.cashedOut}
+                                payout={panel1.payout}
+                                onBet={(amt, auto) => handleBet(amt, auto, 1)}
+                                onCancel={() => handleCancel(1)}
+                                onCashout={() => handleCashout(1)}
+                            />
+
+                            {/* Panel 2 (Secondary, can be minimized / expanded) */}
+                            {showSecondPanel ? (
+                                <BettingPanel
+                                    panelId={2}
+                                    phase={phase}
+                                    betPlaced={panel2.betPlaced}
+                                    betAmount={panel2.amount}
+                                    multiplier={multiplier}
+                                    cashedOut={panel2.cashedOut}
+                                    payout={panel2.payout}
+                                    canRemove={true}
+                                    onRemove={() => setShowSecondPanel(false)}
+                                    onBet={(amt, auto) => handleBet(amt, auto, 2)}
+                                    onCancel={() => handleCancel(2)}
+                                    onCashout={() => handleCashout(2)}
+                                />
+                            ) : (
+                                <div className="aviator-add-second-bet-bar">
+                                    <button
+                                        type="button"
+                                        className="add-second-bet-btn"
+                                        onClick={() => setShowSecondPanel(true)}
+                                    >
+                                        <PlusOutlined style={{ marginRight: 6 }} />
+                                        Add Second Bet
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Provably Fair Verifier Modal */}
