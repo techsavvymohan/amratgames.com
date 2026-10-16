@@ -24,11 +24,11 @@ export class ColorMatchEngine {
             totalBet = Object.values(bets).reduce((a, b) => a + (parseFloat(b) || 0), 0) || totalBet
 
             if (bets.green && colors.includes('green')) {
-                const mult = colors.includes('violet') ? 1.5 : 2.0
+                const mult = colors.includes('violet') ? 1.47 : 1.96
                 payout += (parseFloat(bets.green) || 0) * mult
             }
             if (bets.red && colors.includes('red')) {
-                const mult = colors.includes('violet') ? 1.5 : 2.0
+                const mult = colors.includes('violet') ? 1.47 : 1.96
                 payout += (parseFloat(bets.red) || 0) * mult
             }
             if (bets.violet && colors.includes('violet')) {
@@ -39,7 +39,7 @@ export class ColorMatchEngine {
                 payout += (parseFloat(bets[numKey]) || 0) * 9.0
             }
             if (bets[bigSmall]) {
-                payout += (parseFloat(bets[bigSmall]) || 0) * 2.0
+                payout += (parseFloat(bets[bigSmall]) || 0) * 1.96
             }
             payout = parseFloat(payout.toFixed(2))
             won = payout >= totalBet
@@ -52,16 +52,16 @@ export class ColorMatchEngine {
                 if (selectedChoice === 'violet') {
                     multiplier = 4.5
                 } else if (luckyNumber === 0 || luckyNumber === 5) {
-                    multiplier = 1.5
+                    multiplier = 1.47
                 } else {
-                    multiplier = 2.0
+                    multiplier = 1.96
                 }
             } else if (selectedChoice === String(luckyNumber)) {
                 won = true
                 multiplier = 9.0
             } else if (selectedChoice === bigSmall) {
                 won = true
-                multiplier = 2.0
+                multiplier = 1.96
             }
             payout = parseFloat((totalBet * multiplier).toFixed(2))
         }

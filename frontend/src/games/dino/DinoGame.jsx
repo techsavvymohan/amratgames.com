@@ -232,8 +232,8 @@ function DinoGame() {
         // Survivor probability for 'cleared' hurdles
         const probability = Math.pow(diff.survivalChance, cleared);
 
-        // 0.99 is 99% RTP (Return To Player) -> 1% house edge
-        const pureMultiplier = 0.99 / probability;
+        // 0.96 is 96% RTP (Return To Player) -> 4% house edge
+        const pureMultiplier = 0.96 / probability;
 
         // Floor to 2 decimal places
         return parseFloat((Math.floor(pureMultiplier * 100) / 100).toFixed(2));

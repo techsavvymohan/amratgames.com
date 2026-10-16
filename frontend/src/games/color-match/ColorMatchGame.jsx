@@ -430,7 +430,7 @@ function ColorMatchGame() {
                                     />
                                 </div>
                                 <div className="cm-crystal-title">GREEN</div>
-                                <div className="cm-crystal-badge">2X / 1.5X</div>
+                                <div className="cm-crystal-badge">1.96X / 1.47X</div>
                                 {bets.green > 0 && (
                                     <div className="cm-staked-badge">{currencySymbol}{bets.green}</div>
                                 )}
@@ -472,7 +472,7 @@ function ColorMatchGame() {
                                     />
                                 </div>
                                 <div className="cm-crystal-title">RED</div>
-                                <div className="cm-crystal-badge">2X / 1.5X</div>
+                                <div className="cm-crystal-badge">1.96X / 1.47X</div>
                                 {bets.red > 0 && (
                                     <div className="cm-staked-badge">{currencySymbol}{bets.red}</div>
                                 )}
@@ -512,7 +512,7 @@ function ColorMatchGame() {
 
                         {/* 3. Big / Small Dual Bet Pockets */}
                         <div className="cm-section-header" style={{ marginTop: 8 }}>
-                            <span>BIG / SMALL (2X PAYOUT)</span>
+                            <span>BIG / SMALL (1.96X PAYOUT)</span>
                         </div>
 
                         <div className="cm-bigsmall-duo">
@@ -525,7 +525,7 @@ function ColorMatchGame() {
                             >
                                 <div className="cm-pocket-title">BIG</div>
                                 <div className="cm-pocket-sub">5, 6, 7, 8, 9</div>
-                                <div className="cm-pocket-mult">2.0X</div>
+                                <div className="cm-pocket-mult">1.96X</div>
                                 {bets.big > 0 && (
                                     <div className="cm-staked-badge">{currencySymbol}{bets.big}</div>
                                 )}
@@ -540,7 +540,7 @@ function ColorMatchGame() {
                             >
                                 <div className="cm-pocket-title">SMALL</div>
                                 <div className="cm-pocket-sub">0, 1, 2, 3, 4</div>
-                                <div className="cm-pocket-mult">2.0X</div>
+                                <div className="cm-pocket-mult">1.96X</div>
                                 {bets.small > 0 && (
                                     <div className="cm-staked-badge">{currencySymbol}{bets.small}</div>
                                 )}

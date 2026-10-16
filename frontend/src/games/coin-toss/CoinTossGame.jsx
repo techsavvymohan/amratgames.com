@@ -21,7 +21,7 @@ import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import PvPDuelsArena from './PvPDuelsArena'
 import './CoinTossGame.css'
 
-const MULTIPLIER = 1.98 // 99% RTP / 1% House Edge
+const MULTIPLIER = 1.96 // 96% RTP / 4% House Edge
 const MIN_BET = 10
 const MAX_BET = 100000
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000]
@@ -403,7 +403,7 @@ export default function CoinTossGame() {
                         setGameMode('solo')
                     }}
                 >
-                    <span>🎲 Solo Mode (1.98x)</span>
+                    <span>🎲 Solo Mode (1.96x)</span>
                 </button>
 
                 <button
@@ -501,7 +501,7 @@ export default function CoinTossGame() {
                                     </div>
                                     <div className="splash-subtitle">
                                         {lastResult.won
-                                            ? `Multiplier 1.98x • Net Profit +${currencySymbol}${(lastResult.payout - lastResult.betAmount).toLocaleString('en-IN')}`
+                                            ? `Multiplier 1.96x • Net Profit +${currencySymbol}${(lastResult.payout - lastResult.betAmount).toLocaleString('en-IN')}`
                                             : `Better luck next flip! Press Space to try again.`}
                                     </div>
                                 </div>
@@ -516,7 +516,7 @@ export default function CoinTossGame() {
                     {/* Game Multiplier, RTP & Automation Controls */}
                     <div className="coin-controls-top-row">
                         <div className="controls-badges">
-                            <span className="badge-mult-pill">1.98X PAYOUT</span>
+                            <span className="badge-mult-pill">1.96X PAYOUT</span>
                             {betAmount > 0 && (
                                 <span className="badge-win-pill">
                                     Win: {currencySymbol}{potentialPayout.toLocaleString('en-IN')}

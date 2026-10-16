@@ -304,7 +304,7 @@ async function executeAllPipelines() {
 
         // Coin Toss Evaluation
         const coinEval = CoinTossEngine.evaluate({ betAmount: 10, choice: 'heads', clientSeed: 'cointoss_seed', nonce: 1 })
-        recordStep('P5_GAME_ENGINES', 'Provably Fair Coin Toss (1.98x Multiplier)', coinEval.multiplier === 1.98 || coinEval.multiplier === 0, `Outcome: ${coinEval.outcome}`)
+        recordStep('P5_GAME_ENGINES', 'Provably Fair Coin Toss (1.96x Multiplier)', coinEval.multiplier === 1.96 || coinEval.multiplier === 0, `Outcome: ${coinEval.outcome}`)
     } catch (err) {
         recordStep('P5_GAME_ENGINES', 'Game Engine Pipeline', false, err.message)
     }

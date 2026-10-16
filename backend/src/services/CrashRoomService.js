@@ -85,10 +85,10 @@ export class CrashRoomService {
         const intVal = parseInt(hexSub, 16)
         const floatVal = intVal / Math.pow(2, 52)
 
-        // 1% instant bust (RTP = 99%)
+        // 3% instant bust (Spribe Aviator standard RTP = 97.00%)
         let point = 1.00
-        if (floatVal >= 0.01) {
-            point = Math.floor((99 / (1 - floatVal))) / 100
+        if (floatVal >= 0.03) {
+            point = Math.floor((97 / (1 - floatVal))) / 100
         }
         this.crashPoint = Math.max(1.00, Math.min(point, 1000.0))
 

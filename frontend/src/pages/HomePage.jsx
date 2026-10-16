@@ -176,16 +176,16 @@ const HERO_SLIDES = [
     },
     {
         id: 'coin-toss',
-        badge: '🪙 NEW GAME • 1.98X INSTANT WIN',
+        badge: '🪙 NEW GAME • 1.96X INSTANT WIN',
         titlePrefix: 'Heads or Tails? ',
         titleHighlight: 'Flip & Double Your Cash Instantly!',
-        description: 'Pick Heads or Tails, flip the golden 3D coin, and pocket an instant 1.98x multiplier payout. 100% Provably Fair cryptographic math with 99% player RTP.',
+        description: 'Pick Heads or Tails, flip the golden 3D coin, and pocket an instant 1.96x multiplier payout. 100% Provably Fair cryptographic math with 96% player RTP.',
         primaryCta: { label: 'Play Coin Toss Now', icon: '🪙', to: '/coin-toss' },
         secondaryCta: { label: 'Explore All Games', icon: '🎮', hash: '#amrat-originals' },
-        navLabel: 'Coin Toss (1.98x)',
+        navLabel: 'Coin Toss (1.96x)',
         stats: [
-            { label: 'Instant 1-Second Payout', value: '1.98x Multiplier', icon: '⚡' },
-            { label: 'Provably Fair HMAC', value: '99% RTP', icon: '🪙' },
+            { label: 'Instant 1-Second Payout', value: '1.96x Multiplier', icon: '⚡' },
+            { label: 'Provably Fair HMAC', value: '96% RTP', icon: '🪙' },
             { label: 'Fast Action Bets', value: '₹10 Min Bet', icon: '🎯' },
             { label: 'Certified Fair Play', value: '100% Honest', icon: '🛡️' },
         ],
@@ -468,7 +468,7 @@ function HomePage() {
                             <div className="showcase-card showcase-coin">
                                 <div className="showcase-header">
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
-                                    <span className="showcase-live-pill is-pulse">🪙 1.98x Payout</span>
+                                    <span className="showcase-live-pill is-pulse">🪙 1.96x Payout</span>
                                 </div>
                                 <div className="coin-preview-showcase" style={{ textAlign: 'center', padding: '12px 0 8px 0' }}>
                                     <img
@@ -477,18 +477,18 @@ function HomePage() {
                                         style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '10px' }}
                                     />
                                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '4px' }}>
-                                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>👑 HEADS (1.98x)</span>
-                                        <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>⭐ TAILS (1.98x)</span>
+                                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>👑 HEADS (1.96x)</span>
+                                        <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>⭐ TAILS (1.96x)</span>
                                     </div>
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">
                                         <span className="stat-label">Win Multiplier</span>
-                                        <span className="stat-val" style={{ color: '#10b981' }}>1.98x Instant</span>
+                                        <span className="stat-val" style={{ color: '#10b981' }}>1.96x Instant</span>
                                     </div>
                                     <div className="showcase-stat">
                                         <span className="stat-label">House Edge</span>
-                                        <span className="stat-val">Only 1% (99% RTP)</span>
+                                        <span className="stat-val">4% (96% RTP)</span>
                                     </div>
                                 </div>
                                 <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#0b0f19', fontWeight: '700' }}>

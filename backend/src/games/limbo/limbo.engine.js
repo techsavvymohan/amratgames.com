@@ -3,17 +3,17 @@ import { bankrollRisk } from '../../services/BankrollRiskService.js'
 
 /**
  * Limbo Multiplier Engine (Server-Authoritative)
- * 99% Player Return (1% instant bust house edge)
+ * 96% Player Return (4% instant bust house edge)
  */
 export class LimboEngine {
     static evaluate({ betAmount, targetMultiplier, clientSeed, nonce }) {
         const target = Math.max(1.01, Math.min(parseFloat(targetMultiplier) || 2.0, 1000000.0))
         const { hash, floatVal } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // 1% instant bust house edge (RTP = 99%)
+        // 4% instant bust house edge (Standard Casino RTP = 96.00%)
         let roll = 1.00
-        if (floatVal >= 0.01) {
-            roll = Math.floor((99 / (1 - floatVal))) / 100
+        if (floatVal >= 0.04) {
+            roll = Math.floor((96 / (1 - floatVal))) / 100
         }
         roll = Math.max(1.00, Math.min(roll, 1000000.0))
 

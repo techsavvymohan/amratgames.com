@@ -84,8 +84,8 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
                         choice: r.choice || r.picked || r.selection,
                         outcome: r.outcome || r.result,
                         betAmount: r.betAmount || r.amount || 0,
-                        multiplier: r.multiplier !== undefined ? r.multiplier : (r.won ? 1.98 : 0),
-                        payout: r.payout !== undefined ? r.payout : (r.won ? (r.betAmount * 1.98) : 0),
+                        multiplier: r.multiplier !== undefined ? r.multiplier : (r.won ? 1.96 : 0),
+                        payout: r.payout !== undefined ? r.payout : (r.won ? (r.betAmount * 1.96) : 0),
                         won: Boolean(r.won),
                         createdAt: r.timestamp || r.createdAt || new Date().toISOString(),
                         isLocal: true
@@ -188,7 +188,7 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
                                 const betAmt = Number(item.betAmount || 0)
                                 const payoutAmt = Number(item.payout || 0)
                                 const profitAmt = isWin ? payoutAmt - betAmt : -betAmt
-                                const mult = Number(item.multiplier || (isWin ? (betAmt > 0 ? payoutAmt / betAmt : 1.98) : 0)).toFixed(2)
+                                const mult = Number(item.multiplier || (isWin ? (betAmt > 0 ? payoutAmt / betAmt : 1.96) : 0)).toFixed(2)
 
                                 // Detail formatting
                                 let detailText = item.outcome || item.choice || '-'

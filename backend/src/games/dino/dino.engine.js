@@ -34,8 +34,8 @@ export class DinoEngine {
         if (cleared <= 0) return 1.00
         const diff = DINO_DIFFICULTIES[difficulty] || DINO_DIFFICULTIES.medium
         const probability = Math.pow(diff.survivalChance, cleared)
-        // 99% RTP (1% house edge)
-        const pureMultiplier = 0.99 / probability
+        // 96% RTP (4% house edge)
+        const pureMultiplier = 0.96 / probability
         return parseFloat((Math.floor(pureMultiplier * 100) / 100).toFixed(2))
     }
 

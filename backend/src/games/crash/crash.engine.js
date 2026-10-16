@@ -8,7 +8,7 @@ export const CRASH_GROWTH_RATE = 0.16
 
 /**
  * Crash / Rocket Flight Engine (Server-Authoritative)
- * 99% Player Return (1% instant bust house edge)
+ * 97% Player Return (3% instant bust house edge - Spribe Aviator Standard)
  */
 export class CrashEngine {
     constructor() {
@@ -29,10 +29,10 @@ export class CrashEngine {
     evaluate({ claimedMultiplier, clientSeed, nonce, autoCashout = null }) {
         const { hash, floatVal, serverSeed } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // 1% instant bust (RTP = 99%)
+        // 3% instant bust (Spribe Aviator standard RTP = 97.00%)
         let crashPoint = 1.00
-        if (floatVal >= 0.01) {
-            crashPoint = Math.floor((99 / (1 - floatVal))) / 100
+        if (floatVal >= 0.03) {
+            crashPoint = Math.floor((97 / (1 - floatVal))) / 100
         }
         crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
 
