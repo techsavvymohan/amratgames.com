@@ -529,7 +529,11 @@
 /* Mobile Optimization Breakpoint */
 @media (max-width: 768px) {
     .pvp-arena-container {
-        gap: 10px;
+        gap: 8px;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
 
     .pvp-hero-banner {
