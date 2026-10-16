@@ -1472,27 +1472,123 @@
     }
 
     .crash-mobile-tabs {
-        display: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        padding: 8px 10px 12px !important;
+        background: #0b0e14 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        order: 3 !important;
+        flex-shrink: 0 !important;
+        box-sizing: border-box !important;
     }
 
     .crash-mobile-tabs [role='tablist'] {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 10px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+        width: 100% !important;
     }
 
     .crash-mobile-tabs [role='tab'] {
-        min-height: 44px;
-        border: 1px solid var(--border-default);
-        border-radius: 8px;
-        background: var(--surface-1);
-        color: var(--text-secondary);
+        min-height: 36px !important;
+        height: 36px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 8px !important;
+        background: #141b27 !important;
+        color: #94a3b8 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .crash-mobile-tabs [role='tab']:active {
+        transform: scale(0.97) !important;
     }
 
     .crash-mobile-tabs [aria-selected='true'] {
-        border-color: var(--primary);
-        color: var(--text-primary);
+        border-color: #ffd700 !important;
+        color: #ffd700 !important;
+        background: rgba(245, 175, 25, 0.16) !important;
+        box-shadow: 0 0 10px rgba(245, 175, 25, 0.25) !important;
+    }
+
+    .crash-mobile-tab-panel {
+        width: 100% !important;
+        min-height: 90px !important;
+        max-height: 180px !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin !important;
+        box-sizing: border-box !important;
+        background: #0f131a !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px !important;
+    }
+
+    .crash-mobile-tabs .player-bets-panel {
+        border: none !important;
+        background: transparent !important;
+        width: 100% !important;
+    }
+
+    .crash-mobile-tabs .player-bets-header {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    }
+
+    .crash-mobile-tabs .player-bets-list {
+        max-height: 130px !important;
+        overflow-y: auto !important;
+        border-top: none !important;
+    }
+
+    .crash-mobile-tabs .player-bet-row {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+
+    .crash-results-panel {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 6px 10px;
+        box-sizing: border-box;
+    }
+
+    .crash-results-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 12px;
+        gap: 6px;
+        text-align: center;
+    }
+
+    .crash-results-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 140px;
+        overflow-y: auto;
+    }
+
+    .crash-result-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 12px;
     }
 
     .crash-game .game-history-bar {

@@ -977,30 +977,6 @@ function CrashGame() {
                                 Solo Flight
                             </Radio.Button>
                         </Radio.Group>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                background: gameMode === 'arena' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                                border: `1px solid ${gameMode === 'arena' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
-                                padding: '3px 8px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                color: gameMode === 'arena' ? '#4ade80' : '#60a5fa'
-                            }}>
-                                <span style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: '50%',
-                                    background: gameMode === 'arena' ? '#22c55e' : '#3b82f6',
-                                    boxShadow: gameMode === 'arena' ? '0 0 8px #22c55e' : '0 0 8px #3b82f6'
-                                }} />
-                                {gameMode === 'arena' ? 'SYNCHRONIZED ROOM' : 'PROVABLY FAIR RNG'}
-                            </span>
-                        </div>
                     </div>
 
                     <GameHistory history={history} />
@@ -1046,10 +1022,11 @@ function CrashGame() {
                             </div>
                             <div
                                 id={`crash-${mobileDataTab}-panel`}
+                                className="crash-mobile-tab-panel"
                                 role="tabpanel"
                                 aria-labelledby={`crash-${mobileDataTab}-tab`}
                             >
-                                {showPlayerBets && mobileDataTab === 'bets' ? (
+                                {mobileDataTab === 'bets' ? (
                                     <PlayerBets
                                         phase={phase}
                                         multiplier={multiplier}
@@ -1058,9 +1035,16 @@ function CrashGame() {
                                         roomBets={roomBets}
                                         isArena={gameMode === 'arena'}
                                     />
-                                ) : mobileDataTab === 'results' && showPlayerResults ? (
-                                    <PlayerResults cashouts={playerCashouts} />
-                                ) : null}
+                                ) : (
+                                    <PlayerResults
+                                        cashouts={playerCashouts}
+                                        isPanel={true}
+                                        phase={phase}
+                                        multiplier={multiplier}
+                                        history={history}
+                                        currencySymbol={currencySymbol}
+                                    />
+                                )}
                             </div>
                         </section>
                     )}
@@ -1146,8 +1130,6 @@ function CrashGame() {
                                 />
                             </Tooltip>
                         </Space>
-
-                        <span className="logo" style={{ color: 'var(--primary)', fontWeight: '900', letterSpacing: '-0.02em' }}>AmratGames</span>
 
                         {/* History Button */}
                         <Button
