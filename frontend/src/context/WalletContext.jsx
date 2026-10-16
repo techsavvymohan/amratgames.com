@@ -658,7 +658,7 @@ export function WalletProvider({ children }) {
     }, [token])
 
     // Multiplayer Synchronized Crash Room Methods
-    const placeRoomCrashBet = useCallback(async ({ betAmount, autoCashout }) => {
+    const placeRoomCrashBet = useCallback(async ({ betAmount, autoCashout, panelId = 1 }) => {
         if (!user) {
             authContext?.openAuthModal?.('register')
             return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
@@ -672,6 +672,7 @@ export function WalletProvider({ children }) {
                 body: JSON.stringify({
                     betAmount,
                     autoCashout,
+                    panelId: panelId || 1,
                     currency: currencyRef.current
                 })
             })
@@ -686,14 +687,14 @@ export function WalletProvider({ children }) {
         }
     }, [user, authContext, token, setStoredBalance])
 
-    const cashoutRoomCrash = useCallback(async () => {
+    const cashoutRoomCrash = useCallback(async ({ panelId = 1 } = {}) => {
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) headers.Authorization = `Bearer ${token}`
             const res = await fetch('/api/games/crash/room/cashout', {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({})
+                body: JSON.stringify({ panelId: panelId || 1 })
             })
             const data = await res.json()
             if (data.success && data.balances) {

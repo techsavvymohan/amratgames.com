@@ -218,13 +218,14 @@ const handleRoomBet = async (req, res) => {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required to join multiplayer room bets' })
         }
-        const { betAmount, currency = 'INR', autoCashout } = req.body
+        const { betAmount, currency = 'INR', autoCashout, panelId = 1 } = req.body
         const result = await crashRoomService.placeBet({
             userId: req.user.id,
             username: req.user.username,
             betAmount,
             currency,
-            autoCashout
+            autoCashout,
+            panelId
         })
         const user = db.findUserById(req.user.id)
         res.json({ success: true, ...result, bet: result, balances: user.balances })
@@ -241,7 +242,8 @@ const handleRoomCashout = async (req, res) => {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required to cashout' })
         }
-        const result = await crashRoomService.cashoutPlayer({ userId: req.user.id })
+        const { panelId = 1 } = req.body || {}
+        const result = await crashRoomService.cashoutPlayer({ userId: req.user.id, panelId })
         const user = db.findUserById(req.user.id)
         res.json({ success: true, ...result, cashout: result, balances: user.balances })
     } catch (err) {

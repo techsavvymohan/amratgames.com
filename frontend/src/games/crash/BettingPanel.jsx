@@ -1,192 +1,330 @@
 import { useState, useEffect } from 'react'
-import {
-    InputNumber,
-    Button,
-    Typography,
-    Card,
-    Switch,
-    Tooltip,
-    Slider
-} from 'antd'
-import {
-    ThunderboltOutlined,
-    QuestionCircleOutlined
-} from '@ant-design/icons'
-
+import { Switch } from 'antd'
+import { PlusOutlined, MinusOutlined, CloseOutlined } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
-import { CurrencyIcon } from '../../components/Header'
 import casinoAudio from '../../utils/casinoAudio'
 
-const { Text } = Typography
+function BettingPanel({
+    panelId = 1,
+    phase = 'waiting',
+    betPlaced = false,
+    betAmount = 25,
+    multiplier = 1.00,
+    onBet,
+    onCancel,
+    onCashout,
+    cashedOut = false,
+    payout = 0,
+    canRemove = false,
+    onRemove = null
+}) {
+    const { currencySymbol, currency, balance } = useWallet()
+    const [activeTab, setActiveTab] = useState('bet') // 'bet' | 'auto'
+    const [amount, setAmount] = useState(betAmount || 25)
+    const [autoBetEnabled, setAutoBetEnabled] = useState(false)
+    const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false)
+    const [autoCashoutMult, setAutoCashoutMult] = useState(2.00)
 
-function BettingPanel({ phase, betPlaced, multiplier, onBet, onCashout }) {
-    const { currencySymbol, currency } = useWallet()
-    const [activeTab, setActiveTab] = useState('manual')
-    const [betAmount, setBetAmount] = useState(100)
-    const [cashoutAt, setCashoutAt] = useState(2.00)
-    const [autoCashout, setAutoCashout] = useState(true)
-
-    // Calculate profit
-    const profit = betAmount * (cashoutAt - 1)
-
-    const handleBetClick = () => {
-        if (phase === 'idle' || phase === 'waiting') {
-            if (betAmount > 0) {
-                onBet(betAmount, autoCashout ? cashoutAt : null)
-            }
-        } else if (phase === 'running' && betPlaced) {
-            onCashout()
+    // Sync external betAmount if updated
+    useEffect(() => {
+        if (betAmount && !betPlaced) {
+            setAmount(betAmount)
         }
+    }, [betAmount, betPlaced])
+
+    // Stepper amount adjustment
+    const adjustAmount = (delta) => {
+        casinoAudio.playChip?.()
+        setAmount((prev) => {
+            const next = Math.max(1, parseFloat((Number(prev || 0) + delta).toFixed(2)))
+            return next
+        })
     }
 
-    const getButtonText = () => {
-        if (phase === 'idle') {
-            return `Place Bet & Launch`
-        }
-        if (phase === 'waiting') {
-            return betPlaced ? 'Cancel Bet' : 'Place Bet'
-        }
-        if (phase === 'running') {
+    // Set quick chip amount
+    const handleChipClick = (chipVal) => {
+        casinoAudio.playChip?.()
+        setAmount(chipVal)
+    }
+
+    // Auto Cashout stepper
+    const adjustAutoCashout = (delta) => {
+        casinoAudio.playChip?.()
+        setAutoCashoutMult((prev) => Math.max(1.05, parseFloat((Number(prev || 2.0) + delta).toFixed(2))))
+    }
+
+    // Main action button click handler
+    const handleActionClick = () => {
+        if (phase === 'waiting' || phase === 'idle') {
             if (betPlaced) {
-                return `Cash Out ${currencySymbol}${(betAmount * multiplier).toFixed(2)}`
+                // Cancel placed bet before round begins
+                if (onCancel) {
+                    casinoAudio.playChip?.()
+                    onCancel(panelId)
+                }
+            } else {
+                // Place bet
+                if (amount > 0 && onBet) {
+                    casinoAudio.playBet?.()
+                    onBet(amount, autoCashoutEnabled ? autoCashoutMult : null, panelId)
+                }
             }
-            return 'Flight in Progress'
+        } else if (phase === 'running' && betPlaced && !cashedOut) {
+            // Cash out live during flight
+            if (onCashout) {
+                casinoAudio.playWin?.()
+                onCashout(panelId)
+            }
         }
-        if (phase === 'crashed') {
-            return 'Crashed'
-        }
-        return 'Place Bet & Launch'
     }
 
-    const getButtonClass = () => {
-        if (phase === 'running' && betPlaced) return 'bet-button cashout-btn'
-        if (phase === 'crashed') return 'bet-button crashed-btn'
-        return 'bet-button'
+    // Auto-bet placing hook during countdown
+    useEffect(() => {
+        if (autoBetEnabled && phase === 'waiting' && !betPlaced && amount > 0 && amount <= balance) {
+            const timer = setTimeout(() => {
+                if (onBet && !betPlaced) {
+                    onBet(amount, autoCashoutEnabled ? autoCashoutMult : null, panelId)
+                }
+            }, 500)
+            return () => clearTimeout(timer)
+        }
+    }, [autoBetEnabled, phase, betPlaced, amount, balance, autoCashoutEnabled, autoCashoutMult, onBet, panelId])
+
+    // Render button appearance & state
+    const isRunning = phase === 'running'
+    const isWaiting = phase === 'waiting' || phase === 'idle'
+    const isCrashed = phase === 'crashed'
+
+    const liveCashoutVal = (amount * multiplier).toFixed(2)
+
+    let btnStateClass = 'state-bet'
+    let topLabel = 'Bet'
+    let bottomLabel = `${Number(amount || 0).toFixed(2)} ${currency}`
+    let isDisabled = false
+
+    if (isWaiting) {
+        if (betPlaced) {
+            btnStateClass = 'state-cancel'
+            topLabel = 'Cancel'
+            bottomLabel = `${Number(amount || 0).toFixed(2)} ${currency}`
+        } else {
+            btnStateClass = 'state-bet'
+            topLabel = 'Bet'
+            bottomLabel = `${Number(amount || 0).toFixed(2)} ${currency}`
+        }
+    } else if (isRunning) {
+        if (betPlaced && !cashedOut) {
+            btnStateClass = 'state-cashout'
+            topLabel = 'Cash Out'
+            bottomLabel = `${liveCashoutVal} ${currency}`
+        } else if (cashedOut) {
+            btnStateClass = 'state-cashed'
+            topLabel = 'Cashed Out'
+            bottomLabel = `+${Number(payout || 0).toFixed(2)} ${currency}`
+            isDisabled = true
+        } else {
+            btnStateClass = 'state-waiting-next'
+            topLabel = 'Waiting'
+            bottomLabel = 'Next Round'
+            isDisabled = true
+        }
+    } else if (isCrashed) {
+        if (cashedOut) {
+            btnStateClass = 'state-cashed'
+            topLabel = 'Won'
+            bottomLabel = `+${Number(payout || 0).toFixed(2)} ${currency}`
+        } else {
+            btnStateClass = 'state-crashed'
+            topLabel = 'Crashed'
+            bottomLabel = 'Next Round'
+        }
+        isDisabled = true
     }
 
     return (
-        <div className="betting-panel-3d">
-            {/* 3D Tabs */}
-            <div className="bet-mode-tabs">
-                <button
-                    className={`bet-mode-tab ${activeTab === 'manual' ? 'active' : ''}`}
-                    onClick={() => {
-                        casinoAudio.playChip()
-                        setActiveTab('manual')
-                    }}
-                >
-                    Manual
-                </button>
-                <button
-                    className={`bet-mode-tab ${activeTab === 'auto' ? 'active' : ''}`}
-                    onClick={() => {
-                        casinoAudio.playChip()
-                        setActiveTab('auto')
-                    }}
-                >
-                    Auto
-                </button>
-            </div>
-
-            {activeTab === 'manual' ? (
-                <div className="bet-form">
-                    {/* Bet Amount */}
-                    <div className="form-group">
-                        <div className="form-header">
-                            <label className="form-label" style={{ margin: 0 }}>Bet Amount</label>
-                            <Text type="secondary" style={{ margin: 0 }}>{currencySymbol}{Number(betAmount || 0).toFixed(2)}</Text>
-                        </div>
-                        <div className="input-row">
-                            <InputNumber
-                                id="crash-bet-amount-input"
-                                value={betAmount}
-                                onChange={setBetAmount}
-                                min={0}
-                                step={1}
-                                addonBefore={
-                                    <CurrencyIcon symbol={currencySymbol} currency={currency} size={20} fontSize={12} />
-                                }
-                                controls={false}
-                                formatter={(v) => `${v}`}
-                                parser={(v) => v.replace(/[₹$₿₮\s,]/g, '')}
-                            />
-                            <Button.Group>
-                                <Button onClick={() => {
-                                    casinoAudio.playChip?.()
-                                    setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))
-                                }}>½</Button>
-                                <Button onClick={() => {
-                                    casinoAudio.playChip?.()
-                                    setBetAmount(prev => parseFloat((Number(prev || 1) * 2).toFixed(2)))
-                                }}>2×</Button>
-                            </Button.Group>
-                        </div>
-                    </div>
-
-                    {/* Cashout At */}
-                    <div className="form-group crash-cashout-group">
-                        <div className="form-header">
-                            <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-                                Auto Cashout
-                                <Tooltip title="Auto cashout when multiplier reaches this value">
-                                    <QuestionCircleOutlined style={{ marginLeft: 6, cursor: 'pointer', color: '#b1b6c6' }} />
-                                </Tooltip>
-                            </label>
-                            <Switch
-                                size="small"
-                                checked={autoCashout}
-                                onChange={setAutoCashout}
-                                className="crash-switch"
-                            />
-                        </div>
-                        <InputNumber
-                            value={cashoutAt}
-                            onChange={setCashoutAt}
-                            min={1.01}
-                            max={1000}
-                            step={0.1}
-                            precision={2}
-                            disabled={!autoCashout}
-                            controls={false}
-                            style={{ width: '100%' }}
-                            addonAfter={<span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>×</span>}
-                        />
-                    </div>
-
-                    {/* Profit Display - 3D Card Style */}
-                    <div className="profit-card-3d mobile-sheet-secondary">
-                        <div className="form-header" style={{ marginBottom: 4 }}>
-                            <label className="form-label" style={{ margin: 0 }}>Profit on Win</label>
-                            <Text type="secondary" style={{ margin: 0 }}>{currencySymbol}{profit.toFixed(2)}</Text>
-                        </div>
-                        <Text strong style={{ color: 'var(--success)', fontSize: 16, fontFamily: "'Courier New', monospace" }}>
-                            +{currencySymbol}{profit.toFixed(2)}
-                        </Text>
-                    </div>
-
-                    {/* Bet Button */}
+        <div className={`aviator-bet-panel panel-${panelId} ${betPlaced ? 'has-active-bet' : ''}`}>
+            {/* Top Bar: Bet/Auto Segmented Switch + Optional Remove Panel Button */}
+            <div className="panel-top-bar">
+                <div className="aviator-segmented-control">
                     <button
-                        id="crash-bet-action-btn"
-                        onClick={handleBetClick}
-                        className={getButtonClass()}
-                        disabled={phase === 'crashed' || (phase === 'running' && !betPlaced)}
+                        type="button"
+                        className={`seg-btn ${activeTab === 'bet' ? 'active' : ''}`}
+                        onClick={() => {
+                            casinoAudio.playChip?.()
+                            setActiveTab('bet')
+                        }}
                     >
-                        <ThunderboltOutlined style={{ marginRight: 6 }} />
-                        {getButtonText()}
+                        Bet
+                    </button>
+                    <button
+                        type="button"
+                        className={`seg-btn ${activeTab === 'auto' ? 'active' : ''}`}
+                        onClick={() => {
+                            casinoAudio.playChip?.()
+                            setActiveTab('auto')
+                        }}
+                    >
+                        Auto
                     </button>
                 </div>
-            ) : (
-                <div className="bet-form">
-                    <Card size="small" style={{ background: 'var(--bg-input)', borderColor: 'var(--border-color)', borderRadius: 10 }}>
-                        <Text type="secondary">
-                            Auto betting coming soon! Configure automated betting strategies.
-                        </Text>
-                    </Card>
+
+                {canRemove && onRemove && (
+                    <button
+                        type="button"
+                        className="panel-toggle-btn"
+                        onClick={onRemove}
+                        title="Remove second betting panel"
+                    >
+                        <CloseOutlined />
+                    </button>
+                )}
+            </div>
+
+            {/* Main Panel Content: 2 Columns */}
+            <div className="panel-main-row">
+                {/* Left Column: Stepper & Quick Chips (or Auto Options) */}
+                <div className="panel-controls-col">
+                    {activeTab === 'bet' ? (
+                        <>
+                            {/* Stepper: [-]  Amount  [+] */}
+                            <div className="aviator-stepper">
+                                <button
+                                    type="button"
+                                    className="stepper-btn minus-btn"
+                                    onClick={() => adjustAmount(-10)}
+                                    disabled={betPlaced}
+                                >
+                                    <MinusOutlined />
+                                </button>
+                                <div className="stepper-input-wrap">
+                                    <input
+                                        type="number"
+                                        className="stepper-input"
+                                        value={amount}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value)
+                                            setAmount(isNaN(val) ? 0 : val)
+                                        }}
+                                        min="1"
+                                        step="1"
+                                        disabled={betPlaced}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    className="stepper-btn plus-btn"
+                                    onClick={() => adjustAmount(10)}
+                                    disabled={betPlaced}
+                                >
+                                    <PlusOutlined />
+                                </button>
+                            </div>
+
+                            {/* 2x2 Quick Chips: [ 100 ] [ 200 ] / [ 500 ] [ 1,000 ] */}
+                            <div className="aviator-quick-chips">
+                                <button
+                                    type="button"
+                                    className="chip-btn"
+                                    onClick={() => handleChipClick(100)}
+                                    disabled={betPlaced}
+                                >
+                                    100
+                                </button>
+                                <button
+                                    type="button"
+                                    className="chip-btn"
+                                    onClick={() => handleChipClick(200)}
+                                    disabled={betPlaced}
+                                >
+                                    200
+                                </button>
+                                <button
+                                    type="button"
+                                    className="chip-btn"
+                                    onClick={() => handleChipClick(500)}
+                                    disabled={betPlaced}
+                                >
+                                    500
+                                </button>
+                                <button
+                                    type="button"
+                                    className="chip-btn"
+                                    onClick={() => handleChipClick(1000)}
+                                    disabled={betPlaced}
+                                >
+                                    1,000
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        /* Auto Mode Controls */
+                        <div className="aviator-auto-settings">
+                            {/* Auto Bet Toggle */}
+                            <div className="auto-row">
+                                <span className="auto-label">Auto Bet</span>
+                                <Switch
+                                    size="small"
+                                    checked={autoBetEnabled}
+                                    onChange={setAutoBetEnabled}
+                                    className="aviator-switch"
+                                />
+                            </div>
+
+                            {/* Auto Cashout Toggle + Stepper */}
+                            <div className="auto-cashout-group">
+                                <div className="auto-row">
+                                    <span className="auto-label">Auto Cash Out</span>
+                                    <Switch
+                                        size="small"
+                                        checked={autoCashoutEnabled}
+                                        onChange={setAutoCashoutEnabled}
+                                        className="aviator-switch"
+                                    />
+                                </div>
+                                {autoCashoutEnabled && (
+                                    <div className="aviator-stepper compact-stepper">
+                                        <button
+                                            type="button"
+                                            className="stepper-btn minus-btn"
+                                            onClick={() => adjustAutoCashout(-0.1)}
+                                            disabled={betPlaced}
+                                        >
+                                            <MinusOutlined />
+                                        </button>
+                                        <div className="stepper-input-wrap">
+                                            <span className="stepper-val-text">{autoCashoutMult.toFixed(2)}x</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="stepper-btn plus-btn"
+                                            onClick={() => adjustAutoCashout(0.1)}
+                                            disabled={betPlaced}
+                                        >
+                                            <PlusOutlined />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {/* Right Column: GIANT Action Button */}
+                <div className="panel-action-col">
+                    <button
+                        type="button"
+                        id={`crash-bet-btn-${panelId}`}
+                        className={`aviator-action-btn ${btnStateClass}`}
+                        onClick={handleActionClick}
+                        disabled={isDisabled}
+                    >
+                        <span className="btn-main-label">{topLabel}</span>
+                        <span className="btn-sub-label">{bottomLabel}</span>
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }
 
 export default BettingPanel
-

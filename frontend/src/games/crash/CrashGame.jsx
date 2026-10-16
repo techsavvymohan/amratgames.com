@@ -1,62 +1,37 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
-    Card,
-    Button,
-    Space,
-    Tag,
-    Tooltip,
+    Modal,
     Typography,
     message,
-    Switch,
-    Modal,
-    Drawer,
-    Statistic,
-    Row,
-    Col,
-    Divider,
-    Radio,
-    Progress,
-    Input
+    Tooltip
 } from 'antd'
 import {
-    SettingOutlined,
     ExpandOutlined,
-    BarChartOutlined,
-    AppstoreOutlined,
     SafetyCertificateOutlined,
     SoundOutlined,
-    FullscreenOutlined,
     FullscreenExitOutlined,
     TrophyOutlined,
     FireOutlined,
-    ThunderboltOutlined,
-    CheckCircleOutlined,
-    CopyOutlined,
-    SyncOutlined,
-    RightOutlined,
     StarOutlined,
-    LineChartOutlined,
     CloseOutlined,
     ReloadOutlined,
     TeamOutlined,
-    UserOutlined
+    UserOutlined,
+    PlusOutlined,
+    BarChartOutlined
 } from '@ant-design/icons'
-import Chart from 'chart.js/auto'
 import BettingPanel from './BettingPanel'
-import MobileBetSheet from '../../components/MobileBetSheet'
 import GameChart from './GameChart'
 import GameHistory from './GameHistory'
 import PlayerBets from './PlayerBets'
-import PlayerResults from './PlayerResults'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWebSocket } from '../../context/WebSocketContext'
-import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './CrashGame.css'
 
-const { Text, Title, Paragraph } = Typography
+const { Text } = Typography
 
 // Game phases
 const PHASE = {
@@ -67,8 +42,6 @@ const PHASE = {
 }
 
 export const CRASH_GROWTH_RATE = 0.16
-
-const MOBILE_QUERY = '(max-width: 768px), (max-width: 932px) and (orientation: landscape) and (hover: none)'
 
 function CrashGame() {
     const { user } = useAuth()
@@ -86,8 +59,8 @@ function CrashGame() {
         currencySymbol,
         currency
     } = useWallet()
+
     const activeRoundIdRef = useRef(null)
-    const autoCashoutTargetRef = useRef(null)
     const targetCrashPointRef = useRef(null)
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
     const [roomBets, setRoomBets] = useState([])
@@ -96,62 +69,38 @@ function CrashGame() {
     const [multiplier, setMultiplier] = useState(1.00)
     const [flightStartTime, setFlightStartTime] = useState(null)
     const [countdown, setCountdown] = useState(6)
-    const [crashPoint, setCrashPoint] = useState(0)
     const [elapsedTime, setElapsedTime] = useState(0)
-    const [history, setHistory] = useState([1.45, 2.80, 1.15, 5.40, 1.88, 12.30, 1.02, 3.15, 1.95, 2.10])
-    const [betPlaced, setBetPlaced] = useState(false)
-    const [betAmount, setBetAmount] = useState(0)
-    const [userBetData, setUserBetData] = useState(null)
+    const [history, setHistory] = useState([1.61, 7.07, 1.41, 1.25, 1.12, 3.02, 1.90, 1.05, 14.80, 2.15, 1.34, 4.20])
     const [soundEnabled, setSoundEnabled] = useState(true)
 
-    // Settings for optional features
-    const [showPlayerBets, setShowPlayerBets] = useState(true)
-    const [showPlayerResults, setShowPlayerResults] = useState(true)
-    const [playerCashouts, setPlayerCashouts] = useState([])
+    // DUAL BETTING PANELS STATE (Aviator Signature Architecture)
+    const [panel1, setPanel1] = useState({
+        amount: 25,
+        betPlaced: false,
+        cashedOut: false,
+        payout: 0,
+        autoCashout: null
+    })
 
-    // UI States
+    const [panel2, setPanel2] = useState({
+        amount: 25,
+        betPlaced: false,
+        cashedOut: false,
+        payout: 0,
+        autoCashout: null
+    })
+
+    const [showSecondPanel, setShowSecondPanel] = useState(true)
+
+    // UI & Modal States
     const [isFullscreen, setIsFullscreen] = useState(false)
-    const [statsDrawerOpen, setStatsDrawerOpen] = useState(false)
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false)
-    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
-    const [layout, setLayout] = useState('default') // 'default', 'compact', 'wide'
-    const [mobileDataTab, setMobileDataTab] = useState('bets')
-    const [isMobileLayout, setIsMobileLayout] = useState(() =>
-        window.matchMedia(MOBILE_QUERY).matches,
-    )
-
-    useEffect(() => {
-        const media = window.matchMedia(MOBILE_QUERY)
-        const update = () => setIsMobileLayout(media.matches)
-        media.addEventListener('change', update)
-        return () => media.removeEventListener('change', update)
-    }, [])
-
-    // History and Stats logic
     const [gameRecords, setGameRecords] = useState([])
-    const widgetRef = useRef(null)
-    const chartCanvasRef = useRef(null)
-    const chartInstanceRef = useRef(null)
-    const [hoveredProfitValue, setHoveredProfitValue] = useState(null)
-
-    // Derived Stats
-    const totalProfit = useMemo(() => gameRecords.reduce((sum, r) => sum + r.profit, 0), [gameRecords])
-    const winsCount = useMemo(() => gameRecords.filter(r => r.profit >= 0).length, [gameRecords])
-    const lossesCount = useMemo(() => gameRecords.filter(r => r.profit < 0).length, [gameRecords])
-    const maxStreak = useMemo(() => {
-        let max = 0
-        let current = 0
-        for (const record of gameRecords) {
-            if (record.profit >= 0) {
-                current++
-                if (current > max) max = current
-            } else {
-                current = 0
-            }
-        }
-        return max
-    }, [gameRecords])
+    const gameDisplayRef = useRef(null)
+    const multiplierRef = useRef(1.00)
+    const elapsedTimeRef = useRef(0)
+    const [messageApi, contextHolder] = message.useMessage()
 
     // Provably Fair state
     const [clientSeedInput, setClientSeedInput] = useState(() =>
@@ -175,46 +124,21 @@ function CrashGame() {
             .catch(() => {})
     }, [])
 
-    const startTimeRef = useRef(null)
-    const animationRef = useRef(null)
-    const gameDisplayRef = useRef(null)
-    // Performance: use refs for high-frequency values, throttle React state updates
-    const multiplierRef = useRef(1.00)
-    const elapsedTimeRef = useRef(0)
-    const lastStateUpdateRef = useRef(0)
-    const [messageApi, contextHolder] = message.useMessage()
-
-    // Calculate statistics
-    const stats = {
-        totalGames: history.length,
-        avgMultiplier: (history.reduce((a, b) => a + b, 0) / history.length).toFixed(2),
-        maxMultiplier: Math.max(...history).toFixed(2),
-        under2x: history.filter(x => x < 2).length,
-        over2x: history.filter(x => x >= 2 && x < 10).length,
-        over10x: history.filter(x => x >= 10).length,
-        over100x: history.filter(x => x >= 100).length
-    }
-
     // Fullscreen toggle
     const toggleFullscreen = useCallback(() => {
         if (!document.fullscreenElement) {
             if (gameDisplayRef.current) {
                 gameDisplayRef.current.requestFullscreen().then(() => {
                     setIsFullscreen(true)
-                    messageApi.success('Entered fullscreen mode')
-                }).catch(err => {
-                    messageApi.error('Could not enter fullscreen')
-                })
+                }).catch(() => {})
             }
         } else {
             document.exitFullscreen().then(() => {
                 setIsFullscreen(false)
-                messageApi.info('Exited fullscreen mode')
-            })
+            }).catch(() => {})
         }
-    }, [messageApi])
+    }, [])
 
-    // Listen for fullscreen changes
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement)
@@ -223,380 +147,37 @@ function CrashGame() {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
     }, [])
 
-    // Draggable Live Stats logic
-    const handleDragStart = useCallback((e) => {
-        const widget = widgetRef.current
-        if (!widget) return
-
-        const startX = e.clientX
-        const startY = e.clientY
-        const rect = widget.getBoundingClientRect()
-        const offsetX = startX - rect.left
-        const offsetY = startY - rect.top
-
-        const handleMouseMove = (moveEvent) => {
-            let newX = moveEvent.clientX - offsetX
-            let newY = moveEvent.clientY - offsetY
-
-            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width))
-            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height))
-
-            widget.style.left = `${newX}px`
-            widget.style.top = `${newY}px`
-            widget.style.right = 'auto'
-            widget.style.bottom = 'auto'
-        }
-
-        const handleMouseUp = () => {
-            document.removeEventListener('mousemove', handleMouseMove)
-            document.removeEventListener('mouseup', handleMouseUp)
-        }
-
-        document.addEventListener('mousemove', handleMouseMove)
-        document.addEventListener('mouseup', handleMouseUp)
-    }, [])
-
-    // Live Stats Chart Update
-    useEffect(() => {
-        if (!statsDrawerOpen || !chartCanvasRef.current) return
-
-        const WIN_COLOR = 'rgb(74, 222, 128)';
-        const WIN_COLOR_FILL = 'rgba(74, 222, 128, 0.3)';
-        const LOSS_COLOR = 'rgb(248, 113, 113)';
-        const LOSS_COLOR_FILL = 'rgba(248, 113, 113, 0.3)';
-        const X_AXIS_COLOR = '#2a3f4d';
-        const POINT_HOVER_COLOR = '#fff';
-
-        let runProfit = 0;
-        const profitHistory = [0, ...gameRecords.map(r => {
-            runProfit += r.profit;
-            return runProfit;
-        })];
-
-        if (chartInstanceRef.current) {
-            // Update existing chart
-            chartInstanceRef.current.data.labels = Array(profitHistory.length).fill(0);
-            chartInstanceRef.current.data.datasets[0].data = profitHistory;
-            chartInstanceRef.current.update('none'); // Update without animation for smooth flow
-        } else {
-            // Initialize new chart
-            chartInstanceRef.current = new Chart(chartCanvasRef.current, {
-                type: 'line',
-                data: {
-                    labels: Array(profitHistory.length).fill(0),
-                    datasets: [
-                        {
-                            label: 'Profit',
-                            data: profitHistory,
-                            fill: {
-                                target: 'origin',
-                                above: WIN_COLOR_FILL,
-                                below: LOSS_COLOR_FILL,
-                            },
-                            cubicInterpolationMode: 'monotone',
-                            segment: {
-                                borderColor: (ctx) => {
-                                    if (!ctx.p0 || !ctx.p1) return WIN_COLOR;
-                                    const y0 = ctx.p0.parsed.y;
-                                    const y1 = ctx.p1.parsed.y;
-                                    if (y1 === 0) {
-                                        return y0 < 0 ? LOSS_COLOR : WIN_COLOR;
-                                    }
-                                    return y1 < 0 ? LOSS_COLOR : WIN_COLOR;
-                                },
-                            },
-                            pointRadius: 0,
-                            pointHoverRadius: 5,
-                            pointHoverBackgroundColor: POINT_HOVER_COLOR,
-                            pointHoverBorderColor: POINT_HOVER_COLOR,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animations: {
-                        y: {
-                            duration: 0,
-                        },
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index',
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false },
-                    },
-                    scales: {
-                        x: {
-                            border: { display: false },
-                            grid: { display: false },
-                            ticks: { display: false },
-                        },
-                        y: {
-                            border: { display: false },
-                            grid: {
-                                color: (ctx) => (ctx.tick.value === 0 ? X_AXIS_COLOR : 'transparent'),
-                                lineWidth: 2,
-                            },
-                            ticks: { display: false },
-                            grace: '1%',
-                        },
-                    },
-                    onHover: (_, elements) => {
-                        if (elements.length) {
-                            const idx = elements[0].index;
-                            const val = profitHistory[idx];
-                            setHoveredProfitValue(val !== undefined ? val : null);
-                        } else {
-                            setHoveredProfitValue(null);
-                        }
-                    },
-                },
-            });
-        }
-    }, [statsDrawerOpen, gameRecords]);
-
-    // Reset to idle ready state
-    const resetToIdle = useCallback(() => {
-        targetCrashPointRef.current = null
-        setPhase(PHASE.IDLE)
-        setMultiplier(1.00)
-        setElapsedTime(0)
-        multiplierRef.current = 1.00
-        elapsedTimeRef.current = 0
-        startTimeRef.current = null
-        setFlightStartTime(null)
-        setCountdown(0)
-        setBetPlaced(false)
-        setUserBetData(null)
-        setPlayerCashouts([])
-    }, [])
-
-    // Check and restore active crash flight on mount
-    useEffect(() => {
-        let mounted = true
-        getActiveCrashRound().then((active) => {
-            if (!mounted || !active || !active.active) return
-            // Ignore stale flights older than 45 seconds
-            const elapsedSinceStart = (Date.now() - active.startedAt) / 1000
-            if (elapsedSinceStart >= 45.0) return
-
-            // Restore active flight in progress
-            activeRoundIdRef.current = active.roundId
-            setBetAmount(active.betAmount)
-            setBetPlaced(true)
-            if (active.autoCashout) {
-                autoCashoutTargetRef.current = parseFloat(active.autoCashout)
-            }
-            if (active.serverSeedHash) {
-                setFairnessData(prev => ({ ...prev, serverSeedHash: active.serverSeedHash }))
-            }
-            setUserBetData({
-                name: 'You',
-                amount: active.betAmount,
-                currency: {
-                    symbol: currencySymbol,
-                    color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
-                    name: currency
-                },
-                active: true,
-                cashoutAt: null,
-                profit: null
-            })
-            startTimeRef.current = active.startedAt
-            setFlightStartTime(active.startedAt)
-            setPhase(PHASE.RUNNING)
-        }).catch(() => {})
-        return () => { mounted = false }
-    }, [getActiveCrashRound, currencySymbol, currency])
-
-    // Handle crash (Server-Authoritative)
-    const handleCrash = useCallback((crashMultiplier) => {
-        const finalMult = parseFloat(crashMultiplier) || 1.00
-        setPhase(PHASE.CRASHED)
-        setMultiplier(finalMult)
-        multiplierRef.current = finalMult
-        targetCrashPointRef.current = null
-        setHistory(prev => [finalMult, ...prev].slice(0, 30))
-        casinoAudio.playExplosion()
-
-        let profit = 0
-        let didPlay = false
-
-        if (userBetData) {
-            didPlay = true
-            if (betPlaced && activeRoundIdRef.current) {
-                // User didn't cash out in time, lost bet
-                profit = -userBetData.amount
-                bustCrashRound({ roundId: activeRoundIdRef.current }).catch(() => {})
-                activeRoundIdRef.current = null
-                showToast('loss', 'You Lost!', `-${currencySymbol}${userBetData.amount.toFixed(2)} — Crashed @${finalMult.toFixed(2)}×`, 4000)
-                setGameRecords(prev => [...prev, {
-                    id: Date.now(),
-                    multiplier: finalMult,
-                    cashedOutAt: null,
-                    bet: userBetData.amount,
-                    profit
-                }])
-            } else {
-                profit = parseFloat(userBetData.profit || 0) - userBetData.amount
-            }
-        }
-
-        setBetPlaced(false)
-        activeRoundIdRef.current = null
-
-        // Return to IDLE state after crash explosion (2.5s)
-        setTimeout(() => {
-            setPhase(PHASE.IDLE)
-            setMultiplier(1.00)
-            setElapsedTime(0)
-            multiplierRef.current = 1.00
-            elapsedTimeRef.current = 0
-            startTimeRef.current = null
-            setFlightStartTime(null)
-            setCountdown(0)
-            setUserBetData(null)
-            setPlayerCashouts([])
-        }, 2500)
-    }, [userBetData, betPlaced, showToast, bustCrashRound, currencySymbol])
-
-    // Handle player cashout notification
-    const handlePlayerCashout = useCallback((cashoutData) => {
-        if (showPlayerResults) {
-            setPlayerCashouts(prev => [...prev, cashoutData])
-        }
-    }, [showPlayerResults])
-
-    // Handle cashout (Server-Authoritative)
-    const handleCashout = useCallback(async () => {
-        if (gameMode === 'arena') {
-            if (phase !== PHASE.RUNNING || !betPlaced) return
-            const res = await cashoutRoomCrash()
-            if (res && res.success) {
-                setBetPlaced(false)
-                const winAmount = res.payout
-                const profit = winAmount - betAmount
-                setUserBetData(prev => prev ? {
-                    ...prev,
-                    active: false,
-                    cashoutAt: res.multiplier.toFixed(2),
-                    profit: winAmount.toFixed(2)
-                } : null)
-
-                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
-                if (res.multiplier >= 3) {
-                    casinoAudio.playBigWin()
-                } else {
-                    casinoAudio.playCashout()
-                }
-
-                setGameRecords(prev => [...prev, {
-                    id: Date.now(),
-                    multiplier: res.multiplier,
-                    cashedOutAt: res.multiplier,
-                    bet: betAmount,
-                    profit
-                }])
-            } else {
-                showToast('error', 'Cashout Rejected', res?.error || 'Flight may have already crashed')
-            }
-            return
-        }
-
-        // Solo Provably Fair mode
-        if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
-            const currentRoundId = activeRoundIdRef.current
-            const targetMult = multiplierRef.current
-            try {
-                const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
-
-                if (res && res.success && res.won) {
-                    setBetPlaced(false)
-                    activeRoundIdRef.current = null
-                    const winAmount = res.payout
-                    const profit = winAmount - betAmount
-                    setUserBetData(prev => prev ? {
-                        ...prev,
-                        active: false,
-                        cashoutAt: res.multiplier.toFixed(2),
-                        profit: winAmount.toFixed(2)
-                    } : null)
-
-                    showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
-                    if (res.multiplier >= 3) {
-                        casinoAudio.playBigWin()
-                    } else {
-                        casinoAudio.playCashout()
-                    }
-
-                    setGameRecords(prev => [...prev, {
-                        id: Date.now(),
-                        multiplier: res.multiplier,
-                        cashedOutAt: res.multiplier,
-                        bet: betAmount,
-                        profit
-                    }])
-
-                    // Reveal server crash point: continue flight smoothly up to crash point
-                    const revealedCrashPoint = parseFloat(res.crashPoint) || (targetMult * 1.05)
-                    if (multiplierRef.current >= revealedCrashPoint) {
-                        handleCrash(revealedCrashPoint)
-                    } else {
-                        targetCrashPointRef.current = revealedCrashPoint
-                    }
-                } else if (res && !res.won) {
-                    // Server rejected cashout because flight crashed earlier
-                    handleCrash(res.crashPoint || targetMult)
-                }
-            } catch (err) {
-                console.error('[Crash] Cashout error:', err)
-            }
-        }
-    }, [gameMode, phase, betPlaced, cashoutRoomCrash, betAmount, currencySymbol, showToast, cashoutCrashRound, handleCrash])
-
-    // Synchronize Room State
+    // Synchronize Room State from server
     const syncRoomState = useCallback((room) => {
         if (!room) return
         roomRoundIdRef.current = room.roundId
 
         if (room.state === 'WAITING') {
             setPhase(PHASE.WAITING)
-            setCountdown(Math.max(0, Math.ceil(room.countdown || 6)))
+            setCountdown(room.countdown || 0)
             setMultiplier(1.00)
             setElapsedTime(0)
             multiplierRef.current = 1.00
             elapsedTimeRef.current = 0
-            startTimeRef.current = null
             setFlightStartTime(null)
         } else if (room.state === 'FLYING') {
             setPhase(PHASE.RUNNING)
-            const m = room.currentMultiplier || 1.00
-            setMultiplier(m)
-            multiplierRef.current = m
-            if (!startTimeRef.current || roomRoundIdRef.current !== room.roundId) {
-                roomRoundIdRef.current = room.roundId
-                const initialSecs = (m > 1.02) ? (Math.log(m) / CRASH_GROWTH_RATE) * 1000 : 0
-                const fStart = Date.now() - initialSecs
-                startTimeRef.current = fStart
-                setFlightStartTime(fStart)
-            }
-            const el = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
-            setElapsedTime(el)
-            elapsedTimeRef.current = el
+            const currentMult = room.currentMultiplier || 1.00
+            setMultiplier(currentMult)
+            multiplierRef.current = currentMult
+            const fStart = room.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, currentMult)) / CRASH_GROWTH_RATE) * 1000)
+            setFlightStartTime(fStart)
+            const elapsed = Math.max(0, (Date.now() - fStart) / 1000)
+            setElapsedTime(elapsed)
+            elapsedTimeRef.current = elapsed
         } else if (room.state === 'CRASHED') {
             setPhase(PHASE.CRASHED)
-            const pt = room.crashPoint || room.currentMultiplier || 1.00
-            setMultiplier(pt)
-            multiplierRef.current = pt
-            startTimeRef.current = null
+            setMultiplier(room.crashPoint || 1.00)
+            multiplierRef.current = room.crashPoint || 1.00
             setFlightStartTime(null)
-            roomRoundIdRef.current = room.roundId
         }
 
-        if (Array.isArray(room.history) && room.history.length > 0) {
+        if (room.history && Array.isArray(room.history)) {
             setHistory(room.history.map(h => typeof h === 'object' ? h.crashPoint : h))
         }
 
@@ -606,24 +187,31 @@ function CrashGame() {
             setRoomBets(bets)
 
             if (user) {
-                const myBet = bets.find(b => b.userId === user.id)
-                if (myBet && !myBet.cashedOut && room.state !== 'CRASHED') {
-                    setBetPlaced(true)
-                    setBetAmount(myBet.betAmount)
-                    setUserBetData({
-                        name: myBet.username || user.username || 'You',
-                        amount: myBet.betAmount,
-                        currency: { symbol: currencySymbol, name: currency },
-                        active: true,
-                        cashoutAt: null,
-                        profit: null
-                    })
+                const myBet1 = bets.find(b => b.userId === user.id && (!b.panelId || b.panelId === 1))
+                if (myBet1) {
+                    setPanel1(prev => ({
+                        ...prev,
+                        betPlaced: !myBet1.cashedOut,
+                        cashedOut: Boolean(myBet1.cashedOut),
+                        payout: myBet1.payout || 0,
+                        amount: myBet1.betAmount || prev.amount
+                    }))
+                }
+                const myBet2 = bets.find(b => b.userId === user.id && b.panelId === 2)
+                if (myBet2) {
+                    setPanel2(prev => ({
+                        ...prev,
+                        betPlaced: !myBet2.cashedOut,
+                        cashedOut: Boolean(myBet2.cashedOut),
+                        payout: myBet2.payout || 0,
+                        amount: myBet2.betAmount || prev.amount
+                    }))
                 }
             }
         }
-    }, [user, currencySymbol, currency])
+    }, [user])
 
-    // Real-Time Multiplayer Room WebSocket Connection via centralized WebSocketContext
+    // Real-Time Multiplayer Room WebSocket Connection
     useEffect(() => {
         if (gameMode !== 'arena') return
 
@@ -651,24 +239,24 @@ function CrashGame() {
                     setElapsedTime(0)
                     multiplierRef.current = 1.00
                     elapsedTimeRef.current = 0
-                    startTimeRef.current = null
                     setFlightStartTime(null)
                     roomRoundIdRef.current = payload.roundId
+                    // Reset cashed out state when countdown restarts
+                    setPanel1(p => ({ ...p, cashedOut: false, payout: 0 }))
+                    setPanel2(p => ({ ...p, cashedOut: false, payout: 0 }))
                 } else if (payload.state === 'FLYING') {
                     setPhase(PHASE.RUNNING)
-                    setSpectatorMissedWin(null)
                     setMultiplier(payload.multiplier || 1.00)
                     multiplierRef.current = payload.multiplier || 1.00
-                    if (!startTimeRef.current || roomRoundIdRef.current !== payload.roundId) {
+                    if (!flightStartTime || roomRoundIdRef.current !== payload.roundId) {
                         roomRoundIdRef.current = payload.roundId
                         const initialSecs = (payload.multiplier && payload.multiplier > 1.02)
                             ? (Math.log(payload.multiplier) / CRASH_GROWTH_RATE) * 1000
                             : 0
                         const fStart = Date.now() - initialSecs
-                        startTimeRef.current = fStart
                         setFlightStartTime(fStart)
                     }
-                    const elapsed = Math.max(0, (Date.now() - startTimeRef.current) / 1000)
+                    const elapsed = Math.max(0, (Date.now() - (flightStartTime || Date.now())) / 1000)
                     setElapsedTime(elapsed)
                     elapsedTimeRef.current = elapsed
                 }
@@ -679,37 +267,34 @@ function CrashGame() {
                 const bustPoint = payload.crashPoint || 1.00
                 setMultiplier(bustPoint)
                 multiplierRef.current = bustPoint
-                startTimeRef.current = null
                 setFlightStartTime(null)
                 roomRoundIdRef.current = payload.roundId
                 if (payload.history && Array.isArray(payload.history)) {
                     setHistory(payload.history.map(h => typeof h === 'object' ? h.crashPoint : h))
                 } else {
-                    setHistory(prev => [bustPoint, ...prev.slice(0, 19)])
+                    setHistory(prev => [bustPoint, ...prev.slice(0, 24)])
                 }
                 casinoAudio.playCrash?.()
 
-                if (betPlaced) {
-                    setBetPlaced(false)
-                    setUserBetData(prev => prev ? { ...prev, active: false, profit: '0.00' } : null)
-                    showToast('loss', 'Crashed!', `Flight busted at ${bustPoint.toFixed(2)}×`, 3000)
-                } else {
-                    if (bustPoint >= 1.5) {
-                        setSpectatorMissedWin({
-                            outcome: `${bustPoint.toFixed(2)}x`,
-                            multiplier: Math.min(bustPoint, 2.0).toFixed(2),
-                            amount: betAmount || 100,
-                            payout: ((betAmount || 100) * Math.min(bustPoint, 2.0)).toFixed(0)
-                        })
+                // If user had placed bets that didn't cash out, record loss
+                setPanel1(p => {
+                    if (p.betPlaced && !p.cashedOut) {
+                        showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
                     }
-                }
-                startTimeRef.current = null
+                    return { ...p, betPlaced: false }
+                })
+                setPanel2(p => {
+                    if (p.betPlaced && !p.cashedOut) {
+                        showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                    }
+                    return { ...p, betPlaced: false }
+                })
             }),
             subscribe('CRASH_ROOM_BET', (payload) => {
                 if (!isMounted || !payload) return
                 if (payload.bet) {
                     setRoomBets(prev => {
-                        const existing = prev.filter(b => b.userId !== payload.bet.userId)
+                        const existing = prev.filter(b => !(b.userId === payload.bet.userId && (b.panelId || 1) === (payload.bet.panelId || 1)))
                         return [...existing, payload.bet]
                     })
                 }
@@ -717,22 +302,32 @@ function CrashGame() {
             subscribe('CRASH_ROOM_CASHOUT', (payload) => {
                 if (!isMounted || !payload) return
                 setRoomBets(prev => prev.map(b => {
-                    if (b.userId === payload.userId) {
+                    if (b.userId === payload.userId && (b.panelId || 1) === (payload.panelId || 1)) {
                         return { ...b, cashedOut: true, multiplier: payload.multiplier, payout: payload.payout }
                     }
                     return b
                 }))
 
-                if (user && payload.userId === user.id && betPlaced) {
-                    setBetPlaced(false)
-                    setUserBetData(prev => prev ? {
+                if (user && payload.userId === user.id) {
+                    const panelKey = payload.panelId === 2 ? 2 : 1
+                    const updatePanel = (panelKey === 1 ? setPanel1 : setPanel2)
+                    updatePanel(prev => ({
                         ...prev,
-                        active: false,
-                        cashoutAt: payload.multiplier.toFixed(2),
-                        profit: payload.payout.toFixed(2)
-                    } : null)
-                    showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}×`, 4000)
+                        betPlaced: false,
+                        cashedOut: true,
+                        payout: payload.payout
+                    }))
+                    showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}x`, 4000)
                     casinoAudio.playCashout?.()
+
+                    // Add record
+                    setGameRecords(prev => [{
+                        id: Date.now(),
+                        multiplier: payload.multiplier,
+                        cashedOutAt: payload.multiplier,
+                        bet: payload.betAmount || (panelKey === 1 ? panel1.amount : panel2.amount),
+                        profit: payload.payout - (payload.betAmount || (panelKey === 1 ? panel1.amount : panel2.amount))
+                    }, ...prev])
                 }
             })
         ]
@@ -743,80 +338,10 @@ function CrashGame() {
                 if (typeof unsub === 'function') unsub()
             })
         }
-    }, [gameMode, syncRoomState, betPlaced, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, betAmount])
+    }, [gameMode, syncRoomState, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, flightStartTime, panel1.amount, panel2.amount])
 
-    // Listen for Solo Flight Bust events from server
-    useEffect(() => {
-        const unsub = subscribe('CRASH_SOLO_BUST', (payload) => {
-            if (!payload) return
-            if (activeRoundIdRef.current && payload.roundId === activeRoundIdRef.current) {
-                const bustPoint = payload.crashPoint || 1.00
-                setPhase(PHASE.CRASHED)
-                setMultiplier(bustPoint)
-                multiplierRef.current = bustPoint
-                handleCrash(bustPoint)
-            }
-        })
-        return () => {
-            if (typeof unsub === 'function') unsub()
-        }
-    }, [subscribe, handleCrash])
-
-    // OPTIMIZED Solo Game loop: only active when playing solo
-    useEffect(() => {
-        if (phase === PHASE.RUNNING && gameMode === 'solo') {
-            const tick = () => {
-                const now = Date.now()
-                const elapsed = Math.max(0, (now - startTimeRef.current) / 1000)
-                const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
-
-                // 1. Check if cashed-out solo flight has reached its revealed crash point
-                if (targetCrashPointRef.current && currentMultiplier >= targetCrashPointRef.current) {
-                    const finalCrash = targetCrashPointRef.current
-                    targetCrashPointRef.current = null
-                    handleCrash(finalCrash)
-                    return
-                }
-
-                // 2. Hard failsafe: platform limit is 1000.00x (~43.2s) - never let flight run infinitely
-                if (currentMultiplier >= 1000.00 || elapsed >= 45.0) {
-                    const finalCrash = targetCrashPointRef.current || 1000.00
-                    targetCrashPointRef.current = null
-                    handleCrash(finalCrash)
-                    return
-                }
-
-                // Always update refs (used by Canvas directly)
-                multiplierRef.current = currentMultiplier
-                elapsedTimeRef.current = elapsed
-
-                // Check auto-cashout in solo mode
-                if (betPlaced && autoCashoutTargetRef.current && currentMultiplier >= autoCashoutTargetRef.current) {
-                    autoCashoutTargetRef.current = null
-                    handleCashout()
-                }
-
-                // Throttle React state updates to every ~50ms
-                if (now - lastStateUpdateRef.current >= 50) {
-                    setMultiplier(currentMultiplier)
-                    setElapsedTime(elapsed)
-                    lastStateUpdateRef.current = now
-                }
-                animationRef.current = requestAnimationFrame(tick)
-            }
-            lastStateUpdateRef.current = Date.now()
-            animationRef.current = requestAnimationFrame(tick)
-
-            return () => {
-                if (animationRef.current) {
-                    cancelAnimationFrame(animationRef.current)
-                }
-            }
-        }
-    }, [phase, betPlaced, gameMode, handleCrash, handleCashout])
-
-    // Handle user betting and starting flight (Server-Authoritative)
-    const handleBet = async (amount, autoCashoutTarget) => {
+    // Place Bet Handler (for Panel 1 or Panel 2)
+    const handleBet = async (amount, autoCashoutTarget, panelId = 1) => {
         if (gameMode === 'arena') {
             if (phase !== PHASE.WAITING) {
                 showToast('error', 'Round In Progress', 'Bets can only be placed during the countdown window!')
@@ -829,35 +354,27 @@ function CrashGame() {
 
             const res = await placeRoomCrashBet({
                 betAmount: amount,
-                autoCashout: autoCashoutTarget || null
+                autoCashout: autoCashoutTarget || null,
+                panelId
             })
             if (!res || !res.success) {
                 showToast('error', 'Bet Failed', res?.error || 'Unable to place room bet')
                 return
             }
 
-            setBetAmount(amount)
-            setBetPlaced(true)
-            setUserBetData({
-                name: user?.username || 'You',
-                amount: amount,
-                currency: {
-                    symbol: currencySymbol,
-                    color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
-                    name: currency
-                },
-                active: true,
-                cashoutAt: null,
-                profit: null
-            })
-            casinoAudio.playBet()
-            showToast('bet', 'Room Bet Confirmed!', `${currencySymbol}${amount.toFixed(2)} locked in for flight`, 2000)
+            if (panelId === 1) {
+                setPanel1(prev => ({ ...prev, amount, betPlaced: true, cashedOut: false, payout: 0, autoCashout: autoCashoutTarget }))
+            } else {
+                setPanel2(prev => ({ ...prev, amount, betPlaced: true, cashedOut: false, payout: 0, autoCashout: autoCashoutTarget }))
+            }
+
+            casinoAudio.playBet?.()
+            showToast('bet', 'Bet Confirmed!', `${currencySymbol}${amount.toFixed(2)} locked in for flight`, 2000)
             return
         }
 
         // Solo Provably Fair mode
         if (phase !== PHASE.IDLE) return
-
         if (amount > balance) {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${amount.toFixed(2)} but only have ${currencySymbol}${balance.toFixed(2)}`)
             return
@@ -874,28 +391,8 @@ function CrashGame() {
         }
 
         activeRoundIdRef.current = res.roundId
-        targetCrashPointRef.current = null
-        setBetAmount(amount)
-        setBetPlaced(true)
-        autoCashoutTargetRef.current = autoCashoutTarget ? parseFloat(autoCashoutTarget) : null
-        setUserBetData({
-            name: 'You',
-            amount: amount,
-            currency: {
-                symbol: currencySymbol,
-                color: currency === 'INR' ? '#f5af19' : (currency === 'BTC' ? '#f7931a' : '#26a17b'),
-                name: currency
-            },
-            active: true,
-            cashoutAt: null,
-            profit: null
-        })
-
-        if (res.serverSeedHash) {
-            setFairnessData(prev => ({ ...prev, serverSeedHash: res.serverSeedHash }))
-        }
-
-        casinoAudio.playBet()
+        setPanel1(prev => ({ ...prev, amount, betPlaced: true, cashedOut: false, payout: 0, autoCashout: autoCashoutTarget }))
+        casinoAudio.playBet?.()
         showToast('bet', 'Flight Launched!', `${currencySymbol}${amount.toFixed(2)}`, 2000)
 
         setMultiplier(1.00)
@@ -903,444 +400,214 @@ function CrashGame() {
         multiplierRef.current = 1.00
         elapsedTimeRef.current = 0
         const launchTime = Date.now()
-        startTimeRef.current = launchTime
         setFlightStartTime(launchTime)
         setPhase(PHASE.RUNNING)
     }
 
-    // Copy to clipboard
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text)
-        messageApi.success('Copied to clipboard!')
+    // Cancel Bet Handler before takeoff
+    const handleCancel = (panelId = 1) => {
+        if (phase !== PHASE.WAITING) return
+        if (panelId === 1) {
+            setPanel1(prev => ({ ...prev, betPlaced: false }))
+        } else {
+            setPanel2(prev => ({ ...prev, betPlaced: false }))
+        }
+        showToast('info', 'Bet Cancelled', 'Your stake was returned')
     }
 
-    // Handle client seed change
-    const handleChangeClientSeed = useCallback((newSeed) => {
-        const seed = String(newSeed || clientSeedInput).trim()
-        if (!seed) return
-        localStorage.setItem('amrat_crash_client_seed', seed)
-        setClientSeedInput(seed)
-        setFairnessData(prev => ({ ...prev, clientSeed: seed }))
-        message.success('Client seed updated for future flights!')
-    }, [clientSeedInput])
+    // Cash Out Handler (for Panel 1 or Panel 2)
+    const handleCashout = async (panelId = 1) => {
+        if (gameMode === 'arena') {
+            if (phase !== PHASE.RUNNING) return
+            const targetPanel = panelId === 1 ? panel1 : panel2
+            if (!targetPanel.betPlaced || targetPanel.cashedOut) return
+
+            const res = await cashoutRoomCrash({ panelId })
+            if (res && res.success) {
+                const updatePanel = panelId === 1 ? setPanel1 : setPanel2
+                updatePanel(prev => ({ ...prev, betPlaced: false, cashedOut: true, payout: res.payout }))
+                showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${res.multiplier.toFixed(2)}x`, 4000)
+                casinoAudio.playCashout?.()
+            }
+            return
+        }
+
+        // Solo mode cashout
+        if (phase !== PHASE.RUNNING || !panel1.betPlaced || !activeRoundIdRef.current) return
+        const res = await cashoutCrashRound({ roundId: activeRoundIdRef.current, multiplier })
+        if (res && res.success) {
+            setPanel1(prev => ({ ...prev, betPlaced: false, cashedOut: true, payout: res.payout }))
+            showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${multiplier.toFixed(2)}x`, 4000)
+            casinoAudio.playCashout?.()
+        }
+    }
+
+    const userBetSummary = useMemo(() => {
+        if (!panel1.betPlaced && !panel2.betPlaced && !panel1.cashedOut && !panel2.cashedOut) return null
+        return {
+            userId: user?.id,
+            username: user?.username || 'You',
+            betAmount: (panel1.betPlaced ? panel1.amount : 0) + (panel2.betPlaced ? panel2.amount : 0),
+            multiplier: panel1.cashedOut ? (panel1.payout / panel1.amount) : (panel2.cashedOut ? (panel2.payout / panel2.amount) : null),
+            cashedOut: panel1.cashedOut || panel2.cashedOut,
+            payout: (panel1.payout || 0) + (panel2.payout || 0),
+            isUser: true
+        }
+    }, [panel1, panel2, user])
 
     return (
-        <div className={`crash-game layout-${layout}`}>
+        <div className="aviator-game-viewport" ref={gameDisplayRef}>
             {contextHolder}
 
-            <div className="game-container">
-                {/* Betting Panel + Player Bets */}
-                <MobileBetSheet title="Crash bet controls" className="crash-bet-sheet">
-                    <div className="crash-sidebar">
-                        <BettingPanel
-                            phase={phase}
-                            betPlaced={betPlaced}
-                            multiplier={multiplier}
-                            onBet={handleBet}
-                            onCashout={handleCashout}
-                        />
-
-                        {/* Player Bets List */}
-                        {showPlayerBets && !isMobileLayout && (
-                            <PlayerBets
-                                phase={phase}
-                                multiplier={multiplier}
-                                onPlayerCashout={handlePlayerCashout}
-                                userBetData={userBetData}
-                                roomBets={roomBets}
-                                isArena={gameMode === 'arena'}
-                            />
-                        )}
-
-                        {/* Footer */}
-                        <div className="sidebar-footer">
-                            <div className="footer-buttons">
-                                <button
-                                    className={`footer-btn ${historyDrawerOpen ? 'active' : ''}`}
-                                    onClick={() => setHistoryDrawerOpen(true)}
-                                    title="Play History & Dashboard"
-                                >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                                    </svg>
-                                </button>
-                                <button
-                                    className={`footer-btn ${statsDrawerOpen ? 'active' : ''}`}
-                                    onClick={() => setStatsDrawerOpen(true)}
-                                    title="Live Stats"
-                                >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M16 11.78l4.24-7.33 1.73 1-5.23 9.05-6.51-3.75L5.46 19H22v2H2V3h2v14.54L9.5 8z" />
-                                    </svg>
-                                </button>
-                                <button
-                                    className="footer-btn"
-                                    onClick={() => setFairnessModalOpen(true)}
-                                    title="Provably Fair"
-                                >
-                                    <SafetyCertificateOutlined style={{ fontSize: 18 }} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </MobileBetSheet>
-
-                {/* Game Display */}
-                <div className="game-display" ref={gameDisplayRef}>
-                    {/* Mode Switcher */}
-                    <div className="crash-mode-header">
-                        <Radio.Group
-                            value={gameMode}
-                            onChange={(e) => {
-                                const nextMode = e.target.value
-                                setGameMode(nextMode)
-                                setBetPlaced(false)
-                                if (nextMode === 'solo') {
+            <div className="aviator-app-card">
+                {/* 1. TOP HEADER: AVIATOR LOGO + LIVE BALANCE + CONTROLS */}
+                <header className="aviator-header-bar">
+                    <div className="aviator-header-left">
+                        <span className="aviator-logo-script">Aviator</span>
+                        <div className="aviator-mode-pill">
+                            <button
+                                type="button"
+                                className={`mode-toggle-btn ${gameMode === 'arena' ? 'active' : ''}`}
+                                onClick={() => {
+                                    setGameMode('arena')
+                                    setPanel1(p => ({ ...p, betPlaced: false }))
+                                    setPanel2(p => ({ ...p, betPlaced: false }))
+                                }}
+                                title="Multiplayer Synchronized Arena"
+                            >
+                                <TeamOutlined />
+                            </button>
+                            <button
+                                type="button"
+                                className={`mode-toggle-btn ${gameMode === 'solo' ? 'active' : ''}`}
+                                onClick={() => {
+                                    setGameMode('solo')
                                     setPhase(PHASE.IDLE)
-                                    setMultiplier(1.00)
-                                    setCountdown(0)
-                                }
-                            }}
-                            buttonStyle="solid"
-                            size="small"
-                        >
-                            <Radio.Button value="arena" style={{ fontWeight: 700, borderRadius: '6px 0 0 6px' }}>
-                                <TeamOutlined style={{ marginRight: 6 }} />
-                                Multiplayer Room
-                            </Radio.Button>
-                            <Radio.Button value="solo" style={{ fontWeight: 700, borderRadius: '0 6px 6px 0' }}>
-                                <UserOutlined style={{ marginRight: 6 }} />
-                                Solo Flight
-                            </Radio.Button>
-                        </Radio.Group>
-                    </div>
-
-                    <GameHistory history={history} />
-
-                    <GameChart
-                        phase={phase}
-                        multiplier={multiplier}
-                        elapsedTime={elapsedTime}
-                        countdown={countdown}
-                        flightStartTime={flightStartTime}
-                    />
-
-                    {/* Player Results (floating on chart) */}
-                    {showPlayerResults && !isMobileLayout && (
-                        <PlayerResults cashouts={playerCashouts} />
-                    )}
-
-                    {isMobileLayout && (
-                        <section className="crash-mobile-tabs" aria-label="Crash player data">
-                            <div role="tablist" aria-label="Player data">
-                                {['bets', 'results'].map((tab, index, tabs) => (
-                                    <button
-                                        key={tab}
-                                        id={`crash-${tab}-tab`}
-                                        type="button"
-                                        role="tab"
-                                        tabIndex={mobileDataTab === tab ? 0 : -1}
-                                        aria-selected={mobileDataTab === tab}
-                                        aria-controls={`crash-${tab}-panel`}
-                                        onClick={() => setMobileDataTab(tab)}
-                                        onKeyDown={(event) => {
-                                            if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return
-                                            event.preventDefault()
-                                            const direction = event.key === 'ArrowRight' ? 1 : -1
-                                            const nextTab = tabs[(index + direction + tabs.length) % tabs.length]
-                                            setMobileDataTab(nextTab)
-                                            document.getElementById(`crash-${nextTab}-tab`)?.focus()
-                                        }}
-                                    >
-                                        {tab === 'bets' ? 'Bets' : 'Results'}
-                                    </button>
-                                ))}
-                            </div>
-                            <div
-                                id={`crash-${mobileDataTab}-panel`}
-                                className="crash-mobile-tab-panel"
-                                role="tabpanel"
-                                aria-labelledby={`crash-${mobileDataTab}-tab`}
+                                    setPanel1(p => ({ ...p, betPlaced: false }))
+                                    setPanel2(p => ({ ...p, betPlaced: false }))
+                                }}
+                                title="Solo Flight"
                             >
-                                {mobileDataTab === 'bets' ? (
-                                    <PlayerBets
-                                        phase={phase}
-                                        multiplier={multiplier}
-                                        onPlayerCashout={handlePlayerCashout}
-                                        userBetData={userBetData}
-                                        roomBets={roomBets}
-                                        isArena={gameMode === 'arena'}
-                                    />
-                                ) : (
-                                    <PlayerResults
-                                        cashouts={playerCashouts}
-                                        isPanel={true}
-                                        phase={phase}
-                                        multiplier={multiplier}
-                                        history={history}
-                                        currencySymbol={currencySymbol}
-                                    />
-                                )}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Bottom Controls */}
-                    <div className="bottom-controls-antd">
-                        <Space>
-                            <Tooltip
-                                title={
-                                    <div>
-                                        <div style={{ marginBottom: 8 }}>
-                                            <Text style={{ color: '#fff' }}>Show Player Bets</Text>
-                                            <Switch
-                                                size="small"
-                                                checked={showPlayerBets}
-                                                onChange={setShowPlayerBets}
-                                                style={{ marginLeft: 8 }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Text style={{ color: '#fff' }}>Show Player Results</Text>
-                                            <Switch
-                                                size="small"
-                                                checked={showPlayerResults}
-                                                onChange={setShowPlayerResults}
-                                                style={{ marginLeft: 8 }}
-                                            />
-                                        </div>
-                                    </div>
-                                }
-                                trigger="click"
-                                placement="top"
-                            >
-                                <Button
-                                    type="text"
-                                    icon={<SettingOutlined />}
-                                    className="control-btn-antd"
-                                />
-                            </Tooltip>
-
-                            {/* Fullscreen Button */}
-                            <Tooltip title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
-                                <Button
-                                    type="text"
-                                    icon={isFullscreen ? <FullscreenExitOutlined /> : <ExpandOutlined />}
-                                    className="control-btn-antd"
-                                    onClick={toggleFullscreen}
-                                />
-                            </Tooltip>
-
-
-
-                            {/* Layout Button */}
-                            <Tooltip
-                                title={
-                                    <Radio.Group
-                                        value={layout}
-                                        onChange={(e) => setLayout(e.target.value)}
-                                        size="small"
-                                    >
-                                        <Radio.Button value="default">Default</Radio.Button>
-                                        <Radio.Button value="compact">Compact</Radio.Button>
-                                        <Radio.Button value="wide">Wide</Radio.Button>
-                                    </Radio.Group>
-                                }
-                                trigger="click"
-                                placement="top"
-                            >
-                                <Button
-                                    type="text"
-                                    icon={<AppstoreOutlined />}
-                                    className="control-btn-antd"
-                                />
-                            </Tooltip>
-
-                            {/* Sound Button */}
-                            <Tooltip title={soundEnabled ? 'Mute Sound' : 'Enable Sound'}>
-                                <Button
-                                    type="text"
-                                    icon={<SoundOutlined />}
-                                    className={`control-btn-antd ${!soundEnabled ? 'muted' : ''}`}
-                                    onClick={() => setSoundEnabled(!soundEnabled)}
-                                />
-                            </Tooltip>
-                        </Space>
-
-                        {/* History Button */}
-                        <Button
-                            type="text"
-                            icon={<BarChartOutlined />}
-                            className="fairness-btn"
-                            onClick={() => setHistoryDrawerOpen(true)}
-                        >
-                            History
-                        </Button>
-
-                        {/* Fairness Button */}
-                        <Button
-                            type="text"
-                            icon={<SafetyCertificateOutlined />}
-                            className="fairness-btn"
-                            onClick={() => setFairnessModalOpen(true)}
-                        >
-                            Fairness
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-
-            {/* Statistics Mini Window / Profit Chart */}
-            {statsDrawerOpen && (
-                <div className="fixed-widget fade-in-scale" ref={widgetRef}>
-                    <div className="widget-header" onMouseDown={handleDragStart}>
-                        <div className="widget-title">
-                            <LineChartOutlined style={{ fontSize: 20, color: '#94a3b8' }} />
-                            <span>Live Stats</span>
-                        </div>
-                        <div className="widget-actions">
-                            <Tooltip title="Reset Live Stats" placement="topRight">
-                                <button className="widget-btn-icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => setGameRecords([])}>
-                                    <ReloadOutlined />
-                                </button>
-                            </Tooltip>
-                            <button className="widget-btn-icon" onMouseDown={(e) => e.stopPropagation()} onClick={() => setStatsDrawerOpen(false)}>
-                                <CloseOutlined />
+                                <UserOutlined />
                             </button>
                         </div>
                     </div>
 
-                    <div className="widget-content">
-                        {/* Profit Overview */}
-                        <div className="profit-box">
-                            <div className="profit-main">
-                                <p className="label">Profit</p>
-                                <p className="value" style={{ color: totalProfit >= 0 ? '#4ade80' : '#f87171' }}>
-                                    {currencySymbol}{totalProfit.toFixed(2)}
-                                </p>
-                            </div>
-                            <div className="profit-divider"></div>
-                            <div className="profit-stats">
-                                <div className="stat-row">
-                                    <p className="label">Wins</p>
-                                    <p className="value" style={{ color: '#4ade80' }}>{winsCount.toLocaleString()}</p>
-                                </div>
-                                <div className="stat-row">
-                                    <p className="label">Losses</p>
-                                    <p className="value" style={{ color: '#f87171' }}>{lossesCount.toLocaleString()}</p>
-                                </div>
-                            </div>
+                    <div className="aviator-header-right">
+                        {/* Live Balance Pill (Green Amount as in Screenshot) */}
+                        <div className="aviator-balance-pill">
+                            <span className="balance-green-val">
+                                {Number(balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <span className="balance-curr-label">{currency}</span>
                         </div>
 
-                        {/* Chart.js Container */}
-                        <div className="chart-box" onMouseLeave={() => setHoveredProfitValue(null)}>
-                            <p className="label">Profit History</p>
-                            {hoveredProfitValue !== null && (
-                                <p className="hovered-value" style={{ color: hoveredProfitValue >= 0 ? '#4ade80' : '#f87171' }}>
-                                    {hoveredProfitValue >= 0 ? '' : '-'}{currencySymbol}{Math.abs(hoveredProfitValue).toFixed(2)}
-                                </p>
-                            )}
-                            <div className="canvas-wrapper">
-                                <canvas ref={chartCanvasRef}></canvas>
-                            </div>
-                        </div>
+                        {/* Audio Mute Toggle */}
+                        <button
+                            type="button"
+                            className="header-icon-btn"
+                            onClick={() => {
+                                setSoundEnabled(!soundEnabled)
+                                casinoAudio.playChip?.()
+                            }}
+                            title={soundEnabled ? 'Mute Audio' : 'Unmute Audio'}
+                        >
+                            <SoundOutlined className={!soundEnabled ? 'muted-icon' : ''} />
+                        </button>
+
+                        {/* Provably Fair Verifier */}
+                        <button
+                            type="button"
+                            className="header-icon-btn"
+                            onClick={() => setFairnessModalOpen(true)}
+                            title="Provably Fair Verification"
+                        >
+                            <SafetyCertificateOutlined />
+                        </button>
+
+                        {/* Fullscreen Toggle */}
+                        <button
+                            type="button"
+                            className="header-icon-btn"
+                            onClick={toggleFullscreen}
+                            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        >
+                            {isFullscreen ? <FullscreenExitOutlined /> : <ExpandOutlined />}
+                        </button>
                     </div>
-                </div>
-            )}
+                </header>
 
-            {/* History Window - sleek modern dashboard style */}
-            <Modal
-                title={
-                    <Space className="history-window-header-title">
-                        <div className="icon-wrapper"><ThunderboltOutlined /></div>
-                        <span>Play History & Dashboard</span>
-                    </Space>
-                }
-                centered
-                footer={null}
-                onCancel={() => setHistoryDrawerOpen(false)}
-                open={historyDrawerOpen}
-                width={460}
-                rootClassName="crash-history-modal-portal mobile-game-modal"
-                className="history-window box-modal-3d"
-                closeIcon={<CloseOutlined style={{ color: '#94a3b8' }} />}
-            >
-                <div className="history-window-content">
-                    {/* Achievements */}
-                    <div className="dashboard-section">
-                        <div className="section-title">Milestones</div>
-                        <div className="achievements-row">
-                            {(() => {
-                                const achievements = [
-                                    { id: 'first-drop', title: 'First Drop', unlocked: gameRecords.length > 0, icon: <StarOutlined /> },
-                                    { id: 'big-win', title: 'Big Win 20×', unlocked: gameRecords.some(w => w.multiplier >= 20 && w.profit >= 0), icon: <TrophyOutlined /> },
-                                    { id: 'hot-streak', title: 'Hot streak 5+', unlocked: maxStreak >= 5, icon: <FireOutlined /> },
-                                ];
-                                return achievements.map(a => (
-                                    <div key={a.id} className={`achievement-badge ${a.unlocked ? 'unlocked' : 'locked'}`}>
-                                        <div className="achievement-icon">{a.icon}</div>
-                                        <div className="achievement-title">{a.title}</div>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
-                    </div>
+                {/* 2. MULTIPLIER HISTORY RIBBON */}
+                <GameHistory history={history} />
 
-                    {/* Streak timeline (last 20 results) */}
-                    <div className="dashboard-section">
-                        <div className="section-title">Streak Timeline (Last 20)</div>
-                        <div className="streak-timeline glass-panel">
-                            {gameRecords.slice(-20).map((r, idx) => (
-                                <div key={r.id || idx} className={`timeline-dot ${r.profit >= 0 ? 'win' : 'loss'}`} title={`Crash: ${r.multiplier.toFixed(2)}x ${r.cashedOutAt ? `• Cashed out: ${r.cashedOutAt.toFixed(2)}x` : ''}`} />
-                            ))}
-                        </div>
-                    </div>
+                {/* 3. FLIGHT CANVAS ARENA */}
+                <GameChart
+                    phase={phase}
+                    multiplier={multiplier}
+                    elapsedTime={elapsedTime}
+                    countdown={countdown}
+                    flightStartTime={flightStartTime}
+                    onlinePlayersCount={roomBets.length > 0 ? roomBets.length * 42 + 1350 : 1385}
+                />
 
-                    {/* History list */}
-                    <div className="dashboard-section">
-                        <div className="section-title">Recent Transactions</div>
-                        <div className="history-list">
-                            {gameRecords.length === 0 ? (
-                                <div className="empty-state">No transaction history yet</div>
-                            ) : (
-                                gameRecords.slice().reverse().map((r) => {
-                                    const isWin = r.profit >= 0;
-                                    return (
-                                        <div key={r.id} className="history-card glass-panel">
-                                            <div className="history-card-icon">
-                                                <div className="ball-color-circle medium" style={{ background: isWin ? 'linear-gradient(135deg, var(--success), #26ad58)' : 'linear-gradient(135deg, #ff4d4f, #cf1322)' }}>
-                                                    {isWin ? <TrophyOutlined style={{ color: '#fff' }} /> : <CloseOutlined style={{ color: '#fff' }} />}
-                                                </div>
-                                            </div>
-                                            <div className="history-card-info">
-                                                <div className="history-card-name">{isWin ? 'Win' : 'Loss'}</div>
-                                                <div className="history-card-multiplier" style={{ color: isWin ? 'var(--success)' : '#ff4d4f' }}>
-                                                    {r.cashedOutAt ? r.cashedOutAt.toFixed(2) : r.multiplier.toFixed(2)}×
-                                                </div>
-                                            </div>
-                                            <div className={`history-card-profit ${isWin ? 'profit-up' : 'profit-down'}`}>
-                                                {isWin ? '+' : '-'}{currencySymbol}{Math.abs(r.profit).toFixed(2)}
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </div>
+                {/* 4. DUAL INDEPENDENT BETTING PANELS (Aviator signature UX) */}
+                <div className="aviator-dual-panels-wrap">
+                    {/* Panel 1 (Primary) */}
+                    <BettingPanel
+                        panelId={1}
+                        phase={phase}
+                        betPlaced={panel1.betPlaced}
+                        betAmount={panel1.amount}
+                        multiplier={multiplier}
+                        cashedOut={panel1.cashedOut}
+                        payout={panel1.payout}
+                        onBet={(amt, auto) => handleBet(amt, auto, 1)}
+                        onCancel={() => handleCancel(1)}
+                        onCashout={() => handleCashout(1)}
+                    />
 
-                    {/* Game Bottom History (Live Bets & My Bets) */}
-                    <div className="dashboard-section" style={{ marginTop: 16 }}>
-                        <GameBottomHistory
-                            gameKey="crash"
-                            gameTitle="Crash"
-                            localRounds={gameRecords}
+                    {/* Panel 2 (Secondary, can be minimized / expanded) */}
+                    {showSecondPanel ? (
+                        <BettingPanel
+                            panelId={2}
+                            phase={phase}
+                            betPlaced={panel2.betPlaced}
+                            betAmount={panel2.amount}
+                            multiplier={multiplier}
+                            cashedOut={panel2.cashedOut}
+                            payout={panel2.payout}
+                            canRemove={true}
+                            onRemove={() => setShowSecondPanel(false)}
+                            onBet={(amt, auto) => handleBet(amt, auto, 2)}
+                            onCancel={() => handleCancel(2)}
+                            onCashout={() => handleCashout(2)}
                         />
-                    </div>
+                    ) : (
+                        <div className="aviator-add-second-bet-bar">
+                            <button
+                                type="button"
+                                className="add-second-bet-btn"
+                                onClick={() => setShowSecondPanel(true)}
+                            >
+                                <PlusOutlined style={{ marginRight: 6 }} />
+                                Add Second Bet
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </Modal>
 
-            {/* Provably Fair Outcome Verifier Modal */}
+                {/* 5. BOTTOM SOCIAL BETS / TURNOVER / PREVIOUS / TOP TABLE */}
+                <PlayerBets
+                    phase={phase}
+                    multiplier={multiplier}
+                    userBetData={userBetSummary}
+                    roomBets={roomBets}
+                    isArena={gameMode === 'arena'}
+                    userHistory={gameRecords}
+                />
+            </div>
+
+            {/* Provably Fair Verifier Modal */}
             <ProvablyFairVerifierModal
                 isOpen={fairnessModalOpen}
                 onClose={() => setFairnessModalOpen(false)}

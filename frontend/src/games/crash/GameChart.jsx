@@ -1,20 +1,108 @@
 import React, { useRef, useEffect, useMemo, useCallback } from 'react'
-import { Tag, Typography, Badge } from 'antd'
-import { WifiOutlined } from '@ant-design/icons'
+import { Tag, Typography } from 'antd'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 export const CRASH_GROWTH_RATE = 0.16
 
-function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, flightStartTime = null }) {
+// Aviator Red Monoplane Component with high-detail SVG & spinning propeller
+function AviatorPlane({ isSpinning = true }) {
+    return (
+        <div className="aviator-plane-element">
+            <svg
+                width="92"
+                height="48"
+                viewBox="0 0 160 80"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="aviator-plane-svg"
+            >
+                <defs>
+                    <linearGradient id="fuselageGrad" x1="0%" y1="0%" x2="100%" y2="50%">
+                        <stop offset="0%" stopColor="#991b1b" />
+                        <stop offset="25%" stopColor="#dc2626" />
+                        <stop offset="70%" stopColor="#ef4444" />
+                        <stop offset="100%" stopColor="#f87171" />
+                    </linearGradient>
+                    <linearGradient id="mainWingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#7f1d1d" />
+                        <stop offset="40%" stopColor="#dc2626" />
+                        <stop offset="100%" stopColor="#f87171" />
+                    </linearGradient>
+                    <linearGradient id="canopyReflect" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                        <stop offset="45%" stopColor="#67e8f9" stopOpacity="0.75" />
+                        <stop offset="100%" stopColor="#0284c7" stopOpacity="0.9" />
+                    </linearGradient>
+                    <filter id="planeGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#dc2626" floodOpacity="0.45" />
+                    </filter>
+                </defs>
+
+                <g filter="url(#planeGlow)">
+                    {/* Rear Tail Wing / Stabilizer */}
+                    <path d="M 16 38 L 4 18 L 22 18 L 34 37 Z" fill="#991b1b" />
+                    <path d="M 20 40 L 10 50 L 26 50 L 36 43 Z" fill="#7f1d1d" />
+
+                    {/* Lower Wing Strut */}
+                    <path d="M 52 42 L 72 58 Q 88 58 84 52 L 68 42 Z" fill="#991b1b" />
+
+                    {/* Aerodynamic Red Fuselage Body */}
+                    <path
+                        d="M 12 40 Q 35 30 95 30 Q 132 30 144 38 Q 148 40 144 43 Q 126 50 80 49 Q 35 48 12 40 Z"
+                        fill="url(#fuselageGrad)"
+                        stroke="#7f1d1d"
+                        strokeWidth="1.2"
+                    />
+
+                    {/* Cockpit Canopy Glass */}
+                    <path
+                        d="M 72 30 Q 90 20 108 29 Q 110 30 72 30 Z"
+                        fill="url(#canopyReflect)"
+                        stroke="#ffffff"
+                        strokeWidth="0.8"
+                    />
+
+                    {/* Upper Main Wing */}
+                    <path
+                        d="M 60 36 L 86 12 Q 106 12 102 18 L 78 38 Z"
+                        fill="url(#mainWingGrad)"
+                        stroke="#7f1d1d"
+                        strokeWidth="1"
+                    />
+
+                    {/* Wing Tip Amrat Gold Light */}
+                    <circle cx="98" cy="14" r="2.5" fill="#f5af19" />
+
+                    {/* Engine Cowling Nose */}
+                    <ellipse cx="144" cy="40" rx="4.5" ry="8" fill="#334155" />
+                    <ellipse cx="145" cy="40" rx="3" ry="5" fill="#94a3b8" />
+
+                    {/* Spinning Propeller */}
+                    <g className={isSpinning ? "aviator-propeller-animated" : ""}>
+                        <ellipse cx="147" cy="40" rx="2.5" ry="22" fill="rgba(255, 255, 255, 0.4)" />
+                        <line x1="147" y1="20" x2="147" y2="60" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" />
+                        <circle cx="147" cy="40" r="3.5" fill="#f5af19" />
+                    </g>
+                </g>
+            </svg>
+        </div>
+    )
+}
+
+function GameChart({
+    phase,
+    multiplier = 1.00,
+    elapsedTime = 0,
+    countdown = 0,
+    flightStartTime = null,
+    onlinePlayersCount = 1385
+}) {
     const canvasRef = useRef(null)
-    const rocketRef = useRef(null)
-    const exhaustRef = useRef(null)
-    const explosionRef = useRef(null)
-    const explosionTimeoutRef = useRef(null)
-    const multiplierTextRef = useRef(null)
+    const planeContainerRef = useRef(null)
     const multiplierNumberRef = useRef(null)
-    const totalTimeTextRef = useRef(null)
+    const centerCardRef = useRef(null)
+    const flewAwayRef = useRef(null)
 
     // Canvas size & device pixel ratio
     const canvasSizeRef = useRef({ width: 0, height: 0, dpr: 1 })
@@ -27,48 +115,7 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
     const phaseRef = useRef(phase)
     phaseRef.current = phase
 
-    // Multiplier color palette helper
-    const getMultiplierColor = useCallback((val, currentPhase = phaseRef.current) => {
-        if (currentPhase === 'crashed') return '#ed4245'
-        if (val >= 10) return '#35d06f'
-        if (val >= 5) return '#ffc107'
-        if (val >= 2) return '#f7931a'
-        return '#ffffff'
-    }, [])
-
-    // Dynamic scaling for both axes (throttled by milestone steps to prevent React churn)
-    const maxTime = useMemo(() => {
-        return Math.max(elapsedTime + 2, 8)
-    }, [Math.floor(elapsedTime / 2)])
-
-    const maxMultiplier = useMemo(() => {
-        return Math.max(multiplier * 1.3, 2)
-    }, [Math.floor(multiplier * 2)])
-
-    // Y-axis labels
-    const yAxisLabels = useMemo(() => {
-        const roundedMax = Math.round(maxMultiplier * 10) / 10
-        const labels = []
-        const steps = 5
-        for (let i = steps; i >= 0; i--) {
-            const value = 1 + ((roundedMax - 1) * i / steps)
-            labels.push(value.toFixed(1))
-        }
-        return labels
-    }, [maxMultiplier])
-
-    // X-axis labels
-    const xAxisLabels = useMemo(() => {
-        const roundedMax = Math.ceil(maxTime)
-        const labels = []
-        const step = Math.ceil(roundedMax / 4)
-        for (let i = step; i <= roundedMax; i += step) {
-            labels.push(i)
-        }
-        return labels
-    }, [maxTime])
-
-    // Core scene renderer — renders at native 60fps/120fps with sub-pixel precision
+    // Draw Aviator Radar Sunburst background + curved flight trajectory
     const drawScene = useCallback((curElapsed, curMult, isCrashed = false) => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -85,46 +132,58 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
 
         const isMobile = width < 600
         const padding = isMobile
-            ? { left: 40, right: 16, top: 25, bottom: 35 }
-            : { left: 60, right: 30, top: 50, bottom: 60 }
+            ? { left: 24, right: 16, top: 20, bottom: 24 }
+            : { left: 40, right: 28, top: 32, bottom: 36 }
 
         const chartWidth = Math.max(10, width - padding.left - padding.right)
         const chartHeight = Math.max(10, height - padding.top - padding.bottom)
 
         // Dynamic chart bounds
         const maxT = Math.max(curElapsed + 2, 8)
-        const maxM = Math.max(curMult * 1.3, 2)
+        const maxM = Math.max(curMult * 1.25, 2.0)
+
+        const originX = padding.left
+        const originY = height - padding.bottom
 
         const timeToX = (time) => padding.left + (time / maxT) * chartWidth
         const multiplierToY = (m) => {
             const normalized = (m - 1) / (maxM - 1)
-            return height - padding.bottom - normalized * chartHeight
+            return originY - normalized * chartHeight
         }
 
-        // 1. Grid lines (single stroke path)
-        ctx.strokeStyle = 'rgba(47, 69, 83, 0.25)'
+        // 1. Draw Aviator Sunburst Rays / Radar Backdrop
+        ctx.save()
+        const rayCount = 14
+        const maxRadius = Math.sqrt(width * width + height * height)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)'
         ctx.lineWidth = 1
-        ctx.setLineDash([4, 6])
-        ctx.beginPath()
 
-        for (let i = 0; i <= 5; i++) {
-            const y = padding.top + (chartHeight * i / 5)
-            ctx.moveTo(padding.left, y)
-            ctx.lineTo(width - padding.right, y)
+        for (let i = 0; i <= rayCount; i++) {
+            const angle = (Math.PI / 2) * (i / rayCount) - 0.05
+            const x2 = originX + Math.cos(angle) * maxRadius
+            const y2 = originY - Math.sin(angle) * maxRadius
+            ctx.beginPath()
+            ctx.moveTo(originX, originY)
+            ctx.lineTo(x2, y2)
+            ctx.stroke()
         }
-        for (let i = 0; i <= 4; i++) {
-            const x = padding.left + (chartWidth * i / 4)
-            ctx.moveTo(x, padding.top)
-            ctx.lineTo(x, height - padding.bottom)
+
+        // Radar faint concentric distance arcs
+        const arcSteps = 4
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)'
+        for (let a = 1; a <= arcSteps; a++) {
+            const r = (chartWidth * a) / arcSteps
+            ctx.beginPath()
+            ctx.arc(originX, originY, r, -Math.PI / 2, 0)
+            ctx.stroke()
         }
-        ctx.stroke()
-        ctx.setLineDash([])
+        ctx.restore()
 
         const isFlying = (phaseRef.current === 'running' || phaseRef.current === 'crashed' || isCrashed) && (curElapsed > 0 || isCrashed)
 
         if (isFlying) {
             // Adaptive sample points along exponential curve
-            const numPoints = Math.max(1, Math.min(180, Math.floor(curElapsed * 15)))
+            const numPoints = Math.max(2, Math.min(180, Math.floor(curElapsed * 16)))
             const points = new Array(numPoints + 1)
 
             for (let i = 0; i <= numPoints; i++) {
@@ -138,60 +197,52 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             const endX = timeToX(curElapsed)
             const endY = multiplierToY(curMult)
 
-            // 2. Glowing Area Fill under curve
-            const fillGradient = ctx.createLinearGradient(
-                padding.left, height - padding.bottom,
-                endX, endY
-            )
-
+            // 2. Glowing Area Fill under the red curve
+            const fillGradient = ctx.createLinearGradient(originX, originY, endX, endY)
             if (isCrashed) {
-                fillGradient.addColorStop(0, 'rgba(237, 66, 69, 0.02)')
-                fillGradient.addColorStop(0.5, 'rgba(237, 66, 69, 0.25)')
-                fillGradient.addColorStop(1, 'rgba(237, 66, 69, 0.50)')
+                fillGradient.addColorStop(0, 'rgba(225, 29, 72, 0.02)')
+                fillGradient.addColorStop(0.4, 'rgba(225, 29, 72, 0.15)')
+                fillGradient.addColorStop(1, 'rgba(225, 29, 72, 0.35)')
             } else {
-                fillGradient.addColorStop(0, 'rgba(255, 165, 0, 0.02)')
-                fillGradient.addColorStop(0.3, 'rgba(255, 165, 0, 0.15)')
-                fillGradient.addColorStop(0.6, 'rgba(255, 180, 50, 0.35)')
-                fillGradient.addColorStop(1, 'rgba(255, 200, 80, 0.60)')
+                fillGradient.addColorStop(0, 'rgba(225, 29, 72, 0.03)')
+                fillGradient.addColorStop(0.5, 'rgba(225, 29, 72, 0.22)')
+                fillGradient.addColorStop(1, 'rgba(244, 63, 94, 0.50)')
             }
 
             ctx.beginPath()
-            ctx.moveTo(padding.left, height - padding.bottom)
+            ctx.moveTo(originX, originY)
             for (let i = 0; i <= numPoints; i++) {
                 ctx.lineTo(points[i].x, points[i].y)
             }
-            ctx.lineTo(endX, height - padding.bottom)
+            ctx.lineTo(endX, originY)
             ctx.closePath()
             ctx.fillStyle = fillGradient
             ctx.fill()
 
-            // 3. Wide Neon Outer Glow Stroke
-            const lineColor = isCrashed ? '#ed4245' : '#f7931a'
+            // 3. Neon Red Outer Glow Path
             ctx.beginPath()
             ctx.moveTo(points[0].x, points[0].y)
             for (let i = 1; i <= numPoints; i++) {
                 ctx.lineTo(points[i].x, points[i].y)
             }
-            ctx.strokeStyle = isCrashed ? 'rgba(237, 66, 69, 0.25)' : 'rgba(247, 147, 26, 0.25)'
+            ctx.strokeStyle = isCrashed ? 'rgba(225, 29, 72, 0.3)' : 'rgba(244, 63, 94, 0.35)'
             ctx.lineWidth = isMobile ? 8 : 12
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
-            ctx.shadowColor = lineColor
-            ctx.shadowBlur = 10
+            ctx.shadowColor = '#e11d48'
+            ctx.shadowBlur = 14
             ctx.stroke()
             ctx.shadowBlur = 0
 
-            // 4. Sharp High-Definition Gradient Core Line
-            const lineGradient = ctx.createLinearGradient(padding.left, 0, endX, 0)
+            // 4. Sharp High-Definition Red Core Flight Line
+            const lineGradient = ctx.createLinearGradient(originX, 0, endX, 0)
             if (isCrashed) {
-                lineGradient.addColorStop(0, '#f7931a')
-                lineGradient.addColorStop(0.7, '#ed4245')
-                lineGradient.addColorStop(1, '#ed4245')
+                lineGradient.addColorStop(0, '#991b1b')
+                lineGradient.addColorStop(1, '#e11d48')
             } else {
-                lineGradient.addColorStop(0, '#f7931a')
-                lineGradient.addColorStop(0.5, '#ffaa33')
-                lineGradient.addColorStop(0.8, '#ffcc66')
-                lineGradient.addColorStop(1, '#ffffff')
+                lineGradient.addColorStop(0, '#be123c')
+                lineGradient.addColorStop(0.5, '#e11d48')
+                lineGradient.addColorStop(1, '#ff4d6d')
             }
 
             ctx.beginPath()
@@ -200,13 +251,13 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                 ctx.lineTo(points[i].x, points[i].y)
             }
             ctx.strokeStyle = lineGradient
-            ctx.lineWidth = isMobile ? 3 : 4
+            ctx.lineWidth = isMobile ? 3.5 : 4.5
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctx.stroke()
 
-            // 5. Continuous Mathematical Tangent Angle along curve (zero discrete step jitter)
-            let angle = -0.785398 // Default ~ -45deg
+            // 5. Plane Tangent Angle along curve
+            let angle = -0.65 // Default upward incline
             if (curElapsed > 0.001) {
                 const prevDt = Math.min(0.04, curElapsed * 0.1)
                 const prevTime = Math.max(0, curElapsed - prevDt)
@@ -218,98 +269,59 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
                 angle = Math.atan2(dy, dx)
             }
 
-            // 6. Direct GPU Transform Updates (translate3d, zero reflow)
-            if (rocketRef.current) {
+            // 6. Position Aviator Plane via high-performance GPU translate3d
+            if (planeContainerRef.current) {
                 if (!isCrashed) {
-                    rocketRef.current.style.display = 'block'
-                    rocketRef.current.style.transform = `translate3d(${endX}px, ${endY}px, 0) translate(-50%, -50%) rotate(${angle}rad) rotate(90deg)`
+                    planeContainerRef.current.style.display = 'block'
+                    planeContainerRef.current.style.transform = `translate3d(${endX}px, ${endY}px, 0) translate(-30%, -50%) rotate(${angle}rad)`
+                    planeContainerRef.current.style.opacity = '1'
                 } else {
-                    rocketRef.current.style.display = 'none'
+                    // Crashed: Plane zooms off the screen to the top right
+                    planeContainerRef.current.style.transform = `translate3d(${endX + 160}px, ${endY - 140}px, 0) translate(-30%, -50%) rotate(${angle - 0.3}rad)`
+                    planeContainerRef.current.style.opacity = '0'
+                    planeContainerRef.current.style.transition = 'transform 0.8s ease-out, opacity 0.6s ease-out'
                 }
             }
 
-            if (exhaustRef.current) {
-                if (!isCrashed) {
-                    exhaustRef.current.style.display = 'block'
-                    const exhaustOffset = isMobile ? 55 : 85
-                    exhaustRef.current.style.transform = `translate3d(${endX}px, ${endY}px, 0) translate(-50%, -50%) rotate(${angle}rad) rotate(90deg) translate(0px, ${exhaustOffset}px)`
-                } else {
-                    exhaustRef.current.style.display = 'none'
-                }
-            }
-
-            if (explosionRef.current) {
-                if (isCrashed) {
-                    if (explosionRef.current.style.display !== 'block') {
-                        explosionRef.current.style.display = 'block'
-                        explosionRef.current.style.transform = `translate3d(${endX}px, ${endY}px, 0) translate(-50%, -50%)`
-                        explosionRef.current.src = '/images/explosions/normal_explosion.gif'
-                        if (explosionTimeoutRef.current) clearTimeout(explosionTimeoutRef.current)
-                        explosionTimeoutRef.current = setTimeout(() => {
-                            if (explosionRef.current) explosionRef.current.style.display = 'none'
-                        }, 1400)
-                    }
-                } else {
-                    explosionRef.current.style.display = 'none'
-                    if (explosionTimeoutRef.current) {
-                        clearTimeout(explosionTimeoutRef.current)
-                        explosionTimeoutRef.current = null
-                    }
-                }
-            }
-
-            // 7. Microsecond-Accurate HUD Elements
+            // 7. Update Center Multiplier Display
             if (multiplierNumberRef.current) {
-                multiplierNumberRef.current.textContent = curMult.toFixed(2)
+                multiplierNumberRef.current.textContent = `${curMult.toFixed(2)}x`
             }
-            if (multiplierTextRef.current) {
-                const clr = isCrashed ? '#ed4245' : getMultiplierColor(curMult, isCrashed ? 'crashed' : 'running')
-                multiplierTextRef.current.style.color = clr
-                multiplierTextRef.current.style.textShadow = `0 0 40px ${clr}50, 0 0 80px ${clr}30`
-            }
-            if (totalTimeTextRef.current) {
-                totalTimeTextRef.current.textContent = `Total ${Math.floor(curElapsed)}s`
+            if (centerCardRef.current) {
+                if (isCrashed) {
+                    centerCardRef.current.classList.add('crashed')
+                    if (flewAwayRef.current) flewAwayRef.current.style.display = 'block'
+                } else {
+                    centerCardRef.current.classList.remove('crashed')
+                    if (flewAwayRef.current) flewAwayRef.current.style.display = 'none'
+                }
             }
         } else {
-            // IDLE or WAITING / READY state: Plane is PARKED on the launchpad at 1.00x!
-            const startX = padding.left
-            const startY = height - padding.bottom
-
-            // Runway glowing dot
-            ctx.beginPath()
-            ctx.arc(startX, startY, isMobile ? 5 : 7, 0, Math.PI * 2)
-            ctx.fillStyle = '#f7931a'
-            ctx.shadowColor = '#f7931a'
-            ctx.shadowBlur = 10
-            ctx.fill()
-            ctx.shadowBlur = 0
-
-            if (rocketRef.current) {
-                rocketRef.current.style.display = 'block'
-                const parkX = startX + (isMobile ? 12 : 20)
-                const parkY = startY - (isMobile ? 12 : 20)
-                rocketRef.current.style.transform = `translate3d(${parkX}px, ${parkY}px, 0) translate(-50%, -50%) rotate(-45deg)`
+            // IDLE or WAITING / READY state: Plane parked at bottom-left runway
+            if (planeContainerRef.current) {
+                planeContainerRef.current.style.display = 'block'
+                planeContainerRef.current.style.transition = 'none'
+                planeContainerRef.current.style.opacity = '1'
+                const parkX = originX + (isMobile ? 18 : 28)
+                const parkY = originY - (isMobile ? 14 : 20)
+                planeContainerRef.current.style.transform = `translate3d(${parkX}px, ${parkY}px, 0) translate(-30%, -50%) rotate(-0.35rad)`
             }
-            if (exhaustRef.current) exhaustRef.current.style.display = 'none'
-            if (explosionRef.current) explosionRef.current.style.display = 'none'
 
             if (multiplierNumberRef.current) {
-                multiplierNumberRef.current.textContent = '1.00'
+                multiplierNumberRef.current.textContent = '1.00x'
             }
-            if (multiplierTextRef.current) {
-                multiplierTextRef.current.style.color = '#ffffff'
-                multiplierTextRef.current.style.textShadow = '0 0 40px rgba(255,255,255,0.3)'
+            if (centerCardRef.current) {
+                centerCardRef.current.classList.remove('crashed')
             }
-            if (totalTimeTextRef.current) {
-                totalTimeTextRef.current.textContent = 'Total 0s'
+            if (flewAwayRef.current) {
+                flewAwayRef.current.style.display = 'none'
             }
         }
-    }, [getMultiplierColor])
+    }, [])
 
-    // High-performance 60fps/120fps flight animation loop (rock-solid, monotonic)
+    // 60fps/120fps flight animation loop
     useEffect(() => {
         if (phase === 'running') {
-            // Resolve anchor start time
             let anchorTime = flightStartTime
             if (!anchorTime) {
                 const estimatedSecs = Math.log(Math.max(1.0, multiplier)) / CRASH_GROWTH_RATE
@@ -321,12 +333,10 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             const loop = () => {
                 const now = Date.now()
                 const rawElapsed = Math.max(0, (now - activeFlightStartRef.current) / 1000)
-                // STRICT MONOTONICITY: Elapsed flight time can NEVER decrease!
                 const curElapsed = Math.max(maxElapsedRef.current, rawElapsed)
                 maxElapsedRef.current = curElapsed
 
                 const curMult = Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * curElapsed))
-
                 drawScene(curElapsed, curMult, false)
 
                 animFrameRef.current = requestAnimationFrame(loop)
@@ -360,9 +370,9 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
             maxElapsedRef.current = 0
             drawScene(0, 1.00, false)
         }
-    }, [phase, flightStartTime, drawScene])
+    }, [phase, flightStartTime, drawScene, multiplier])
 
-    // Persistent single-instance ResizeObserver (never rebuilt on animation ticks)
+    // ResizeObserver for canvas
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
@@ -404,126 +414,79 @@ function GameChart({ phase, multiplier = 1.00, elapsedTime = 0, countdown = 0, f
         }
 
         return () => observer.disconnect()
-    }, [drawScene])
+    }, [drawScene, multiplier])
 
-    const getStatusText = () => {
-        if (phase === 'idle') return 'Ready to Launch'
-        if (phase === 'waiting') return `Starting in ${countdown.toFixed(1)}s`
-        if (phase === 'crashed') return `Crashed @${multiplier.toFixed(2)}×`
-        return null
-    }
+    const isWaiting = phase === 'waiting'
+    const isRunning = phase === 'running'
+    const isCrashed = phase === 'crashed'
 
     return (
-        <div className="chart-container-antd" style={{ position: 'relative' }}>
-            <canvas ref={canvasRef} className="crash-canvas" />
+        <div className="aviator-chart-arena">
+            <canvas ref={canvasRef} className="aviator-canvas" />
 
-            {/* In-game Overlay Assets */}
-            <img
-                ref={rocketRef}
-                src="/images/spaceship.png"
-                alt="Rocket"
-                className="crash-rocket-img"
-            />
-            <img
-                ref={exhaustRef}
-                src="/images/exhaust/exhaust02_preview.gif"
-                alt="Exhaust"
-                className="crash-exhaust-img"
-            />
-            <img
-                ref={explosionRef}
-                src="/images/explosions/normal_explosion.gif"
-                alt="Explosion"
-                className="crash-explosion-img"
-            />
-
-            {/* Y Axis Labels */}
-            <div className="y-axis-antd">
-                {yAxisLabels.map((label, i) => (
-                    <Text key={i} className="axis-label" type="secondary">
-                        {label}×
-                    </Text>
-                ))}
+            {/* Aviator Red Propeller Plane Element */}
+            <div
+                ref={planeContainerRef}
+                className="aviator-plane-anchor"
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 10 }}
+            >
+                <AviatorPlane isSpinning={isRunning || isWaiting} />
             </div>
 
-            {/* X Axis Labels */}
-            <div className="x-axis-antd">
-                {xAxisLabels.map(label => (
-                    <Text key={label} type="secondary" className="x-label">
-                        {label}s
-                    </Text>
-                ))}
-                <Text type="secondary" className="total-time-antd">
-                    <span ref={totalTimeTextRef}>Total {Math.floor(elapsedTime)}s</span>
-                </Text>
-            </div>
+            {/* Center Multiplier Display */}
+            <div className="aviator-center-hud" ref={centerCardRef}>
+                {isCrashed && (
+                    <div ref={flewAwayRef} className="aviator-flew-away-text">
+                        FLEW AWAY!
+                    </div>
+                )}
 
-            {/* Multiplier Display */}
-            <div className={`multiplier-container ${phase === 'crashed' ? 'crashed' : ''}`}>
-                <Title
-                    ref={multiplierTextRef}
-                    level={1}
-                    className="multiplier-title"
-                    style={{
-                        color: getMultiplierColor(multiplier, phase),
-                        margin: 0,
-                        fontWeight: 800,
-                        letterSpacing: '-2px',
-                        textShadow: `0 0 40px ${getMultiplierColor(multiplier, phase)}50, 0 0 80px ${getMultiplierColor(multiplier, phase)}30`,
-                        transition: 'color 0.2s ease',
-                        fontFamily: "'Inter', -apple-system, sans-serif"
-                    }}
+                <div
+                    ref={multiplierNumberRef}
+                    className={`aviator-multiplier-val ${isCrashed ? 'crashed-val' : ''}`}
                 >
-                    <span ref={multiplierNumberRef}>
-                        {phase === 'running' && lastRenderedRef.current.multiplier > 1.0
-                            ? lastRenderedRef.current.multiplier.toFixed(2)
-                            : multiplier.toFixed(2)}
-                    </span>
-                    <span className="multiplier-suffix">×</span>
-                </Title>
+                    {isCrashed
+                        ? `${(multiplier || 1.00).toFixed(2)}x`
+                        : (isRunning && lastRenderedRef.current.multiplier > 1.0
+                            ? `${lastRenderedRef.current.multiplier.toFixed(2)}x`
+                            : `${(multiplier || 1.00).toFixed(2)}x`)}
+                </div>
+
+                {/* Waiting Countdown bar */}
+                {isWaiting && (
+                    <div className="aviator-waiting-box">
+                        <div className="waiting-title">WAITING FOR NEXT ROUND</div>
+                        <div className="waiting-bar-track">
+                            <div
+                                className="waiting-bar-progress"
+                                style={{ width: `${Math.min(100, Math.max(0, (countdown / 6) * 100))}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Status Message */}
-            {(phase === 'idle' || phase === 'waiting' || phase === 'crashed') && (
-                <div className="status-container">
-                    <Tag
-                        color={phase === 'crashed' ? 'error' : (phase === 'idle' ? 'processing' : 'warning')}
-                        className="status-tag"
-                        style={{
-                            fontSize: 14,
-                            padding: '6px 20px',
-                            borderRadius: 24,
-                            fontWeight: 700,
-                            letterSpacing: '0.5px',
-                            textTransform: 'uppercase'
-                        }}
-                    >
-                        {getStatusText()}
-                    </Tag>
+            {/* In-Canvas Active Players Online Badge (bottom-right, exactly like screenshot) */}
+            <div className="aviator-in-canvas-players-badge">
+                <div className="avatar-stack">
+                    <span className="mini-avatar avatar-1">✈️</span>
+                    <span className="mini-avatar avatar-2">👤</span>
+                    <span className="mini-avatar avatar-3">🟢</span>
                 </div>
-            )}
-
-            {/* Network Status */}
-            <div className="network-indicator">
-                <Badge status="success" />
-                <WifiOutlined style={{ color: 'var(--success)', marginRight: 4 }} />
-                <Text type="secondary" style={{ fontSize: 11 }}>Connected</Text>
+                <span className="players-count-num">
+                    {Number(onlinePlayersCount || 1385).toLocaleString()}
+                </span>
             </div>
         </div>
     )
 }
 
 export default React.memo(GameChart, (prevProps, nextProps) => {
-    // If phase changes, always re-render
     if (prevProps.phase !== nextProps.phase) return false
-    // If waiting countdown changes, re-render HUD
     if (nextProps.phase === 'waiting' && prevProps.countdown !== nextProps.countdown) return false
-    // If new flight anchor time initialized, re-render
     if (prevProps.flightStartTime !== nextProps.flightStartTime) return false
-    // If crashed multiplier updates, re-render
     if (nextProps.phase === 'crashed' && prevProps.multiplier !== nextProps.multiplier) return false
-    // While actively flying, RAF manages canvas, rocket, exhaust, and HUD DOM updates directly at 60-120fps.
-    // Suppressing 10Hz React DOM re-renders completely eliminates visual text and transform stutter.
+    if (prevProps.onlinePlayersCount !== nextProps.onlinePlayersCount) return false
     if (nextProps.phase === 'running') return true
     return false
 })

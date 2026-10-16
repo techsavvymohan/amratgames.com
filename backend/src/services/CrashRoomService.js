@@ -110,7 +110,7 @@ export class CrashRoomService {
         this.hash = this.secretHash // Reveal HMAC digest post-crash for Provably Fair verification
 
         // Record losses for any players who did not cash out before the crash
-        for (const [userId, bet] of this.activeBets.entries()) {
+        for (const [, bet] of this.activeBets.entries()) {
             if (!bet.cashedOut) {
                 bet.cashedOut = true
                 bet.multiplier = 0
@@ -119,7 +119,7 @@ export class CrashRoomService {
 
                 try {
                     db.recordBet({
-                        userId,
+                        userId: bet.userId,
                         username: bet.username,
                         game: 'crash',
                         gameName: 'Crash Multiplayer',
@@ -189,10 +189,10 @@ export class CrashRoomService {
             this.currentMultiplier = isCrashed ? this.crashPoint : Math.max(1.00, parseFloat(raw.toFixed(2)))
 
             // Check auto-cashouts for active bets strictly capped at crashPoint
-            for (const [userId, bet] of this.activeBets.entries()) {
+            for (const [betKey, bet] of this.activeBets.entries()) {
                 if (!bet.cashedOut && bet.autoCashout) {
                     if (this.currentMultiplier >= bet.autoCashout && bet.autoCashout <= this.crashPoint) {
-                        this.executeAutoCashout(userId, bet, bet.autoCashout)
+                        this.executeAutoCashout(betKey, bet, bet.autoCashout)
                     }
                 }
             }
@@ -212,7 +212,7 @@ export class CrashRoomService {
         }
     }
 
-    async executeAutoCashout(userId, bet, targetMultiplier) {
+    async executeAutoCashout(betKey, bet, targetMultiplier) {
         if (bet.cashedOut) return
         bet.cashedOut = true
         bet.won = true
@@ -229,10 +229,10 @@ export class CrashRoomService {
         bet.multiplier = capped.multiplier
 
         try {
-            await db.withUserLock(userId, async () => {
-                db.updateUserBalance(userId, bet.currency, payout, `Crash Multiplayer Auto-Cashout (${targetMultiplier}x)`)
+            await db.withUserLock(bet.userId, async () => {
+                db.updateUserBalance(bet.userId, bet.currency, payout, `Crash Multiplayer Auto-Cashout (${targetMultiplier}x)`)
                 const betRecord = db.recordBet({
-                    userId,
+                    userId: bet.userId,
                     username: bet.username,
                     game: 'crash',
                     gameName: 'Crash Multiplayer',
@@ -248,7 +248,8 @@ export class CrashRoomService {
             })
 
             broadcastEvent('CRASH_ROOM_CASHOUT', {
-                userId,
+                userId: bet.userId,
+                panelId: bet.panelId || 1,
                 username: bet.username,
                 roundId: this.roundId,
                 multiplier: targetMultiplier,
@@ -259,7 +260,7 @@ export class CrashRoomService {
         }
     }
 
-    async placeBet({ userId, username, betAmount, autoCashout = null, currency = 'INR' }) {
+    async placeBet({ userId, username, betAmount, autoCashout = null, currency = 'INR', panelId = 1 }) {
         if (this.state !== 'WAITING') {
             const err = new Error('Betting is closed for the active round. Please wait for the next flight.')
             err.status = 400
@@ -267,8 +268,10 @@ export class CrashRoomService {
             throw err
         }
 
-        if (this.activeBets.has(userId)) {
-            const err = new Error('You have already placed a bet in this round.')
+        const numericPanelId = parseInt(panelId, 10) || 1
+        const betKey = numericPanelId === 1 ? userId : `${userId}:${numericPanelId}`
+        if (this.activeBets.has(betKey) || (numericPanelId === 1 && this.activeBets.has(`${userId}:1`))) {
+            const err = new Error('You have already placed a bet in this slot.')
             err.status = 400
             err.code = 'ALREADY_BET'
             throw err
@@ -326,6 +329,7 @@ export class CrashRoomService {
                 id: 'cbet_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex'),
                 userId,
                 username,
+                panelId: numericPanelId,
                 currency,
                 betAmount: parsedAmount,
                 autoCashout: parsedAuto,
@@ -335,7 +339,7 @@ export class CrashRoomService {
                 timestamp: new Date().toISOString()
             }
 
-            this.activeBets.set(userId, bet)
+            this.activeBets.set(betKey, bet)
             return { user: db.findUserById(userId), bet }
         })
 
@@ -343,6 +347,7 @@ export class CrashRoomService {
             roundId: this.roundId,
             bet: {
                 userId,
+                panelId: numericPanelId,
                 username,
                 betAmount: parsedAmount,
                 autoCashout: parsedAuto,
@@ -357,7 +362,7 @@ export class CrashRoomService {
         }
     }
 
-    async cashoutPlayer({ userId }) {
+    async cashoutPlayer({ userId, panelId = 1 }) {
         if (this.state !== 'FLYING') {
             const err = new Error('Cannot cashout when flight is not in progress')
             err.status = 400
@@ -365,9 +370,11 @@ export class CrashRoomService {
             throw err
         }
 
-        const bet = this.activeBets.get(userId)
+        const numericPanelId = parseInt(panelId, 10) || 1
+        const betKey = numericPanelId === 1 ? userId : `${userId}:${numericPanelId}`
+        const bet = this.activeBets.get(betKey) || (numericPanelId === 1 ? this.activeBets.get(`${userId}:1`) : null)
         if (!bet) {
-            const err = new Error('No active bet found for this round')
+            const err = new Error('No active bet found for this slot')
             err.status = 400
             err.code = 'NO_BET'
             throw err
@@ -423,6 +430,7 @@ export class CrashRoomService {
 
         broadcastEvent('CRASH_ROOM_CASHOUT', {
             userId,
+            panelId: numericPanelId,
             username: bet.username,
             roundId: this.roundId,
             multiplier,
@@ -434,6 +442,7 @@ export class CrashRoomService {
             roundId: this.roundId,
             multiplier,
             payout,
+            panelId: numericPanelId,
             balances: updatedUser.balances
         }
     }
@@ -443,6 +452,7 @@ export class CrashRoomService {
         for (const b of this.activeBets.values()) {
             list.push({
                 userId: b.userId,
+                panelId: b.panelId || 1,
                 username: b.username,
                 betAmount: b.betAmount,
                 autoCashout: b.autoCashout,
