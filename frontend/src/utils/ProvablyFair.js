@@ -281,20 +281,15 @@ class ProvablyFair {
         // Create array [0..24] representing all tile positions
         const tiles = Array.from({ length: 25 }, (_, i) => i);
 
-        // Fisher-Yates shuffle using hash bytes as entropy source
-        // We need minesCount swaps, each consuming 4 hex chars (2 bytes)
-        for (let i = 0; i < minesCount; i++) {
-            const hexOffset = (i * 4) % 64; // Wrap around if needed
-            const chunk = hash.substr(hexOffset, 4);
-            const value = parseInt(chunk, 16);
-            // Pick from remaining positions [i..24]
-            const remaining = 25 - i;
-            const swapIdx = i + (value % remaining);
-            // Swap
+        // Standardized unbiased 16-bit Fisher-Yates shuffle
+        for (let i = 24; i > 0; i--) {
+            const offset = ((24 - i) * 4) % 60;
+            const intVal = parseInt(hash.slice(offset, offset + 4), 16);
+            const j = Math.floor((intVal / 0x10000) * (i + 1));
+            const swapIdx = Math.min(j, i);
             [tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]];
         }
 
-        // First minesCount elements are where mines go
         const minePositions = tiles.slice(0, minesCount).sort((a, b) => a - b);
 
         this.nonce++;
@@ -317,12 +312,11 @@ class ProvablyFair {
 
         const tiles = Array.from({ length: 25 }, (_, i) => i);
 
-        for (let i = 0; i < minesCount; i++) {
-            const hexOffset = (i * 4) % 64;
-            const chunk = hash.substr(hexOffset, 4);
-            const value = parseInt(chunk, 16);
-            const remaining = 25 - i;
-            const swapIdx = i + (value % remaining);
+        for (let i = 24; i > 0; i--) {
+            const offset = ((24 - i) * 4) % 60;
+            const intVal = parseInt(hash.slice(offset, offset + 4), 16);
+            const j = Math.floor((intVal / 0x10000) * (i + 1));
+            const swapIdx = Math.min(j, i);
             [tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]];
         }
 

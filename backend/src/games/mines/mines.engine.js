@@ -8,6 +8,20 @@ import { bankrollRisk } from '../../services/BankrollRiskService.js'
 export class MinesEngine {
     constructor() {
         this.activeMinesRounds = new Map() // roundId -> session
+        // Periodic cleanup of abandoned rounds (older than 24 hours) to prevent memory leaks
+        this.cleanupTimer = setInterval(() => this.cleanupExpiredRounds(), 60000)
+        if (this.cleanupTimer.unref) this.cleanupTimer.unref()
+    }
+
+    cleanupExpiredRounds() {
+        const now = Date.now()
+        const TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+        for (const [roundId, session] of this.activeMinesRounds.entries()) {
+            if (now - (session.createdAt || 0) > TTL_MS) {
+                session.active = false
+                this.activeMinesRounds.delete(roundId)
+            }
+        }
     }
 
     calculateMultiplier(minesCount, gemsRevealed) {
@@ -20,25 +34,39 @@ export class MinesEngine {
         return parseFloat((mult * houseEdge).toFixed(2))
     }
 
-    startRound({ userId, currency = 'INR', betAmount, minesCount = 3, clientSeed }) {
+    startRound({ userId, currency = 'INR', betAmount, minesCount = 3, clientSeed = 'amrat-player' }) {
         const riskCheck = bankrollRisk.validateBetRisk({ betAmount, currency, game: 'mines' })
         if (!riskCheck.valid) {
             throw new Error(riskCheck.error)
         }
-        const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
-        const nonce = provablyFairCore.getNextNonce(userId)
-        const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // Generate 25 tiles shuffled with Fisher-Yates driven by HMAC hash
-        const tiles = Array.from({ length: 25 }, (_, i) => i)
-        for (let i = 24; i > 0; i--) {
-            const byteOffset = (24 - i) % 32
-            const randByte = parseInt(hash.slice(byteOffset * 2, byteOffset * 2 + 2), 16)
-            const j = randByte % (i + 1);
-            [tiles[i], tiles[j]] = [tiles[j], tiles[i]]
+        // Prevent multiple concurrent active rounds per user
+        const existing = this.getActiveRound(userId)
+        if (existing) {
+            const err = new Error('You already have an active Mines round. Please complete or cash out your current round.')
+            err.status = 400
+            err.code = 'ACTIVE_ROUND_EXISTS'
+            err.roundId = existing.roundId
+            throw err
         }
 
-        const mineIndices = new Set(tiles.slice(0, count))
+        const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
+        const cleanClientSeed = String(clientSeed || 'amrat-player').trim()
+        const nonce = provablyFairCore.getNextNonce(userId)
+        const { hash, serverSeed } = provablyFairCore.generateHmacFloat(cleanClientSeed, nonce)
+        const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
+
+        // Generate 25 tiles shuffled with unbiased 16-bit Fisher-Yates driven by HMAC hash
+        const tiles = Array.from({ length: 25 }, (_, i) => i)
+        for (let i = 24; i > 0; i--) {
+            const offset = ((24 - i) * 4) % 60
+            const intVal = parseInt(hash.slice(offset, offset + 4), 16)
+            const j = Math.floor((intVal / 0x10000) * (i + 1))
+            const swapIdx = Math.min(j, i)
+            ;[tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]]
+        }
+
+        const mineIndices = tiles.slice(0, count).sort((a, b) => a - b)
         const roundId = 'mines_' + Date.now().toString(36) + crypto.randomBytes(4).toString('hex')
 
         const session = {
@@ -47,11 +75,16 @@ export class MinesEngine {
             currency,
             betAmount,
             minesCount: count,
-            mineIndices: Array.from(mineIndices),
+            mineIndices,
             revealedIndices: [],
             currentMultiplier: 1.00,
             active: true,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            serverSeed,
+            serverSeedHash,
+            clientSeed: cleanClientSeed,
+            nonce,
+            hash
         }
 
         this.activeMinesRounds.set(roundId, session)
@@ -60,7 +93,9 @@ export class MinesEngine {
             roundId,
             minesCount: count,
             nextMultiplier: this.calculateMultiplier(count, 1),
-            active: true
+            active: true,
+            serverSeedHash,
+            nonce
         }
     }
 
@@ -87,7 +122,12 @@ export class MinesEngine {
                 allMines: session.mineIndices,
                 won: false,
                 multiplier: 0,
-                payout: 0
+                payout: 0,
+                hash: session.hash,
+                serverSeed: session.serverSeed,
+                serverSeedHash: session.serverSeedHash,
+                clientSeed: session.clientSeed,
+                nonce: session.nonce
             }
         }
 
@@ -98,11 +138,21 @@ export class MinesEngine {
         const nextMultiplier = this.calculateMultiplier(session.minesCount, gemsRevealed + 1)
         const maxGems = 25 - session.minesCount
 
-        // If player revealed all gems, auto cashout
+        // If player revealed all gems, auto cashout with win cap enforcement
         const autoWin = gemsRevealed >= maxGems
+        let capped = { payout: 0, multiplier: session.currentMultiplier, wasCapped: false }
+
         if (autoWin) {
             session.active = false
             this.activeMinesRounds.delete(roundId)
+
+            const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+            capped = bankrollRisk.enforceWinCap({
+                betAmount: session.betAmount,
+                multiplier: session.currentMultiplier,
+                rawPayout,
+                currency: session.currency
+            })
         }
 
         return {
@@ -115,7 +165,14 @@ export class MinesEngine {
             nextMultiplier,
             autoWin,
             allMines: autoWin ? session.mineIndices : undefined,
-            payout: autoWin ? parseFloat((session.betAmount * session.currentMultiplier).toFixed(2)) : 0
+            multiplier: autoWin ? capped.multiplier : session.currentMultiplier,
+            payout: autoWin ? capped.payout : 0,
+            wasCapped: autoWin ? capped.wasCapped : false,
+            hash: session.hash,
+            serverSeed: autoWin ? session.serverSeed : undefined,
+            serverSeedHash: session.serverSeedHash,
+            clientSeed: session.clientSeed,
+            nonce: session.nonce
         }
     }
 
@@ -145,7 +202,12 @@ export class MinesEngine {
             multiplier: capped.multiplier,
             payout: capped.payout,
             wasCapped: capped.wasCapped,
-            allMines: session.mineIndices
+            allMines: session.mineIndices,
+            hash: session.hash,
+            serverSeed: session.serverSeed,
+            serverSeedHash: session.serverSeedHash,
+            clientSeed: session.clientSeed,
+            nonce: session.nonce
         }
     }
 
@@ -161,7 +223,9 @@ export class MinesEngine {
                     nextMultiplier: this.calculateMultiplier(session.minesCount, session.revealedIndices.length + 1),
                     betAmount: session.betAmount,
                     currency: session.currency,
-                    active: true
+                    active: true,
+                    serverSeedHash: session.serverSeedHash,
+                    nonce: session.nonce
                 }
             }
         }

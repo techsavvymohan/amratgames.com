@@ -98,7 +98,7 @@ router.post('/reveal', authenticate, async (req, res) => {
             const betAmount = revealResult.betAmount || 0
 
             if (revealResult.hitMine) {
-                db.recordBet({
+                const betRecord = db.recordBet({
                     userId: req.user.id,
                     username: req.user.username,
                     game: 'mines',
@@ -109,10 +109,11 @@ router.post('/reveal', authenticate, async (req, res) => {
                     payout: 0,
                     profit: -betAmount,
                     won: false,
-                    hash: crypto.randomBytes(16).toString('hex')
+                    hash: revealResult.hash || crypto.randomBytes(16).toString('hex')
                 })
+                broadcastEvent('NEW_BET', betRecord)
             } else if (revealResult.autoWin && revealResult.payout > 0) {
-                db.updateUserBalance(req.user.id, currency, revealResult.payout, `Mines Auto Win (${revealResult.currentMultiplier}x)`)
+                db.updateUserBalance(req.user.id, currency, revealResult.payout, `Mines Auto Win (${revealResult.multiplier || revealResult.currentMultiplier}x)`)
                 const betRecord = db.recordBet({
                     userId: req.user.id,
                     username: req.user.username,
@@ -120,11 +121,11 @@ router.post('/reveal', authenticate, async (req, res) => {
                     gameName: 'Mines',
                     currency,
                     betAmount,
-                    multiplier: revealResult.currentMultiplier,
+                    multiplier: revealResult.multiplier || revealResult.currentMultiplier,
                     payout: revealResult.payout,
                     profit: revealResult.payout - betAmount,
                     won: true,
-                    hash: crypto.randomBytes(16).toString('hex')
+                    hash: revealResult.hash || crypto.randomBytes(16).toString('hex')
                 })
                 broadcastEvent('NEW_BET', betRecord)
             }
@@ -183,7 +184,7 @@ router.post('/cashout', authenticate, async (req, res) => {
                 payout: cashoutResult.payout,
                 profit: cashoutResult.payout - betAmount,
                 won: true,
-                hash: crypto.randomBytes(16).toString('hex')
+                hash: cashoutResult.hash || crypto.randomBytes(16).toString('hex')
             })
 
             broadcastEvent('NEW_BET', betRecord)

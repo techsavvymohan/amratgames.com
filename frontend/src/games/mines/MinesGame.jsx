@@ -24,6 +24,7 @@ import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { CurrencyIcon } from '../../components/Header'
 import ProvablyFair from '../../utils/ProvablyFair'
+import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import MobileBetSheet from '../../components/MobileBetSheet'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './MinesGame.css'
@@ -36,7 +37,7 @@ const calculateMultiplier = (mines, hits) => {
     for (let i = 0; i < hits; i++) {
         mult *= (25 - i) / (25 - mines - i);
     }
-    return mult * HOUSE_EDGE;
+    return parseFloat((mult * HOUSE_EDGE).toFixed(2));
 };
 
 // SVG Icons inline to avoid ant-design missing ones if any
@@ -73,24 +74,27 @@ function MinesGame() {
     const [gameOverState, setGameOverState] = useState(null) // 'win', 'loss', or null
     const [isHovering, setIsHovering] = useState(null);
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false);
+    const [verifierOpen, setVerifierOpen] = useState(false);
 
     // Bottom Controls State
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
 
-    // Debug & Fairness State
-    const [isDebugMode, setIsDebugMode] = useState(false);
-    const [debugData, setDebugData] = useState(null);
+    // Concurrency Action Locks
+    const isRevealingRef = useRef(false);
+    const isStartingRef = useRef(false);
+    const isCashingOutRef = useRef(false);
 
     // Provably Fair
-    const fairnessRef = useRef(null);
     const [fairnessData, setFairnessData] = useState({
         serverSeedHash: 'Loading...',
-        clientSeed: 'Loading...',
-        nonce: 0,
+        clientSeed: localStorage.getItem('amrat_mines_client_seed') || 'amrat-player',
+        nonce: 1,
     });
     const [revealedSeed, setRevealedSeed] = useState(null);
-    const [clientSeedInput, setClientSeedInput] = useState('');
+    const [clientSeedInput, setClientSeedInput] = useState(() =>
+        localStorage.getItem('amrat_mines_client_seed') || 'amrat-player'
+    );
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -121,20 +125,16 @@ function MinesGame() {
     const chartInstanceRef = useRef(null);
     const profitHistoryRef = useRef([0]);
 
-    // Debug Widget Refs
-    const debugWidgetRef = useRef(null);
-    const isDebugDragging = useRef(false);
-    const debugDragOffset = useRef({ x: 0, y: 0 });
-
-    // Initialize ProvablyFair and check for active session
+    // Initialize Provably Fair and check for active session
     useEffect(() => {
-        const pf = new ProvablyFair();
-        fairnessRef.current = pf;
-        pf.waitReady().then(async () => {
-            const data = await pf.getFairnessData();
-            setFairnessData(data);
-            setClientSeedInput(data.clientSeed);
-        });
+        fetch('/api/games/provably-fair/seed')
+            .then(res => res.json())
+            .then(data => {
+                if (data?.serverSeedHash) {
+                    setFairnessData(prev => ({ ...prev, serverSeedHash: data.serverSeedHash }));
+                }
+            })
+            .catch(() => {});
 
         if (getActiveMinesRound) {
             getActiveMinesRound().then(active => {
@@ -143,73 +143,36 @@ function MinesGame() {
                     setMinesCount(active.minesCount);
                     setBetAmount(active.betAmount);
                     setRevealedTiles(active.revealedIndices || []);
+                    if (active.serverSeedHash) {
+                        setFairnessData(prev => ({
+                            ...prev,
+                            serverSeedHash: active.serverSeedHash,
+                            nonce: active.nonce || 1
+                        }));
+                    }
                     setIsPlaying(true);
                 }
             });
         }
     }, [getActiveMinesRound]);
 
-    // Fetch peek data for Fairness Debug whenever conditions change
-    useEffect(() => {
-        const pf = fairnessRef.current;
-        // Don't update debug data while game is playing, so it matches the current game.
-        if (isDebugMode && pf && pf._hashReady && !isPlaying) {
-            pf.peekMinesPositions(minesCount).then(data => {
-                setDebugData(data);
-            }).catch(err => console.error('Peek info error:', err));
-        }
-    }, [isDebugMode, fairnessData, minesCount, isPlaying]);
-
     // Handle client seed change
-    const handleChangeClientSeed = useCallback(async () => {
-        const pf = fairnessRef.current;
-        if (!pf || !clientSeedInput) return;
-        await pf.setClientSeed(clientSeedInput);
-        const data = await pf.getFairnessData();
-        setFairnessData(data);
-    }, [clientSeedInput]);
+    const handleChangeClientSeed = useCallback(() => {
+        if (!clientSeedInput || !clientSeedInput.trim()) return;
+        const trimmed = clientSeedInput.trim();
+        localStorage.setItem('amrat_mines_client_seed', trimmed);
+        setFairnessData(prev => ({ ...prev, clientSeed: trimmed }));
+        showToast('info', 'Client Seed Updated', `Client seed saved: ${trimmed}`);
+    }, [clientSeedInput, showToast]);
 
-    // Handle seed rotation (reveals current seed)
-    const handleRotateSeed = useCallback(async () => {
-        const pf = fairnessRef.current;
-        if (!pf) return;
-        const revealed = await pf.rotateSeed();
-        setRevealedSeed(revealed);
-        const data = await pf.getFairnessData();
-        setFairnessData(data);
-        setClientSeedInput(data.clientSeed);
-    }, []);
-
-    // Drag handler for debug widget
-    const handleDebugDragStart = useCallback((e) => {
-        if (!debugWidgetRef.current) return;
-        isDebugDragging.current = true;
-        const rect = debugWidgetRef.current.getBoundingClientRect();
-        debugDragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-
-        const handleMouseMove = (moveEvt) => {
-            if (!isDebugDragging.current || !debugWidgetRef.current) return;
-            const newX = moveEvt.clientX - debugDragOffset.current.x;
-            const newY = moveEvt.clientY - debugDragOffset.current.y;
-
-            const maxX = window.innerWidth - debugWidgetRef.current.offsetWidth;
-            const maxY = window.innerHeight - debugWidgetRef.current.offsetHeight;
-            debugWidgetRef.current.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
-            debugWidgetRef.current.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-            debugWidgetRef.current.style.right = 'auto';
-            debugWidgetRef.current.style.bottom = 'auto';
-            debugWidgetRef.current.style.transform = 'none';
-        };
-
-        const handleMouseUp = () => {
-            isDebugDragging.current = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-    }, []);
+    // Handle seed rotation
+    const handleRotateSeed = useCallback(() => {
+        const randomSeed = Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
+        setClientSeedInput(randomSeed);
+        localStorage.setItem('amrat_mines_client_seed', randomSeed);
+        setFairnessData(prev => ({ ...prev, clientSeed: randomSeed }));
+        showToast('info', 'Client Seed Rotated', `New client seed: ${randomSeed}`);
+    }, [showToast]);
 
     // Live Stats Drag Logic
     const handleDragStart = (e) => {
@@ -424,57 +387,88 @@ function MinesGame() {
             return;
         }
 
-        if (betAmount <= 0) return;
+        if (betAmount <= 0) {
+            showToast('error', 'Invalid Bet', 'Please enter a valid bet amount');
+            return;
+        }
         if (betAmount > balance) {
             showToast('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)}`);
             return;
         }
 
-        const res = await startMinesRound({ betAmount, minesCount });
-        if (!res || !res.success) {
-            showToast('error', 'Error Starting Game', res?.error || 'Failed to start game');
-            return;
-        }
+        if (isStartingRef.current) return;
+        isStartingRef.current = true;
 
-        playSound('bet');
-        setRoundId(res.roundId);
-        setRevealedTiles([]);
-        setMineLocations([]);
-        setGameOverState(null);
-        setIsPlaying(true);
-        showToast('bet', 'Game Started', `${currencySymbol}${betAmount.toFixed(2)} bet placed`);
+        try {
+            const seedToSend = clientSeedInput || localStorage.getItem('amrat_mines_client_seed') || user?.id || 'amrat-player';
+            const res = await startMinesRound({
+                betAmount,
+                minesCount,
+                clientSeed: seedToSend
+            });
+
+            if (!res || !res.success) {
+                showToast('error', 'Error Starting Game', res?.error || 'Failed to start game');
+                return;
+            }
+
+            playSound('bet');
+            setRoundId(res.roundId);
+            setRevealedTiles([]);
+            setMineLocations([]);
+            setGameOverState(null);
+            setIsPlaying(true);
+            if (res.serverSeedHash) {
+                setFairnessData(prev => ({
+                    ...prev,
+                    serverSeedHash: res.serverSeedHash,
+                    nonce: res.nonce || 1
+                }));
+            }
+            showToast('bet', 'Game Started', `${currencySymbol}${betAmount.toFixed(2)} bet placed`);
+        } finally {
+            isStartingRef.current = false;
+        }
     };
 
     const cashout = async () => {
-        if (!isPlaying || revealedTiles.length === 0 || !roundId) return;
+        if (isCashingOutRef.current || !isPlaying || revealedTiles.length === 0 || !roundId) return;
+        isCashingOutRef.current = true;
 
-        const res = await cashoutMinesRound({ roundId });
-        if (!res || !res.success) {
-            showToast('error', 'Cashout Failed', res?.error || 'Cashout failed');
-            return;
+        try {
+            const res = await cashoutMinesRound({ roundId });
+            if (!res || !res.success) {
+                showToast('error', 'Cashout Failed', res?.error || 'Cashout failed');
+                return;
+            }
+
+            setIsPlaying(false);
+            setGameOverState('win');
+            setMineLocations(res.allMines || []);
+            const profit = res.payout - betAmount;
+
+            setTotalProfit(prev => prev + profit);
+            setWinsCount(prev => prev + 1);
+            setWinRecords(prev => [...prev, profit]);
+            profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
+
+            showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000);
+            if (res.multiplier >= 3) {
+                playSound('bigWin');
+            } else {
+                playSound('cashout');
+            }
+            if (res.serverSeed) {
+                setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
+            }
+            setRoundId(null);
+        } finally {
+            isCashingOutRef.current = false;
         }
-
-        setIsPlaying(false);
-        setGameOverState('win');
-        setMineLocations(res.allMines || []);
-        const profit = res.payout - betAmount;
-
-        setTotalProfit(prev => prev + profit);
-        setWinsCount(prev => prev + 1);
-        setWinRecords(prev => [...prev, profit]);
-        profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
-
-        showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000);
-        if (res.multiplier >= 3) {
-            playSound('bigWin');
-        } else {
-            playSound('cashout');
-        }
-        setRoundId(null);
     };
 
     const pickRandom = () => {
-        if (!isPlaying) return;
+        if (!isPlaying || isRevealingRef.current) return;
         const unrevealedSafe = [];
         for (let i = 0; i < 25; i++) {
             if (!revealedTiles.includes(i)) {
@@ -489,50 +483,63 @@ function MinesGame() {
     };
 
     const handleTileClick = async (index) => {
-        if (!isPlaying || revealedTiles.includes(index) || gameOverState || !roundId) return;
+        if (isRevealingRef.current || !isPlaying || revealedTiles.includes(index) || gameOverState || !roundId) return;
+        isRevealingRef.current = true;
 
-        const res = await revealMinesTile({ roundId, tileIndex: index });
-        if (!res || !res.success) {
-            showToast('error', 'Tile Reveal Error', res?.error || 'Tile reveal failed');
-            return;
-        }
-
-        if (res.hitMine) {
-            // Hit a mine!
-            setRevealedTiles(prev => [...prev, index]);
-            setMineLocations(res.allMines || []);
-            setIsPlaying(false);
-            setGameOverState('loss');
-
-            setTotalProfit(prev => prev - betAmount);
-            setLossesCount(prev => prev + 1);
-            setWinRecords(prev => [...prev, -betAmount]);
-            profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
-
-            showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
-            playSound('explosion');
-            setRoundId(null);
-        } else {
-            // Hit a safe diamond gem!
-            const newRevealed = [...revealedTiles, index];
-            setRevealedTiles(newRevealed);
-            playSound('gem', newRevealed.length);
-
-            if (res.autoWin) {
-                setIsPlaying(false);
-                setGameOverState('win');
-                setMineLocations(res.allMines || []);
-                const profit = res.payout - betAmount;
-
-                setTotalProfit(prev => prev + profit);
-                setWinsCount(prev => prev + 1);
-                setWinRecords(prev => [...prev, profit]);
-                profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
-
-                showToast('win', 'Cleared All Gems!', `+${currencySymbol}${profit.toFixed(2)} at ${res.currentMultiplier.toFixed(2)}×`, 4000);
-                playSound('bigWin');
-                setRoundId(null);
+        try {
+            const res = await revealMinesTile({ roundId, tileIndex: index });
+            if (!res || !res.success) {
+                showToast('error', 'Tile Reveal Error', res?.error || 'Tile reveal failed');
+                return;
             }
+
+            if (res.hitMine) {
+                // Hit a mine!
+                setRevealedTiles(prev => prev.includes(index) ? prev : [...prev, index]);
+                setMineLocations(res.allMines || []);
+                setIsPlaying(false);
+                setGameOverState('loss');
+
+                setTotalProfit(prev => prev - betAmount);
+                setLossesCount(prev => prev + 1);
+                setWinRecords(prev => [...prev, -betAmount]);
+                profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
+
+                showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
+                playSound('explosion');
+                if (res.serverSeed) {
+                    setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
+                }
+                setRoundId(null);
+            } else {
+                // Hit a safe diamond gem!
+                setRevealedTiles(prev => {
+                    const next = prev.includes(index) ? prev : [...prev, index];
+                    playSound('gem', next.length);
+                    return next;
+                });
+
+                if (res.autoWin) {
+                    setIsPlaying(false);
+                    setGameOverState('win');
+                    setMineLocations(res.allMines || []);
+                    const profit = res.payout - betAmount;
+
+                    setTotalProfit(prev => prev + profit);
+                    setWinsCount(prev => prev + 1);
+                    setWinRecords(prev => [...prev, profit]);
+                    profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
+
+                    showToast('win', 'Cleared All Gems!', `+${currencySymbol}${profit.toFixed(2)} at ${res.currentMultiplier.toFixed(2)}×`, 4000);
+                    playSound('bigWin');
+                    if (res.serverSeed) {
+                        setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
+                    }
+                    setRoundId(null);
+                }
+            }
+        } finally {
+            isRevealingRef.current = false;
         }
     };
 
@@ -862,11 +869,28 @@ function MinesGame() {
                     <Button onClick={handleRotateSeed} style={{ flex: 1, background: '#2f4553', border: 'none', color: '#fff' }}>
                         <ReloadOutlined /> Rotate Seed
                     </Button>
+                    <Button onClick={() => setVerifierOpen(true)} style={{ flex: 1, background: '#2f4553', border: 'none', color: '#fff' }}>
+                        <SafetyCertificateOutlined /> Verifier
+                    </Button>
                     <Button type="primary" onClick={() => setFairnessModalOpen(false)} style={{ flex: 1, background: 'var(--primary)', border: 'none', color: '#000', fontWeight: 'bold' }}>
                         Close
                     </Button>
                 </div>
             </Modal>
+
+            {/* Provably Fair Verifier Modal */}
+            <ProvablyFairVerifierModal
+                isOpen={verifierOpen}
+                onClose={() => setVerifierOpen(false)}
+                initialData={{
+                    game: 'mines',
+                    serverSeed: revealedSeed?.serverSeed || '',
+                    serverSeedHash: fairnessData.serverSeedHash,
+                    clientSeed: clientSeedInput || 'amrat-player',
+                    nonce: fairnessData.nonce || 1,
+                    minesCount
+                }}
+            />
 
             {/* Play History & Dashboard Modal */}
             <Modal
@@ -973,6 +997,14 @@ function MinesGame() {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    <div className="dashboard-section" style={{ marginTop: '20px' }}>
+                        <GameBottomHistory
+                            gameKey="mines"
+                            gameTitle="Mines"
+                            localRounds={winRecords}
+                        />
                     </div>
                 </div>
             </Modal>

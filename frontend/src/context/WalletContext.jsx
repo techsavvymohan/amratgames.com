@@ -368,7 +368,7 @@ export function WalletProvider({ children }) {
     }, [user, authContext, token, setStoredBalance])
 
     // Server-Authoritative Mines Lifecycle Methods
-    const startMinesRound = useCallback(async ({ betAmount, minesCount }) => {
+    const startMinesRound = useCallback(async ({ betAmount, minesCount, clientSeed }) => {
         if (!user) {
             authContext?.openAuthModal?.('register')
             return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
@@ -382,6 +382,7 @@ export function WalletProvider({ children }) {
                 body: JSON.stringify({
                     betAmount,
                     minesCount,
+                    clientSeed,
                     currency: currencyRef.current
                 })
             })

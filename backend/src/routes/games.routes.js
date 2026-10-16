@@ -145,16 +145,17 @@ router.post('/provably-fair/verify', (req, res) => {
         } else if (gameType === 'mines') {
             const tiles = Array.from({ length: 25 }, (_, i) => i)
             for (let i = 24; i > 0; i--) {
-                const byteOffset = (24 - i) % 32
-                const randByte = parseInt(hash.slice(byteOffset * 2, byteOffset * 2 + 2), 16)
-                const j = randByte % (i + 1);
-                [tiles[i], tiles[j]] = [tiles[j], tiles[i]]
+                const offset = ((24 - i) * 4) % 60
+                const intVal = parseInt(hash.slice(offset, offset + 4), 16)
+                const j = Math.floor((intVal / 0x10000) * (i + 1))
+                const swapIdx = Math.min(j, i)
+                ;[tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]]
             }
             const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
             result = {
                 game: 'mines',
                 minesCount: count,
-                mineIndices: tiles.slice(0, count)
+                mineIndices: tiles.slice(0, count).sort((a, b) => a - b)
             }
         } else if (gameType === 'coin-toss' || gameType === 'cointoss' || gameType === 'coinflip') {
             const outcome = floatVal < 0.50 ? 'heads' : 'tails'
@@ -290,21 +291,9 @@ function evaluateGameRound({
         }
 
         case 'mines': {
-            const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
-            const numHits = Math.max(0, Math.min(parseInt(hits, 10) || 1, 25 - count))
-            const verifiedMult = gameEngine.calculateMinesMultiplier(count, numHits)
-            const clientWon = Boolean(reqBody.won)
-            const safeWon = clientWon && numHits > 0
-            const safeMult = safeWon ? verifiedMult : 0
-            const payout = safeWon ? parseFloat((parsedAmount * safeMult).toFixed(2)) : 0
-
-            evaluation = {
-                won: safeWon,
-                multiplier: safeMult,
-                payout,
-                hash: crypto.randomBytes(16).toString('hex')
-            }
-            break
+            const err = new Error('Mines bets must be placed via the server-authoritative session routes at /api/games/mines/*')
+            err.status = 400
+            throw err
         }
 
         case 'coin-toss':
