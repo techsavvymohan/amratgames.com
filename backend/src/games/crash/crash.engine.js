@@ -130,7 +130,7 @@ export class CrashEngine {
 
         this.activeCrashRounds.set(roundId, session)
 
-        // Return session data with outcome commitment
+        // Return session data with outcome commitment (crashPoint stripped by HTTP route)
         return {
             roundId,
             crashPoint,

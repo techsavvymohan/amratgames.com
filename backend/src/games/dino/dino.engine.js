@@ -184,21 +184,10 @@ export class DinoEngine {
         return null
     }
 
-    static evaluate(params) {
-        const diff = params.difficulty || 'medium'
-        const cleared = parseInt(params.obstaclesCleared || 0, 10)
-        const diffChances = { easy: 0.85, medium: 0.65, hard: 0.45 }
-        const chance = diffChances[diff] || 0.65
-        const maxAllowedMult = cleared > 0 ? parseFloat((0.99 / Math.pow(chance, cleared)).toFixed(2)) : 1.00
-        const clientMult = parseFloat(params.multiplier || 1.00)
-        const won = Boolean(params.won) && cleared > 0 && clientMult <= (maxAllowedMult + 0.1)
-
-        return {
-            game: 'dino',
-            won,
-            multiplier: won ? clientMult : 0,
-            payout: won ? parseFloat(((params.betAmount || 0) * clientMult).toFixed(2)) : 0
-        }
+    static evaluate() {
+        const err = new Error('Dino bets must be placed via the server-authoritative session routes at /api/games/dino/*')
+        err.status = 400
+        throw err
     }
 }
 

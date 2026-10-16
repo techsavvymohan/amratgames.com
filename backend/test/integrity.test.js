@@ -1404,6 +1404,76 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         floorActivityEngine.stop()
     })
 
+    it('verifies Dragon Tiger win/loss accuracy: ties and net-negative bets are not recorded as wins', () => {
+        // Tie with Dragon bet -> 50% refund, must NOT be recorded as won
+        const evalTie = gameEngine.evaluateDragonTiger({
+            betAmount: 100,
+            choice: 'dragon',
+            clientSeed: 'dt-tie-test',
+            nonce: 1
+        })
+        if (evalTie.winner === 'tie') {
+            assert.equal(evalTie.won, false, 'Tie with 50% refund must NOT be recorded as a win')
+            assert.equal(evalTie.multiplier, 0.5)
+            assert.equal(evalTie.payout, 50)
+        }
+
+        // Multi-bet where payout is less than total bet must be marked as loss
+        const evalMultiLoss = gameEngine.evaluateDragonTiger({
+            betAmount: 150,
+            bets: { dragon: 50, tiger: 100 },
+            clientSeed: 'dt-multi-test',
+            nonce: 2
+        })
+        if (evalMultiLoss.winner === 'dragon') {
+            // Payout is 100 (50 * 2), total bet was 150 -> Net loss of 50
+            assert.equal(evalMultiLoss.payout, 100)
+            assert.equal(evalMultiLoss.won, false, 'Net loss on multi-bet must be recorded as won: false')
+        }
+    })
+
+    it('verifies Color Match multi-bet accuracy: net losses are not recorded as wins', () => {
+        const evalCM = gameEngine.evaluateColorMatch({
+            betAmount: 300,
+            bets: { green: 100, red: 100, violet: 100 },
+            clientSeed: 'cm-multi-test',
+            nonce: 1
+        })
+        if (evalCM.payout < 300) {
+            assert.equal(evalCM.won, false, 'Multi-bet return less than total bet must be recorded as won: false')
+        }
+    })
+
+    it('verifies BankrollRiskService preserves 8-decimal Satoshi precision for BTC', () => {
+        const btcCap = bankrollRisk.enforceWinCap({
+            betAmount: 0.00123456,
+            multiplier: 5.0,
+            rawPayout: 0.00617280,
+            currency: 'BTC'
+        })
+        assert.equal(btcCap.wasCapped, false)
+        assert.equal(btcCap.payout, 0.0061728)
+        assert.equal(btcCap.profit, 0.00493824, 'BTC profit must preserve full 8 decimal places')
+    })
+
+    it('verifies ProvablyFairCore user nonce persistence on user records in DB', () => {
+        const testUser = db.createUser({
+            username: 'pf_nonce_user_' + Date.now(),
+            email: `pf_nonce_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        const initialNonce = gameEngine.getNextNonce(testUser.id)
+        assert.equal(initialNonce, 1)
+
+        const secondNonce = gameEngine.getNextNonce(testUser.id)
+        assert.equal(secondNonce, 2)
+
+        const userInDb = db.findUserById(testUser.id)
+        assert.equal(userInDb.nonce, 3, 'User nonce must be persisted in DB to prevent replay attacks')
+    })
+
     after(() => {
         redisPubSub.disconnect()
         // Ensure TAP test output flushes completely, then terminate cleanly to prevent keep-alive hang

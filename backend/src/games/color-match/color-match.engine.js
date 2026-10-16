@@ -42,7 +42,7 @@ export class ColorMatchEngine {
                 payout += (parseFloat(bets[bigSmall]) || 0) * 2.0
             }
             payout = parseFloat(payout.toFixed(2))
-            won = payout > 0
+            won = payout >= totalBet
         } else {
             const selectedChoice = String(choice).toLowerCase()
             let multiplier = 0

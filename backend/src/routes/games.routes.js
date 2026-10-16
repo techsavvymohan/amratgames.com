@@ -69,13 +69,28 @@ router.post('/provably-fair/verify', (req, res) => {
         const cleanNonce = parseInt(nonce, 10) || 1
         const serverSeedSha256 = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
-        const message = `${cleanClientSeed}:${cleanNonce}`
+        let isMultiplayerCrash = (gameType === 'crash-multiplayer' || gameType === 'crash_room') || (Boolean(req.body.roundId) && String(req.body.roundId).startsWith('room_'))
+        let message = `${cleanClientSeed}:${cleanNonce}`
+        if (isMultiplayerCrash) {
+            const roundId = req.body.roundId || 'room_default'
+            message = `${roundId}:${cleanClientSeed}`
+        } else if (gameType === 'dino' && req.body.stepNonce) {
+            message = `${cleanClientSeed}:dino_jump_${parseInt(req.body.stepNonce, 10) || 1}:${cleanNonce}`
+        }
+
         const hmac = crypto.createHmac('sha256', serverSeed)
         hmac.update(message)
         const hash = hmac.digest('hex')
 
-        const intVal = parseInt(hash.slice(0, 8), 16)
-        const floatVal = intVal / 0x100000000
+        let floatVal = 0
+        if (isMultiplayerCrash) {
+            const hexSub = hash.slice(0, 13)
+            const intVal = parseInt(hexSub, 16)
+            floatVal = intVal / Math.pow(2, 52)
+        } else {
+            const intVal = parseInt(hash.slice(0, 8), 16)
+            floatVal = intVal / 0x100000000
+        }
 
         let result = {}
         const gameType = String(game).toLowerCase()
@@ -87,13 +102,13 @@ router.post('/provably-fair/verify', (req, res) => {
             }
             roll = Math.max(1.00, Math.min(roll, 1000000.0))
             result = { game: 'limbo', roll, floatVal }
-        } else if (gameType === 'crash') {
+        } else if (gameType === 'crash' || isMultiplayerCrash) {
             let crashPoint = 1.00
             if (floatVal >= 0.01) {
                 crashPoint = Math.floor((99 / (1 - floatVal))) / 100
             }
             crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
-            result = { game: 'crash', crashPoint, floatVal }
+            result = { game: isMultiplayerCrash ? 'crash-multiplayer' : 'crash', crashPoint, floatVal }
         } else if (gameType === 'plinko') {
             const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))
             const riskLevel = ['low', 'medium', 'high'].includes(risk) ? risk : 'medium'
@@ -166,13 +181,19 @@ router.post('/provably-fair/verify', (req, res) => {
                 multiplier: 1.98
             }
         } else if (gameType === 'dino') {
-            const diffKey = ['easy', 'medium', 'hard', 'expert'].includes(req.body.difficulty) ? req.body.difficulty : 'medium'
-            const threshold = diffKey === 'easy' ? 0.96 : diffKey === 'medium' ? 0.92 : diffKey === 'hard' ? 0.85 : 0.70
+            const diffKey = ['easy', 'medium', 'hard'].includes(req.body.difficulty) ? req.body.difficulty : 'medium'
+            const DINO_SURVIVAL = { easy: 0.85, medium: 0.65, hard: 0.45 }
+            const survivalChance = DINO_SURVIVAL[diffKey] || 0.65
+            const survived = floatVal < survivalChance
+            const cleared = parseInt(req.body.obstaclesCleared, 10) || (survived ? 1 : 0)
+            const pureMultiplier = cleared > 0 ? parseFloat((0.99 / Math.pow(survivalChance, cleared)).toFixed(2)) : 1.00
             result = {
                 game: 'dino',
                 difficulty: diffKey,
-                survived: floatVal < threshold,
-                floatVal
+                survivalChance,
+                survived,
+                floatVal,
+                multiplier: survived ? pureMultiplier : 0
             }
         } else {
             result = { game: gameType, floatVal, hash }
@@ -266,28 +287,9 @@ function evaluateGameRound({
         }
 
         case 'dino': {
-            const clientWon = Boolean(reqBody.won)
-            const diff = reqBody.difficulty || 'medium'
-            const cleared = parseInt(reqBody.obstaclesCleared || 0, 10)
-            const diffChances = { easy: 0.85, medium: 0.65, hard: 0.45 }
-            const chance = diffChances[diff] || 0.65
-            const maxAllowedMult = cleared > 0 ? parseFloat((0.99 / Math.pow(chance, cleared)).toFixed(2)) : 1.00
-            const clientMult = parseFloat(reqBody.multiplier || claimedMultiplier || 1.00)
-
-            const won = clientWon && cleared > 0 && clientMult <= (maxAllowedMult + 0.1)
-            const multiplier = won ? clientMult : 0
-            const payout = won ? parseFloat((parsedAmount * multiplier).toFixed(2)) : 0
-
-            evaluation = {
-                game: 'dino',
-                won,
-                multiplier,
-                payout,
-                obstaclesCleared: cleared,
-                difficulty: diff,
-                hash: crypto.randomBytes(16).toString('hex')
-            }
-            break
+            const err = new Error('Dino bets must be placed via the server-authoritative session routes at /api/games/dino/*')
+            err.status = 400
+            throw err
         }
 
         case 'mines': {

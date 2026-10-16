@@ -36,7 +36,7 @@ export class DragonTigerEngine {
                 payout = (bTie * 9.0) + (bDragon * 0.5) + (bTiger * 0.5)
             }
             payout = parseFloat(payout.toFixed(2))
-            won = payout > 0
+            won = payout >= totalBet
         } else {
             const selectedChoice = String(choice).toLowerCase()
             let multiplier = 0
@@ -56,7 +56,7 @@ export class DragonTigerEngine {
                 multiplier = 0
             }
             payout = parseFloat((totalBet * multiplier).toFixed(2))
-            won = payout > 0
+            // won is preserved from the explicit branch above (false on tie half-refund or loss)
         }
 
         const multiplier = totalBet > 0 ? parseFloat((payout / totalBet).toFixed(2)) : 0

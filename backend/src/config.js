@@ -48,7 +48,9 @@ export const CONFIG = {
     ADMIN_DEFAULT_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
     ADMIN_DEFAULT_NAME: process.env.ADMIN_NAME || 'Amrat Royal Admin',
 
-    // 4. Database & Storage Paths
+    // 4. Database & Storage Driver Settings
+    DB_DRIVER: process.env.DB_DRIVER || (process.env.DATABASE_URL ? 'postgres' : 'json'),
+    DATABASE_URL: process.env.DATABASE_URL || '',
     DATA_DIR: process.env.DATA_DIR
         ? (path.isAbsolute(process.env.DATA_DIR) ? process.env.DATA_DIR : path.resolve(backendDir, process.env.DATA_DIR))
         : path.resolve(backendDir, './data'),

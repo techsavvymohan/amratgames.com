@@ -171,7 +171,7 @@ export class DurableOutboxService {
                 const usersToSync = Array.from(this.pendingUsers.values()).slice(0, 50)
                 const userPayloads = usersToSync.map(u => ({
                     id: u.id,
-                    username: u.username,
+                    username: u.username || (u.id ? 'player_' + u.id.slice(-6) : 'Player'),
                     email: u.email || null,
                     phone: u.phone || null,
                     password_hash: supabaseSync._resolvePasswordHash(u),
@@ -225,6 +225,10 @@ export class DurableOutboxService {
                     this._stats.lastError = `Users sync error: ${error.message}`
                     // Fallback: sync individually to isolate poisoned items
                     for (const u of usersToSync) {
+                        if (!u.username && !u.email) {
+                            this.pendingUsers.delete(u.id)
+                            continue
+                        }
                         const sRes = await supabaseSync.syncUser(u)
                         if (sRes) this.pendingUsers.delete(u.id)
                     }

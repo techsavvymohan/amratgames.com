@@ -113,19 +113,30 @@ export class BankrollRiskService {
     }
 
     /**
+     * Get decimal precision for a currency
+     */
+    getCurrencyDecimals(currency = 'INR') {
+        const curr = String(currency).toUpperCase()
+        if (curr === 'BTC') return 8
+        if (curr === 'USDT') return 4
+        return 2
+    }
+
+    /**
      * Enforce max win cap on game payouts
      * Guarantees platform can NEVER owe more than the bankroll ceiling on a single round
      */
     enforceWinCap({ betAmount, multiplier, rawPayout, currency = 'INR' }) {
         const curr = String(currency).toUpperCase()
         const maxProfitCap = this.getMaxProfitCap(curr)
+        const decimals = this.getCurrencyDecimals(curr)
         const stake = Math.max(0, parseFloat(betAmount) || 0)
         const payout = Math.max(0, parseFloat(rawPayout) || 0)
 
         const rawProfit = Math.max(0, payout - stake)
 
         if (rawProfit > maxProfitCap) {
-            const cappedPayout = parseFloat((stake + maxProfitCap).toFixed(2))
+            const cappedPayout = parseFloat((stake + maxProfitCap).toFixed(decimals))
             const effectiveMultiplier = parseFloat((cappedPayout / (stake || 1)).toFixed(2))
 
             return {
@@ -140,7 +151,7 @@ export class BankrollRiskService {
 
         return {
             payout,
-            profit: parseFloat(rawProfit.toFixed(2)),
+            profit: parseFloat(rawProfit.toFixed(decimals)),
             multiplier: parseFloat((parseFloat(multiplier) || (payout / (stake || 1))).toFixed(2)),
             wasCapped: false,
             maxProfitCap,

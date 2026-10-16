@@ -14,8 +14,30 @@ class ProvablyFairCore {
     }
 
     getNextNonce(userId = 'guest') {
-        const current = this.userNonces.get(userId) || 1
+        let current = this.userNonces.get(userId)
+        if (!current && userId && userId !== 'guest' && db.data?.users) {
+            const user = db.findUserById(userId)
+            if (user && typeof user.nonce === 'number') {
+                current = user.nonce
+            }
+        }
+        if (!current || typeof current !== 'number') current = 1
+
         this.userNonces.set(userId, current + 1)
+
+        // Persist to user record in DB if real player
+        if (userId && userId !== 'guest' && db.data?.users) {
+            try {
+                const user = db.findUserById(userId)
+                if (user) {
+                    user.nonce = current + 1
+                    if (typeof db.persistDebounced === 'function') {
+                        db.persistDebounced()
+                    }
+                }
+            } catch {}
+        }
+
         return current
     }
 
