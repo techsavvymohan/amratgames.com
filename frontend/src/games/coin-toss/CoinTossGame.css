@@ -1224,6 +1224,16 @@
     border-radius: 20px;
 }
 
+.badge-win-pill {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
 .controls-toggles {
     display: flex;
     align-items: center;
@@ -1265,7 +1275,7 @@
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch !important;
-        padding: 4px 8px calc(var(--mobile-nav-space, 68px) + 20px) !important;
+        padding: 4px 8px calc(var(--mobile-nav-space, 68px) + 12px) !important;
         gap: 6px !important;
         display: flex !important;
         flex-direction: column !important;
@@ -1394,31 +1404,50 @@
     }
 
     .coin-controls-card {
-        padding: 8px 10px !important;
+        padding: 8px 12px !important;
         border-radius: 14px !important;
         gap: 6px !important;
     }
 
     .coin-controls-top-row {
-        padding: 3px 6px !important;
+        padding: 3px 8px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .badge-win-pill {
+        font-size: 0.72rem !important;
+        padding: 2px 8px !important;
+    }
+
+    .control-group {
+        gap: 4px !important;
     }
 
     .control-title-row {
-        margin-bottom: 3px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .control-title {
+        font-size: 0.72rem !important;
+    }
+
+    .balance-hint {
+        font-size: 0.7rem !important;
     }
 
     .side-selector-grid {
         grid-template-columns: 1fr 1fr !important;
-        gap: 6px !important;
+        gap: 8px !important;
     }
 
     .side-card {
-        padding: 6px 8px !important;
+        padding: 6px 10px !important;
+        min-height: 40px !important;
     }
 
     .side-asset-avatar {
-        width: 32px !important;
-        height: 32px !important;
+        width: 30px !important;
+        height: 30px !important;
     }
 
     .side-card-name {
@@ -1427,38 +1456,27 @@
     }
 
     .bet-input-box {
+        padding: 2px 8px !important;
+        height: 38px !important;
+    }
+
+    .bet-input-field {
+        font-size: 1rem !important;
+        padding: 4px 6px !important;
+    }
+
+    .math-btn {
         padding: 4px 8px !important;
-    }
-
-    .preset-chips-row {
-        gap: 4px !important;
-        margin-top: 3px !important;
-    }
-
-    .preset-chip {
-        padding: 3px 6px !important;
         font-size: 0.74rem !important;
-    }
-
-    .payout-summary-card {
-        padding: 5px 10px !important;
-        margin-top: 2px !important;
-    }
-
-    .summary-lbl {
-        font-size: 0.65rem !important;
-    }
-
-    .summary-val {
-        font-size: 0.78rem !important;
     }
 
     .flip-submit-btn {
         height: 42px !important;
+        min-height: 42px !important;
         font-size: 0.92rem !important;
         font-weight: 900 !important;
         border-radius: 10px !important;
-        margin-top: 2px !important;
+        margin-top: 3px !important;
     }
 
     .result-splash-badge {

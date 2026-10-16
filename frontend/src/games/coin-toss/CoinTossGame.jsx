@@ -517,6 +517,11 @@ export default function CoinTossGame() {
                     <div className="coin-controls-top-row">
                         <div className="controls-badges">
                             <span className="badge-mult-pill">1.98X PAYOUT</span>
+                            {betAmount > 0 && (
+                                <span className="badge-win-pill">
+                                    Win: {currencySymbol}{potentialPayout.toLocaleString('en-IN')}
+                                </span>
+                            )}
                         </div>
                         <div className="controls-toggles">
                             <button
@@ -634,42 +639,6 @@ export default function CoinTossGame() {
                                     MAX
                                 </button>
                             </div>
-                        </div>
-
-                        {/* Quick Chip Preset Pills */}
-                        <div className="preset-chips-row">
-                            {PRESET_AMOUNTS.map((amt) => (
-                                <button
-                                    key={amt}
-                                    type="button"
-                                    className={`preset-chip ${betAmount === amt ? 'active' : ''}`}
-                                    onClick={() => setExactBet(amt)}
-                                >
-                                    +{currencySymbol}{amt}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Return & Profit Preview with Multiplier in Bottom */}
-                    <div className="payout-summary-card">
-                        <div className="payout-summary-item">
-                            <span className="summary-lbl">Multiplier</span>
-                            <span className="summary-val mult-val">1.98×</span>
-                        </div>
-                        <div className="payout-summary-divider" />
-                        <div className="payout-summary-item">
-                            <span className="summary-lbl">Potential Win</span>
-                            <span className="summary-val win-val">
-                                {currencySymbol}{potentialPayout.toLocaleString('en-IN')}
-                            </span>
-                        </div>
-                        <div className="payout-summary-divider" />
-                        <div className="payout-summary-item">
-                            <span className="summary-lbl">Net Profit</span>
-                            <span className="summary-val profit-val">
-                                +{currencySymbol}{potentialProfit.toLocaleString('en-IN')}
-                            </span>
                         </div>
                     </div>
 
