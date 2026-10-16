@@ -10,7 +10,9 @@ export default function UserManagementTab({
     onRejectKYC,
     onRefresh
 }) {
-    const filteredUsers = users.filter((u) => {
+    const realUsers = users.filter((u) => !u.isFakeOrDemo?.())
+
+    const filteredUsers = realUsers.filter((u) => {
         const matchesSearch = u.matchesSearch(searchQuery)
         if (!matchesSearch) return false
 
@@ -26,7 +28,7 @@ export default function UserManagementTab({
                 <div>
                     <h2>
                         <span>👥</span>
-                        <span>Players ({users.length})</span>
+                        <span>Players ({realUsers.length})</span>
                     </h2>
                     <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0' }}>
                         Manage accounts, balances, and access.

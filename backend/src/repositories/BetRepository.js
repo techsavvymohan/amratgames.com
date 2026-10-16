@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { BaseRepository } from './BaseRepository.js'
 import { CONFIG } from '../config.js'
 import { bankrollRisk } from '../services/BankrollRiskService.js'
+import { isFakeOrDemoUser } from '../admin-panel/utils/userFilter.js'
 
 /**
  * 🎲 BetRepository
@@ -143,8 +144,9 @@ export class BetRepository extends BaseRepository {
     }
 
     getPlatformStats() {
-        const totalUsers = this.data.users.length
-        const activeUsers = this.data.users.filter(u => !u.isBanned).length
+        const realUsers = (this.data.users || []).filter(u => !isFakeOrDemoUser(u))
+        const totalUsers = realUsers.length
+        const activeUsers = realUsers.filter(u => !u.isBanned).length
         const totalBetsCount = this.data.bets.length
 
         let totalWageredINR = 0

@@ -14,6 +14,8 @@ export class UserEntity {
         this.balances = userData.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
         this.totalDeposited = userData.totalDeposited || 0
         this.isBanned = Boolean(userData.isBanned)
+        this.isBot = Boolean(userData.isBot)
+        this.isMarketMaker = Boolean(userData.isMarketMaker)
         this.kycStatus = userData.kycStatus || 'unverified'
         this.firstName = userData.firstName || ''
         this.lastName = userData.lastName || ''
@@ -77,6 +79,8 @@ export class UserEntity {
             balances: this.balances,
             totalDeposited: this.totalDeposited,
             isBanned: this.isBanned,
+            isBot: this.isBot,
+            isMarketMaker: this.isMarketMaker,
             kycStatus: this.kycStatus,
             kycSubmittedAt: this.kycSubmittedAt,
             kycDocumentType: this.kycDocumentType,

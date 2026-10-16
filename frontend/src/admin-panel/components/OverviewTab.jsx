@@ -1,12 +1,15 @@
-export default function OverviewTab({ stats, treasury, users, liveBets, withdrawals = [], onSwitchTab, onRotateSeed }) {
-    const totalWagered = stats?.totalWageredApproxINR || 685000
-    const netProfit = stats?.netHouseProfitINR || 24800
-    const totalUsersCount = stats?.totalUsers || users.length || 8
-    const activeUsersCount = stats?.activeUsers || 7
+export default function OverviewTab({ stats, treasury, users = [], liveBets = [], withdrawals = [], onSwitchTab, onRotateSeed }) {
+    const realUsers = users.filter(u => !u.isFakeOrDemo?.())
+    const totalWagered = stats?.totalWageredApproxINR ?? 0
+    const netProfit = stats?.netHouseProfitINR ?? 0
+    const totalUsersCount = stats?.totalUsers ?? realUsers.length
+    const activeUsersCount = stats?.activeUsers ?? realUsers.filter(u => !u.isSuspended()).length
 
     const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending')
     const pendingCount = stats?.withdrawalStats?.pendingCount ?? pendingWithdrawals.length
     const pendingAmount = stats?.withdrawalStats?.pendingAmount ?? pendingWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0)
+
+    const genuineBets = (liveBets || []).filter(b => !b.userId?.startsWith('usr_sim_') && !b.userId?.startsWith('usr_bot_'))
 
     return (
         <div className="admin-tab-content">
@@ -116,12 +119,12 @@ export default function OverviewTab({ stats, treasury, users, liveBets, withdraw
                     </div>
 
                     <div className="live-bets-stream">
-                        {liveBets.length === 0 ? (
+                        {genuineBets.length === 0 ? (
                             <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
                                 <div>No recent activity</div>
                             </div>
                         ) : (
-                            liveBets.map((b) => (
+                            genuineBets.map((b) => (
                                 <div key={b.id || Math.random()} className={`bet-stream-item ${b.won ? 'won' : 'lost'}`}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <span style={{ fontWeight: 700, color: '#f8fafc' }}>{b.username || 'Player'}</span>

@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { BaseRepository } from './BaseRepository.js'
 import { CONFIG } from '../config.js'
 import { broadcastEvent } from '../websocket.js'
+import { isFakeOrDemoUser } from '../admin-panel/utils/userFilter.js'
 
 /**
  * 💳 WalletRepository
@@ -139,6 +140,10 @@ export class WalletRepository extends BaseRepository {
             )
         }
 
+        if (!filters.includeBots) {
+            list = list.filter(w => !isFakeOrDemoUser({ id: w.userId, username: w.username, email: w.userEmail }))
+        }
+
         return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     }
 
@@ -228,7 +233,7 @@ export class WalletRepository extends BaseRepository {
 
     getWithdrawalStats() {
         if (!this.data.withdrawals) this.data.withdrawals = []
-        const list = this.data.withdrawals
+        const list = this.data.withdrawals.filter(w => !isFakeOrDemoUser({ id: w.userId, username: w.username, email: w.userEmail }))
         const pending = list.filter(w => w.status === 'pending')
         const approved = list.filter(w => w.status === 'approved')
         const rejected = list.filter(w => w.status === 'rejected')
@@ -342,6 +347,10 @@ export class WalletRepository extends BaseRepository {
                 (d.userPhone && d.userPhone.includes(s)) ||
                 (d.userEmail && d.userEmail.toLowerCase().includes(s))
             )
+        }
+
+        if (!filters.includeBots) {
+            list = list.filter(d => !isFakeOrDemoUser({ id: d.userId, username: d.username, email: d.userEmail }))
         }
 
         return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))

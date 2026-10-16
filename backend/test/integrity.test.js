@@ -20,6 +20,7 @@ import { automatedSettlement } from '../src/services/AutomatedSettlementService.
 import { pvpService } from '../src/services/PvPService.js'
 import { houseVaultService } from '../src/services/HouseVaultService.js'
 import { floorActivityEngine, BOT_PERSONAS } from '../src/services/FloorActivityEngine.js'
+import { isFakeOrDemoUser } from '../src/admin-panel/utils/userFilter.js'
 
 describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     it('verifies default configuration parameters and types', () => {
@@ -1476,6 +1477,16 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
     after(() => {
         redisPubSub.disconnect()
+        // Purge test users and simulated artifacts created during test run
+        if (db && db.data) {
+            db.data.users = (db.data.users || []).filter(u => !isFakeOrDemoUser(u))
+            const realIds = new Set(db.data.users.map(u => u.id))
+            db.data.transactions = (db.data.transactions || []).filter(t => realIds.has(t.userId))
+            db.data.deposits = (db.data.deposits || []).filter(d => realIds.has(d.userId))
+            db.data.withdrawals = (db.data.withdrawals || []).filter(w => realIds.has(w.userId))
+            db.data.bets = (db.data.bets || []).filter(b => realIds.has(b.userId))
+            try { db.flushSync() } catch {}
+        }
         // Ensure TAP test output flushes completely, then terminate cleanly to prevent keep-alive hang
         setTimeout(() => {
             process.exit(0)

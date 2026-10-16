@@ -1,5 +1,6 @@
 import { db } from '../../db/db.js'
 import { UserEntity } from '../models/UserEntity.js'
+import { isFakeOrDemoUser } from '../utils/userFilter.js'
 
 /**
  * AdminUserManager — OOP Service managing user querying, balance adjustments & security status
@@ -10,11 +11,17 @@ export class AdminUserManager {
     }
 
     /**
-     * List users with optional search and filters
+     * List users with optional search and filters.
+     * Excludes simulated bots, QA testers, and demo players by default.
      */
     listUsers(filters = {}) {
         const rawUsers = this.db.getAllUsers(filters)
-        return rawUsers.map(u => new UserEntity(u).toSafeJSON())
+        return rawUsers
+            .filter(u => {
+                if (filters.includeBots === true) return true
+                return !isFakeOrDemoUser(u)
+            })
+            .map(u => new UserEntity(u).toSafeJSON())
     }
 
     /**

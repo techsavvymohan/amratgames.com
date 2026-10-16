@@ -90,17 +90,19 @@ export default function AdminPanel() {
                 if (statsData.settings) setSettings(statsData.settings)
             }
 
-            // 2. Users
+            // 2. Users (Filter real players only)
             const userModels = await apiClient.getUsers().catch(() => [])
-            setUsers(userModels)
+            setUsers((userModels || []).filter(u => !u.isFakeOrDemo?.()))
 
             // 3. Airdrops
             const airdropModels = await apiClient.getAirdropHistory().catch(() => [])
             setAirdrops(airdropModels)
 
-            // 4. Recent Bets
+            // 4. Recent Bets (Filter out simulated/bot bets)
             const bets = await apiClient.getRecentBets(25).catch(() => [])
-            if (bets && bets.length > 0) setLiveBets(bets)
+            if (bets && bets.length > 0) {
+                setLiveBets(bets.filter(b => !b.userId?.startsWith('usr_sim_') && !b.userId?.startsWith('usr_bot_')))
+            }
 
             // 5. Withdrawals
             const withdrawalModels = await apiClient.getWithdrawals().catch(() => [])
@@ -128,7 +130,9 @@ export default function AdminPanel() {
 
         const unsubs = [
             subscribe('NEW_BET', (bet) => {
-                if (bet) setLiveBets((prev) => [bet, ...prev].slice(0, 30))
+                if (bet && !bet.userId?.startsWith('usr_sim_') && !bet.userId?.startsWith('usr_bot_')) {
+                    setLiveBets((prev) => [bet, ...prev].slice(0, 30))
+                }
             }),
             subscribe('NEW_WITHDRAWAL_REQUEST', (payload) => {
                 if (payload) triggerToast(`🔔 New Withdrawal: ₹${payload.amount} requested by ${payload.username}!`)

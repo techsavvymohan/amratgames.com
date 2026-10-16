@@ -56,6 +56,10 @@ echo -e "\n${CYAN}[5/7] Building high-performance Vite frontend bundle...${NC}"
 pnpm --filter ./frontend build
 echo -e "${GREEN}✓ Frontend built successfully.${NC}"
 
+# Sanitize Database (Purge any bot personas or demo test accounts)
+echo -e "\n${CYAN}[Sanitizing] Purging any bot or demo players from production database...${NC}"
+node scripts/sanitize-db.mjs 2>/dev/null || true
+
 # 6. Graceful PM2 Backend Reload
 echo -e "\n${CYAN}[6/7] Reloading backend cluster via PM2...${NC}"
 if pm2 describe amratgames-backend > /dev/null 2>&1; then

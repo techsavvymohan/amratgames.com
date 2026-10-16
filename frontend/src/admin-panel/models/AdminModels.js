@@ -7,14 +7,47 @@ export class UserModel {
         this.id = data.id || ''
         this.username = data.username || 'Anonymous'
         this.email = data.email || ''
+        this.phone = data.phone || ''
         this.role = data.role || 'player'
         this.status = data.status || 'active'
         this.balances = data.balances || { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
         this.isBanned = Boolean(data.isBanned)
+        this.isBot = Boolean(data.isBot)
+        this.isMarketMaker = Boolean(data.isMarketMaker)
         this.kycStatus = data.kycStatus || 'unverified'
+        this.kycDocumentType = data.kycDocumentType || ''
+        this.kycDocumentNumber = data.kycDocumentNumber || ''
         this.createdAt = data.createdAt || new Date().toISOString()
         this.lastLoginAt = data.lastLoginAt || new Date().toISOString()
         this.avatar = data.avatar || '👤'
+    }
+
+    isFakeOrDemo() {
+        if (this.isBot || this.isMarketMaker) return true
+        const id = (this.id || '').toLowerCase()
+        if (id.startsWith('usr_bot_') || id.startsWith('usr_demo_') || id.startsWith('sim_') || id.startsWith('usr_play_')) return true
+        const name = (this.username || '').toLowerCase()
+        if (
+            name.includes('bot') ||
+            name.includes('tester') ||
+            name.startsWith('hero_') ||
+            name.startsWith('test_') ||
+            name.includes('concurrency') ||
+            name.includes('pipe_user') ||
+            name.includes('audit_') ||
+            name === 'player_0101' ||
+            name.startsWith('sharma_vip_')
+        ) return true
+        const email = (this.email || '').toLowerCase()
+        if (
+            email.endsWith('@amratgames.internal') ||
+            email.endsWith('@test.com') ||
+            email.endsWith('@audit-test.com') ||
+            email.includes('bot@') ||
+            email.includes('_tester') ||
+            email.includes('trashmail.com')
+        ) return true
+        return false
     }
 
     isAdmin() {
