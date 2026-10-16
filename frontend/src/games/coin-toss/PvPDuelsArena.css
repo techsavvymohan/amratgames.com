@@ -462,9 +462,221 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 10px;
+    padding: 30px 10px;
     color: #64748b;
     font-size: 0.85rem;
     text-align: center;
     gap: 8px;
+}
+
+.pvp-create-shortcut-btn {
+    background: linear-gradient(135deg, #f5af19, #e65c00);
+    border: none;
+    color: #0c111a;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-top: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 175, 25, 0.3);
+}
+
+.badge-rake {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+
+.winner-highlight {
+    color: #34d399;
+    font-weight: 900;
+}
+
+/* Mobile Segmented Navigation Switcher */
+.pvp-mobile-nav {
+    display: none;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 3px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pvp-mobile-nav-btn {
+    flex: 1;
+    padding: 7px 12px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: 800;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.pvp-mobile-nav-btn.active {
+    background: linear-gradient(135deg, rgba(245, 175, 25, 0.25), rgba(217, 119, 6, 0.15));
+    border: 1px solid rgba(245, 175, 25, 0.5);
+    color: #fbbf24;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Mobile Optimization Breakpoint */
+@media (max-width: 768px) {
+    .pvp-arena-container {
+        gap: 10px;
+    }
+
+    .pvp-hero-banner {
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 12px;
+    }
+
+    .pvp-hero-title-row {
+        gap: 6px;
+    }
+
+    .pvp-hero-title {
+        font-size: 0.95rem;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .pvp-hero-title span.badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+
+    .pvp-stats-row {
+        gap: 4px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pvp-stat-pill {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+        gap: 4px;
+        justify-content: center;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .pvp-mobile-nav {
+        display: flex;
+    }
+
+    .pvp-arena-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .pvp-card {
+        padding: 12px;
+        border-radius: 12px;
+        gap: 10px;
+    }
+
+    .pvp-card.mobile-hidden {
+        display: none !important;
+    }
+
+    .pvp-card.mobile-visible {
+        display: flex !important;
+    }
+
+    .pvp-side-selector {
+        gap: 8px;
+    }
+
+    .pvp-side-btn {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+
+    .pvp-side-icon {
+        font-size: 1.25rem;
+    }
+
+    .pvp-pot-preview {
+        padding: 8px 10px;
+        gap: 4px;
+        font-size: 0.74rem;
+    }
+
+    .pvp-create-btn {
+        padding: 10px;
+        font-size: 0.88rem;
+        min-height: 42px;
+        border-radius: 8px;
+    }
+
+    .pvp-challenge-card {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .pvp-challenge-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.95rem;
+    }
+
+    .pvp-challenge-username {
+        font-size: 0.8rem;
+    }
+
+    .pvp-challenge-choice-badge {
+        font-size: 0.68rem;
+    }
+
+    .pvp-challenge-stake {
+        font-size: 0.84rem;
+    }
+
+    .pvp-challenge-winner-pot {
+        font-size: 0.68rem;
+    }
+
+    .pvp-fight-btn {
+        padding: 6px 10px;
+        font-size: 0.76rem;
+    }
+
+    .pvp-cancel-btn {
+        padding: 5px 10px;
+        font-size: 0.72rem;
+    }
+
+    .pvp-battle-modal {
+        padding: 16px;
+        gap: 12px;
+        border-radius: 14px;
+    }
+
+    .pvp-combatant-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .pvp-battle-coin-stage {
+        width: 90px;
+        height: 90px;
+        margin: 6px 0;
+    }
+
+    .pvp-battle-coin {
+        width: 80px;
+        height: 80px;
+        font-size: 1.8rem;
+    }
 }

@@ -16,7 +16,6 @@ import { useWebSocket } from '../../context/WebSocketContext'
 import casinoAudio from '../../utils/casinoAudio'
 import './PvPDuelsArena.css'
 
-const STAKE_PRESETS = [10, 50, 100, 250, 500, 1000, 2500, 5000]
 const HEADS_ASSET = '/images/coin-toss/heads.jpg'
 const TAILS_ASSET = '/images/coin-toss/tails.jpg'
 
@@ -43,11 +42,27 @@ export default function PvPDuelsArena() {
         houseRakeRate: 0.03
     })
     const [activeTab, setActiveTab] = useState('open') // 'open' | 'history'
+    const [mobileTab, setMobileTab] = useState('open') // 'open' | 'create'
     const [loadingLobby, setLoadingLobby] = useState(false)
 
     // Battle Modal & Provably Fair reveal
     const [battleModal, setBattleModal] = useState(null) // { duel, spinning: bool, outcome: string, won: bool }
     const [showSeeds, setShowSeeds] = useState(false)
+
+    // Stake multipliers
+    const multiplyStake = (factor) => {
+        casinoAudio.playChip()
+        setStake((prev) => {
+            const base = prev || 10
+            return Math.max(10, Math.min(50000, Math.floor(base * factor)))
+        })
+    }
+
+    const setMaxStake = () => {
+        casinoAudio.playChip()
+        const maxAffordable = Math.min(50000, Math.floor(balance || 10))
+        setStake(Math.max(10, maxAffordable))
+    }
 
     // Potential pot math
     const parsedStake = parseFloat(stake) || 0
@@ -214,6 +229,7 @@ export default function PvPDuelsArena() {
                     '⚔️ Duel Challenge Live',
                     `₹${parsedStake.toLocaleString('en-IN')} on ${choice.toUpperCase()} broadcasted to players!`
                 )
+                setMobileTab('open')
                 if (refreshBalance) refreshBalance()
             }
         } catch (err) {
@@ -303,24 +319,22 @@ export default function PvPDuelsArena() {
             <div className="pvp-hero-banner">
                 <div className="pvp-hero-title-row">
                     <div className="pvp-hero-title">
-                        <span>⚔️ 1v1 PvP Coin Toss Arena</span>
+                        <span>⚔️ 1v1 PvP Arena</span>
                         <span className="badge">P2P Arcade</span>
-                        <span className="badge" style={{ background: '#3b82f6', color: '#fff' }}>
-                            3% Zero-Risk House Rake
-                        </span>
+                        <span className="badge badge-rake">3% Rake</span>
                     </div>
 
                     <div className="pvp-stats-row">
                         <div className="pvp-stat-pill">
-                            <span>Open Challenges:</span>
+                            <span>Open:</span>
                             <strong className="accent-gold">{openDuels.length}</strong>
                         </div>
                         <div className="pvp-stat-pill">
-                            <span>Duels Resolved:</span>
+                            <span>Resolved:</span>
                             <strong>{stats.totalDuelsResolved.toLocaleString('en-IN')}</strong>
                         </div>
                         <div className="pvp-stat-pill">
-                            <span>Total Volume:</span>
+                            <span>Volume:</span>
                             <strong className="accent-green">
                                 {currencySymbol}{Number(stats.totalPvpVolume || 0).toLocaleString('en-IN')}
                             </strong>
@@ -329,10 +343,34 @@ export default function PvPDuelsArena() {
                 </div>
             </div>
 
+            {/* Mobile Tab Switcher */}
+            <div className="pvp-mobile-nav">
+                <button
+                    type="button"
+                    className={`pvp-mobile-nav-btn ${mobileTab === 'open' ? 'active' : ''}`}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setMobileTab('open')
+                    }}
+                >
+                    <span>⚔️ Open Duels ({openDuels.length})</span>
+                </button>
+                <button
+                    type="button"
+                    className={`pvp-mobile-nav-btn ${mobileTab === 'create' ? 'active' : ''}`}
+                    onClick={() => {
+                        casinoAudio.playChip()
+                        setMobileTab('create')
+                    }}
+                >
+                    <span>➕ Create Duel</span>
+                </button>
+            </div>
+
             {/* Arena Main Grid */}
             <div className="pvp-arena-grid">
                 {/* Left Card: Create Duel Challenge */}
-                <div className="pvp-card">
+                <div className={`pvp-card pvp-create-card ${mobileTab === 'create' ? 'mobile-visible' : 'mobile-hidden'}`}>
                     <div className="pvp-card-header">
                         <div className="pvp-card-title">
                             <FireOutlined style={{ color: '#fbbf24' }} />
@@ -371,7 +409,7 @@ export default function PvPDuelsArena() {
                     </div>
 
                     {/* Stake Amount */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>Stake Amount</span>
                             <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
@@ -390,39 +428,41 @@ export default function PvPDuelsArena() {
                                 value={stake}
                                 onChange={(e) => setStake(Math.max(0, parseInt(e.target.value, 10) || 0))}
                             />
-                        </div>
-
-                        {/* Presets */}
-                        <div className="preset-chips-row">
-                            {STAKE_PRESETS.map((p) => (
+                            <div className="bet-math-buttons">
                                 <button
-                                    key={p}
                                     type="button"
-                                    className={`preset-chip ${stake === p ? 'active' : ''}`}
-                                    onClick={() => {
-                                        casinoAudio.playChip()
-                                        setStake(p)
-                                    }}
+                                    className="math-btn"
+                                    onClick={() => multiplyStake(0.5)}
                                 >
-                                    +{currencySymbol}{p}
+                                    ½
                                 </button>
-                            ))}
+                                <button
+                                    type="button"
+                                    className="math-btn"
+                                    onClick={() => multiplyStake(2)}
+                                >
+                                    2X
+                                </button>
+                                <button
+                                    type="button"
+                                    className="math-btn max-btn"
+                                    onClick={setMaxStake}
+                                >
+                                    MAX
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Pot Math Breakdown */}
                     <div className="pvp-pot-preview">
                         <div className="pvp-pot-row">
-                            <span>Total Duel Pot (2x Stake):</span>
-                            <span>{currencySymbol}{totalPot.toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="pvp-pot-row">
-                            <span>Platform House Rake (3%):</span>
-                            <span style={{ color: '#fbbf24' }}>-{currencySymbol}{rakeAmount.toLocaleString('en-IN')}</span>
+                            <span>Total Pot (2x Stake):</span>
+                            <strong>{currencySymbol}{totalPot.toLocaleString('en-IN')}</strong>
                         </div>
                         <div className="pvp-pot-row winner-row">
-                            <span>Winner Payout (97%):</span>
-                            <span>{currencySymbol}{potentialWinnerPayout.toLocaleString('en-IN')}</span>
+                            <span>Winner Takes (3% Rake):</span>
+                            <strong className="accent-green">{currencySymbol}{potentialWinnerPayout.toLocaleString('en-IN')}</strong>
                         </div>
                     </div>
 
@@ -444,7 +484,7 @@ export default function PvPDuelsArena() {
                 </div>
 
                 {/* Right Card: Live Open Challenges & Battled History */}
-                <div className="pvp-card">
+                <div className={`pvp-card pvp-lobby-card ${mobileTab === 'open' ? 'mobile-visible' : 'mobile-hidden'}`}>
                     <div className="pvp-card-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <button
@@ -504,6 +544,13 @@ export default function PvPDuelsArena() {
                                 <div className="pvp-empty-lobby">
                                     <TeamOutlined style={{ fontSize: '2.4rem', opacity: 0.3 }} />
                                     <span>No active challenges waiting. Create one now to start the battle!</span>
+                                    <button
+                                        type="button"
+                                        className="pvp-create-shortcut-btn"
+                                        onClick={() => setMobileTab('create')}
+                                    >
+                                        ➕ Create Challenge
+                                    </button>
                                 </div>
                             ) : (
                                 openDuels.map((duel) => {
