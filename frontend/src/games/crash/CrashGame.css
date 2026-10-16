@@ -1211,13 +1211,50 @@
         width: 130px !important;
     }
 
-    /* Remove unnecessary mobile clutter */
-    .crash-game .crash-mode-header,
-    .crash-game .game-controls,
-    .crash-game .bottom-controls-antd,
-    .crash-game .crash-mobile-tabs,
-    .crash-game .recent-plays {
-        display: none !important;
+    /* Mobile-optimized mode header */
+    .crash-game .crash-mode-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 4px 8px !important;
+        margin: 4px 8px !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        z-index: 10 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .crash-game .crash-mode-header .ant-radio-button-wrapper {
+        height: 28px !important;
+        line-height: 26px !important;
+        font-size: 11px !important;
+        padding: 0 8px !important;
+    }
+
+    .crash-game .bottom-controls-antd {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 6px 12px !important;
+        background: #0f131c !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        z-index: 10 !important;
+        flex-shrink: 0 !important;
+        width: 100% !important;
+    }
+
+    .crash-game .bottom-controls-antd .control-btn-antd {
+        height: 32px !important;
+        width: 32px !important;
+        padding: 0 !important;
+        font-size: 14px !important;
+    }
+
+    .crash-game .bottom-controls-antd .fairness-btn {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 8px !important;
     }
 
     .crash-game .crash-bet-sheet {
@@ -1484,43 +1521,57 @@
     }
 
     .crash-mobile-tabs {
-        display: none !important;
+        display: block !important;
+        width: 100% !important;
+        padding: 10px 12px 20px 12px !important;
+        background: #0b0e14 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        order: 3 !important;
+        flex-shrink: 0 !important;
     }
 
     .crash-mobile-tabs [role='tablist'] {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 10px;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
     }
 
     .crash-mobile-tabs [role='tab'] {
-        min-height: 44px;
-        border: 1px solid var(--border-default);
-        border-radius: 8px;
-        background: var(--surface-1);
-        color: var(--text-secondary);
+        min-height: 34px !important;
+        height: 34px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 6px !important;
+        background: #161f2e !important;
+        color: var(--text-secondary) !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
     }
 
     .crash-mobile-tabs [aria-selected='true'] {
-        border-color: var(--primary);
-        color: var(--text-primary);
+        border-color: var(--primary) !important;
+        color: var(--text-primary) !important;
+        background: rgba(245, 175, 25, 0.15) !important;
     }
 
     .crash-game .game-history-bar {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
         padding: 4px 8px !important;
-        z-index: 20 !important;
-        background: linear-gradient(180deg, rgba(15, 33, 46, 0.95) 0%, rgba(15, 33, 46, 0.7) 70%, transparent 100%) !important;
+        margin: 0 8px 4px 8px !important;
+        z-index: 10 !important;
+        border-radius: 8px !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        flex-shrink: 0 !important;
     }
 
     .crash-game .game-history-bar .history-pills-scroll {
-        overflow-x: auto;
-        overscroll-behavior-inline: contain;
-        touch-action: pan-x;
+        overflow-x: auto !important;
+        overscroll-behavior-inline: contain !important;
+        touch-action: pan-x !important;
         gap: 4px !important;
     }
 
@@ -1529,6 +1580,7 @@
         padding: 1px 6px !important;
         height: 22px !important;
         line-height: 20px !important;
+        border-radius: 4px !important;
     }
 
     .crash-game .chart-container-antd .multiplier-container {

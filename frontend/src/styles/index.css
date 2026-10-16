@@ -782,23 +782,24 @@ a {
     align-items: flex-end;
     gap: 4px;
     pointer-events: none;
-    max-width: min(72vw, 210px);
+    max-width: min(92vw, 380px);
 }
 
 .wallet-toast {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    background: rgba(26, 44, 56, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(26, 44, 56, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid #2f4553;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
     animation: walletToastSlide 0.22s ease-out;
-    white-space: nowrap;
+    white-space: normal;
+    max-width: 100%;
 }
 
 @keyframes walletToastSlide {

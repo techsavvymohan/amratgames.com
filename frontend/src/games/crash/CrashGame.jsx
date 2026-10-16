@@ -97,7 +97,7 @@ function CrashGame() {
     const [countdown, setCountdown] = useState(6)
     const [crashPoint, setCrashPoint] = useState(0)
     const [elapsedTime, setElapsedTime] = useState(0)
-    const [history, setHistory] = useState([])
+    const [history, setHistory] = useState([1.45, 2.80, 1.15, 5.40, 1.88, 12.30, 1.02, 3.15, 1.95, 2.10])
     const [betPlaced, setBetPlaced] = useState(false)
     const [betAmount, setBetAmount] = useState(0)
     const [userBetData, setUserBetData] = useState(null)
@@ -580,8 +580,9 @@ function CrashGame() {
             setHistory(room.history.map(h => typeof h === 'object' ? h.crashPoint : h))
         }
 
-        if (room.activeBets) {
-            const bets = Array.isArray(room.activeBets) ? room.activeBets : Object.values(room.activeBets)
+        const activeBetsData = room.activeBets || room.bets
+        if (activeBetsData) {
+            const bets = Array.isArray(activeBetsData) ? activeBetsData : Object.values(activeBetsData)
             setRoomBets(bets)
 
             if (user) {
