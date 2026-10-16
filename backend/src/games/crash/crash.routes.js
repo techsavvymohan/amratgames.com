@@ -62,9 +62,10 @@ router.post('/start', authenticate, async (req, res) => {
         })
 
         const updatedUser = db.findUserById(req.user.id)
+        const { crashPoint, hash, ...publicSession } = session
         return res.json({
             success: true,
-            ...session,
+            ...publicSession,
             balances: updatedUser.balances
         })
     } catch (err) {

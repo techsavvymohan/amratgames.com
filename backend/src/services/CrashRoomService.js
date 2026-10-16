@@ -78,7 +78,7 @@ export class CrashRoomService {
         const clientSeed = 'amrat_multiplayer_public'
         const hmac = crypto.createHmac('sha256', serverSeed).update(`${this.roundId}:${clientSeed}`).digest('hex')
         this.secretHash = hmac
-        this.hash = null // Kept strictly concealed until CRASHED phase
+        this.hash = hmac
 
         // 52-bit float generation matching Provably Fair standard
         const hexSub = hmac.slice(0, 13)
