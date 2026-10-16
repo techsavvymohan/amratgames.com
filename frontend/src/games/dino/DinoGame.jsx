@@ -411,45 +411,48 @@ function DinoGame() {
     // Cash out (Server-Authoritative)
     const cashOut = useCallback(async () => {
         if ((gamePhase !== 'waiting' && gamePhase !== 'running') || !roundIdRef.current) return;
-        const gameScene = gameSceneRef.current;
-
         const currentRoundId = roundIdRef.current;
-        roundIdRef.current = null;
 
-        const cashRes = await cashoutDinoRound({ roundId: currentRoundId });
-        if (!cashRes || !cashRes.success) {
-            showToast('error', 'Cashout Failed', cashRes?.error || 'Unable to cash out');
-            return;
+        try {
+            const cashRes = await cashoutDinoRound({ roundId: currentRoundId });
+            if (!cashRes || !cashRes.success) {
+                showToast('error', 'Cashout Failed', cashRes?.error || 'Unable to cash out');
+                return;
+            }
+
+            roundIdRef.current = null;
+            const winAmount = cashRes.payout || (betAmountRef.current * cashRes.multiplier);
+            const settledMult = cashRes.multiplier || currentMultiplier;
+            const profit = winAmount - betAmountRef.current;
+
+            setTotalProfit(prev => prev + profit);
+            setWinRecords(prev => [...prev, profit]);
+            setLastResult({
+                type: 'win',
+                obstaclesCleared: cashRes.obstaclesCleared || obstaclesCleared,
+                multiplier: settledMult,
+                amount: winAmount,
+            });
+            setGamePhase('cashed_out');
+            gamePhaseRef.current = 'cashed_out';
+
+            if (settledMult >= 3) {
+                casinoAudio.playBigWin();
+            } else {
+                casinoAudio.playCashout();
+            }
+
+            // Disable betting mode and trigger game over to reset
+            const gameScene = gameSceneRef.current;
+            if (gameScene) {
+                gameScene.events.emit(CONFIG.EVENTS.BETTING_MODE_OFF);
+                gameScene.events.emit(CONFIG.EVENTS.GAME_OVER, gameScene.score, gameScene.highScore);
+            }
+
+            showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${settledMult.toFixed(2)}×`, 4000);
+        } catch (err) {
+            showToast('error', 'Cashout Error', err.message || 'Network error during cashout');
         }
-
-        const winAmount = cashRes.payout || (betAmountRef.current * cashRes.multiplier);
-        const settledMult = cashRes.multiplier || currentMultiplier;
-        const profit = winAmount - betAmountRef.current;
-
-        setTotalProfit(prev => prev + profit);
-        setWinRecords(prev => [...prev, profit]);
-        setLastResult({
-            type: 'win',
-            obstaclesCleared: cashRes.obstaclesCleared || obstaclesCleared,
-            multiplier: settledMult,
-            amount: winAmount,
-        });
-        setGamePhase('cashed_out');
-        gamePhaseRef.current = 'cashed_out';
-
-        if (settledMult >= 3) {
-            casinoAudio.playBigWin();
-        } else {
-            casinoAudio.playCashout();
-        }
-
-        // Disable betting mode and trigger game over to reset
-        if (gameScene) {
-            gameScene.events.emit(CONFIG.EVENTS.BETTING_MODE_OFF);
-            gameScene.events.emit(CONFIG.EVENTS.GAME_OVER, gameScene.score, gameScene.highScore);
-        }
-
-        showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${settledMult.toFixed(2)}×`, 4000);
     }, [gamePhase, cashoutDinoRound, currentMultiplier, obstaclesCleared, showToast, currencySymbol]);
 
     // Fullscreen

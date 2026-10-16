@@ -116,17 +116,22 @@ function DragonTigerGame() {
         if (bets.tiger > bets.dragon && bets.tiger > bets.tie) primaryChoice = 'tiger'
         else if (bets.tie > bets.dragon && bets.tie > bets.tiger) primaryChoice = 'tie'
 
-        const betResponse = await executeGameBet({
-            game: 'dragon-tiger',
-            gameName: 'Dragon Tiger',
-            betAmount: totalBet,
-            choice: primaryChoice,
-            bets: {
-                dragon: bets.dragon,
-                tie: bets.tie,
-                tiger: bets.tiger
-            }
-        })
+        let betResponse
+        try {
+            betResponse = await executeGameBet({
+                game: 'dragon-tiger',
+                gameName: 'Dragon Tiger',
+                betAmount: totalBet,
+                choice: primaryChoice,
+                bets: {
+                    dragon: bets.dragon,
+                    tie: bets.tie,
+                    tiger: bets.tiger
+                }
+            })
+        } catch (err) {
+            console.error('[DragonTiger] Error placing bet:', err)
+        }
 
         if (!betResponse || !betResponse.success) {
             setIsDealing(false)

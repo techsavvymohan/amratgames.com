@@ -35,6 +35,7 @@ export class Ball {
         this.onCollidePin = onCollidePin;
         this.finished = false;
         this.id = Math.random().toString(36).substr(2, 9);
+        this.createdAt = Date.now();
 
         // Physics constants (configurable per rowCount)
         this.gravity = gravity || pad(0.6);
@@ -102,19 +103,53 @@ export class Ball {
         const ux = unpad(this.x);
         const uy = unpad(this.y);
 
-        for (let i = 0; i < this.sinks.length; i++) {
-            const sink = this.sinks[i];
-            if (
-                ux > sink.x - sink.width / 2 &&
-                ux < sink.x + sink.width / 2 &&
-                (uy + this.radius) > (sink.y - sink.height / 2)
-            ) {
+        if (this.sinks && this.sinks.length > 0) {
+            const firstSink = this.sinks[0];
+            const sinkYThreshold = firstSink.y - firstSink.height / 2;
+
+            // Standard sink bounding box check
+            for (let i = 0; i < this.sinks.length; i++) {
+                const sink = this.sinks[i];
+                if (
+                    ux > sink.x - sink.width / 2 &&
+                    ux < sink.x + sink.width / 2 &&
+                    (uy + this.radius) > sinkYThreshold
+                ) {
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.finished = true;
+                    this.onFinish(i);
+                    return;
+                }
+            }
+
+            // Failsafe 1: Ball dropped past sink row vertically
+            // Snap to closest horizontal bin rather than falling infinitely into void
+            if ((uy + this.radius) >= sinkYThreshold) {
+                let closestIndex = 0;
+                let minDistance = Infinity;
+                for (let i = 0; i < this.sinks.length; i++) {
+                    const dist = Math.abs(ux - this.sinks[i].x);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        closestIndex = i;
+                    }
+                }
                 this.vx = 0;
                 this.vy = 0;
                 this.finished = true;
-                this.onFinish(i);
-                break;
+                this.onFinish(closestIndex);
+                return;
             }
+        }
+
+        // Failsafe 2: Watchdog timeout (6s max drop duration)
+        if (Date.now() - this.createdAt > 6000) {
+            const fallbackBin = this.sinks && this.sinks.length > 0 ? Math.floor(this.sinks.length / 2) : 0;
+            this.vx = 0;
+            this.vy = 0;
+            this.finished = true;
+            this.onFinish(fallbackBin);
         }
     }
 

@@ -199,12 +199,17 @@ function ColorMatchGame() {
         casinoAudio.playCardDeal?.()
 
         // Submit to server-authoritative Provably Fair engine
-        const betResponse = await executeGameBet({
-            game: 'color-match',
-            gameName: 'Color Match',
-            betAmount: totalStaked,
-            bets: { ...bets }
-        })
+        let betResponse
+        try {
+            betResponse = await executeGameBet({
+                game: 'color-match',
+                gameName: 'Color Match',
+                betAmount: totalStaked,
+                bets: { ...bets }
+            })
+        } catch (err) {
+            console.error('[ColorMatch] Error submitting bet:', err)
+        }
 
         if (!betResponse || !betResponse.success) {
             setIsDrawing(false)

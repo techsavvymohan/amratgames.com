@@ -15,6 +15,19 @@ export const DINO_DIFFICULTIES = {
 export class DinoEngine {
     constructor() {
         this.activeDinoRounds = new Map() // roundId -> session
+
+        // Periodic TTL cleaner for abandoned sessions (older than 30 minutes)
+        this.cleanupTimer = setInterval(() => {
+            const now = Date.now()
+            const TTL_MS = 30 * 60 * 1000
+            for (const [roundId, session] of this.activeDinoRounds.entries()) {
+                if (now - (session.startedAt || 0) > TTL_MS) {
+                    session.active = false
+                    this.activeDinoRounds.delete(roundId)
+                }
+            }
+        }, 60000)
+        if (this.cleanupTimer.unref) this.cleanupTimer.unref()
     }
 
     calculateMultiplier(difficulty = 'medium', cleared = 0) {
@@ -165,8 +178,15 @@ export class DinoEngine {
     }
 
     getActiveRound(userId) {
+        const now = Date.now()
+        const TTL_MS = 30 * 60 * 1000
         for (const session of this.activeDinoRounds.values()) {
             if (session.userId === userId && session.active) {
+                if (now - (session.startedAt || 0) > TTL_MS) {
+                    session.active = false
+                    this.activeDinoRounds.delete(session.roundId)
+                    continue
+                }
                 return {
                     roundId: session.roundId,
                     difficulty: session.difficulty,

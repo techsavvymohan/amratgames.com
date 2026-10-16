@@ -275,13 +275,16 @@ export class CrashRoomService {
         }
 
         const parsedAmount = parseFloat(betAmount)
-        if (isNaN(parsedAmount) || parsedAmount < 10) {
-            const err = new Error('Minimum bet is ₹10')
+        const minAllowed = bankrollRisk.getMinBet(currency)
+        const maxAllowed = bankrollRisk.getMaxBet(currency)
+
+        if (isNaN(parsedAmount) || parsedAmount < minAllowed) {
+            const err = new Error(`Minimum bet for ${currency} is ${minAllowed}`)
             err.status = 400
             throw err
         }
-        if (parsedAmount > 50000) {
-            const err = new Error('Maximum bet limit is ₹50,000')
+        if (parsedAmount > maxAllowed) {
+            const err = new Error(`Maximum bet limit for ${currency} is ${maxAllowed}`)
             err.status = 400
             throw err
         }

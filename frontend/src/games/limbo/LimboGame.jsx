@@ -172,13 +172,17 @@ function LimboGame() {
 
         // Call server-authoritative bet evaluation
         let betResponse
-        if (executeGameBet) {
-            betResponse = await executeGameBet({
-                game: 'limbo',
-                gameName: 'Limbo Multiplier',
-                betAmount: currentBet,
-                targetMultiplier: target
-            })
+        try {
+            if (executeGameBet) {
+                betResponse = await executeGameBet({
+                    game: 'limbo',
+                    gameName: 'Limbo Multiplier',
+                    betAmount: currentBet,
+                    targetMultiplier: target
+                })
+            }
+        } catch (err) {
+            console.error('[Limbo] Error placing bet:', err)
         }
 
         if (!betResponse || !betResponse.success) {

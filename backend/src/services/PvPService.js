@@ -344,6 +344,7 @@ export class PvPService {
                     })
                     duel.status = 'expired'
                     this.activeDuels.delete(id)
+                    db.persist()
                     broadcastEvent('PVP_DUEL_CANCELLED', { duelId: duel.id, reason: 'expired' })
                 } catch (e) {
                     console.error('[PVP JANITOR ERROR]', e)
