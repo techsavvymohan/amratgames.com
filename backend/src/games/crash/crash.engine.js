@@ -18,12 +18,12 @@ export class CrashEngine {
         setInterval(() => {
             const now = Date.now()
             for (const [roundId, session] of this.activeCrashRounds.entries()) {
-                if (now - session.startedAt > 180000) { // 3 minutes max flight lifespan
+                if (now - session.startedAt > 60000) { // Max flight lifespan is ~44s, so 60s is safe
                     if (session.timer) clearTimeout(session.timer)
                     this.activeCrashRounds.delete(roundId)
                 }
             }
-        }, 60000)
+        }, 30000)
     }
 
     evaluate({ claimedMultiplier, clientSeed, nonce, autoCashout = null }) {
@@ -212,8 +212,15 @@ export class CrashEngine {
 
     getActiveRound(userId) {
         if (!userId) return null
+        const now = Date.now()
         for (const session of this.activeCrashRounds.values()) {
             if (session.userId === userId && session.active) {
+                if (now - session.startedAt >= (session.flightDurationMs || 45000)) {
+                    session.active = false
+                    if (session.timer) clearTimeout(session.timer)
+                    this.activeCrashRounds.delete(session.roundId)
+                    continue
+                }
                 return {
                     roundId: session.roundId,
                     betAmount: session.betAmount,

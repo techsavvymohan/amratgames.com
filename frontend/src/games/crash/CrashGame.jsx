@@ -88,6 +88,7 @@ function CrashGame() {
     } = useWallet()
     const activeRoundIdRef = useRef(null)
     const autoCashoutTargetRef = useRef(null)
+    const targetCrashPointRef = useRef(null)
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
     const [roomBets, setRoomBets] = useState([])
     const roomRoundIdRef = useRef(null)
@@ -359,6 +360,7 @@ function CrashGame() {
 
     // Reset to idle ready state
     const resetToIdle = useCallback(() => {
+        targetCrashPointRef.current = null
         setPhase(PHASE.IDLE)
         setMultiplier(1.00)
         setElapsedTime(0)
@@ -377,6 +379,10 @@ function CrashGame() {
         let mounted = true
         getActiveCrashRound().then((active) => {
             if (!mounted || !active || !active.active) return
+            // Ignore stale flights older than 45 seconds
+            const elapsedSinceStart = (Date.now() - active.startedAt) / 1000
+            if (elapsedSinceStart >= 45.0) return
+
             // Restore active flight in progress
             activeRoundIdRef.current = active.roundId
             setBetAmount(active.betAmount)
@@ -408,7 +414,12 @@ function CrashGame() {
 
     // Handle crash (Server-Authoritative)
     const handleCrash = useCallback((crashMultiplier) => {
-        setHistory(prev => [crashMultiplier, ...prev].slice(0, 30))
+        const finalMult = parseFloat(crashMultiplier) || 1.00
+        setPhase(PHASE.CRASHED)
+        setMultiplier(finalMult)
+        multiplierRef.current = finalMult
+        targetCrashPointRef.current = null
+        setHistory(prev => [finalMult, ...prev].slice(0, 30))
         casinoAudio.playExplosion()
 
         let profit = 0
@@ -421,20 +432,17 @@ function CrashGame() {
                 profit = -userBetData.amount
                 bustCrashRound({ roundId: activeRoundIdRef.current }).catch(() => {})
                 activeRoundIdRef.current = null
-                showToast('loss', 'You Lost!', `-${currencySymbol}${userBetData.amount.toFixed(2)} — Crashed @${crashMultiplier.toFixed(2)}×`, 4000)
+                showToast('loss', 'You Lost!', `-${currencySymbol}${userBetData.amount.toFixed(2)} — Crashed @${finalMult.toFixed(2)}×`, 4000)
+                setGameRecords(prev => [...prev, {
+                    id: Date.now(),
+                    multiplier: finalMult,
+                    cashedOutAt: null,
+                    bet: userBetData.amount,
+                    profit
+                }])
             } else {
                 profit = parseFloat(userBetData.profit || 0) - userBetData.amount
             }
-        }
-
-        if (didPlay) {
-            setGameRecords(prev => [...prev, {
-                id: Date.now(),
-                multiplier: crashMultiplier,
-                cashedOutAt: betPlaced ? null : (userBetData.cashoutAt ? parseFloat(userBetData.cashoutAt) : null),
-                bet: userBetData.amount,
-                profit
-            }])
         }
 
         setBetPlaced(false)
@@ -502,37 +510,49 @@ function CrashGame() {
         if (phase === PHASE.RUNNING && betPlaced && activeRoundIdRef.current) {
             const currentRoundId = activeRoundIdRef.current
             const targetMult = multiplierRef.current
-            const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
+            try {
+                const res = await cashoutCrashRound({ roundId: currentRoundId, multiplier: targetMult })
 
-            if (res && res.success && res.won) {
-                setBetPlaced(false)
-                activeRoundIdRef.current = null
-                const winAmount = res.payout
-                const profit = winAmount - betAmount
-                setUserBetData(prev => prev ? {
-                    ...prev,
-                    active: false,
-                    cashoutAt: res.multiplier.toFixed(2),
-                    profit: winAmount.toFixed(2)
-                } : null)
+                if (res && res.success && res.won) {
+                    setBetPlaced(false)
+                    activeRoundIdRef.current = null
+                    const winAmount = res.payout
+                    const profit = winAmount - betAmount
+                    setUserBetData(prev => prev ? {
+                        ...prev,
+                        active: false,
+                        cashoutAt: res.multiplier.toFixed(2),
+                        profit: winAmount.toFixed(2)
+                    } : null)
 
-                showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
-                if (res.multiplier >= 3) {
-                    casinoAudio.playBigWin()
-                } else {
-                    casinoAudio.playCashout()
+                    showToast('win', 'You Won!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000)
+                    if (res.multiplier >= 3) {
+                        casinoAudio.playBigWin()
+                    } else {
+                        casinoAudio.playCashout()
+                    }
+
+                    setGameRecords(prev => [...prev, {
+                        id: Date.now(),
+                        multiplier: res.multiplier,
+                        cashedOutAt: res.multiplier,
+                        bet: betAmount,
+                        profit
+                    }])
+
+                    // Reveal server crash point: continue flight smoothly up to crash point
+                    const revealedCrashPoint = parseFloat(res.crashPoint) || (targetMult * 1.05)
+                    if (multiplierRef.current >= revealedCrashPoint) {
+                        handleCrash(revealedCrashPoint)
+                    } else {
+                        targetCrashPointRef.current = revealedCrashPoint
+                    }
+                } else if (res && !res.won) {
+                    // Server rejected cashout because flight crashed earlier
+                    handleCrash(res.crashPoint || targetMult)
                 }
-
-                setGameRecords(prev => [...prev, {
-                    id: Date.now(),
-                    multiplier: res.multiplier,
-                    cashedOutAt: res.multiplier,
-                    bet: betAmount,
-                    profit
-                }])
-            } else if (res && !res.won) {
-                // Server rejected cashout because flight crashed earlier
-                handleCrash(res.crashPoint || targetMult)
+            } catch (err) {
+                console.error('[Crash] Cashout error:', err)
             }
         }
     }, [gameMode, phase, betPlaced, cashoutRoomCrash, betAmount, currencySymbol, showToast, cashoutCrashRound, handleCrash])
@@ -750,6 +770,22 @@ function CrashGame() {
                 const elapsed = Math.max(0, (now - startTimeRef.current) / 1000)
                 const currentMultiplier = Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)
 
+                // 1. Check if cashed-out solo flight has reached its revealed crash point
+                if (targetCrashPointRef.current && currentMultiplier >= targetCrashPointRef.current) {
+                    const finalCrash = targetCrashPointRef.current
+                    targetCrashPointRef.current = null
+                    handleCrash(finalCrash)
+                    return
+                }
+
+                // 2. Hard failsafe: platform limit is 1000.00x (~43.2s) - never let flight run infinitely
+                if (currentMultiplier >= 1000.00 || elapsed >= 45.0) {
+                    const finalCrash = targetCrashPointRef.current || 1000.00
+                    targetCrashPointRef.current = null
+                    handleCrash(finalCrash)
+                    return
+                }
+
                 // Always update refs (used by Canvas directly)
                 multiplierRef.current = currentMultiplier
                 elapsedTimeRef.current = elapsed
@@ -758,7 +794,6 @@ function CrashGame() {
                 if (betPlaced && autoCashoutTargetRef.current && currentMultiplier >= autoCashoutTargetRef.current) {
                     autoCashoutTargetRef.current = null
                     handleCashout()
-                    return
                 }
 
                 // Throttle React state updates to every ~50ms
@@ -839,6 +874,7 @@ function CrashGame() {
         }
 
         activeRoundIdRef.current = res.roundId
+        targetCrashPointRef.current = null
         setBetAmount(amount)
         setBetPlaced(true)
         autoCashoutTargetRef.current = autoCashoutTarget ? parseFloat(autoCashoutTarget) : null
