@@ -66,7 +66,22 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
         }
     }, [gameKey, normalizedKey, token, user?.id, user?.username, subscribe])
 
-    // Merge local session rounds with fetched bets for instantaneous zero-latency updates
+    const storageKey = useMemo(() => {
+        return `amrat_game_bottom_history_${normalizedKey}_${user?.id || 'guest'}`
+    }, [normalizedKey, user?.id])
+
+    // Load initial persisted history from localStorage
+    const [cachedBets, setCachedBets] = useState(() => {
+        try {
+            const raw = localStorage.getItem(`amrat_game_bottom_history_${normalizedKey}_${user?.id || 'guest'}`) ||
+                        localStorage.getItem(`amrat_game_bottom_history_${normalizedKey}_guest`)
+            return raw ? JSON.parse(raw) : []
+        } catch {
+            return []
+        }
+    })
+
+    // Merge local session rounds, server recorded bets, and persisted localStorage bets
     const displayedMyBets = useMemo(() => {
         const list = []
         const seenIds = new Set()
@@ -74,7 +89,7 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
         // 1. Session local rounds (placed right now in this component)
         if (Array.isArray(localRounds)) {
             for (const r of localRounds) {
-                const id = r.id || `${r.timestamp || Date.now()}-${Math.random()}`
+                const id = r.id || `${r.timestamp || r.createdAt || Date.now()}-${r.betAmount || 0}`
                 if (!seenIds.has(id)) {
                     seenIds.add(id)
                     list.push({
@@ -84,9 +99,9 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
                         choice: r.choice || r.picked || r.selection,
                         outcome: r.outcome || r.result,
                         betAmount: r.betAmount || r.amount || 0,
-                        multiplier: r.multiplier !== undefined ? r.multiplier : (r.won ? 1.96 : 0),
-                        payout: r.payout !== undefined ? r.payout : (r.won ? (r.betAmount * 1.96) : 0),
-                        won: Boolean(r.won),
+                        multiplier: r.multiplier !== undefined ? r.multiplier : (r.won ? 1.95 : 0),
+                        payout: r.payout !== undefined ? r.payout : (r.won ? (r.betAmount * 1.95) : 0),
+                        won: Boolean(r.won || (r.payout > (r.betAmount || 0))),
                         createdAt: r.timestamp || r.createdAt || new Date().toISOString(),
                         isLocal: true
                     })
@@ -96,14 +111,36 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
 
         // 2. Server recorded bets
         for (const b of serverMyBets) {
-            if (!seenIds.has(b.id)) {
-                seenIds.add(b.id)
+            const id = b.id || `${b.createdAt}-${b.betAmount}`
+            if (!seenIds.has(id)) {
+                seenIds.add(id)
                 list.push(b)
             }
         }
 
-        return list.slice(0, 30)
-    }, [localRounds, serverMyBets, gameKey, gameTitle])
+        // 3. Persisted cached bets from previous sessions
+        for (const c of cachedBets) {
+            const id = c.id || `${c.createdAt}-${c.betAmount}`
+            if (!seenIds.has(id)) {
+                seenIds.add(id)
+                list.push(c)
+            }
+        }
+
+        // Sort descending by creation date
+        list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+
+        const finalSlice = list.slice(0, 50)
+
+        // Keep localStorage synced so it NEVER disappears when leaving the game
+        try {
+            if (finalSlice.length > 0) {
+                localStorage.setItem(storageKey, JSON.stringify(finalSlice))
+            }
+        } catch {}
+
+        return finalSlice
+    }, [localRounds, serverMyBets, cachedBets, gameKey, gameTitle, storageKey])
 
     const displayedList = activeTab === 'my_bets' ? displayedMyBets : allPlayersBets
 

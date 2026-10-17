@@ -208,6 +208,8 @@ function evaluateGameRound({
     hits,
     clientSeed,
     nonce,
+    userId,
+    userBets,
     reqBody
 }) {
     let evaluation = null
@@ -281,7 +283,9 @@ function evaluateGameRound({
                 betAmount: parsedAmount,
                 choice: choice || reqBody.choice || reqBody.side || 'heads',
                 clientSeed,
-                nonce
+                nonce,
+                userId,
+                userBets
             })
             break
         }
@@ -350,6 +354,7 @@ router.post('/bet', authenticate, async (req, res) => {
             gameName,
             evaluator: async () => {
                 const nonce = gameEngine.getNextNonce(req.user.id)
+                const userBets = db.getUserBets ? db.getUserBets(req.user.id, 10) : []
                 return evaluateGameRound({
                     game,
                     parsedAmount,
@@ -362,6 +367,8 @@ router.post('/bet', authenticate, async (req, res) => {
                     hits,
                     clientSeed,
                     nonce,
+                    userId: req.user.id,
+                    userBets,
                     reqBody: req.body
                 })
             }

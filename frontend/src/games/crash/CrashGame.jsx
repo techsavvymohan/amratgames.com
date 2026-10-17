@@ -25,6 +25,7 @@ import GameChart from './GameChart'
 import GameHistory from './GameHistory'
 import PlayerBets from './PlayerBets'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
+import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
@@ -97,7 +98,23 @@ function CrashGame() {
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [fairnessModalOpen, setFairnessModalOpen] = useState(false)
-    const [gameRecords, setGameRecords] = useState([])
+    const [gameRecords, setGameRecords] = useState(() => {
+        try {
+            const raw = localStorage.getItem('amrat_crash_history')
+            return raw ? JSON.parse(raw) : []
+        } catch {
+            return []
+        }
+    })
+
+    useEffect(() => {
+        if (gameRecords.length > 0) {
+            try {
+                localStorage.setItem('amrat_crash_history', JSON.stringify(gameRecords.slice(0, 50)))
+            } catch {}
+        }
+    }, [gameRecords])
+
     const gameDisplayRef = useRef(null)
     const multiplierRef = useRef(1.00)
     const elapsedTimeRef = useRef(0)
@@ -528,6 +545,37 @@ function CrashGame() {
         }
     }, [panel1, panel2, user])
 
+    const userBetsList = useMemo(() => {
+        const list = []
+        if (panel1.betPlaced || panel1.cashedOut) {
+            list.push({
+                id: 'user-panel-1',
+                userId: user?.id,
+                username: user?.username || 'You',
+                betAmount: panel1.amount,
+                cashedOut: panel1.cashedOut,
+                multiplier: panel1.cashedOut ? (panel1.payout / (panel1.amount || 1)) : null,
+                payout: panel1.payout,
+                isUser: true,
+                avatarEmoji: '👑'
+            })
+        }
+        if (panel2.betPlaced || panel2.cashedOut) {
+            list.push({
+                id: 'user-panel-2',
+                userId: user?.id,
+                username: user?.username || 'You',
+                betAmount: panel2.amount,
+                cashedOut: panel2.cashedOut,
+                multiplier: panel2.cashedOut ? (panel2.payout / (panel2.amount || 1)) : null,
+                payout: panel2.payout,
+                isUser: true,
+                avatarEmoji: '👑'
+            })
+        }
+        return list
+    }, [panel1.betPlaced, panel1.cashedOut, panel1.amount, panel1.payout, panel2.betPlaced, panel2.cashedOut, panel2.amount, panel2.payout, user])
+
     return (
         <div className="aviator-game-viewport" ref={gameDisplayRef}>
             {contextHolder}
@@ -617,7 +665,8 @@ function CrashGame() {
                         <PlayerBets
                             phase={phase}
                             multiplier={multiplier}
-                            userBetData={userBetSummary}
+                            userBetData={userBetsList[0] || userBetSummary}
+                            userBets={userBetsList}
                             roomBets={roomBets}
                             isArena={gameMode === 'arena'}
                             userHistory={gameRecords}
@@ -686,6 +735,23 @@ function CrashGame() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* In-Window Persistent Bet History Directly Underneath Crash Game */}
+            <div className="aviator-bottom-history-section" style={{ maxWidth: '1240px', margin: '0 auto', padding: '16px 12px 28px' }}>
+                <GameBottomHistory
+                    gameKey="crash"
+                    gameTitle="Aviator Crash"
+                    localRounds={gameRecords.map(r => ({
+                        id: r.id,
+                        betAmount: r.bet || r.betAmount || 25,
+                        multiplier: r.multiplier || r.cashedOutAt || 1.0,
+                        payout: (r.bet || r.betAmount || 25) + (r.profit || 0),
+                        won: (r.profit !== undefined ? r.profit >= 0 : Boolean(r.cashedOutAt)),
+                        outcome: `${(r.cashedOutAt || r.multiplier || 1.0).toFixed(2)}x ${r.profit >= 0 ? 'WIN' : 'BUST'}`,
+                        createdAt: r.createdAt || r.timestamp || new Date().toISOString()
+                    }))}
+                />
             </div>
 
             {/* Provably Fair Verifier Modal */}

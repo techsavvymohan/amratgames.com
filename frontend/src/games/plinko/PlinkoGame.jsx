@@ -128,7 +128,24 @@ function PlinkoGame() {
     const [betAmount, setBetAmount] = useState(() => (currency === 'INR' ? 10 : 1));
     const [rowCount, setRowCount] = useState(16);
     const [riskLevel, setRiskLevel] = useState('medium');
-    const [winRecords, setWinRecords] = useState([]);
+    const [winRecords, setWinRecords] = useState(() => {
+        try {
+            const raw = localStorage.getItem('amrat_plinko_history');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        if (winRecords.length > 0) {
+            try {
+                localStorage.setItem('amrat_plinko_history', JSON.stringify(winRecords.slice(-50)));
+            } catch {}
+        }
+    }, [winRecords]);
+
+    const [landingNotification, setLandingNotification] = useState(null);
     const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
     const [selectedBallType, setSelectedBallType] = useState('normal');
 
@@ -226,24 +243,38 @@ function PlinkoGame() {
         const ballType = data.ballType || selectedBallType;
         const actualBall = BALL_TYPES[ballType] || BALL_TYPES.normal;
 
-        const bonusMultiplier = calculateBonusMultiplier(ballType);
-        const finalMultiplier = data.payout.multiplier * bonusMultiplier;
+        const actualMultiplier = Number(data.payout?.multiplier || 1.0);
         const currentEffectiveBet = (betAmount || 10) * actualBall.cost;
-        const finalPayout = currentEffectiveBet * finalMultiplier;
+        const finalPayout = currentEffectiveBet * actualMultiplier;
         const profit = finalPayout - currentEffectiveBet;
 
-        casinoAudio.playBinLand(finalMultiplier);
-        if (finalMultiplier >= 5) {
+        casinoAudio.playBinLand(actualMultiplier);
+        if (actualMultiplier >= 5) {
             casinoAudio.playBigWin();
         } else if (profit > 0) {
             casinoAudio.playWin();
         }
 
+        // Active floating visual coin feedback
+        const isWin = profit >= 0;
+        setLandingNotification({
+            id: Date.now() + Math.random(),
+            isWin,
+            profit,
+            payout: finalPayout,
+            multiplier: actualMultiplier,
+            binIndex: data.binIndex,
+            ballName: actualBall.name
+        });
+        setTimeout(() => {
+            setLandingNotification(null);
+        }, 2500);
+
         if (data.isDemo) {
-            if (finalMultiplier >= 1.5) {
+            if (actualMultiplier >= 1.5) {
                 setSpectatorMissedWin({
-                    outcome: `${finalMultiplier}x (Bin ${data.binIndex})`,
-                    multiplier: finalMultiplier,
+                    outcome: `${actualMultiplier}x (Bin ${data.binIndex})`,
+                    multiplier: actualMultiplier,
                     amount: currentEffectiveBet,
                     payout: finalPayout.toFixed(0)
                 });
@@ -255,24 +286,26 @@ function PlinkoGame() {
         // Real bet placed & settled: clear spectator missed win prompt
         setSpectatorMissedWin(null);
 
-        if (finalMultiplier >= 1.0) {
-            notifyWin?.(finalPayout, finalMultiplier);
+        // Prominent toast notification showing coins won / lost
+        if (profit > 0) {
+            showToast?.('win', `Plinko Win! ${actualMultiplier.toFixed(2)}x`, `+${currencySymbol}${finalPayout.toFixed(2)} (Profit: +${currencySymbol}${profit.toFixed(2)})`, 3000);
         } else {
-            notifyLoss?.(currentEffectiveBet - finalPayout);
+            showToast?.('info', `Plinko Landed: ${actualMultiplier.toFixed(2)}x`, `Payout: ${currencySymbol}${finalPayout.toFixed(2)} (-${currencySymbol}${Math.abs(profit).toFixed(2)})`, 2500);
         }
 
         const newRecord = {
             id: Date.now() + Math.random(),
             ...data,
             ballType: ballType,
-            bonusMultiplier,
+            bonusMultiplier: 1,
             payout: {
                 ...data.payout,
-                multiplier: finalMultiplier,
+                multiplier: actualMultiplier,
                 value: finalPayout,
-                originalMultiplier: data.payout.multiplier
+                originalMultiplier: actualMultiplier
             },
-            profit
+            profit,
+            createdAt: new Date().toISOString()
         };
 
         setWinRecords(prev => [...prev, newRecord]);
@@ -287,7 +320,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-    }, [selectedBallType, calculateBonusMultiplier, maxStreak, betAmount, minBet, notifyWin, notifyLoss]);
+    }, [selectedBallType, maxStreak, betAmount, minBet, currencySymbol, showToast]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -575,7 +608,16 @@ function PlinkoGame() {
                     </MobileBetSheet>
 
                     {/* Plinko Game Area */}
-                    <div className="plinko-game-wrapper">
+                    <div className="plinko-game-wrapper" style={{ position: 'relative' }}>
+                        {landingNotification && (
+                            <div className={`plinko-landing-popup ${landingNotification.isWin ? 'win-popup' : 'loss-popup'}`}>
+                                <span className="landing-coin-icon">{landingNotification.isWin ? '🪙' : '⚪'}</span>
+                                <span className="landing-mult-badge">{landingNotification.multiplier.toFixed(2)}x</span>
+                                <span className="landing-amount-text">
+                                    {landingNotification.isWin ? '+' : '-'}{currencySymbol}{Math.abs(landingNotification.profit).toFixed(2)}
+                                </span>
+                            </div>
+                        )}
                         {spectatorMissedWin && (
                             <MissedWinBanner
                                 outcome={spectatorMissedWin.outcome}
@@ -715,6 +757,21 @@ function PlinkoGame() {
                     </div>
                 </div>
             </div>
+
+            {/* In-Window Persistent Game History Beneath Plinko */}
+            <GameBottomHistory
+                gameKey="plinko"
+                gameTitle="Plinko"
+                localRounds={winRecords.map(r => ({
+                    id: r.id,
+                    betAmount: r.betAmount,
+                    multiplier: r.payout?.multiplier || 1,
+                    payout: r.payout?.value || (r.betAmount * (r.payout?.multiplier || 1)),
+                    won: (r.payout?.multiplier || 0) >= 1.0,
+                    outcome: `${(r.payout?.multiplier || 1).toFixed(2)}x (Bin ${r.binIndex !== undefined ? r.binIndex : '-'})`,
+                    createdAt: r.createdAt || r.timestamp || new Date().toISOString()
+                }))}
+            />
 
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (

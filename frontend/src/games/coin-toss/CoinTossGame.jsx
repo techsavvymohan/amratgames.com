@@ -21,7 +21,7 @@ import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import PvPDuelsArena from './PvPDuelsArena'
 import './CoinTossGame.css'
 
-const MULTIPLIER = 1.96 // 96% RTP / 4% House Edge
+const MULTIPLIER = 1.95 // 95% RTP / Calibrated 5% House Edge with Anti-Exploit Protection
 const MIN_BET = 10
 const MAX_BET = 100000
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000]
@@ -55,8 +55,24 @@ export default function CoinTossGame() {
     const [landingTrigger, setLandingTrigger] = useState(0)
     const [winTrigger, setWinTrigger] = useState(0)
 
-    // History and sound
-    const [history, setHistory] = useState([])
+    // History and sound (persisted in localStorage)
+    const [history, setHistory] = useState(() => {
+        try {
+            const raw = localStorage.getItem('amrat_cointoss_history')
+            return raw ? JSON.parse(raw) : []
+        } catch {
+            return []
+        }
+    })
+
+    useEffect(() => {
+        if (history.length > 0) {
+            try {
+                localStorage.setItem('amrat_cointoss_history', JSON.stringify(history.slice(0, 50)))
+            } catch {}
+        }
+    }, [history])
+
     const [isMuted, setIsMuted] = useState(casinoAudio.getMuted())
 
     // Provably fair modal & history drawer state

@@ -102,18 +102,28 @@ export class Ball {
         const ux = unpad(this.x);
         const uy = unpad(this.y);
 
-        for (let i = 0; i < this.sinks.length; i++) {
-            const sink = this.sinks[i];
-            if (
-                ux > sink.x - sink.width / 2 &&
-                ux < sink.x + sink.width / 2 &&
-                (uy + this.radius) > (sink.y - sink.height / 2)
-            ) {
+        if (this.sinks && this.sinks.length > 0) {
+            const firstSink = this.sinks[0];
+            const sinkTriggerY = firstSink.y - (firstSink.height || 20);
+
+            // When ball reaches bucket entry height or bottom edge
+            if ((uy + this.radius) >= sinkTriggerY || uy >= 555) {
+                // Find closest sink to current horizontal position
+                let closestIndex = 0;
+                let minDiff = Infinity;
+                for (let i = 0; i < this.sinks.length; i++) {
+                    const diff = Math.abs(ux - this.sinks[i].x);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIndex = i;
+                    }
+                }
+
                 this.vx = 0;
                 this.vy = 0;
                 this.finished = true;
-                this.onFinish(i);
-                break;
+                this.onFinish(closestIndex);
+                return;
             }
         }
     }
