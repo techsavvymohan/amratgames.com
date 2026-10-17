@@ -88,7 +88,16 @@ export function WebSocketProvider({ children }) {
 
                     // 1. Maintain shared state caches
                     if (type === 'CONNECTED') {
-                        if (data.crashRoom) setCrashRoomState(data.crashRoom)
+                        if (data.crashRoom) {
+                            setCrashRoomState(data.crashRoom)
+                            // Immediately broadcast fresh crash room state to all subscribers upon reconnect
+                            const roomCbs = subscribersRef.current.get('CRASH_ROOM_STATE')
+                            if (roomCbs) {
+                                roomCbs.forEach(cb => {
+                                    try { cb(data.crashRoom, data) } catch (err) { console.error('[WS] Callback error:', err) }
+                                })
+                            }
+                        }
                         if (Array.isArray(data.recentChat)) setChatMessages(data.recentChat)
                     } else if (type === 'CRASH_ROOM_STATE' && payload) {
                         setCrashRoomState(payload)

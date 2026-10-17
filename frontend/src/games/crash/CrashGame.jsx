@@ -45,7 +45,7 @@ export const CRASH_GROWTH_RATE = 0.16
 
 function CrashGame() {
     const { user } = useAuth()
-    const { subscribe, sendJson } = useWebSocket()
+    const { subscribe, sendJson, isConnected } = useWebSocket()
     const {
         balance,
         startCrashRound,
@@ -65,6 +65,7 @@ function CrashGame() {
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
     const [roomBets, setRoomBets] = useState([])
     const roomRoundIdRef = useRef(null)
+    const flightStartTimeRef = useRef(null)
     const [phase, setPhase] = useState(PHASE.WAITING)
     const [multiplier, setMultiplier] = useState(1.00)
     const [flightStartTime, setFlightStartTime] = useState(null)
@@ -159,21 +160,25 @@ function CrashGame() {
             setElapsedTime(0)
             multiplierRef.current = 1.00
             elapsedTimeRef.current = 0
+            flightStartTimeRef.current = null
             setFlightStartTime(null)
         } else if (room.state === 'FLYING') {
             setPhase(PHASE.RUNNING)
-            const currentMult = room.currentMultiplier || 1.00
+            const currentMult = Math.min(1000.0, Math.max(1.00, room.currentMultiplier || 1.00))
             setMultiplier(currentMult)
             multiplierRef.current = currentMult
             const fStart = room.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, currentMult)) / CRASH_GROWTH_RATE) * 1000)
+            flightStartTimeRef.current = fStart
             setFlightStartTime(fStart)
-            const elapsed = Math.max(0, (Date.now() - fStart) / 1000)
+            const elapsed = Math.max(0, Math.min(50, (Date.now() - fStart) / 1000))
             setElapsedTime(elapsed)
             elapsedTimeRef.current = elapsed
         } else if (room.state === 'CRASHED') {
             setPhase(PHASE.CRASHED)
-            setMultiplier(room.crashPoint || 1.00)
-            multiplierRef.current = room.crashPoint || 1.00
+            const bust = Math.min(1000.0, Math.max(1.00, room.crashPoint || 1.00))
+            setMultiplier(bust)
+            multiplierRef.current = bust
+            flightStartTimeRef.current = null
             setFlightStartTime(null)
         }
 
@@ -211,19 +216,50 @@ function CrashGame() {
         }
     }, [user])
 
-    // Real-Time Multiplayer Room WebSocket Connection
+    // Visibility Change & Tab Wake-up: Re-sync state immediately when returning from lock screen / background tab
     useEffect(() => {
-        if (gameMode !== 'arena') return
+        const handleWakeUp = () => {
+            if (document.visibilityState === 'visible') {
+                if (gameMode === 'arena') {
+                    sendJson({ type: 'GET_CRASH_ROOM_STATE' })
+                    getRoomCrashState().then(room => {
+                        if (room) syncRoomState(room)
+                    }).catch(() => {})
+                }
+            }
+        }
 
+        document.addEventListener('visibilitychange', handleWakeUp)
+        window.addEventListener('focus', handleWakeUp)
+        return () => {
+            document.removeEventListener('visibilitychange', handleWakeUp)
+            window.removeEventListener('focus', handleWakeUp)
+        }
+    }, [gameMode, sendJson, getRoomCrashState, syncRoomState])
+
+    // Re-sync on WebSocket reconnect
+    useEffect(() => {
+        if (isConnected && gameMode === 'arena') {
+            sendJson({ type: 'GET_CRASH_ROOM_STATE' })
+            getRoomCrashState().then(room => {
+                if (room) syncRoomState(room)
+            }).catch(() => {})
+        }
+    }, [isConnected, gameMode, sendJson, getRoomCrashState, syncRoomState])
+
+    // Real-Time Multiplayer Room & Solo Mode WebSocket Connection
+    useEffect(() => {
         let isMounted = true
 
-        // Request initial room state via WebSocket & HTTP
-        sendJson({ type: 'GET_CRASH_ROOM_STATE' })
-        getRoomCrashState().then(room => {
-            if (room && isMounted) {
-                syncRoomState(room)
-            }
-        })
+        if (gameMode === 'arena') {
+            // Request initial room state via WebSocket & HTTP
+            sendJson({ type: 'GET_CRASH_ROOM_STATE' })
+            getRoomCrashState().then(room => {
+                if (room && isMounted) {
+                    syncRoomState(room)
+                }
+            }).catch(() => {})
+        }
 
         const unsubs = [
             subscribe('CRASH_ROOM_STATE', (payload) => {
@@ -239,6 +275,7 @@ function CrashGame() {
                     setElapsedTime(0)
                     multiplierRef.current = 1.00
                     elapsedTimeRef.current = 0
+                    flightStartTimeRef.current = null
                     setFlightStartTime(null)
                     roomRoundIdRef.current = payload.roundId
                     // Reset cashed out state when countdown restarts
@@ -246,17 +283,25 @@ function CrashGame() {
                     setPanel2(p => ({ ...p, cashedOut: false, payout: 0 }))
                 } else if (payload.state === 'FLYING') {
                     setPhase(PHASE.RUNNING)
-                    setMultiplier(payload.multiplier || 1.00)
-                    multiplierRef.current = payload.multiplier || 1.00
-                    if (!flightStartTime || roomRoundIdRef.current !== payload.roundId) {
+                    const sMult = Math.min(1000.0, Math.max(1.00, payload.multiplier || 1.00))
+                    setMultiplier(sMult)
+                    multiplierRef.current = sMult
+
+                    const serverStart = payload.flightStartTime
+                    if (serverStart) {
+                        flightStartTimeRef.current = serverStart
+                        setFlightStartTime(serverStart)
+                    } else if (!flightStartTimeRef.current || roomRoundIdRef.current !== payload.roundId) {
                         roomRoundIdRef.current = payload.roundId
-                        const initialSecs = (payload.multiplier && payload.multiplier > 1.02)
-                            ? (Math.log(payload.multiplier) / CRASH_GROWTH_RATE) * 1000
+                        const initialSecs = (sMult > 1.02)
+                            ? (Math.log(sMult) / CRASH_GROWTH_RATE) * 1000
                             : 0
                         const fStart = Date.now() - initialSecs
+                        flightStartTimeRef.current = fStart
                         setFlightStartTime(fStart)
                     }
-                    const elapsed = Math.max(0, (Date.now() - (flightStartTime || Date.now())) / 1000)
+                    const fStart = flightStartTimeRef.current || Date.now()
+                    const elapsed = Math.max(0, Math.min(50, (Date.now() - fStart) / 1000))
                     setElapsedTime(elapsed)
                     elapsedTimeRef.current = elapsed
                 }
@@ -264,9 +309,10 @@ function CrashGame() {
             subscribe('CRASH_ROOM_BUST', (payload) => {
                 if (!isMounted || !payload) return
                 setPhase(PHASE.CRASHED)
-                const bustPoint = payload.crashPoint || 1.00
+                const bustPoint = Math.min(1000.0, Math.max(1.00, payload.crashPoint || 1.00))
                 setMultiplier(bustPoint)
                 multiplierRef.current = bustPoint
+                flightStartTimeRef.current = null
                 setFlightStartTime(null)
                 roomRoundIdRef.current = payload.roundId
                 if (payload.history && Array.isArray(payload.history)) {
@@ -329,6 +375,25 @@ function CrashGame() {
                         profit: payload.payout - (payload.betAmount || (panelKey === 1 ? panel1.amount : panel2.amount))
                     }, ...prev])
                 }
+            }),
+            subscribe('CRASH_SOLO_BUST', (payload) => {
+                if (!isMounted || !payload) return
+                if (activeRoundIdRef.current && activeRoundIdRef.current === payload.roundId) {
+                    setPhase(PHASE.CRASHED)
+                    const bustPoint = Math.min(1000.0, Math.max(1.00, payload.crashPoint || 1.00))
+                    setMultiplier(bustPoint)
+                    multiplierRef.current = bustPoint
+                    flightStartTimeRef.current = null
+                    setFlightStartTime(null)
+                    activeRoundIdRef.current = null
+                    casinoAudio.playCrash?.()
+                    setPanel1(p => {
+                        if (p.betPlaced && !p.cashedOut) {
+                            showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                        }
+                        return { ...p, betPlaced: false }
+                    })
+                }
             })
         ]
 
@@ -338,7 +403,7 @@ function CrashGame() {
                 if (typeof unsub === 'function') unsub()
             })
         }
-    }, [gameMode, syncRoomState, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, flightStartTime, panel1.amount, panel2.amount])
+    }, [gameMode, syncRoomState, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, panel1.amount, panel2.amount])
 
     // Place Bet Handler (for Panel 1 or Panel 2)
     const handleBet = async (amount, autoCashoutTarget, panelId = 1) => {
