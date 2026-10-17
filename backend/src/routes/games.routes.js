@@ -58,20 +58,21 @@ router.get('/provably-fair/seed', (req, res) => {
 // POST /api/games/provably-fair/verify
 router.post('/provably-fair/verify', (req, res) => {
     try {
-        const { serverSeed, clientSeed = 'amrat-player', nonce = 1, game = 'limbo', rows = 16, risk = 'medium', minesCount = 3 } = req.body
+        const { serverSeed, clientSeed = 'amrat-player', nonce = 1, roundEntropy, game = 'limbo', rows = 16, risk = 'medium', minesCount = 3 } = req.body
         if (!serverSeed) {
             return res.status(400).json({ success: false, error: 'serverSeed is required for provably fair verification' })
         }
 
+        const gameType = String(game || '').toLowerCase()
         const cleanClientSeed = String(clientSeed).trim()
         const cleanNonce = parseInt(nonce, 10) || 1
         const serverSeedSha256 = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
         let isMultiplayerCrash = (gameType === 'crash-multiplayer' || gameType === 'crash_room') || (Boolean(req.body.roundId) && String(req.body.roundId).startsWith('room_'))
-        let message = `${cleanClientSeed}:${cleanNonce}`
+        let message = roundEntropy ? `${cleanClientSeed}:${cleanNonce}:${roundEntropy}` : `${cleanClientSeed}:${cleanNonce}`
         if (isMultiplayerCrash) {
             const roundId = req.body.roundId || 'room_default'
-            message = `${roundId}:${cleanClientSeed}`
+            message = roundEntropy ? `${roundId}:${cleanClientSeed}:${roundEntropy}` : `${roundId}:${cleanClientSeed}`
         }
 
         const hmac = crypto.createHmac('sha256', serverSeed)
@@ -89,7 +90,6 @@ router.post('/provably-fair/verify', (req, res) => {
         }
 
         let result = {}
-        const gameType = String(game).toLowerCase()
 
         if (gameType === 'limbo') {
             let roll = 1.00
@@ -220,7 +220,9 @@ function evaluateGameRound({
                 betAmount: parsedAmount,
                 targetMultiplier: targetMultiplier || reqBody.multiplier || 2.0,
                 clientSeed,
-                nonce
+                nonce,
+                userId,
+                userBets
             })
             break
         }
@@ -231,7 +233,9 @@ function evaluateGameRound({
                 rows: rows || reqBody.rows || 16,
                 risk: risk || reqBody.risk || 'medium',
                 clientSeed,
-                nonce
+                nonce,
+                userId,
+                userBets
             })
             break
         }
@@ -242,7 +246,9 @@ function evaluateGameRound({
                 choice: choice || reqBody.choice || 'dragon',
                 bets: reqBody.bets,
                 clientSeed,
-                nonce
+                nonce,
+                userId,
+                userBets
             })
             break
         }
@@ -253,7 +259,9 @@ function evaluateGameRound({
                 choice: choice || reqBody.choice || 'green',
                 bets: reqBody.bets,
                 clientSeed,
-                nonce
+                nonce,
+                userId,
+                userBets
             })
             break
         }
@@ -263,7 +271,9 @@ function evaluateGameRound({
                 claimedMultiplier: claimedMultiplier || reqBody.multiplier,
                 clientSeed,
                 nonce,
-                autoCashout: reqBody.autoCashout
+                autoCashout: reqBody.autoCashout,
+                userId,
+                userBets
             })
             evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
             break

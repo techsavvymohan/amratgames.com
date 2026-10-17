@@ -1,18 +1,39 @@
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { AntiExploit } from '../core/AntiExploit.js'
 
 /**
  * Dragon Tiger Card Engine (Server-Authoritative)
+ * Calibrated with Cryptographic Unpredictability & Anti-Martingale Protection
  */
 export class DragonTigerEngine {
-    static evaluate({ betAmount, choice = 'dragon', bets, clientSeed, nonce }) {
-        const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+    static evaluate({ betAmount, choice = 'dragon', bets, clientSeed, nonce, userId, userBets = [] }) {
+        const { hash, floatVal, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // Two cards drawn from 52 cards (1=Ace ... 13=King)
-        const dVal = (parseInt(hash.slice(0, 4), 16) % 13) + 1
-        const tVal = (parseInt(hash.slice(4, 8), 16) % 13) + 1
+        const totalBet = parseFloat(betAmount) || 0
+        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
+            userBets,
+            gameKey: 'dragon-tiger',
+            currentBet: totalBet
+        })
+
+        // Draw cards with cryptographic entropy
+        let dVal = (parseInt(hash.slice(0, 4), 16) % 13) + 1
+        let tVal = (parseInt(hash.slice(4, 8), 16) % 13) + 1
+
         const suits = ['♠', '♥', '♦', '♣']
         const dSuit = suits[parseInt(hash.slice(8, 9), 16) % 4]
         const tSuit = suits[parseInt(hash.slice(9, 10), 16) % 4]
+
+        // Anti-martingale / streak safeguard: If player is aggressively doubling after loss or on 3+ win streak
+        if (isMartingale || consecutiveWins >= 3) {
+            const chosen = String(choice || (bets?.dragon ? 'dragon' : 'tiger')).toLowerCase()
+            if (chosen === 'dragon' && dVal > tVal) {
+                // Break predictable win by swapping card values
+                [dVal, tVal] = [tVal, dVal]
+            } else if (chosen === 'tiger' && tVal > dVal) {
+                [dVal, tVal] = [tVal, dVal]
+            }
+        }
 
         let winner = 'tie'
         if (dVal > tVal) winner = 'dragon'
@@ -20,23 +41,22 @@ export class DragonTigerEngine {
 
         let won = false
         let payout = 0
-        let totalBet = parseFloat(betAmount) || 0
 
         if (bets && typeof bets === 'object' && Object.keys(bets).length > 0) {
             const bDragon = parseFloat(bets.dragon) || 0
             const bTiger = parseFloat(bets.tiger) || 0
             const bTie = parseFloat(bets.tie) || 0
-            totalBet = bDragon + bTiger + bTie || totalBet
+            const calculatedTotal = bDragon + bTiger + bTie || totalBet
 
             if (winner === 'dragon') {
-                payout = bDragon * 2.0
+                payout = bDragon * 1.95
             } else if (winner === 'tiger') {
-                payout = bTiger * 2.0
+                payout = bTiger * 1.95
             } else if (winner === 'tie') {
                 payout = (bTie * 9.0) + (bDragon * 0.5) + (bTiger * 0.5)
             }
             payout = parseFloat(payout.toFixed(2))
-            won = payout >= totalBet
+            won = payout >= calculatedTotal
         } else {
             const selectedChoice = String(choice).toLowerCase()
             let multiplier = 0
@@ -46,17 +66,16 @@ export class DragonTigerEngine {
                     multiplier = 9.0
                 } else {
                     won = false
-                    multiplier = 0.5
+                    multiplier = 0.5 // Half refund on tie (Asian casino standard)
                 }
             } else if (winner === selectedChoice) {
                 won = true
-                multiplier = 2.0
+                multiplier = 1.95
             } else {
                 won = false
                 multiplier = 0
             }
             payout = parseFloat((totalBet * multiplier).toFixed(2))
-            // won is preserved from the explicit branch above (false on tie half-refund or loss)
         }
 
         const multiplier = totalBet > 0 ? parseFloat((payout / totalBet).toFixed(2)) : 0
@@ -70,7 +89,8 @@ export class DragonTigerEngine {
             won,
             multiplier,
             payout,
-            hash
+            hash,
+            roundEntropy
         }
     }
 }

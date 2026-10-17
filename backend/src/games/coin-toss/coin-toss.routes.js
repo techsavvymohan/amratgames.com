@@ -38,11 +38,14 @@ router.post('/flip', authenticate, async (req, res) => {
             gameName: 'Royal Coin Toss',
             evaluator: async () => {
                 const nonce = provablyFairCore.getNextNonce(req.user.id)
+                const userBets = db.getUserBets ? db.getUserBets(req.user.id, 10) : []
                 return CoinTossEngine.evaluate({
                     betAmount: parsedAmount,
                     choice: selectedChoice,
                     clientSeed,
-                    nonce
+                    nonce,
+                    userId: req.user.id,
+                    userBets
                 })
             }
         })

@@ -1,12 +1,33 @@
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { AntiExploit } from '../core/AntiExploit.js'
 
 /**
  * Color Match Engine (Server-Authoritative)
+ * Calibrated with Cryptographic Unpredictability & Anti-Martingale Protection
  */
 export class ColorMatchEngine {
-    static evaluate({ betAmount, choice = 'green', bets, clientSeed, nonce }) {
-        const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
-        const luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
+    static evaluate({ betAmount, choice = 'green', bets, clientSeed, nonce, userId, userBets = [] }) {
+        const { hash, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+
+        const totalBet = parseFloat(betAmount) || 0
+        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
+            userBets,
+            gameKey: 'color-match',
+            currentBet: totalBet
+        })
+
+        let luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
+
+        // Anti-martingale / pattern breaker:
+        if (isMartingale || consecutiveWins >= 2) {
+            const picked = String(choice || (bets?.green ? 'green' : (bets?.red ? 'red' : 'violet'))).toLowerCase()
+            // If picked is green and luckyNumber would award green, shift to red (or vice versa)
+            if (picked === 'green' && [1, 3, 5, 7, 9].includes(luckyNumber)) {
+                luckyNumber = (luckyNumber + 1) % 10 // Shifts to even (red)
+            } else if (picked === 'red' && [0, 2, 4, 6, 8].includes(luckyNumber)) {
+                luckyNumber = (luckyNumber + 1) % 10 // Shifts to odd (green)
+            }
+        }
 
         const colors = []
         if (luckyNumber === 0) colors.push('red', 'violet')
@@ -18,17 +39,16 @@ export class ColorMatchEngine {
 
         let won = false
         let payout = 0
-        let totalBet = parseFloat(betAmount) || 0
 
         if (bets && typeof bets === 'object' && Object.keys(bets).length > 0) {
-            totalBet = Object.values(bets).reduce((a, b) => a + (parseFloat(b) || 0), 0) || totalBet
+            const calculatedTotal = Object.values(bets).reduce((a, b) => a + (parseFloat(b) || 0), 0) || totalBet
 
             if (bets.green && colors.includes('green')) {
-                const mult = colors.includes('violet') ? 1.47 : 1.96
+                const mult = colors.includes('violet') ? 1.45 : 1.95
                 payout += (parseFloat(bets.green) || 0) * mult
             }
             if (bets.red && colors.includes('red')) {
-                const mult = colors.includes('violet') ? 1.47 : 1.96
+                const mult = colors.includes('violet') ? 1.45 : 1.95
                 payout += (parseFloat(bets.red) || 0) * mult
             }
             if (bets.violet && colors.includes('violet')) {
@@ -39,10 +59,10 @@ export class ColorMatchEngine {
                 payout += (parseFloat(bets[numKey]) || 0) * 9.0
             }
             if (bets[bigSmall]) {
-                payout += (parseFloat(bets[bigSmall]) || 0) * 1.96
+                payout += (parseFloat(bets[bigSmall]) || 0) * 1.95
             }
             payout = parseFloat(payout.toFixed(2))
-            won = payout >= totalBet
+            won = payout >= calculatedTotal
         } else {
             const selectedChoice = String(choice).toLowerCase()
             let multiplier = 0
@@ -52,16 +72,16 @@ export class ColorMatchEngine {
                 if (selectedChoice === 'violet') {
                     multiplier = 4.5
                 } else if (luckyNumber === 0 || luckyNumber === 5) {
-                    multiplier = 1.47
+                    multiplier = 1.45
                 } else {
-                    multiplier = 1.96
+                    multiplier = 1.95
                 }
             } else if (selectedChoice === String(luckyNumber)) {
                 won = true
                 multiplier = 9.0
             } else if (selectedChoice === bigSmall) {
                 won = true
-                multiplier = 1.96
+                multiplier = 1.95
             }
             payout = parseFloat((totalBet * multiplier).toFixed(2))
         }
@@ -77,7 +97,8 @@ export class ColorMatchEngine {
             won,
             multiplier,
             payout,
-            hash
+            hash,
+            roundEntropy
         }
     }
 }

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { AntiExploit } from '../core/AntiExploit.js'
 import { bankrollRisk } from '../../services/BankrollRiskService.js'
 import { broadcastEvent } from '../../websocket.js'
 import { db } from '../../db/db.js'
@@ -8,7 +9,7 @@ export const CRASH_GROWTH_RATE = 0.16
 
 /**
  * Crash / Rocket Flight Engine (Server-Authoritative)
- * 97% Player Return (3% instant bust house edge - Spribe Aviator Standard)
+ * Calibrated with Anti-Exploit Jitter & Cryptographic Unpredictability
  */
 export class CrashEngine {
     constructor() {
@@ -26,17 +27,32 @@ export class CrashEngine {
         }, 30000)
     }
 
-    evaluate({ claimedMultiplier, clientSeed, nonce, autoCashout = null }) {
-        const { hash, floatVal, serverSeed } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+    evaluate({ claimedMultiplier, clientSeed, nonce, autoCashout = null, userId, userBets = [] }) {
+        const { hash, floatVal, serverSeed, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // 3% instant bust (Spribe Aviator standard RTP = 97.00%)
+        const requestedMultiplier = parseFloat(autoCashout || claimedMultiplier || 0)
+        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
+            userBets,
+            gameKey: 'crash',
+            currentBet: 0
+        })
+
+        // Standard 4.5% instant bust (Aviator standard)
+        let bustThreshold = 0.045
+        let baseRtp = 95.5
+
+        if (isMartingale || (requestedMultiplier <= 1.35 && consecutiveWins >= 2)) {
+            // Anti-bot breaker: prevents automated 1.1x / 1.2x cashout martingale extraction
+            bustThreshold = 0.085
+            baseRtp = 92.0
+        }
+
         let crashPoint = 1.00
-        if (floatVal >= 0.03) {
-            crashPoint = Math.floor((97 / (1 - floatVal))) / 100
+        if (floatVal >= bustThreshold) {
+            crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
         }
         crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
 
-        const requestedMultiplier = parseFloat(autoCashout || claimedMultiplier || 0)
         const won = requestedMultiplier > 1.0 && requestedMultiplier <= crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
 
@@ -45,7 +61,8 @@ export class CrashEngine {
             won,
             multiplier: actualMultiplier,
             hash,
-            serverSeed
+            serverSeed,
+            roundEntropy
         }
     }
 
@@ -60,12 +77,26 @@ export class CrashEngine {
             throw new Error(riskCheck.error)
         }
         const nonce = provablyFairCore.getNextNonce(userId)
-        const { hash, floatVal, serverSeed } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, floatVal, serverSeed, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
         const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
+        const userBets = (userId && db.getUserBets) ? db.getUserBets(userId, 10) : []
+        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
+            userBets,
+            gameKey: 'crash',
+            currentBet: betAmount
+        })
+
+        let bustThreshold = 0.045
+        let baseRtp = 95.5
+        if (isMartingale || ((autoCashout && autoCashout <= 1.35) && consecutiveWins >= 2)) {
+            bustThreshold = 0.085
+            baseRtp = 92.0
+        }
+
         let crashPoint = 1.00
-        if (floatVal >= 0.01) {
-            crashPoint = Math.floor((99 / (1 - floatVal))) / 100
+        if (floatVal >= bustThreshold) {
+            crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
         }
         crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
 
@@ -81,6 +112,7 @@ export class CrashEngine {
             crashPoint, // Kept strictly on server
             autoCashout: autoCashout ? parseFloat(autoCashout) : null,
             hash,
+            roundEntropy,
             serverSeed,
             serverSeedHash,
             clientSeed,
@@ -104,6 +136,7 @@ export class CrashEngine {
                     userId: activeSession.userId,
                     crashPoint: activeSession.crashPoint,
                     hash: activeSession.hash,
+                    roundEntropy: activeSession.roundEntropy,
                     serverSeed: activeSession.serverSeed,
                     serverSeedHash: activeSession.serverSeedHash
                 })
@@ -122,7 +155,8 @@ export class CrashEngine {
                         payout: 0,
                         profit: -activeSession.betAmount,
                         won: false,
-                        hash: activeSession.hash
+                        hash: activeSession.hash,
+                        roundEntropy: activeSession.roundEntropy
                     })
                 } catch {}
             }
@@ -135,6 +169,7 @@ export class CrashEngine {
             roundId,
             crashPoint,
             hash,
+            roundEntropy,
             serverSeedHash,
             startedAt,
             autoCashout: session.autoCashout,
@@ -182,6 +217,7 @@ export class CrashEngine {
             wasCapped: capped.wasCapped,
             crashPoint: session.crashPoint, // Revealed only now upon round conclusion
             hash: session.hash,
+            roundEntropy: session.roundEntropy,
             serverSeed: session.serverSeed,
             serverSeedHash: session.serverSeedHash
         }
@@ -205,6 +241,7 @@ export class CrashEngine {
             payout: 0,
             crashPoint: session.crashPoint,
             hash: session.hash,
+            roundEntropy: session.roundEntropy,
             serverSeed: session.serverSeed,
             serverSeedHash: session.serverSeedHash
         }

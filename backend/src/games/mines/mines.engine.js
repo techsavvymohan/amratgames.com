@@ -53,14 +53,18 @@ export class MinesEngine {
         const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
         const cleanClientSeed = String(clientSeed || 'amrat-player').trim()
         const nonce = provablyFairCore.getNextNonce(userId)
-        const { hash, serverSeed } = provablyFairCore.generateHmacFloat(cleanClientSeed, nonce)
+        const { hash, serverSeed, roundEntropy } = provablyFairCore.generateHmacFloat(cleanClientSeed, nonce)
         const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
-        // Generate 25 tiles shuffled with unbiased 16-bit Fisher-Yates driven by HMAC hash
+        // Generate 25 tiles shuffled with unbiased cryptographic SHA-512 Fisher-Yates expansion
+        const entropyHash = crypto.createHmac('sha512', serverSeed)
+            .update(`${cleanClientSeed}:${nonce}:${roundEntropy || ''}`)
+            .digest('hex')
+
         const tiles = Array.from({ length: 25 }, (_, i) => i)
         for (let i = 24; i > 0; i--) {
-            const offset = ((24 - i) * 4) % 60
-            const intVal = parseInt(hash.slice(offset, offset + 4), 16)
+            const offset = (24 - i) * 4 // 24 steps * 4 chars = 96 chars (fits easily in 128-char sha512)
+            const intVal = parseInt(entropyHash.slice(offset, offset + 4), 16)
             const j = Math.floor((intVal / 0x10000) * (i + 1))
             const swapIdx = Math.min(j, i)
             ;[tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]]
@@ -82,6 +86,7 @@ export class MinesEngine {
             createdAt: Date.now(),
             serverSeed,
             serverSeedHash,
+            roundEntropy,
             clientSeed: cleanClientSeed,
             nonce,
             hash
@@ -95,6 +100,7 @@ export class MinesEngine {
             nextMultiplier: this.calculateMultiplier(count, 1),
             active: true,
             serverSeedHash,
+            roundEntropy,
             nonce
         }
     }
@@ -124,6 +130,7 @@ export class MinesEngine {
                 multiplier: 0,
                 payout: 0,
                 hash: session.hash,
+                roundEntropy: session.roundEntropy,
                 serverSeed: session.serverSeed,
                 serverSeedHash: session.serverSeedHash,
                 clientSeed: session.clientSeed,
@@ -169,6 +176,7 @@ export class MinesEngine {
             payout: autoWin ? capped.payout : 0,
             wasCapped: autoWin ? capped.wasCapped : false,
             hash: session.hash,
+            roundEntropy: session.roundEntropy,
             serverSeed: autoWin ? session.serverSeed : undefined,
             serverSeedHash: session.serverSeedHash,
             clientSeed: session.clientSeed,
@@ -204,6 +212,7 @@ export class MinesEngine {
             wasCapped: capped.wasCapped,
             allMines: session.mineIndices,
             hash: session.hash,
+            roundEntropy: session.roundEntropy,
             serverSeed: session.serverSeed,
             serverSeedHash: session.serverSeedHash,
             clientSeed: session.clientSeed,

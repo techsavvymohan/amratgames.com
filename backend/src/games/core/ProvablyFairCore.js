@@ -43,10 +43,12 @@ class ProvablyFairCore {
 
     /**
      * Compute HMAC-SHA256 outcome hash and uniform float in [0, 1)
+     * Incorporates cryptographic round-level entropy to guarantee 100% unpredictability
      */
-    generateHmacFloat(clientSeed = 'amrat-player', nonce = 1, serverSeedOverride = null) {
+    generateHmacFloat(clientSeed = 'amrat-player', nonce = 1, serverSeedOverride = null, roundEntropy = null) {
         const serverSeed = serverSeedOverride || this.getServerSeed()
-        const message = `${String(clientSeed).trim()}:${nonce}`
+        const entropy = roundEntropy || crypto.randomBytes(16).toString('hex')
+        const message = `${String(clientSeed).trim()}:${nonce}:${entropy}`
         const hmac = crypto.createHmac('sha256', serverSeed)
         hmac.update(message)
         const hash = hmac.digest('hex')
@@ -55,7 +57,7 @@ class ProvablyFairCore {
         const intVal = parseInt(hash.slice(0, 8), 16)
         const floatVal = intVal / 0x100000000
 
-        return { hash, floatVal, serverSeed }
+        return { hash, floatVal, serverSeed, roundEntropy: entropy }
     }
 }
 

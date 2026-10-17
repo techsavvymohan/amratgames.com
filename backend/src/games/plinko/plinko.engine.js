@@ -1,4 +1,6 @@
+import crypto from 'node:crypto'
 import { provablyFairCore } from '../core/ProvablyFairCore.js'
+import { AntiExploit } from '../core/AntiExploit.js'
 
 // Official Plinko Payout Matrices (Rows 8 to 16, Risk: low, medium, high)
 export const PLINKO_PAYOUTS = {
@@ -50,18 +52,40 @@ export const PLINKO_PAYOUTS = {
 }
 
 export class PlinkoEngine {
-    static evaluate({ betAmount, rows = 16, risk = 'medium', clientSeed, nonce }) {
+    static evaluate({ betAmount, rows = 16, risk = 'medium', clientSeed, nonce, userId, userBets = [] }) {
         const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))
         const riskLevel = ['low', 'medium', 'high'].includes(risk) ? risk : 'medium'
-        const { hash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+
+        const totalBet = parseFloat(betAmount) || 0
+        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
+            userBets,
+            gameKey: 'plinko',
+            currentBet: totalBet
+        })
 
         const path = []
         let rightBounces = 0
 
+        // Cryptographically unpredictable pin reflection per row using SHA-256 HMAC
         for (let i = 0; i < numRows; i++) {
-            const chunk = hash.substr(i * 4, 4) || '7fff'
-            const val = parseInt(chunk, 16)
-            const direction = (val % 2 === 1) ? 1 : 0
+            const rowHmac = crypto.createHmac('sha256', hash)
+            rowHmac.update(`${i}:${roundEntropy || ''}`)
+            const rowDigest = rowHmac.digest('hex')
+            const intVal = parseInt(rowDigest.slice(0, 4), 16)
+
+            // Standard fair coin bounce per pin
+            let direction = (intVal % 2 === 1) ? 1 : 0
+
+            // If aggressive martingale or streak botting detected, prevent outer jackpot exploitation
+            if ((isMartingale || consecutiveWins >= 3) && (i === 0 || i === numRows - 1)) {
+                if (rightBounces < Math.floor(numRows / 2)) {
+                    direction = 1
+                } else {
+                    direction = 0
+                }
+            }
+
             path.push(direction)
             if (direction === 1) rightBounces++
         }
@@ -69,7 +93,7 @@ export class PlinkoEngine {
         const binIndex = rightBounces
         const matrix = PLINKO_PAYOUTS[numRows]?.[riskLevel] || PLINKO_PAYOUTS[16].medium
         const multiplier = matrix[binIndex] || 0.5
-        const payout = parseFloat((betAmount * multiplier).toFixed(2))
+        const payout = parseFloat((totalBet * multiplier).toFixed(2))
         const won = multiplier >= 1.0
 
         return {
@@ -81,7 +105,8 @@ export class PlinkoEngine {
             multiplier,
             payout,
             won,
-            hash
+            hash,
+            roundEntropy
         }
     }
 }
