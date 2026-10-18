@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useWallet } from '../../context/WalletContext'
 import { useWebSocket } from '../../context/WebSocketContext'
 import './GameBottomHistory.css'
 
 export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = 'Coin Toss', localRounds = [] }) {
     const { user, token } = useAuth()
+    const { currencySymbol = '₹' } = useWallet?.() || {}
     const { subscribe } = useWebSocket()
     const [activeTab, setActiveTab] = useState('my_bets') // 'my_bets' | 'all_players'
     const [serverMyBets, setServerMyBets] = useState([])
@@ -81,6 +83,19 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
         }
     })
 
+    // Re-sync cachedBets when user authentication resolves
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(storageKey) || localStorage.getItem(`amrat_game_bottom_history_${normalizedKey}_guest`)
+            if (raw) {
+                const parsed = JSON.parse(raw)
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setCachedBets(parsed)
+                }
+            }
+        } catch {}
+    }, [storageKey, normalizedKey])
+
     // Merge local session rounds, server recorded bets, and persisted localStorage bets
     const displayedMyBets = useMemo(() => {
         const list = []
@@ -89,20 +104,33 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
         // 1. Session local rounds (placed right now in this component)
         if (Array.isArray(localRounds)) {
             for (const r of localRounds) {
-                const id = r.id || `${r.timestamp || r.createdAt || Date.now()}-${r.betAmount || 0}`
+                if (!r || typeof r !== 'object') continue
+                const id = r.id || `${r.timestamp || r.time || r.createdAt || Date.now()}-${r.betAmount || r.stake || r.amount || 0}`
                 if (!seenIds.has(id)) {
                     seenIds.add(id)
+                    const betAmt = Number(r.betAmount ?? r.stake ?? r.amount ?? 0)
+                    const payoutVal = typeof r.payout === 'object' && r.payout !== null
+                        ? Number(r.payout.value ?? r.payout.payout ?? 0)
+                        : Number(r.payout ?? r.winAmount ?? r.win ?? 0)
+                    const won = Boolean(r.won ?? r.winStatus ?? (payoutVal > betAmt))
+                    const multVal = typeof r.payout === 'object' && r.payout !== null && r.payout.multiplier !== undefined
+                        ? Number(r.payout.multiplier)
+                        : Number(r.multiplier ?? r.payoutMultiplier ?? (betAmt > 0 && payoutVal > 0 ? payoutVal / betAmt : (won ? 1.96 : 0)))
+
+                    let choice = r.choice || r.picked || r.selection || (r.targetMultiplier ? `Target ${r.targetMultiplier}×` : '')
+                    let outcome = r.outcome || r.result || (r.roll ? `${Number(r.roll).toFixed(2)}×` : '') || (r.resultNum !== undefined ? `Num ${r.resultNum}` : '') || (r.gemsRevealed !== undefined ? `${r.gemsRevealed} Gems` : '')
+
                     list.push({
                         id,
                         game: gameKey,
                         gameName: gameTitle,
-                        choice: r.choice || r.picked || r.selection,
-                        outcome: r.outcome || r.result,
-                        betAmount: r.betAmount || r.amount || 0,
-                        multiplier: r.multiplier !== undefined ? r.multiplier : (r.won ? 1.95 : 0),
-                        payout: r.payout !== undefined ? r.payout : (r.won ? (r.betAmount * 1.95) : 0),
-                        won: Boolean(r.won || (r.payout > (r.betAmount || 0))),
-                        createdAt: r.timestamp || r.createdAt || new Date().toISOString(),
+                        choice,
+                        outcome,
+                        betAmount: betAmt,
+                        multiplier: multVal,
+                        payout: payoutVal,
+                        won,
+                        createdAt: r.timestamp || r.time || r.createdAt || new Date().toISOString(),
                         isLocal: true
                     })
                 }
@@ -250,11 +278,17 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
                                         <td className="col-detail">
                                             <span className={`detail-pill ${isWin ? 'won' : 'lost'}`}>
                                                 {gameKey === 'coin-toss' && '🪙 '}
+                                                {gameKey === 'mines' && '💎 '}
+                                                {gameKey === 'plinko' && '🔴 '}
+                                                {gameKey === 'crash' && '🚀 '}
+                                                {gameKey === 'dragon-tiger' && '🐉 '}
+                                                {gameKey === 'color-match' && '🎯 '}
+                                                {gameKey === 'limbo' && '⚡ '}
                                                 {detailText}
                                             </span>
                                         </td>
                                         <td className="col-amount">
-                                            ₹{betAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            {currencySymbol}{betAmt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </td>
                                         <td className="col-multiplier">
                                             <span className={`multiplier-tag ${isWin ? 'mult-win' : 'mult-bust'}`}>
@@ -263,7 +297,7 @@ export default function GameBottomHistory({ gameKey = 'coin-toss', gameTitle = '
                                         </td>
                                         <td className="col-payout" style={{ textAlign: 'right' }}>
                                             <span className={`profit-text ${isWin ? 'text-profit' : 'text-loss'}`}>
-                                                {isWin ? '+' : ''}₹{Math.abs(profitAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                {isWin ? '+' : ''}{currencySymbol}{Math.abs(profitAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                         </td>
                                     </tr>

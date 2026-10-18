@@ -336,6 +336,15 @@ export function WalletProvider({ children }) {
             return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
         }
         try {
+            const { deferBalanceUpdate, ...payloadToSend } = betPayload || {}
+            const parsedBet = parseFloat(payloadToSend.betAmount) || 0
+
+            // If deferBalanceUpdate is requested (e.g. Plinko ball falling, Coin spinning, Cards dealing),
+            // deduct the bet immediately from the visual balance so the user sees their stake placed
+            if (deferBalanceUpdate && parsedBet > 0) {
+                setStoredBalance(Math.max(0, balanceRef.current - parsedBet))
+            }
+
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
                 headers.Authorization = `Bearer ${token}`
@@ -345,20 +354,22 @@ export function WalletProvider({ children }) {
                 headers,
                 body: JSON.stringify({
                     currency: currencyRef.current,
-                    ...betPayload
+                    ...payloadToSend
                 })
             })
             const data = await res.json()
             if (data.success) {
-                if (data.balances) {
-                    const updatedBal = data.balances[currencyRef.current]
-                    if (typeof updatedBal === 'number') {
-                        setStoredBalance(updatedBal)
+                const targetBal = (data.balances && typeof data.balances[currencyRef.current] === 'number')
+                    ? data.balances[currencyRef.current]
+                    : Math.max(0, balanceRef.current - (deferBalanceUpdate ? 0 : parsedBet) + (parseFloat(data.payout ?? data.evaluation?.payout) || 0))
+
+                if (deferBalanceUpdate) {
+                    // Provide a commitBalance callback that the game triggers when the animation completes
+                    data.commitBalance = () => {
+                        setStoredBalance(targetBal)
                     }
                 } else {
-                    const parsedBet = parseFloat(betPayload.betAmount) || 0
-                    const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
-                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet + payout))
+                    setStoredBalance(targetBal)
                 }
             }
             return data

@@ -19,20 +19,22 @@ export async function dropPlinkoBall({
     pendingDrops.current++;
     try {
         let binIndex = Math.floor(rowCount / 2);
+        let commitBalance = null;
 
         if (executeGameBet) {
-            if (engine.getActiveBallCount() >= MAX_ACTIVE_BALLS) return 'busy';
             const betRes = await executeGameBet({
                 game: 'plinko',
                 gameName: 'Plinko',
                 betAmount,
                 rows: rowCount,
-                risk: riskLevel
+                risk: riskLevel,
+                deferBalanceUpdate: true
             });
             if (!betRes || !betRes.success) {
                 return { success: false, error: betRes?.error || 'Failed to place bet', code: betRes?.code };
             }
             binIndex = betRes.binIndex ?? betRes.evaluation?.binIndex ?? binIndex;
+            commitBalance = betRes.commitBalance;
         } else if (provablyFair) {
             const fairnessResult = await provablyFair.generatePlinkoPath(rowCount);
             if (isCancelled()) return 'cancelled';
@@ -46,7 +48,7 @@ export async function dropPlinkoBall({
 
         casinoAudio.playBet();
         engine.updateBallStyle(currentBall.color, currentBall.image);
-        return engine.dropBall(binIndex, selectedBallType) ? 'dropped' : 'busy';
+        return engine.dropBall(binIndex, selectedBallType, false, betAmount, commitBalance) ? 'dropped' : 'busy';
     } finally {
         pendingDrops.current--;
     }

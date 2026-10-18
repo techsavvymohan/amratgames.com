@@ -145,7 +145,6 @@ function PlinkoGame() {
         }
     }, [winRecords]);
 
-    const [landingNotification, setLandingNotification] = useState(null);
     const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted());
     const [selectedBallType, setSelectedBallType] = useState('normal');
 
@@ -238,15 +237,19 @@ function PlinkoGame() {
         return ball.multiplierBonus || 1;
     }, []);
 
-    // Handle ball enter bin (Visual and records update; financial transaction handled server-authoritatively on drop)
+    // Active floating visual coin feedback popups
+    const [landingPopups, setLandingPopups] = useState([]);
+
+    // Handle ball enter bin (Visual, financial settlement, and records update)
     const handleBallEnterBin = useCallback((data) => {
         const ballType = data.ballType || selectedBallType;
         const actualBall = BALL_TYPES[ballType] || BALL_TYPES.normal;
 
         const actualMultiplier = Number(data.payout?.multiplier || 1.0);
-        const currentEffectiveBet = (betAmount || 10) * actualBall.cost;
-        const finalPayout = currentEffectiveBet * actualMultiplier;
+        const currentEffectiveBet = parseFloat(data.betAmount) || ((betAmount || 10) * actualBall.cost);
+        const finalPayout = Number(data.payout?.value ?? (currentEffectiveBet * actualMultiplier));
         const profit = finalPayout - currentEffectiveBet;
+        const isWin = profit >= 0;
 
         casinoAudio.playBinLand(actualMultiplier);
         if (actualMultiplier >= 5) {
@@ -256,19 +259,20 @@ function PlinkoGame() {
         }
 
         // Active floating visual coin feedback
-        const isWin = profit >= 0;
-        setLandingNotification({
-            id: Date.now() + Math.random(),
+        const popupId = Date.now() + Math.random();
+        const newPopup = {
+            id: popupId,
             isWin,
             profit,
             payout: finalPayout,
             multiplier: actualMultiplier,
             binIndex: data.binIndex,
             ballName: actualBall.name
-        });
+        };
+        setLandingPopups(prev => [...prev.slice(-3), newPopup]);
         setTimeout(() => {
-            setLandingNotification(null);
-        }, 2500);
+            setLandingPopups(prev => prev.filter(p => p.id !== popupId));
+        }, 2400);
 
         if (data.isDemo) {
             if (actualMultiplier >= 1.5) {
@@ -295,16 +299,16 @@ function PlinkoGame() {
 
         const newRecord = {
             id: Date.now() + Math.random(),
-            ...data,
+            game: 'plinko',
+            gameName: 'Plinko',
+            betAmount: currentEffectiveBet,
+            multiplier: actualMultiplier,
+            payout: finalPayout,
+            profit,
+            won: isWin,
+            binIndex: data.binIndex,
             ballType: ballType,
             bonusMultiplier: 1,
-            payout: {
-                ...data.payout,
-                multiplier: actualMultiplier,
-                value: finalPayout,
-                originalMultiplier: actualMultiplier
-            },
-            profit,
             createdAt: new Date().toISOString()
         };
 
@@ -320,7 +324,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-    }, [selectedBallType, maxStreak, betAmount, minBet, currencySymbol, showToast]);
+    }, [selectedBallType, maxStreak, betAmount, currencySymbol, showToast]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {
@@ -609,15 +613,23 @@ function PlinkoGame() {
 
                     {/* Plinko Game Area */}
                     <div className="plinko-game-wrapper" style={{ position: 'relative' }}>
-                        {landingNotification && (
-                            <div className={`plinko-landing-popup ${landingNotification.isWin ? 'win-popup' : 'loss-popup'}`}>
-                                <span className="landing-coin-icon">{landingNotification.isWin ? '🪙' : '⚪'}</span>
-                                <span className="landing-mult-badge">{landingNotification.multiplier.toFixed(2)}x</span>
+                        {landingPopups.map((popup) => (
+                            <div
+                                key={popup.id}
+                                className={`plinko-landing-popup ${popup.isWin ? 'win-popup' : 'loss-popup'}`}
+                                style={{
+                                    left: typeof popup.binIndex === 'number'
+                                        ? `${Math.max(12, Math.min(88, ((popup.binIndex + 0.5) / (rowCount + 1)) * 100))}%`
+                                        : '50%'
+                                }}
+                            >
+                                <span className="landing-coin-icon">{popup.isWin ? '🪙' : '⚪'}</span>
+                                <span className="landing-mult-badge">{popup.multiplier.toFixed(2)}x</span>
                                 <span className="landing-amount-text">
-                                    {landingNotification.isWin ? '+' : '-'}{currencySymbol}{Math.abs(landingNotification.profit).toFixed(2)}
+                                    {popup.isWin ? '+' : '-'}{currencySymbol}{Math.abs(popup.profit).toFixed(2)}
                                 </span>
                             </div>
-                        )}
+                        ))}
                         {spectatorMissedWin && (
                             <MissedWinBanner
                                 outcome={spectatorMissedWin.outcome}

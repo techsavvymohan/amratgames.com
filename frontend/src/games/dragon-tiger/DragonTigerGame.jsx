@@ -56,6 +56,14 @@ function DragonTigerGame() {
 
     // Real-time dynamic history roadmap (No demo data)
     const [history, setHistory] = useState([])
+    const [localRoundsHistory, setLocalRoundsHistory] = useState(() => {
+        try {
+            const raw = localStorage.getItem('amrat_dragontiger_history')
+            return raw ? JSON.parse(raw) : []
+        } catch {
+            return []
+        }
+    })
 
     // Fairness
     const [fairnessOpen, setFairnessOpen] = useState(false)
@@ -123,6 +131,7 @@ function DragonTigerGame() {
                 gameName: 'Dragon Tiger',
                 betAmount: totalBet,
                 choice: primaryChoice,
+                deferBalanceUpdate: true,
                 bets: {
                     dragon: bets.dragon,
                     tie: bets.tie,
@@ -160,6 +169,11 @@ function DragonTigerGame() {
         setTigerCard(tCard)
 
         setTimeout(() => {
+            // Commit winning coins to user balance at moment of card reveal
+            if (typeof betResponse.commitBalance === 'function') {
+                betResponse.commitBalance()
+            }
+
             setRevealed(true)
             setIsDealing(false)
 
@@ -169,6 +183,24 @@ function DragonTigerGame() {
 
             const payout = betResponse.payout ?? evalData.payout ?? 0
             const won = Boolean(betResponse.won ?? evalData.won)
+
+            const newHistoryRecord = {
+                id: `dt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                game: 'dragon-tiger',
+                gameName: 'Dragon vs Tiger',
+                choice: primaryChoice,
+                outcome: winner,
+                betAmount: totalBet,
+                multiplier: totalBet > 0 ? parseFloat((payout / totalBet).toFixed(2)) : 0,
+                payout,
+                won,
+                createdAt: new Date().toISOString()
+            }
+            setLocalRoundsHistory(prev => {
+                const next = [newHistoryRecord, ...prev.slice(0, 49)]
+                try { localStorage.setItem('amrat_dragontiger_history', JSON.stringify(next)) } catch {}
+                return next
+            })
 
             if (won && payout > 0) {
                 if (winner === 'tie' || (payout / totalBet) >= 3) {
@@ -181,7 +213,7 @@ function DragonTigerGame() {
                 playSound('loss')
                 notifyLoss(totalBet)
             }
-        }, 900)
+        }, 1200)
     }, [isDealing, totalBet, balance, bets, executeGameBet, notifyWin, notifyLoss])
 
     return (
@@ -417,6 +449,15 @@ function DragonTigerGame() {
                 </div>
             </div>
 
+            {/* Live Persistent Bet History Table (Directly Beneath Main Game Board) */}
+            <div className="dt-bottom-history-section" style={{ width: '100%', maxWidth: '1200px', margin: '24px auto 0', padding: '0 16px' }}>
+                <GameBottomHistory
+                    gameKey="dragon-tiger"
+                    gameTitle="Dragon vs Tiger"
+                    localRounds={localRoundsHistory}
+                />
+            </div>
+
             {/* Slide-out Game Specific Round History Drawer */}
             <Drawer
                 title="Dragon Tiger · Live Round History"
@@ -432,6 +473,7 @@ function DragonTigerGame() {
                 <GameBottomHistory
                     gameKey="dragon-tiger"
                     gameTitle="Dragon Tiger"
+                    localRounds={localRoundsHistory}
                 />
             </Drawer>
 
