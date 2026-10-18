@@ -37,21 +37,21 @@ export class CrashEngine {
             currentBet: 0
         })
 
-        // Standard 4.5% instant bust (Aviator standard)
-        let bustThreshold = 0.045
-        let baseRtp = 95.5
+        // Calibrated 7.5% instant bust for robust house margin
+        let bustThreshold = 0.075
+        let baseRtp = 95.0
 
         if (isMartingale || (requestedMultiplier <= 1.35 && consecutiveWins >= 2)) {
             // Anti-bot breaker: prevents automated 1.1x / 1.2x cashout martingale extraction
-            bustThreshold = 0.085
-            baseRtp = 92.0
+            bustThreshold = 0.12
+            baseRtp = 90.0
         }
 
         let crashPoint = 1.00
         if (floatVal >= bustThreshold) {
             crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 100.00))
 
         const won = requestedMultiplier > 1.0 && requestedMultiplier <= crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
@@ -87,18 +87,28 @@ export class CrashEngine {
             currentBet: betAmount
         })
 
-        let bustThreshold = 0.045
-        let baseRtp = 95.5
+        let bustThreshold = 0.075
+        let baseRtp = 95.0
         if (isMartingale || ((autoCashout && autoCashout <= 1.35) && consecutiveWins >= 2)) {
-            bustThreshold = 0.085
-            baseRtp = 92.0
+            bustThreshold = 0.12
+            baseRtp = 90.0
         }
 
         let crashPoint = 1.00
         if (floatVal >= bustThreshold) {
             crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 100.00))
+
+        // Dynamic Bankroll Liability Protection
+        const maxSingleRoundExposure = bankrollRisk.getMaxProfitCap(currency) || 50000.00
+        const parsedBet = parseFloat(betAmount)
+        if (parsedBet > 0) {
+            const maxSafeMultiplier = (maxSingleRoundExposure / parsedBet) + 1.0
+            if (crashPoint > maxSafeMultiplier) {
+                crashPoint = Math.max(1.10, parseFloat(maxSafeMultiplier.toFixed(2)))
+            }
+        }
 
         const roundId = 'crash_' + Date.now().toString(36) + crypto.randomBytes(4).toString('hex')
         const startedAt = Date.now()

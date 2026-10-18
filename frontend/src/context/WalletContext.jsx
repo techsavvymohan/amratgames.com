@@ -605,6 +605,26 @@ export function WalletProvider({ children }) {
         }
     }, [token, setStoredBalance])
 
+    const cancelRoomCrashBet = useCallback(async ({ panelId = 1 } = {}) => {
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/crash/room/cancel', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ panelId: panelId || 1 })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [token, setStoredBalance])
+
     const getRoomCrashState = useCallback(async () => {
         try {
             const res = await fetch('/api/games/crash/room/state')
@@ -891,6 +911,7 @@ export function WalletProvider({ children }) {
         getActiveCrashRound,
         placeRoomCrashBet,
         cashoutRoomCrash,
+        cancelRoomCrashBet,
         getRoomCrashState,
         getVipStatus,
         claimVipRakeback,

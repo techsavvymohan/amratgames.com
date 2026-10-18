@@ -85,12 +85,12 @@ export class CrashRoomService {
         const intVal = parseInt(hexSub, 16)
         const floatVal = intVal / Math.pow(2, 52)
 
-        // 3% instant bust (Spribe Aviator standard RTP = 97.00%)
+        // 8% instant bust (Spribe Aviator standard RTP = 96.00%)
         let point = 1.00
-        if (floatVal >= 0.03) {
-            point = Math.floor((97 / (1 - floatVal))) / 100
+        if (floatVal >= 0.08) {
+            point = Math.floor((96.0 / (1 - floatVal))) / 100
         }
-        this.crashPoint = Math.max(1.00, Math.min(point, 1000.0))
+        this.crashPoint = Math.max(1.00, Math.min(point, 100.00))
 
         broadcastEvent('CRASH_ROOM_STATE', this.getState())
     }
@@ -99,6 +99,21 @@ export class CrashRoomService {
         this.state = 'FLYING'
         this.flightStartTime = Date.now()
         this.currentMultiplier = 1.00
+
+        // Asymmetric Bankroll Risk Protection: Calculate total room stake & cap liability
+        let totalActiveStake = 0
+        for (const bet of this.activeBets.values()) {
+            totalActiveStake += (parseFloat(bet.betAmount) || 0)
+        }
+
+        // Limit maximum single-round net house loss to bankroll risk cap (₹50,000 INR)
+        const maxSingleRoundExposure = bankrollRisk.getMaxProfitCap('INR') || 50000.00
+        if (totalActiveStake > 0) {
+            const maxSafeMultiplier = (maxSingleRoundExposure / totalActiveStake) + 1.0
+            if (this.crashPoint > maxSafeMultiplier) {
+                this.crashPoint = Math.max(1.10, parseFloat(maxSafeMultiplier.toFixed(2)))
+            }
+        }
 
         broadcastEvent('CRASH_ROOM_STATE', this.getState())
     }
@@ -447,6 +462,50 @@ export class CrashRoomService {
         }
     }
 
+    async cancelBet({ userId, panelId = 1 }) {
+        if (this.state !== 'WAITING') {
+            const err = new Error('Cannot cancel bet once the flight countdown has ended')
+            err.status = 400
+            err.code = 'NOT_IN_WAITING_PHASE'
+            throw err
+        }
+
+        const numericPanelId = parseInt(panelId, 10) || 1
+        const betKey = numericPanelId === 1 ? userId : `${userId}:${numericPanelId}`
+        const bet = this.activeBets.get(betKey) || (numericPanelId === 1 ? this.activeBets.get(`${userId}:1`) : null)
+
+        if (!bet) {
+            const err = new Error('No active bet found to cancel')
+            err.status = 400
+            err.code = 'NO_ACTIVE_BET'
+            throw err
+        }
+
+        const updatedUser = await db.withUserLock(userId, async () => {
+            db.updateUserBalance(userId, bet.currency, bet.betAmount, `Crash Multiplayer Cancel Bet Refund (Slot ${numericPanelId})`)
+            return db.findUserById(userId)
+        })
+
+        this.activeBets.delete(betKey)
+        if (numericPanelId === 1) {
+            this.activeBets.delete(`${userId}:1`)
+        }
+
+        broadcastEvent('CRASH_ROOM_BET_CANCELLED', {
+            userId,
+            panelId: numericPanelId,
+            roundId: this.roundId
+        })
+
+        return {
+            success: true,
+            roundId: this.roundId,
+            panelId: numericPanelId,
+            refundedAmount: bet.betAmount,
+            balances: updatedUser.balances
+        }
+    }
+
     getPublicBets() {
         const list = []
         for (const b of this.activeBets.values()) {
@@ -462,6 +521,14 @@ export class CrashRoomService {
             })
         }
         return list
+    }
+
+    getActiveBets() {
+        return this.getPublicBets()
+    }
+
+    getRecentHistory() {
+        return this.history.slice(0, 10)
     }
 
     getState() {

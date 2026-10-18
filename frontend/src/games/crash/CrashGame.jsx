@@ -55,6 +55,7 @@ function CrashGame() {
         getActiveCrashRound,
         placeRoomCrashBet,
         cashoutRoomCrash,
+        cancelRoomCrashBet,
         getRoomCrashState,
         showToast,
         currencySymbol,
@@ -487,8 +488,23 @@ function CrashGame() {
     }
 
     // Cancel Bet Handler before takeoff
-    const handleCancel = (panelId = 1) => {
+    const handleCancel = async (panelId = 1) => {
         if (phase !== PHASE.WAITING) return
+        if (gameMode === 'arena') {
+            const res = await cancelRoomCrashBet({ panelId })
+            if (res && res.success) {
+                if (panelId === 1) {
+                    setPanel1(prev => ({ ...prev, betPlaced: false }))
+                } else {
+                    setPanel2(prev => ({ ...prev, betPlaced: false }))
+                }
+                showToast('info', 'Bet Cancelled', `Returned ${currencySymbol}${res.refundedAmount || (panelId === 1 ? panel1.amount : panel2.amount)}`)
+            } else {
+                showToast('error', 'Cancellation Failed', res?.error || 'Could not cancel bet')
+            }
+            return
+        }
+
         if (panelId === 1) {
             setPanel1(prev => ({ ...prev, betPlaced: false }))
         } else {

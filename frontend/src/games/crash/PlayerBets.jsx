@@ -21,40 +21,35 @@ const BOT_NAMES_POOL = [
     'meera_j', 'rohan_m', 'shivam_t', 'prateek_g', 'nikhil_r'
 ]
 
-// Weighted realistic stake amounts
+// Weighted realistic consumer stake amounts (₹20 to ₹1,000)
 const REALISTIC_STAKES = [
-    50, 100, 100, 150, 200, 200, 250, 300, 500, 500, 750, 1000, 1000,
-    1250, 1500, 2000, 2000, 2500, 3000, 4500, 5000, 6000, 7000, 8500, 10000
+    20, 25, 50, 50, 100, 100, 150, 200, 200, 250, 300, 400, 500, 500, 800, 1000
 ]
 
-function generateRandomBots(count = 30) {
+function generateRandomBots(count = 28) {
     const shuffledNames = [...BOT_NAMES_POOL].sort(() => 0.5 - Math.random())
     const bots = []
 
     for (let i = 0; i < Math.min(count, shuffledNames.length); i++) {
         const username = shuffledNames[i]
         const rawStake = REALISTIC_STAKES[Math.floor(Math.random() * REALISTIC_STAKES.length)]
-        // Add occasional realistic decimals
-        const betAmount = Math.random() < 0.25 ? rawStake + parseFloat((Math.random() * 99).toFixed(2)) : rawStake
+        const betAmount = rawStake
 
         // Weighted target multiplier distribution
         const r = Math.random()
         let targetMultiplier
-        if (r < 0.30) {
+        if (r < 0.40) {
             // Early safe cashouts (1.12x - 1.45x)
             targetMultiplier = parseFloat((1.12 + Math.random() * 0.33).toFixed(2))
-        } else if (r < 0.65) {
-            // Mid steady cashouts (1.46x - 2.25x)
-            targetMultiplier = parseFloat((1.46 + Math.random() * 0.79).toFixed(2))
-        } else if (r < 0.85) {
-            // Higher cashouts (2.26x - 4.80x)
-            targetMultiplier = parseFloat((2.26 + Math.random() * 2.54).toFixed(2))
-        } else if (r < 0.95) {
-            // High flyers (4.81x - 9.50x)
-            targetMultiplier = parseFloat((4.81 + Math.random() * 4.69).toFixed(2))
+        } else if (r < 0.75) {
+            // Mid steady cashouts (1.46x - 2.10x)
+            targetMultiplier = parseFloat((1.46 + Math.random() * 0.64).toFixed(2))
+        } else if (r < 0.92) {
+            // Higher cashouts (2.11x - 3.80x)
+            targetMultiplier = parseFloat((2.11 + Math.random() * 1.69).toFixed(2))
         } else {
-            // Moon shots (10x - 30x)
-            targetMultiplier = parseFloat((10.0 + Math.random() * 20.0).toFixed(2))
+            // Top flyers (3.81x - 6.50x)
+            targetMultiplier = parseFloat((3.81 + Math.random() * 2.69).toFixed(2))
         }
 
         bots.push({
@@ -159,15 +154,18 @@ function PlayerBets({
 
     // Real-time turnover & total wins dynamically calculated as bots cash out
     const stats = useMemo(() => {
-        const totalWon = allBetsList
+        const liveWon = allBetsList
             .filter((b) => b.cashedOut && b.payout > 0)
             .reduce((sum, b) => sum + (parseFloat(b.payout) || 0), 0)
 
-        const totalBetsCount = 2279
-        const cashedCount = 1890 + allBetsList.filter((b) => b.cashedOut).length
+        // Realistic live total won calibrated to standard turnover (₹3,400 to ₹16,500)
+        const cappedWon = Math.min(Math.max(liveWon, 3420.50), 16500.00)
+
+        const totalBetsCount = 184
+        const cashedCount = 112 + allBetsList.filter((b) => b.cashedOut).length
 
         return {
-            totalWon: totalWon > 0 ? totalWon : 37597.97,
+            totalWon: parseFloat(cappedWon.toFixed(2)),
             cashedCount,
             totalBetsCount
         }
@@ -193,14 +191,14 @@ function PlayerBets({
         }
     }, [userHistory])
 
-    // Top wins
+    // Top wins (calibrated to realistic community achievements)
     const topWinsList = useMemo(() => {
         return [
-            { id: 't1', username: 'royal_ace', betAmount: 10000.00, multiplier: 12.85, payout: 128500.00 },
-            { id: 't2', username: 'crypto_whale', betAmount: 5000.00, multiplier: 18.40, payout: 92000.00 },
-            { id: 't3', username: 'gold_striker', betAmount: 8500.00, multiplier: 7.20, payout: 61200.00 },
-            { id: 't4', username: 'sky_walker', betAmount: 2000.00, multiplier: 24.50, payout: 49000.00 },
-            { id: 't5', username: 'amrat_king', betAmount: 4000.00, multiplier: 9.80, payout: 39200.00 }
+            { id: 't1', username: 'royal_ace', betAmount: 1000.00, multiplier: 8.85, payout: 8850.00 },
+            { id: 't2', username: 'crypto_whale', betAmount: 500.00, multiplier: 12.40, payout: 6200.00 },
+            { id: 't3', username: 'gold_striker', betAmount: 800.00, multiplier: 5.60, payout: 4480.00 },
+            { id: 't4', username: 'sky_walker', betAmount: 250.00, multiplier: 15.20, payout: 3800.00 },
+            { id: 't5', username: 'amrat_king', betAmount: 500.00, multiplier: 4.80, payout: 2400.00 }
         ]
     }, [])
 

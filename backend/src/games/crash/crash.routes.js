@@ -253,4 +253,22 @@ const handleRoomCashout = async (req, res) => {
 router.post('/room/cashout', authenticate, handleRoomCashout)
 router.post('/room-cashout', authenticate, handleRoomCashout)
 
+// POST /api/games/crash/room/cancel and /api/games/crash/room-cancel
+const handleRoomCancel = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, error: 'Authentication required to cancel bet' })
+        }
+        const { panelId = 1 } = req.body || {}
+        const result = await crashRoomService.cancelBet({ userId: req.user.id, panelId })
+        const user = db.findUserById(req.user.id)
+        res.json({ success: true, ...result, balances: user.balances })
+    } catch (err) {
+        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
+    }
+}
+router.post('/room/cancel', authenticate, handleRoomCancel)
+router.post('/room-cancel', authenticate, handleRoomCancel)
+
 export default router
+
