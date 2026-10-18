@@ -1265,33 +1265,38 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 /* Interactive Data Hub (Tabs: Game History · Trend Chart · My Bets) */
 .cm-data-hub {
     background: #0f141f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 22px;
-    padding: 20px 24px;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .cm-hub-tabs {
     display: flex;
-    gap: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 12px;
-    margin-bottom: 16px;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 .cm-hub-tab {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     background: none;
-    border: none;
+    border: 1px solid transparent;
     color: #94a3b8;
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 11px;
+    font-weight: 700;
     cursor: pointer;
-    padding: 6px 14px;
-    border-radius: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    letter-spacing: 0.2px;
+}
+
+.cm-hub-tab svg {
+    font-size: 11.5px;
 }
 
 .cm-hub-tab:hover {
@@ -1302,52 +1307,89 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 .cm-hub-tab.active {
     color: #ffd700;
     background: rgba(255, 215, 0, 0.12);
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.25);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+    font-weight: 800;
+}
+
+.cm-tab-panel {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.cm-tab-panel::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.cm-tab-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cm-tab-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.cm-tab-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 215, 0, 0.35);
 }
 
 .cm-data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .cm-data-table th {
     color: #64748b;
-    font-weight: 800;
+    font-weight: 700;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .cm-data-table td {
-    padding: 12px 10px;
+    padding: 5px 6px;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
 }
 
 .col-period {
     color: #94a3b8;
     font-family: monospace;
+    font-size: 10.5px;
+    letter-spacing: -0.2px;
 }
 
 .cm-mini-ball {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     color: #ffffff;
     font-weight: 900;
-    font-size: 14px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    font-size: 10.5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    vertical-align: middle;
 }
 
 .cm-pill-tag {
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 800;
-    padding: 3px 12px;
-    border-radius: 6px;
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    display: inline-block;
+    line-height: 1.3;
 }
 
 .tag-big {
@@ -1365,36 +1407,37 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 .cm-dots-cluster {
     display: flex;
     justify-content: center;
-    gap: 6px;
+    align-items: center;
+    gap: 4px;
 }
 
 .cm-dot {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
 }
 
-.dot-green { background: #00e676; box-shadow: 0 0 8px rgba(0, 230, 118, 0.7); }
-.dot-red { background: #ff1744; box-shadow: 0 0 8px rgba(255, 23, 68, 0.7); }
-.dot-violet { background: #9c27b0; box-shadow: 0 0 8px rgba(156, 39, 176, 0.7); }
+.dot-green { background: #00e676; box-shadow: 0 0 6px rgba(0, 230, 118, 0.6); }
+.dot-red { background: #ff1744; box-shadow: 0 0 6px rgba(255, 23, 68, 0.6); }
+.dot-violet { background: #9c27b0; box-shadow: 0 0 6px rgba(156, 39, 176, 0.6); }
 
 /* Occurrence Statistics Matrix */
 .cm-trend-chart-panel {
-    padding: 10px 0;
+    padding: 6px 0;
 }
 
 .cm-chart-header {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: 10.5px;
+    font-weight: 700;
     color: #94a3b8;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 .cm-matrix-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 8px;
-    height: 140px;
+    gap: 4px;
+    height: 80px;
     align-items: flex-end;
 }
 
@@ -1402,16 +1445,16 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     height: 100%;
     justify-content: flex-end;
 }
 
 .cm-matrix-bar-wrap {
     width: 100%;
-    height: 90px;
+    height: 52px;
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
+    border-radius: 4px;
     display: flex;
     align-items: flex-end;
     overflow: hidden;
@@ -1420,27 +1463,27 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 .cm-matrix-bar {
     width: 100%;
     background: linear-gradient(180deg, #ffd700, #d97706);
-    border-radius: 4px;
+    border-radius: 3px;
     transition: height 0.4s ease;
 }
 
 .cm-matrix-num {
-    font-size: 13px;
-    font-weight: 900;
+    font-size: 10.5px;
+    font-weight: 800;
     color: #ffffff;
 }
 
 .cm-matrix-count {
-    font-size: 11px;
+    font-size: 9px;
     color: #ffd700;
     font-weight: 700;
 }
 
 .cm-empty-history {
-    padding: 30px;
+    padding: 16px;
     text-align: center;
     color: #64748b;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 /* Provably Fair Modal Styles */
@@ -1971,36 +2014,40 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-data-hub {
-        border-radius: 14px !important;
+        border-radius: 12px !important;
         overflow: hidden !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        padding: 8px 10px !important;
     }
 
     .cm-hub-tabs {
         display: flex !important;
         overflow-x: auto !important;
         gap: 4px !important;
+        padding-bottom: 6px !important;
+        margin-bottom: 6px !important;
     }
 
     .cm-hub-tab {
-        padding: 8px 12px !important;
-        font-size: 11px !important;
+        padding: 3px 8px !important;
+        font-size: 10.5px !important;
         white-space: nowrap !important;
     }
 
     .cm-tab-panel {
-        max-height: 280px !important;
+        max-height: 200px !important;
         overflow-y: auto !important;
-        padding: 6px !important;
+        padding: 2px !important;
+        scrollbar-width: thin !important;
     }
 
     .cm-data-table {
-        font-size: 11px !important;
+        font-size: 10.5px !important;
     }
 
     .cm-data-table th,
     .cm-data-table td {
-        padding: 6px 4px !important;
+        padding: 4px 3px !important;
     }
 }
