@@ -53,7 +53,7 @@
 
     .cm-stage-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 8px;
         margin-bottom: 0 !important;
     }
@@ -347,17 +347,11 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     font-size: 13px;
 }
 
-/* Main Stage Grid (Dial + Last Result) */
+/* Main Stage Grid (Last Result) */
 .cm-stage-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
-}
-
-@media (max-width: 700px) {
-    .cm-stage-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Countdown Dial Card */
@@ -1673,7 +1667,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     .cm-stage-grid {
         display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        grid-template-columns: 1fr !important;
         gap: 6px !important;
         width: 100% !important;
         box-sizing: border-box !important;
