@@ -399,7 +399,7 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
     })
 
     it('verifies Server-Authoritative Crash round session lifecycle and cashout validation', () => {
-        const session = gameEngine.startCrashRound({
+        let session = gameEngine.startCrashRound({
             userId: 'test_crash_player',
             currency: 'INR',
             betAmount: 100,
@@ -415,8 +415,35 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.ok(active, 'Must find active crash session')
         assert.equal(active.roundId, session.roundId)
 
+        // If the provably fair roll produced an instant bust (crashPoint <= 1.01),
+        // cashout at 1.01x must correctly resolve as loss
+        if (session.crashPoint <= 1.01) {
+            const bustCashout = gameEngine.cashoutCrash({
+                userId: 'test_crash_player',
+                roundId: session.roundId,
+                multiplier: 1.01
+            })
+            assert.equal(bustCashout.won, false, 'Cashout on instant 1.00x bust must result in loss')
+            assert.equal(bustCashout.payout, 0)
+            assert.equal(gameEngine.getActiveCrashRound('test_crash_player'), null)
+
+            // Start a subsequent round to test the winning cashout lifecycle
+            let attempt = 0
+            do {
+                session = gameEngine.startCrashRound({
+                    userId: 'test_crash_player',
+                    currency: 'INR',
+                    betAmount: 100,
+                    clientSeed: `seed_abc_win_${attempt++}`
+                })
+                if (session.crashPoint <= 1.01) {
+                    gameEngine.cashoutCrash({ userId: 'test_crash_player', roundId: session.roundId, multiplier: 1.01 })
+                }
+            } while (session.crashPoint <= 1.01 && attempt < 20)
+        }
+
         // Cashout below crash point must win
-        const safeMultiplier = Math.max(1.01, parseFloat((session.crashPoint * 0.5).toFixed(2)))
+        const safeMultiplier = parseFloat((1.0 + (session.crashPoint - 1.0) * 0.5).toFixed(2))
         const cashout = gameEngine.cashoutCrash({
             userId: 'test_crash_player',
             roundId: session.roundId,
