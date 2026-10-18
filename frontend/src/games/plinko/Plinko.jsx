@@ -74,13 +74,18 @@ function BinsRow({ rowCount, riskLevel, winRecords, binsWidthPercentage }) {
     );
 }
 
-function LastWins({ winRecords, winCount = 4 }) {
+function LastWins({ winRecords, winCount = 4, onOpenHistory }) {
     const lastWins = winRecords.slice(-winCount).reverse();
 
     if (lastWins.length === 0) return null;
 
     return (
-        <div className="last-wins" style={{ '--win-count': winCount }}>
+        <div
+            className="last-wins"
+            style={{ '--win-count': winCount, cursor: onOpenHistory ? 'pointer' : 'default' }}
+            onClick={onOpenHistory}
+            title="Click to view round history"
+        >
             {lastWins.map((win, i) => {
                 const binColors = getBinColors(win.rowCount);
                 return (
@@ -104,7 +109,8 @@ function Plinko({
     winRecords,
     onBallEnterBin,
     onBalanceChange,
-    engineRef
+    engineRef,
+    onOpenHistory
 }) {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
@@ -200,7 +206,7 @@ function Plinko({
                     />
                 </div>
             </div>
-            <LastWins winRecords={winRecords} />
+            <LastWins winRecords={winRecords} onOpenHistory={onOpenHistory} />
         </div>
     );
 }

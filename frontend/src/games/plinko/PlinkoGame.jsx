@@ -31,7 +31,8 @@ import {
     BugOutlined,
     CloseOutlined,
     ReloadOutlined,
-    LineChartOutlined
+    LineChartOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
 import Chart from 'chart.js/auto';
 import Plinko from './Plinko';
@@ -640,9 +641,8 @@ function PlinkoGame() {
                             onBalanceChange={handleBalanceChange}
                             engineRef={engineRef}
                             ballColor={currentBall.color}
+                            onOpenHistory={() => setHistoryDrawerOpen(true)}
                         />
-
-
 
                         {/* Bottom Controls */}
                         <div className="plinko-controls">
@@ -681,6 +681,14 @@ function PlinkoGame() {
                                             setSoundEnabled(next);
                                             casinoAudio.setMuted(!next);
                                         }}
+                                    />
+                                </Tooltip>
+                                <Tooltip title="Round History & Ledger">
+                                    <Button
+                                        type="text"
+                                        icon={<HistoryOutlined />}
+                                        className="control-btn"
+                                        onClick={() => setHistoryDrawerOpen(true)}
                                     />
                                 </Tooltip>
                             </Space>
@@ -757,21 +765,6 @@ function PlinkoGame() {
                     </div>
                 </div>
             </div>
-
-            {/* In-Window Persistent Game History Beneath Plinko */}
-            <GameBottomHistory
-                gameKey="plinko"
-                gameTitle="Plinko"
-                localRounds={winRecords.map(r => ({
-                    id: r.id,
-                    betAmount: r.betAmount,
-                    multiplier: r.payout?.multiplier || 1,
-                    payout: r.payout?.value || (r.betAmount * (r.payout?.multiplier || 1)),
-                    won: (r.payout?.multiplier || 0) >= 1.0,
-                    outcome: `${(r.payout?.multiplier || 1).toFixed(2)}x (Bin ${r.binIndex !== undefined ? r.binIndex : '-'})`,
-                    createdAt: r.createdAt || r.timestamp || new Date().toISOString()
-                }))}
-            />
 
             {/* Statistics Mini Window / Profit Chart */}
             {statsDrawerOpen && (
@@ -975,6 +968,33 @@ function PlinkoGame() {
                     Verify Game
                 </Button>
             </Modal>
+
+            {/* Round History & Ledger Drawer */}
+            <Drawer
+                title="📜 Plinko Round History & Ledger"
+                placement="right"
+                width={520}
+                open={historyDrawerOpen}
+                onClose={() => setHistoryDrawerOpen(false)}
+                styles={{
+                    body: { padding: 12, background: '#0b101b' },
+                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
+                }}
+            >
+                <GameBottomHistory
+                    gameKey="plinko"
+                    gameTitle="Plinko"
+                    localRounds={winRecords.map(r => ({
+                        id: r.id,
+                        betAmount: r.betAmount,
+                        multiplier: r.payout?.multiplier || 1,
+                        payout: r.payout?.value || (r.betAmount * (r.payout?.multiplier || 1)),
+                        won: (r.payout?.multiplier || 0) >= 1.0,
+                        outcome: `${(r.payout?.multiplier || 1).toFixed(2)}x (Bin ${r.binIndex !== undefined ? r.binIndex : '-'})`,
+                        createdAt: r.createdAt || r.timestamp || new Date().toISOString()
+                    }))}
+                />
+            </Drawer>
         </div>
     );
 }

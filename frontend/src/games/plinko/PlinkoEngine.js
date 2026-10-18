@@ -61,11 +61,10 @@ class PlinkoEngine {
 
     _setupCanvasHDPI() {
         const dpr = window.devicePixelRatio || 1;
-        // The CSS size is fixed to WIDTH x HEIGHT
         this.canvas.width = WIDTH * dpr;
         this.canvas.height = HEIGHT * dpr;
-        this.canvas.style.width = `${WIDTH}px`;
-        this.canvas.style.height = `${HEIGHT}px`;
+        this.canvas.style.maxWidth = '100%';
+        this.canvas.style.maxHeight = '100%';
 
         // Normalize coordinate system to use css pixels
         this.ctx.scale(dpr, dpr);
