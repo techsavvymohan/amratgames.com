@@ -21,7 +21,7 @@ import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import PvPDuelsArena from './PvPDuelsArena'
 import './CoinTossGame.css'
 
-const MULTIPLIER = 1.95 // 95% RTP / Calibrated 5% House Edge with Anti-Exploit Protection
+const MULTIPLIER = 1.96 // 96% RTP / 4% House Edge Provably Fair
 const MIN_BET = 10
 const MAX_BET = 100000
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000]

@@ -14,8 +14,8 @@ export class CoinTossEngine {
         const oppositeChoice = selectedChoice === 'heads' ? 'tails' : 'heads'
         const totalBet = parseFloat(betAmount) || 0
 
-        // 1. Base Win Threshold (47.5% player win probability = ~5% house edge at 1.95x)
-        let winThreshold = 0.475
+        // 1. Base Win Threshold (48.0% player win probability = 4% house edge at 1.96x)
+        let winThreshold = 0.480
 
         // 2. Anti-Martingale & Streak Safeguard
         const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
@@ -34,7 +34,7 @@ export class CoinTossEngine {
         // 3. Determine Outcome
         const won = floatVal < winThreshold
         const outcome = won ? selectedChoice : oppositeChoice
-        const multiplier = won ? 1.95 : 0
+        const multiplier = won ? 1.96 : 0
         const payout = won ? parseFloat((totalBet * multiplier).toFixed(2)) : 0
 
         return {

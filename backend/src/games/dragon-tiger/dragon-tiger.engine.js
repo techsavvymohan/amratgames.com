@@ -49,9 +49,9 @@ export class DragonTigerEngine {
             const calculatedTotal = bDragon + bTiger + bTie || totalBet
 
             if (winner === 'dragon') {
-                payout = bDragon * 1.95
+                payout = bDragon * 2.0
             } else if (winner === 'tiger') {
-                payout = bTiger * 1.95
+                payout = bTiger * 2.0
             } else if (winner === 'tie') {
                 payout = (bTie * 9.0) + (bDragon * 0.5) + (bTiger * 0.5)
             }
@@ -70,7 +70,7 @@ export class DragonTigerEngine {
                 }
             } else if (winner === selectedChoice) {
                 won = true
-                multiplier = 1.95
+                multiplier = 2.0
             } else {
                 won = false
                 multiplier = 0
