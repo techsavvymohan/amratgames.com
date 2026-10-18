@@ -64,21 +64,51 @@ test('Mines keeps the square board ahead of a collapsible betting sheet', async 
 })
 
 
-test('Crash prioritizes chart, cashout, and mobile player tabs', async () => {
+test('Crash prioritizes Aviator cockpit, flight arena, dual panels, and history', async () => {
     const [game, panel, history, css] = await sources([
         './src/games/crash/CrashGame.jsx',
         './src/games/crash/BettingPanel.jsx',
         './src/games/crash/GameHistory.jsx',
         './src/games/crash/CrashGame.css',
     ])
-    assert.match(game, /<MobileBetSheet[^>]*title="Crash bet controls"/)
-    assert.match(game, /mobileDataTab/)
-    assert.match(game, /crash-mobile-tabs/)
-    assert.match(game, /showPlayerBets && mobileDataTab === 'bets'/)
-    assert.match(panel, /mobile-sheet-secondary/)
-    assert.match(history, /crash-history-drawer-portal mobile-game-modal/)
-    assert.match(css, /\.game-history-bar[\s\S]*overflow-x:\s*auto/)
-    assert.match(css, /\.crash-mobile-tabs/)
+    assert.match(game, /aviator-game-viewport/)
+    assert.match(game, /aviator-main-layout/)
+    assert.match(game, /aviator-stage-column/)
+    assert.match(game, /aviator-dual-panels-wrap/)
+    assert.match(game, /handleCancel/)
+    assert.match(panel, /bet-btn/)
+    assert.match(history, /aviator-history-pill/)
+    assert.match(css, /\.aviator-game-viewport/)
+})
+
+test('Profile Page optimizes layout across laptop, tablet, and mobile with live synchronized balance', async () => {
+    const [profileJsx, profileCss] = await sources([
+        './src/pages/ProfilePage.jsx',
+        './src/pages/ProfilePage.css',
+    ])
+
+    // Live balance from useWallet() with currency symbol and refresh
+    assert.match(profileJsx, /useWallet\(\)/)
+    assert.match(profileJsx, /refreshBalance/)
+    assert.match(profileJsx, /currencySymbol/)
+    assert.match(profileJsx, /profile-hero-balance-val/)
+    assert.match(profileJsx, /openWalletModal/)
+
+    // Unified contact details card
+    assert.match(profileJsx, /profile-contact-card/)
+    assert.match(profileJsx, /profile-contact-grid/)
+
+    // Responsive CSS queries for all 3 viewports: Laptop, Tablet, Mobile
+    assert.match(profileCss, /@media\s*\(min-width:\s*769px\)\s*and\s*\(max-width:\s*1024px\)/)
+    assert.match(profileCss, /@media\s*\(max-width:\s*768px\)/)
+    assert.match(profileCss, /@media\s*\(max-width:\s*480px\)/)
+
+    // Mobile safe-area top padding avoids header overlap
+    assert.match(profileCss, /padding-top:\s*calc\(var\(--mobile-header-height/)
+
+    // Horizontal smooth scrolling subnav on mobile
+    assert.match(profileCss, /scroll-snap-type:\s*x mandatory/)
+    assert.match(profileCss, /overflow-x:\s*auto/)
 })
 
 test('Plinko mobile presentation preserves board ratio and critical controls', async () => {

@@ -55,7 +55,10 @@ function CrashGame() {
         getActiveCrashRound,
         placeRoomCrashBet,
         cashoutRoomCrash,
+        cancelRoomCrashBet,
         getRoomCrashState,
+        updateBalance,
+        addWinnings,
         showToast,
         currencySymbol,
         currency
@@ -383,6 +386,13 @@ function CrashGame() {
                     showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}x`, 4000)
                     casinoAudio.playCashout?.()
 
+                    // Real-time coin balance sync on auto-cashout or room broadcast
+                    if (payload.balances && typeof payload.balances[currency] === 'number') {
+                        updateBalance(payload.balances[currency])
+                    } else if (typeof payload.payout === 'number' && payload.payout > 0) {
+                        addWinnings(payload.payout)
+                    }
+
                     // Add record
                     setGameRecords(prev => [{
                         id: Date.now(),
@@ -487,14 +497,24 @@ function CrashGame() {
     }
 
     // Cancel Bet Handler before takeoff
-    const handleCancel = (panelId = 1) => {
+    const handleCancel = async (panelId = 1) => {
         if (phase !== PHASE.WAITING) return
-        if (panelId === 1) {
-            setPanel1(prev => ({ ...prev, betPlaced: false }))
-        } else {
-            setPanel2(prev => ({ ...prev, betPlaced: false }))
+        try {
+            const res = await cancelRoomCrashBet({ panelId })
+            if (res && res.success) {
+                if (panelId === 1) {
+                    setPanel1(prev => ({ ...prev, betPlaced: false }))
+                } else {
+                    setPanel2(prev => ({ ...prev, betPlaced: false }))
+                }
+                const refunded = res.refundedAmount || (panelId === 1 ? panel1.amount : panel2.amount)
+                showToast('info', 'Bet Cancelled', `Your stake of ${currencySymbol}${Number(refunded).toFixed(2)} was returned`)
+            } else {
+                showToast('error', 'Cancel Failed', res?.error || 'Unable to cancel bet')
+            }
+        } catch (err) {
+            showToast('error', 'Cancel Failed', err.message || 'Unable to cancel bet')
         }
-        showToast('info', 'Bet Cancelled', 'Your stake was returned')
     }
 
     // Cash Out Handler (for Panel 1 or Panel 2)

@@ -298,6 +298,24 @@ export function AuthProvider({ children }) {
         return data
     }
 
+    // Update balances on user state and persist in local storage
+    const updateUserBalances = useCallback((newBalances) => {
+        setUser(prev => {
+            if (!prev) return prev
+            const updated = {
+                ...prev,
+                balances: {
+                    ...(prev.balances || {}),
+                    ...newBalances
+                }
+            }
+            try {
+                localStorage.setItem(USER_KEY, JSON.stringify(updated))
+            } catch {}
+            return updated
+        })
+    }, [])
+
     const value = {
         user,
         token,
@@ -322,7 +340,8 @@ export function AuthProvider({ children }) {
         getBetsHistory,
         getPaymentsHistory,
         checkAuthStatus,
-        saveAuth
+        saveAuth,
+        updateUserBalances
     }
 
     return (

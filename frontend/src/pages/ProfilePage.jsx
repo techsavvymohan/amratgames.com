@@ -8,9 +8,16 @@ import './ProfilePage.css'
 
 export default function ProfilePage() {
     const { user, logout, updateProfile, changePassword, submitKycVerification, getBetsHistory, getPaymentsHistory } = useAuth()
-    const { getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission, currencySymbol } = useWallet()
+    const { balance, currency, currencySymbol, refreshBalance, openWalletModal, getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission } = useWallet()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
+
+    // Sync live wallet balance on mount
+    useEffect(() => {
+        if (refreshBalance) {
+            refreshBalance()
+        }
+    }, [refreshBalance])
 
     const [activeTab, setActiveTab] = useState(() => {
         const t = searchParams.get('tab')
@@ -116,6 +123,7 @@ export default function ProfilePage() {
         if (res && res.success) {
             setRakebackMsg(`✓ Claimed ${currencySymbol}${res.claimedAmount.toFixed(2)} rakeback directly to your wallet!`)
             loadVip()
+            refreshBalance?.()
         } else {
             setRakebackMsg(`⚠️ ${res?.error || 'Failed to claim rakeback'}`)
         }
@@ -138,6 +146,7 @@ export default function ProfilePage() {
         if (res && res.success) {
             setCommissionMsg(`✓ Claimed ${currencySymbol}${res.claimedAmount.toFixed(2)} commission directly to your wallet!`)
             loadAffiliate()
+            refreshBalance?.()
         } else {
             setCommissionMsg(`⚠️ ${res?.error || 'Failed to claim commission'}`)
         }
@@ -296,16 +305,43 @@ export default function ProfilePage() {
                     <div className="profile-hero-meta">
                         {user.phone && <span className="profile-meta-item">📱 +91 {user.phone}</span>}
                         {user.email && <span className="profile-meta-item">✉️ {user.email}</span>}
-                        {user.id && <span className="profile-meta-item">🆔 ID: {String(user.id).slice(0, 8)}...</span>}
+                        {user.id && (
+                            <span
+                                className="profile-meta-item profile-meta-copyable"
+                                onClick={handleCopyUuid}
+                                title="Click to copy User ID"
+                            >
+                                🆔 ID: {String(user.id).slice(0, 8)}... {copiedUuid ? '✓' : '📋'}
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="profile-hero-balance-box">
-                    <div className="profile-hero-balance-label">Cash Wallet</div>
+                    <div className="profile-hero-balance-header">
+                        <span className="profile-hero-balance-label">Cash Wallet</span>
+                        <span className="profile-hero-currency-tag">{currency}</span>
+                    </div>
                     <div className="profile-hero-balance-val">
-                        {currencySymbol}{(user.balances?.INR || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        {currencySymbol}{(balance ?? user?.balances?.[currency] ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                     <div className="profile-hero-sub-balance">
-                        Vault: {(user.balances?.AMRAT || 0).toLocaleString()} $AMRAT
+                        <span>Vault:</span> {(user?.balances?.AMRAT ?? 0).toLocaleString()} $AMRAT
+                    </div>
+                    <div className="profile-hero-balance-actions">
+                        <button
+                            type="button"
+                            className="profile-hero-action-btn deposit"
+                            onClick={() => openWalletModal?.('deposit')}
+                        >
+                            ⚡ Deposit
+                        </button>
+                        <button
+                            type="button"
+                            className="profile-hero-action-btn withdraw"
+                            onClick={() => openWalletModal?.('withdraw')}
+                        >
+                            💳 Withdraw
+                        </button>
                     </div>
                 </div>
             </div>
@@ -394,44 +430,55 @@ export default function ProfilePage() {
                     {/* TAB 1: PROFILE */}
                     {activeTab === 'profile' && (
                         <>
-                            {/* Cards: Phone & Email in 2-col on Laptop */}
-                            <div className="profile-cards-grid-2col">
-                                {/* Card 1: Phone Number */}
-                                <div className="profile-card">
-                                    <div className="profile-card-title">Phone number</div>
-                                    <div className="profile-verified-field">
-                                        <div className="profile-flag-pill">
-                                            <span>🇮🇳</span>
-                                            <span>+91</span>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            className="profile-verified-input"
-                                            value={user.phone || '7470718282'}
-                                            readOnly
-                                        />
-                                        <div className="profile-badge-check" title="Verified Phone Number">✓</div>
-                                    </div>
+                            {/* Card 1: Verified Contacts (Unified & Responsive) */}
+                            <div className="profile-card profile-contact-card">
+                                <div className="profile-card-header-row">
+                                    <h3 className="profile-card-title">
+                                        <span>📱 Verified Contact Details</span>
+                                    </h3>
+                                    <span className="profile-card-status-badge">🛡️ Level 2 Secured</span>
                                 </div>
+                                <div className="profile-contact-grid">
+                                    <div className="profile-input-group">
+                                        <label className="profile-input-label">Phone Number</label>
+                                        <div className="profile-verified-field">
+                                            <div className="profile-flag-pill">
+                                                <span>🇮🇳</span>
+                                                <span>+91</span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                className="profile-verified-input"
+                                                value={user.phone || ''}
+                                                placeholder="Phone not added"
+                                                readOnly
+                                            />
+                                            <div className="profile-badge-check" title="Verified Phone Number">✓</div>
+                                        </div>
+                                    </div>
 
-                                {/* Card 2: Email */}
-                                <div className="profile-card">
-                                    <div className="profile-card-title">Email</div>
-                                    <div className="profile-verified-field">
-                                        <input
-                                            type="text"
-                                            className="profile-verified-input"
-                                            value={user.email || 'anuragsingh01321@gmail.com'}
-                                            readOnly
-                                        />
-                                        <div className="profile-badge-check" title="Verified Email">✓</div>
+                                    <div className="profile-input-group">
+                                        <label className="profile-input-label">Email Address</label>
+                                        <div className="profile-verified-field">
+                                            <span style={{ fontSize: '1rem', marginRight: '6px' }}>✉️</span>
+                                            <input
+                                                type="text"
+                                                className="profile-verified-input"
+                                                value={user.email || ''}
+                                                placeholder="Email not added"
+                                                readOnly
+                                            />
+                                            <div className="profile-badge-check" title="Verified Email">✓</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Card 3: Main Info */}
+                            {/* Card 2: Main Info */}
                             <div className="profile-card">
-                                <div className="profile-card-title">Main Info</div>
+                                <h3 className="profile-card-title">
+                                    <span>👤 Personal Details</span>
+                                </h3>
 
                                 <form onSubmit={handleUpdateData}>
                                     {/* UUID */}
@@ -616,9 +663,11 @@ export default function ProfilePage() {
                         </form>
                     </div>
 
-                    {/* Card 4: Change Password */}
+                    {/* Card 3: Change Password */}
                     <div className="profile-card">
-                        <div className="profile-card-title">Change password</div>
+                        <h3 className="profile-card-title">
+                            <span>🔒 Change Password</span>
+                        </h3>
 
                         <form onSubmit={handleChangePassword}>
                             <div className="profile-input-group">

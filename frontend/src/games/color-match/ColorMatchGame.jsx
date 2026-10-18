@@ -152,14 +152,14 @@ function ColorMatchGame() {
 
         // Apply visual/sound notifications
         if (isWin && totalWin > 0) {
-            notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match #${periodId}!`)
+            notifyWin?.(totalWin, totalStaked > 0 ? (totalWin / totalStaked).toFixed(2) : 1)
             if ((totalWin / (totalStaked || 1)) >= 3) {
                 casinoAudio.playBigWin()
             } else {
                 casinoAudio.playWin()
             }
         } else if (Object.keys(activeBets).length > 0) {
-            notifyLoss?.(`Round #${periodId} result: ${winningNum}. Better luck next round!`)
+            notifyLoss?.(totalStaked)
             casinoAudio.playLoss()
         }
 
