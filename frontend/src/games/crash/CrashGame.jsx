@@ -738,7 +738,7 @@ function CrashGame() {
             </div>
 
             {/* In-Window Persistent Bet History Directly Underneath Crash Game */}
-            <div className="aviator-bottom-history-section" style={{ maxWidth: '1240px', margin: '0 auto', padding: '16px 12px 28px' }}>
+            <div className="aviator-bottom-history-section">
                 <GameBottomHistory
                     gameKey="crash"
                     gameTitle="Aviator Crash"
