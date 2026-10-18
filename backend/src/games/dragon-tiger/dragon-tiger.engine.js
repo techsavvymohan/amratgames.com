@@ -46,14 +46,18 @@ export class DragonTigerEngine {
             const bDragon = parseFloat(bets.dragon) || 0
             const bTiger = parseFloat(bets.tiger) || 0
             const bTie = parseFloat(bets.tie) || 0
-            const calculatedTotal = bDragon + bTiger + bTie || totalBet
+            const bSuitedTie = parseFloat(bets.suitedTie) || 0
+            const calculatedTotal = bDragon + bTiger + bTie + bSuitedTie || totalBet
+
+            const isSuitedTie = (dVal === tVal && dSuit === tSuit)
 
             if (winner === 'dragon') {
                 payout = bDragon * 2.0
             } else if (winner === 'tiger') {
                 payout = bTiger * 2.0
             } else if (winner === 'tie') {
-                payout = (bTie * 9.0) + (bDragon * 0.5) + (bTiger * 0.5)
+                const suitedTiePayout = (bSuitedTie > 0 && isSuitedTie) ? (bSuitedTie * 51.0) : 0
+                payout = (bTie * 9.0) + suitedTiePayout + (bDragon * 0.5) + (bTiger * 0.5)
             }
             payout = parseFloat(payout.toFixed(2))
             won = payout >= calculatedTotal
