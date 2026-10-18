@@ -374,10 +374,16 @@ export function WalletProvider({ children }) {
 
                 if (deferBalanceUpdate) {
                     let hasCommitted = false
+                    let safetyTimer = null
+
                     // Provide a commitBalance callback that the game triggers when the visual animation completes
                     data.commitBalance = () => {
                         if (hasCommitted) return
                         hasCommitted = true
+                        if (safetyTimer) {
+                            clearTimeout(safetyTimer)
+                            safetyTimer = null
+                        }
                         inFlightDeferredBetsRef.current = Math.max(0, inFlightDeferredBetsRef.current - 1)
 
                         // 1. If there is a payout, add it directly to current live balance (avoids overwriting concurrent bets)
@@ -385,9 +391,13 @@ export function WalletProvider({ children }) {
                             setStoredBalance(balanceRef.current + payout)
                         }
 
-                        // 2. If all concurrent in-flight bets have settled, reconcile to exact server balance
-                        if (inFlightDeferredBetsRef.current === 0 && data.balances && typeof data.balances[currencyRef.current] === 'number') {
-                            setStoredBalance(data.balances[currencyRef.current])
+                        // 2. If all concurrent in-flight bets have settled, reconcile to latest authoritative server balance
+                        if (inFlightDeferredBetsRef.current === 0) {
+                            if (refreshBalance) {
+                                refreshBalance()
+                            } else if (data.balances && typeof data.balances[currencyRef.current] === 'number') {
+                                setStoredBalance(data.balances[currencyRef.current])
+                            }
                         }
 
                         // 3. Record in live transactions log
@@ -401,15 +411,27 @@ export function WalletProvider({ children }) {
                             timestamp: new Date()
                         }, ...txs].slice(0, 100))
                     }
+
+                    // Failsafe: If animation is interrupted, tab switched, or unmounted, ensure balance commits within 12s
+                    safetyTimer = setTimeout(() => {
+                        if (!hasCommitted && typeof data.commitBalance === 'function') {
+                            data.commitBalance()
+                        }
+                    }, 12000)
                 } else {
-                    setStoredBalance(targetBal)
+                    // Non-deferred bet (instant): if there are in-flight deferred bets, apply delta; otherwise targetBal
+                    if (inFlightDeferredBetsRef.current > 0) {
+                        setStoredBalance(balanceRef.current - parsedBet + payout)
+                    } else {
+                        setStoredBalance(targetBal)
+                    }
                     setTransactions(txs => [{
                         id: Date.now() + Math.random(),
                         type: payout >= parsedBet ? 'win' : 'bet',
                         currency: currencyRef.current,
                         symbol: CURRENCIES[currencyRef.current]?.symbol || '₹',
                         amount: payout > 0 ? payout - parsedBet : -parsedBet,
-                        balance: targetBal,
+                        balance: balanceRef.current,
                         timestamp: new Date()
                     }, ...txs].slice(0, 100))
                 }
@@ -429,7 +451,7 @@ export function WalletProvider({ children }) {
             }
             return { success: false, error: err.message }
         }
-    }, [user, authContext, token, setStoredBalance])
+    }, [user, authContext, token, setStoredBalance, refreshBalance])
 
     // Server-Authoritative Mines Lifecycle Methods
     const startMinesRound = useCallback(async ({ betAmount, minesCount, clientSeed }) => {

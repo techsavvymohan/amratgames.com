@@ -63,7 +63,8 @@ function MinesGame() {
         startMinesRound,
         revealMinesTile,
         cashoutMinesRound,
-        getActiveMinesRound
+        getActiveMinesRound,
+        refreshBalance
     } = useWallet();
     const [isPlaying, setIsPlaying] = useState(false);
     const [roundId, setRoundId] = useState(null);
@@ -490,6 +491,7 @@ function MinesGame() {
                 setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
             }
             setRoundId(null);
+            if (refreshBalance) refreshBalance();
         } finally {
             isCashingOutRef.current = false;
         }
@@ -559,6 +561,7 @@ function MinesGame() {
                     setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
                 }
                 setRoundId(null);
+                if (refreshBalance) refreshBalance();
             } else {
                 // Hit a safe diamond gem!
                 setRevealedTiles(prev => {
@@ -603,6 +606,7 @@ function MinesGame() {
                         setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
                     }
                     setRoundId(null);
+                    if (refreshBalance) refreshBalance();
                 }
             }
         } finally {
