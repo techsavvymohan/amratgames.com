@@ -39,11 +39,20 @@ function sanitizeUser(user) {
     return safeUser
 }
 
-// ── 1. Password Login (Email, Phone, or Username) ──────────
+function maskEmail(email) {
+    if (!email || !email.includes('@')) return email
+    const [name, domain] = email.split('@')
+    if (name.length <= 2) {
+        return `${name[0]}***@${domain}`
+    }
+    return `${name[0]}***${name.slice(-1)}@${domain}`
+}
+
+// ── 1. Password Login (Email, Phone, or Username) with Mandatory Email OTP ──
 // POST /api/auth/login
 router.post('/login', loginRateLimiter, (req, res) => {
     try {
-        const { login, password } = req.body
+        const { login, password, otp } = req.body
         if (!login || !password) {
             return res.status(400).json({ success: false, error: 'Email / Phone / Username and password are required' })
         }
@@ -60,6 +69,45 @@ router.post('/login', loginRateLimiter, (req, res) => {
         const valid = bcrypt.compareSync(password, user.passwordHash)
         if (!valid) {
             return res.status(401).json({ success: false, error: 'Invalid password. Please check your credentials.' })
+        }
+
+        const userEmail = (user.email && user.email.includes('@')) ? user.email.toLowerCase().trim() : null
+        if (!userEmail) {
+            return res.status(400).json({
+                success: false,
+                error: 'No registered email found on this account. Please contact support@amratgames.com.'
+            })
+        }
+
+        // STEP 1: If OTP is not provided, generate and dispatch OTP to registered email
+        if (!otp) {
+            const { otp: generatedOtp, expiresAt } = db.generateOtp(userEmail)
+
+            emailService.sendOtpEmail({
+                to: userEmail,
+                otp: generatedOtp,
+                username: user.username || 'Player'
+            }).catch(e => {
+                console.warn('[AUTH] Notice sending sign-in OTP email:', e.message)
+            })
+
+            return res.json({
+                success: true,
+                requireOtp: true,
+                email: maskEmail(userEmail),
+                cleanEmail: userEmail,
+                expiresAt,
+                message: `Verification code sent to your registered email (${maskEmail(userEmail)})`
+            })
+        }
+
+        // STEP 2: If OTP is provided, verify against the user's registered email
+        const isValid = db.verifyOtp(userEmail, otp)
+        if (!isValid) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired OTP verification code. Please check your email or click resend.'
+            })
         }
 
         // Update last login
@@ -94,25 +142,25 @@ router.post('/send-otp', otpRateLimiter, (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid mobile number or email' })
         }
 
-        const target = isEmail ? cleanId.toLowerCase() : normalizedPhone
+        let target = isEmail ? cleanId.toLowerCase() : normalizedPhone
 
         // Purpose-based validation guard
         if (purpose === 'login') {
-            if (!isEmail) {
-                return res.status(400).json({
-                    success: false,
-                    code: 'SMS_OTP_UNAVAILABLE',
-                    error: 'Mobile SMS OTP is currently unavailable. Please enter your registered email address to receive your login verification OTP, or log in with your password.'
-                })
-            }
             const existingUser = db.findUserByLogin(target)
             if (!existingUser) {
                 return res.status(404).json({
                     success: false,
                     code: 'ACCOUNT_NOT_FOUND',
-                    error: `No registered account found with email ${cleanId}. Please check the spelling or create an account in the Register tab.`
+                    error: `No registered account found for ${cleanId}. Please check the spelling or create an account in the Register tab.`
                 })
             }
+            if (!existingUser.email || !existingUser.email.includes('@')) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'No registered email found on this account to receive OTP.'
+                })
+            }
+            target = existingUser.email.toLowerCase()
         } else if (purpose === 'register') {
             const existing = isEmail ? db.findUserByEmail(target) : db.findUserByPhone(target)
             if (existing) {

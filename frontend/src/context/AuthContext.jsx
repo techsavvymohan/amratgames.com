@@ -92,17 +92,25 @@ export function AuthProvider({ children }) {
         setIsAuthModalOpen(false)
     }, [])
 
-    // Login with Email OR Phone OR Username + Password
-    const login = async (loginId, password) => {
+    // Login with Email OR Phone OR Username + Password (with Mandatory Email OTP)
+    const login = async (loginId, password, otp = undefined) => {
         try {
+            const payload = { login: String(loginId).trim(), password }
+            if (otp !== undefined && otp !== null && String(otp).trim()) {
+                payload.otp = String(otp).trim()
+            }
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ login: String(loginId).trim(), password })
+                body: JSON.stringify(payload)
             })
             const data = await res.json()
             if (!res.ok || !data.success) {
                 throw new Error(data.error || 'Login failed')
+            }
+            // If server requires Email OTP verification code
+            if (data.requireOtp) {
+                return data
             }
             saveAuth(data.token, data.user)
             setIsAuthModalOpen(false)

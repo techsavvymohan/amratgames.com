@@ -1429,6 +1429,60 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.equal(userInDb.nonce, 3, 'User nonce must be persisted in DB to prevent replay attacks')
     })
 
+    it('verifies mandatory Email OTP verification on sign-in (login requires OTP sent to user registered email)', async () => {
+        const bcrypt = (await import('bcryptjs')).default
+        const testEmail = `test_login_otp_${Date.now()}@amratgames.com`
+        const password = 'SuperSecretPassword123!'
+        const passwordHash = bcrypt.hashSync(password, 10)
+
+        const testUser = db.createUser({
+            username: `otp_user_${Date.now()}`,
+            email: testEmail,
+            phone: '9876543299',
+            passwordHash,
+            role: 'player'
+        })
+
+        const callLogin = async (body) => {
+            return new Promise((resolve) => {
+                const req = { body, headers: {} }
+                const res = {
+                    statusCode: 200,
+                    status(code) { this.statusCode = code; return this },
+                    json(data) { resolve({ statusCode: this.statusCode, data }) }
+                }
+                const routeLayer = authRoutes.stack.find(l => l.route && l.route.path === '/login')
+                const handler = routeLayer.route.stack[routeLayer.route.stack.length - 1].handle
+                handler(req, res)
+            })
+        }
+
+        // Step 1: Submit credentials without OTP
+        const step1 = await callLogin({ login: testEmail, password })
+        assert.equal(step1.statusCode, 200)
+        assert.equal(step1.data.requireOtp, true, 'Login without OTP must return requireOtp: true')
+        assert.ok(step1.data.email.includes('***'), 'Email must be masked for user security')
+        assert.equal(step1.data.cleanEmail, testEmail)
+        assert.equal(step1.data.token, undefined, 'JWT session token must NOT be issued before OTP verification')
+
+        // Step 2: Attempt login with incorrect OTP
+        const step2 = await callLogin({ login: testEmail, password, otp: '000000' })
+        assert.equal(step2.statusCode, 400)
+        assert.equal(step2.data.success, false)
+        assert.match(step2.data.error, /invalid or expired otp/i)
+
+        // Step 3: Retrieve generated OTP from DB and verify successful login
+        const otpRecord = db.otps.get(testEmail)
+        assert.ok(otpRecord && otpRecord.otp, 'Active OTP record must exist for the user email')
+        const activeOtp = otpRecord.otp
+
+        const step3 = await callLogin({ login: testEmail, password, otp: activeOtp })
+        assert.equal(step3.statusCode, 200)
+        assert.equal(step3.data.success, true)
+        assert.ok(step3.data.token, 'JWT session token must be issued upon valid Email OTP verification')
+        assert.equal(step3.data.user.id, testUser.id)
+    })
+
     after(() => {
         redisPubSub.disconnect()
         // Purge test users and simulated artifacts created during test run
