@@ -364,7 +364,14 @@ function LimboGame() {
                 <div className="limbo-arena">
                     {/* Real-time Dynamic History Pills */}
                     <div className="limbo-history-bar">
-                        <div className="limbo-live-status">
+                        <div
+                            className="limbo-live-status"
+                            onClick={() => setFairnessOpen(true)}
+                            title="Click to view Provably Fair 99% RTP Verification"
+                            style={{ cursor: 'pointer' }}
+                            role="button"
+                            tabIndex={0}
+                        >
                             <span className="live-dot" /> Provably Fair 99% RTP
                         </div>
                         {history.length === 0 ? (
@@ -481,7 +488,7 @@ function LimboGame() {
                                 onClick={() => applyTargetPreset(preset)}
                                 disabled={isRolling || isAutoRunning}
                             >
-                                {preset.toFixed(2)}×
+                                {preset}×
                             </button>
                         ))}
                     </div>
