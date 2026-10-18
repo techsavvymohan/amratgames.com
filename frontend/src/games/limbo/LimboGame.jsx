@@ -46,21 +46,8 @@ function LimboGame() {
     const [lastOutcome, setLastOutcome] = useState(null) // { roll, target, win }
     const [gameResult, setGameResult] = useState(null) // 'win' | 'lose' | null
 
-    // Real dynamic history (Persisted in localStorage)
-    const [history, setHistory] = useState(() => {
-        try {
-            const saved = localStorage.getItem('amrat_limbo_history')
-            return saved ? JSON.parse(saved) : []
-        } catch {
-            return []
-        }
-    })
-
-    useEffect(() => {
-        try {
-            localStorage.setItem('amrat_limbo_history', JSON.stringify(history.slice(0, 50)))
-        } catch (e) {}
-    }, [history])
+    // Real dynamic history (No demo data)
+    const [history, setHistory] = useState([])
 
     // Auto-betting states
     const [isAutoRunning, setIsAutoRunning] = useState(false)
@@ -183,7 +170,7 @@ function LimboGame() {
         setGameResult(null)
         casinoAudio.playBet()
 
-        // Call server-authoritative bet evaluation with deferred balance update
+        // Call server-authoritative bet evaluation
         let betResponse
         try {
             if (executeGameBet) {
@@ -191,8 +178,7 @@ function LimboGame() {
                     game: 'limbo',
                     gameName: 'Limbo Multiplier',
                     betAmount: currentBet,
-                    targetMultiplier: target,
-                    deferBalanceUpdate: true
+                    targetMultiplier: target
                 })
             }
         } catch (err) {
@@ -226,11 +212,6 @@ function LimboGame() {
                 setCurrentRoll(outcome)
                 setIsRolling(false)
 
-                // Deferred balance settlement on visual landing
-                if (typeof betResponse?.commitBalance === 'function') {
-                    betResponse.commitBalance()
-                }
-
                 const roundResult = isWin ? 'win' : 'lose'
                 setGameResult(roundResult)
                 setLastOutcome({ roll: outcome, target, win: isWin })
@@ -249,27 +230,8 @@ function LimboGame() {
                     casinoAudio.playLoss()
                 }
 
-                // Add to history (Full round record for persistent table)
-                const roundRecord = {
-                    id: `limbo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                    game: 'limbo',
-                    gameName: 'Limbo Multiplier',
-                    roll: outcome,
-                    targetMultiplier: target,
-                    target,
-                    win: isWin,
-                    won: isWin,
-                    winStatus: isWin,
-                    betAmount: currentBet,
-                    stake: currentBet,
-                    payout: isWin ? winAmount : 0,
-                    winAmount: isWin ? winAmount : 0,
-                    multiplier: outcome,
-                    outcome: `${outcome.toFixed(2)}× (Target: ${target.toFixed(2)}×)`,
-                    time: Date.now(),
-                    createdAt: new Date().toISOString()
-                }
-                setHistory(prev => [roundRecord, ...prev.slice(0, 49)])
+                // Add to history (real user data only, up to 12 items)
+                setHistory(prev => [{ roll: outcome, target, win: isWin, id: Date.now() }, ...prev.slice(0, 11)])
 
                 // Auto-bet logic progression
                 if (autoRunningRef.current) {
@@ -364,14 +326,7 @@ function LimboGame() {
                 <div className="limbo-arena">
                     {/* Real-time Dynamic History Pills */}
                     <div className="limbo-history-bar">
-                        <div
-                            className="limbo-live-status"
-                            onClick={() => setFairnessOpen(true)}
-                            title="Click to view Provably Fair 99% RTP Verification"
-                            style={{ cursor: 'pointer' }}
-                            role="button"
-                            tabIndex={0}
-                        >
+                        <div className="limbo-live-status">
                             <span className="live-dot" /> Provably Fair 99% RTP
                         </div>
                         {history.length === 0 ? (
@@ -488,7 +443,7 @@ function LimboGame() {
                                 onClick={() => applyTargetPreset(preset)}
                                 disabled={isRolling || isAutoRunning}
                             >
-                                {preset}×
+                                {preset.toFixed(2)}×
                             </button>
                         ))}
                     </div>
@@ -546,15 +501,6 @@ function LimboGame() {
                         {!user ? 'Sign In to Play' : isRolling ? 'Rolling…' : 'Play Limbo'}
                     </Button>
                 </div>
-            </div>
-
-            {/* Live Persistent Bet History Table (Directly Beneath Main Game Board) */}
-            <div className="limbo-bottom-history-section" style={{ width: '100%', maxWidth: '1100px', margin: '24px auto 0', padding: '0 16px' }}>
-                <GameBottomHistory
-                    gameKey="limbo"
-                    gameTitle="Limbo Multiplier"
-                    localRounds={history}
-                />
             </div>
 
             {/* Slide-out Game Specific Round History Drawer */}

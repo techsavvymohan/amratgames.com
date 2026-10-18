@@ -1,1062 +1,1026 @@
-/* ==========================================================================
-   🐉 DRAGON TIGER LIVE CASINO STUDIO — AUTHENTIC ASIAN TABLE EDITION
-   ========================================================================== */
-
-/* Universal Reset & Hardware Acceleration for Table */
-.dt-table-root {
+.dt-page {
     width: 100%;
-    max-width: 960px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 12px 14px 60px;
+    padding: 12px 16px 60px;
     user-select: none;
-    -webkit-user-select: none;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-.dt-table-container {
-    width: 100%;
-    background: #0d0e12;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    overflow: hidden;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.dt-container {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    align-items: stretch;
+}
+
+/* Laptop Viewport: 100% Zero-Scroll Perfect Fit */
+@media (min-width: 901px) {
+    .dt-page {
+        height: calc(100vh - 60px);
+        max-height: calc(100vh - 60px);
+        overflow: hidden;
+        padding: 12px 18px;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+    .dt-container {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+        align-items: stretch;
+        overflow: hidden;
+    }
+    .dt-felt {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 14px 18px !important;
+        overflow: hidden;
+    }
+    .dt-controls-card {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 14px 16px !important;
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 900px) {
+    .dt-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Touch responsiveness for mobile: zero delay, instant tactile press */
-.dt-table-container button,
-.dt-stage-wing,
-.dt-medallion-half,
-.dt-casino-chip,
-.dt-predictor-btn {
+button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   1. TOP BETTING STAGE (SPLIT-WING EVOLUTION LIVE CASINO TABLE)
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-stage-board {
-    position: relative;
-    width: 100%;
-    height: 270px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: #08090b;
-    border-bottom: 2px solid #16181f;
-    overflow: hidden;
+.dt-chip-btn:active,
+.dt-bet-zone:active,
+.dt-deal-btn:active,
+.dt-clear-btn:active {
+    transform: scale(0.93) !important;
+    filter: brightness(1.22) !important;
+    transition: transform 0.05s ease !important;
 }
 
-/* Shared Stage Wing Styling */
-.dt-stage-wing {
-    position: relative;
+/* Luxury Emerald Velvet Table Felt */
+.dt-felt {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 16px 20px;
-    cursor: pointer;
+    min-height: 540px;
+    padding: 24px;
+    border-radius: 24px;
+    background: radial-gradient(circle at 50% 45%, #0e3b22 0%, #082615 50%, #03130a 85%, #010804 100%);
+    border: 3px solid rgba(255, 215, 0, 0.4);
+    box-shadow: 
+        inset 0 0 100px rgba(0, 0, 0, 0.85),
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 25px rgba(255, 215, 0, 0.15);
+    position: relative;
     overflow: hidden;
-    transition: filter 0.2s ease, background 0.3s ease;
 }
 
-.dt-stage-wing:hover {
-    filter: brightness(1.08);
+/* Felt Inner Gold Accent Line */
+.dt-felt::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    pointer-events: none;
 }
 
-.dt-stage-wing:active {
-    filter: brightness(0.96);
-}
-
-/* 🐉 DRAGON WING (LEFT HALF) — Deep Wine Crimson */
-.dt-wing-dragon {
-    background: radial-gradient(circle at 25% 40%, #4a0d14 0%, #2b060a 60%, #170305 100%);
-    border-right: 1px solid rgba(0, 0, 0, 0.8);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
-}
-
-.dt-wing-dragon.has-bet {
-    background: radial-gradient(circle at 25% 40%, #5c111a 0%, #36070c 60%, #1f0407 100%);
-}
-
-.dt-wing-dragon.is-winner {
-    animation: dragon-win-pulse 1.2s infinite alternate;
-}
-
-@keyframes dragon-win-pulse {
-    0% {
-        box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.5), 0 0 25px rgba(239, 68, 68, 0.6);
-        border-color: #ef4444;
-    }
-    100% {
-        box-shadow: inset 0 0 80px rgba(239, 68, 68, 0.85), 0 0 40px rgba(239, 68, 68, 0.9);
-        border-color: #fca5a5;
-    }
-}
-
-/* 🐅 TIGER WING (RIGHT HALF) — Deep Amber Gold */
-.dt-wing-tiger {
-    background: radial-gradient(circle at 75% 40%, #45370a 0%, #282005 60%, #141002 100%);
-    border-left: 1px solid rgba(0, 0, 0, 0.8);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
-}
-
-.dt-wing-tiger.has-bet {
-    background: radial-gradient(circle at 75% 40%, #57450c 0%, #332806 60%, #1a1403 100%);
-}
-
-.dt-wing-tiger.is-winner {
-    animation: tiger-win-pulse 1.2s infinite alternate;
-}
-
-@keyframes tiger-win-pulse {
-    0% {
-        box-shadow: inset 0 0 50px rgba(234, 179, 8, 0.5), 0 0 25px rgba(234, 179, 8, 0.6);
-        border-color: #eab308;
-    }
-    100% {
-        box-shadow: inset 0 0 80px rgba(234, 179, 8, 0.85), 0 0 40px rgba(234, 179, 8, 0.9);
-        border-color: #fde047;
-    }
-}
-
-/* Authentic Silhouette Watermarks */
-.dt-wing-watermark {
+/* Watermark in Table Center */
+.dt-felt::after {
+    content: 'AMRAT VIP CASINO';
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
-    width: 170px;
-    height: 170px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: rgba(255, 215, 0, 0.04);
+    white-space: nowrap;
     pointer-events: none;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-position: center;
-    opacity: 0.16;
+}
+
+/* Bead Plate / Trend Roadmap */
+.dt-roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    padding: 12px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
     z-index: 1;
 }
 
-.dragon-watermark {
-    left: 16px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ef4444'%3E%3Cpath d='M88 28c-4-6-13-9-20-6 4-6 1-13-5-16-7-3-15 0-19 6-3 4-4 9-2 13-7-3-15-2-21 3-8 7-9 19-3 27-5 1-10 4-13 8-5 7-4 17 2 23 7 7 19 7 26 0 4-4 6-10 5-15 8 4 18 3 25-3 5-5 7-12 5-18 6 3 14 2 19-3 7-7 6-18-2-24zm-48 42c-5 5-13 5-18 0-4-4-5-11-1-16 2-3 5-4 9-4 6 1 11 5 13 10 1 4 0 8-3 10zm25-18c-5 5-13 4-17-1-3-4-3-10 0-14 3-4 8-5 13-3 5 2 8 7 7 13 0 2-1 4-3 5zm17-20c-4 4-11 4-15 0-3-4-3-9 0-13 3-4 8-4 12-2 4 2 6 7 5 11 0 2-1 3-2 4z'/%3E%3C/svg%3E");
-}
-
-.tiger-watermark {
-    right: 16px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23eab308'%3E%3Cpath d='M85 35c-3-8-12-13-20-11-3-6-9-10-16-10-9 0-16 6-18 14-6-2-13 0-18 5-6 6-8 15-4 22-5 3-9 9-9 16 0 10 8 18 18 18 6 0 12-3 15-8 5 3 11 4 17 2 7-2 12-8 13-15 6 1 13-2 16-7 4-6 4-14 0-20zm-50 40c-7 0-12-5-12-12 0-5 3-10 8-12 4-1 8 0 11 3 4 4 5 10 2 15-2 4-5 6-9 6zm24-15c-6 2-12-1-15-6-2-4-2-9 1-13 3-3 8-4 12-2 5 2 7 7 6 12 0 4-2 7-4 9zm18-18c-5 3-11 1-14-3-2-4-2-9 1-12 3-3 8-3 11-1 4 3 5 7 4 11 0 2-1 4-2 5z'/%3E%3C/svg%3E");
-}
-
-/* Wing Header Stats Row */
-.dt-wing-top-row {
+.dt-roadmap-header-line {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    z-index: 2;
-}
-
-.dt-percentage-bubble {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #08090c;
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
-    display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
-    color: #e2e8f0;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.5);
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.dt-wing-dragon .dt-percentage-bubble {
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #fca5a5;
-}
-
-.dt-wing-tiger .dt-percentage-bubble {
-    border-color: rgba(234, 179, 8, 0.4);
-    color: #fde047;
-}
-
-.dt-wing-pool-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    line-height: 1.25;
-}
-
-.dt-wing-pool-info.align-left {
-    align-items: flex-start;
-}
-
-.dt-wing-pool-info .pool-amount {
-    font-size: 13px;
-    font-weight: 700;
-    color: #d1d5db;
-}
-
-.dt-wing-pool-info .pool-players {
-    font-size: 11px;
-    font-weight: 600;
-    color: #9ca3af;
-}
-
-.dt-wing-dragon .pool-amount,
-.dt-wing-dragon .pool-players {
-    color: #f87171;
-}
-
-.dt-wing-tiger .pool-amount,
-.dt-wing-tiger .pool-players {
-    color: #fbbf24;
-}
-
-/* Dealt Playing Card Slots (Inside Wings Beside Medallion) */
-.dt-dealt-card-slot {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 72px;
-    height: 104px;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dt-dealt-card-slot.dragon-slot {
-    right: 108px;
-}
-
-.dt-dealt-card-slot.tiger-slot {
-    left: 108px;
-}
-
-.dt-card-placeholder {
-    width: 68px;
-    height: 98px;
-    border-radius: 8px;
-    border: 1.5px dashed rgba(255, 255, 255, 0.12);
-    background: rgba(0, 0, 0, 0.25);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
-}
-
-/* Wing Bottom Titles */
-.dt-wing-bottom-label {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.1;
-    z-index: 2;
-}
-
-.dt-wing-bottom-label.align-right {
-    align-items: flex-end;
-}
-
-.dt-wing-bottom-label .odds-ratio {
-    font-size: 12px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.45);
-    letter-spacing: 0.5px;
-}
-
-.dt-wing-bottom-label .wing-title {
-    font-family: "Georgia", "Cinzel", "Times New Roman", serif;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 2.5px;
-    color: #f8fafc;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   2. OVERLAPPING CENTRAL GREEN MEDALLION (TIE & SUITED TIE)
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-center-medallion {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 50% 50%, #154532 0%, #0d2e21 65%, #061911 100%);
-    border: 3px solid #0f3d2a;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 6;
-}
-
-.dt-center-medallion.is-winner {
-    animation: tie-win-pulse 1.2s infinite alternate;
-}
-
-@keyframes tie-win-pulse {
-    0% {
-        box-shadow: 0 0 30px rgba(16, 185, 129, 0.7), inset 0 0 20px rgba(16, 185, 129, 0.6);
-        border-color: #10b981;
-    }
-    100% {
-        box-shadow: 0 0 50px rgba(52, 211, 153, 0.95), inset 0 0 30px rgba(52, 211, 153, 0.85);
-        border-color: #6ee7b7;
-    }
-}
-
-.dt-medallion-half {
-    position: relative;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s ease, filter 0.2s ease;
-}
-
-.dt-medallion-half:hover {
-    background: rgba(16, 185, 129, 0.14);
-}
-
-.dt-medallion-half:active {
-    background: rgba(16, 185, 129, 0.25);
-}
-
-.dt-medallion-half.half-top {
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
-}
-
-.dt-medallion-half.half-bottom {
-    padding-top: 16px;
-}
-
-.dt-medallion-half .medallion-odds {
-    font-size: 11px;
-    font-weight: 700;
-    color: #a7f3d0;
-    letter-spacing: 0.5px;
-}
-
-.dt-medallion-half .medallion-text {
-    font-family: "Georgia", "Cinzel", "Times New Roman", serif;
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    color: #f1f5f9;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-}
-
-.dt-medallion-half.half-bottom .medallion-text {
-    font-size: 12px;
-    letter-spacing: 1px;
-}
-
-/* Center Concentric Bullseye */
-.dt-medallion-bullseye {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: #030d07;
-    border: 2.5px solid #0d3824;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.dt-roadmap-label {
     font-size: 12px;
     font-weight: 800;
-    color: #86efac;
-    pointer-events: none;
-    z-index: 7;
-}
-
-/* Placed Bet Floating Badges */
-.dt-placed-chip-badge {
-    position: absolute;
-    z-index: 8;
-    background: radial-gradient(circle at 35% 35%, #f59e0b, #b45309);
-    border: 1.5px dashed #fef08a;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-    animation: chip-drop-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.dt-placed-chip-badge span {
-    font-size: 10px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    color: #ffd700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
     white-space: nowrap;
 }
 
-.badge-dragon {
-    bottom: 20px;
-    left: 45%;
-}
-
-.badge-tiger {
-    bottom: 20px;
-    right: 45%;
-}
-
-.badge-tie {
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.badge-suited-tie {
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-@keyframes chip-drop-in {
-    0% { transform: scale(0.2) translateY(-20px); opacity: 0; }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   3. CASINO PLAYING CARD WITH 3D FLIP ANIMATION
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-casino-card {
-    width: 68px;
-    height: 98px;
-    perspective: 1000px;
-}
-
-.dt-card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.75);
-}
-
-.dt-casino-card.flipped .dt-card-inner {
-    transform: rotateY(180deg);
-}
-
-.dt-card-back,
-.dt-card-front {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-/* Classic Casino Security Back Pattern */
-.dt-card-back {
-    background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 4px, #991b1b 4px, #991b1b 8px);
-    border: 2px solid #fbbf24;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
-}
-
-/* Clean White Face of Card */
-.dt-card-front {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    transform: rotateY(180deg);
+.dt-streak-stats {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 5px 6px;
-    box-sizing: border-box;
+    gap: 8px;
 }
 
-.dt-card-front .card-idx {
-    font-size: 13px;
-    font-weight: 900;
-    line-height: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.dt-card-front .card-idx span {
-    font-size: 12px;
-}
-
-.dt-card-front .card-idx.bottom {
-    transform: rotate(180deg);
-    align-self: flex-end;
-}
-
-.dt-card-front .card-center-suit {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 28px;
-    line-height: 1;
-    pointer-events: none;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   4. ROADMAP COUNTERS & PREDICTION BAR
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-roadmap-stats-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 18px;
-    background: #0d0f13;
-    border-bottom: 1px solid #1a1c24;
-}
-
-.dt-roadmap-counts {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.dt-roadmap-counts .round-serial {
-    font-size: 14px;
-    font-weight: 800;
-    color: #94a3b8;
-    margin-right: 4px;
-}
-
-.count-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 800;
-    color: #e2e8f0;
-}
-
-.count-pill .dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.stat-pill {
     font-size: 11px;
-    font-weight: 900;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.count-pill.pill-d .dot {
-    background: #dc2626;
-    color: #ffffff;
-}
-
-.count-pill.pill-t .dot {
-    background: #eab308;
-    color: #1e293b;
-}
-
-.count-pill.pill-tie .dot {
-    background: #16a34a;
-    color: #ffffff;
-}
-
-/* Predictor Buttons (D ? and T ?) */
-.dt-roadmap-predictors {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.dt-predictor-btn {
-    height: 32px;
-    padding: 0 16px;
-    border-radius: 16px;
-    border: none;
-    font-size: 13px;
     font-weight: 800;
-    cursor: pointer;
-    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    padding: 2px 8px;
+    border-radius: 6px;
 }
 
-.dt-predictor-btn.pred-d {
-    background: linear-gradient(180deg, #991b1b 0%, #581216 100%);
-    color: #ffffff;
-    box-shadow: 0 3px 8px rgba(153, 27, 27, 0.4);
-}
+.stat-dragon { background: rgba(239, 68, 68, 0.2); color: #ff6b6b; border: 1px solid rgba(239, 68, 68, 0.4); }
+.stat-tiger { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+.stat-tie { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
 
-.dt-predictor-btn.pred-t {
-    background: linear-gradient(180deg, #b45309 0%, #5e2802 100%);
-    color: #fef08a;
-    box-shadow: 0 3px 8px rgba(180, 83, 9, 0.4);
-}
-
-.dt-predictor-btn:hover {
-    filter: brightness(1.15);
-    transform: translateY(-1px);
-}
-
-.dt-predictor-btn.active {
-    outline: 2px solid #ffffff;
-    filter: brightness(1.25);
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   5. BEAD PLATE / ROADMAP MATRIX (DOTS GRID)
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-bead-plate-board {
-    padding: 14px 18px;
-    background: #090a0d;
+.dt-roadmap-beads {
+    display: flex;
+    gap: 8px;
     overflow-x: auto;
     scrollbar-width: none;
+    padding-bottom: 2px;
 }
 
-.dt-bead-plate-board::-webkit-scrollbar {
-    display: none;
-}
-
-.dt-bead-matrix {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    min-width: 520px;
-}
-
-.dt-matrix-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-}
-
-.dt-matrix-cell {
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.dt-matrix-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.dt-history-bead {
-    width: 22px;
-    height: 22px;
+.dt-bead {
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 900;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.2s ease;
 }
 
-.dt-history-bead.bead-dragon {
+.dt-bead:hover {
+    transform: scale(1.15);
+}
+
+.dt-bead.dragon {
     background: radial-gradient(circle at 35% 35%, #ef4444, #991b1b);
-    color: #ffffff;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
-.dt-history-bead.bead-tiger {
-    background: radial-gradient(circle at 35% 35%, #facc15, #ca8a04);
-    color: #1e293b;
-    box-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+.dt-bead.tiger {
+    background: radial-gradient(circle at 35% 35%, #3b82f6, #1e40af);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-.dt-history-bead.bead-tie,
-.dt-history-bead.bead-suitedTie {
-    background: radial-gradient(circle at 35% 35%, #22c55e, #15803d);
-    color: #ffffff;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+.dt-bead.tie {
+    background: radial-gradient(circle at 35% 35%, #10b981, #065f46);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
-.dt-history-bead.preview-bead {
-    animation: preview-pulse 0.8s infinite alternate;
-    opacity: 0.85;
-}
-
-@keyframes preview-pulse {
-    0% { transform: scale(0.9); opacity: 0.5; }
-    100% { transform: scale(1.15); opacity: 1; }
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   6. BOTTOM ACTION TOOLBAR & 3D CASINO CHIP CAROUSEL
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-bottom-toolbar {
+/* Duel Arena & Cards */
+.dt-duel-arena {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    background: #0d0f14;
-    border-top: 1px solid #1a1c24;
-    gap: 12px;
+    justify-content: space-around;
+    padding: 24px 10px;
+    gap: 16px;
+    z-index: 1;
 }
 
-.dt-action-icon-btn {
+.dt-player-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.dt-action-icon-btn .icon {
-    font-size: 18px;
-    line-height: 1;
-}
-
-.dt-action-icon-btn:hover:not(:disabled) {
-    color: #f1f5f9;
-    background: rgba(255, 255, 255, 0.06);
-    transform: translateY(-1px);
-}
-
-.dt-action-icon-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Casino Chip Carousel */
-.dt-chips-carousel {
-    display: flex;
-    align-items: center;
     gap: 10px;
-    overflow-x: auto;
-    padding: 8px 4px;
-    scrollbar-width: none;
+    transition: all 0.3s ease;
 }
 
-.dt-chips-carousel::-webkit-scrollbar {
-    display: none;
-}
-
-/* 3D Casino Chip */
-.dt-casino-chip {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+/* 3D Mascot Framed Portrait */
+.dt-mascot-frame {
     position: relative;
-    cursor: pointer;
-    border: 2.5px dashed var(--chip-border, #fbbf24);
-    background: var(--chip-bg, #d97706);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.35);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+    border-radius: 18px;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 215, 0, 0.35);
+    background: #000;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.dt-casino-chip .chip-inner-ring {
+.dt-mascot-frame.dragon {
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.45), inset 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.dt-mascot-frame.tiger {
+    border-color: rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.45), inset 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.dt-player-box.dragon.winner .dt-mascot-frame {
+    transform: scale(1.1);
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), inset 0 0 20px rgba(239, 68, 68, 0.6);
+    border-color: #ff7875;
+}
+
+.dt-player-box.tiger.winner .dt-mascot-frame {
+    transform: scale(1.1);
+    box-shadow: 0 0 35px rgba(59, 130, 246, 0.95), inset 0 0 20px rgba(59, 130, 246, 0.6);
+    border-color: #69b1ff;
+}
+
+.dt-mascot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s ease;
+}
+
+.dt-player-box:hover .dt-mascot-img {
+    transform: scale(1.08);
+}
+
+.dt-mascot-badge {
     position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dt-casino-chip .chip-amount {
-    font-size: 12px;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
     font-weight: 900;
-    color: var(--chip-text, #ffffff);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.dt-casino-chip:hover:not(:disabled) {
-    transform: translateY(-4px) scale(1.08);
-}
-
-.dt-casino-chip.selected {
-    transform: translateY(-8px) scale(1.18);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.85), 0 0 18px var(--chip-border, #fbbf24);
-    border-width: 3px;
+    letter-spacing: 1px;
+    padding: 1px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    white-space: nowrap;
     z-index: 2;
 }
 
-.dt-casino-chip:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.dt-mascot-frame.dragon .dt-mascot-badge {
+    color: #ff6b6b;
+    border: 1px solid rgba(239, 68, 68, 0.6);
 }
 
-/* Floating Hamburger Menu Button */
-.dt-floating-menu-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
-    font-size: 18px;
-    cursor: pointer;
+.dt-mascot-frame.tiger .dt-mascot-badge {
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.6);
+}
+
+/* Card Slot & Winner Aura */
+.dt-card-slot {
+    width: 115px;
+    height: 165px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    perspective: 1000px;
+    transition: all 0.4s ease;
 }
 
-.dt-floating-menu-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+.dt-player-box.dragon.winner .dt-card-slot {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.85), inset 0 0 15px rgba(239, 68, 68, 0.5);
     transform: scale(1.05);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   7. DEAL ACTION BANNER (ACTIVATES UPON BET PLACEMENT)
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-deal-overlay-bar {
+.dt-player-box.tiger.winner .dt-card-slot {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.85), inset 0 0 15px rgba(59, 130, 246, 0.5);
+    transform: scale(1.05);
+}
+
+.dt-empty-slot {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed rgba(255, 215, 0, 0.25);
+    border-radius: 14px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: linear-gradient(90deg, #131722 0%, #1a1f2e 100%);
-    border-top: 1px solid rgba(251, 191, 36, 0.3);
-    animation: slide-up-bar 0.25s ease-out;
-    gap: 16px;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
-@keyframes slide-up-bar {
-    0% { transform: translateY(10px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
+.dt-slot-placeholder {
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: rgba(255, 215, 0, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 6px 14px;
+    border-radius: 8px;
 }
 
-.dt-deal-summary {
+.dt-vs-emblem {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffd700, #b45309);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    border: 2px solid #fff;
+}
+
+/* 3D Realistic Poker Cards */
+.dt-card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+}
+
+.dt-card.flipped {
+    transform: rotateY(180deg);
+}
+
+.dt-card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
+    justify-content: space-between;
+    padding: 12px;
+    font-weight: 800;
 }
 
-.dt-deal-summary span {
-    font-size: 11px;
-    font-weight: 700;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
+.dt-card-front {
+    background: radial-gradient(circle, #ffffff, #f1f5f9);
+    border: 2px solid #cbd5e1;
+    transform: rotateY(180deg);
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
 }
 
-.dt-deal-summary strong {
+.dt-card-back {
+    background: radial-gradient(circle, #991b1b, #450a0a);
+    border: 3px solid #ffd700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
+}
+
+.dt-card-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
     font-size: 18px;
     font-weight: 900;
-    color: #fbbf24;
 }
 
-.dt-primary-deal-btn {
-    flex: 1;
-    max-width: 320px;
-    height: 44px;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #0f172a;
+.dt-card-corner.bottom {
+    transform: rotate(180deg);
+}
+
+.dt-card-center {
+    align-self: center;
+    font-size: 44px;
+}
+
+/* Center VS Badge / Winner Result */
+.dt-vs-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffd700;
+}
+
+.dt-result-tag {
+    padding: 10px 22px;
+    border-radius: 25px;
     font-size: 15px;
     font-weight: 900;
-    letter-spacing: 1.2px;
-    border: none;
-    border-radius: 10px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    animation: popWinner 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+}
+
+.dt-result-tag.dragon {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+    border: 1.5px solid #ff7875;
+}
+
+.dt-result-tag.tiger {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+    border: 1.5px solid #69b1ff;
+}
+
+.dt-result-tag.tie {
+    background: linear-gradient(135deg, #10b981, #047857);
+    color: #ffffff;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+    border: 1.5px solid #5cdbd3;
+}
+
+@keyframes popWinner {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Betting Zones (Dragon · Tie · Tiger) */
+.dt-bet-zones {
+    display: grid;
+    grid-template-columns: 2fr 1.3fr 2fr;
+    gap: 14px;
+    z-index: 1;
+}
+
+.dt-bet-zone {
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
-    transition: all 0.2s ease;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    position: relative;
 }
 
-.dt-primary-deal-btn:hover:not(:disabled) {
-    filter: brightness(1.12);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+.dt-bet-zone:hover {
+    transform: translateY(-3px);
+    background: rgba(0, 0, 0, 0.65);
 }
 
-.dt-primary-deal-btn:active:not(:disabled) {
-    transform: translateY(1px);
-    filter: brightness(0.95);
+.dt-bet-zone.dragon-zone:hover,
+.dt-bet-zone.dragon-zone.active {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(0, 0, 0, 0.6));
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.45);
 }
 
-.dt-primary-deal-btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    filter: grayscale(0.4);
+.dt-bet-zone.tie-zone:hover,
+.dt-bet-zone.tie-zone.active {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(0, 0, 0, 0.6));
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
 }
 
-.dt-cancel-clear-btn {
-    height: 44px;
-    padding: 0 18px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #cbd5e1;
+.dt-bet-zone.tiger-zone:hover,
+.dt-bet-zone.tiger-zone.active {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(0, 0, 0, 0.6));
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.45);
+}
+
+.dt-zone-name {
+    font-size: 17px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.dt-zone-payout {
     font-size: 13px;
     font-weight: 800;
+    color: #ffd700;
     letter-spacing: 0.5px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.dt-cancel-clear-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12);
+.dt-zone-chips {
+    margin-top: 4px;
+    padding: 3px 12px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #ffd700, #b45309);
+    color: #000000;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4);
+    animation: popWinner 0.2s ease;
+}
+
+/* Controls Dashboard */
+.dt-controls-card {
+    background: #0f131a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.dt-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+/* 3D Realistic Casino Chips (Inspired by Pinterest) */
+.dt-chips-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 8px 4px 6px;
+    overflow: visible;
+}
+
+.dt-chip-btn {
+    height: 52px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 2px dashed rgba(255, 255, 255, 0.35);
+    outline: 2px solid rgba(0, 0, 0, 0.4);
+    outline-offset: -1px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 
+        0 6px 14px rgba(0, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.35),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.dt-chip-btn:hover {
+    transform: translateY(-3px) scale(1.06);
+}
+
+.dt-chip-btn.selected {
+    transform: translateY(-4px) scale(1.1);
+    border-color: #ffd700;
+    outline: 2px solid #ffd700;
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.7),
+        0 0 16px rgba(255, 215, 0, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.6);
+    z-index: 2;
+}
+
+/* Denomination Gradients */
+.dt-chip-btn.chip-10 {
+    background: radial-gradient(circle at 35% 35%, #475569, #1e293b 70%, #0f172a);
+    color: #f1f5f9;
+}
+
+.dt-chip-btn.chip-50 {
+    background: radial-gradient(circle at 35% 35%, #3b82f6, #1d4ed8 70%, #172554);
     color: #ffffff;
 }
 
-.dt-cancel-clear-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+.dt-chip-btn.chip-100 {
+    background: radial-gradient(circle at 35% 35%, #10b981, #047857 70%, #064e3b);
+    color: #ffffff;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   8. PERSISTENT ROUND HISTORY WRAPPER
-   ══════════════════════════════════════════════════════════════════════════ */
-.dt-persistent-history-wrapper {
-    margin-top: 24px;
-    width: 100%;
+.dt-chip-btn.chip-500 {
+    background: radial-gradient(circle at 35% 35%, #ec4899, #be185d 70%, #831843);
+    color: #ffffff;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   9. RESPONSIVE BREAKPOINTS (MOBILE & TABLET ADAPTATION)
-   ══════════════════════════════════════════════════════════════════════════ */
+.dt-chip-btn.chip-1000 {
+    background: radial-gradient(circle at 35% 35%, #f59e0b, #b45309 70%, #78350f);
+    color: #ffffff;
+    border-color: rgba(255, 215, 0, 0.6);
+}
+
+.dt-chip-btn.chip-5000 {
+    background: radial-gradient(circle at 35% 35%, #8b5cf6, #5b21b6 70%, #3b0764);
+    color: #ffffff;
+}
+
+/* Total Bet Display */
+.dt-total-bet-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.dt-total-val {
+    font-size: 20px;
+    font-weight: 900;
+    color: #00e676;
+    font-family: monospace;
+}
+
+/* Actions */
+.dt-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.dt-deal-btn {
+    height: 52px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%) !important;
+    border: none !important;
+    color: #000000 !important;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+
+.dt-deal-btn:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6) !important;
+}
+
+.dt-clear-btn {
+    height: 52px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+    font-weight: 700 !important;
+}
+
+.dt-clear-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.dt-fairness-btn {
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    height: 38px !important;
+}
+
+.dt-fairness-btn:hover {
+    color: #00e676 !important;
+    border-color: #00e676 !important;
+}
+
+/* Hash Display */
+.dt-hash-box {
+    background: #090d14;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #94a3b8;
+    word-break: break-all;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 4px;
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .dt-table-root {
-        padding: 6px 6px 40px;
+    .dt-page,
+    .dragon-tiger-page {
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 4px 8px 24px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100vw !important;
     }
 
-    .dt-stage-board {
-        height: 230px;
+    .dt-container {
+        height: auto !important;
+        min-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    .dt-stage-wing {
-        padding: 12px 14px;
+    .dt-felt {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        padding: 6px 8px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        border-radius: 14px !important;
+        margin-bottom: 0 !important;
+        gap: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    .dt-wing-bottom-label .wing-title {
-        font-size: 19px;
-        letter-spacing: 1.5px;
+    .dt-roadmap {
+        padding: 4px 8px !important;
+        border-radius: 10px !important;
+        gap: 4px !important;
     }
 
-    .dt-center-medallion {
-        width: 146px;
-        height: 146px;
+    .dt-roadmap-header-line {
+        gap: 4px !important;
     }
 
-    .dt-medallion-bullseye {
-        width: 44px;
-        height: 44px;
-        font-size: 11px;
+    .dt-roadmap-label {
+        font-size: 10px !important;
+        letter-spacing: 0.8px !important;
     }
 
-    .dt-medallion-half .medallion-text {
-        font-size: 13px;
-        letter-spacing: 1px;
+    .stat-pill {
+        font-size: 9px !important;
+        padding: 1px 5px !important;
     }
 
-    .dt-medallion-half.half-bottom .medallion-text {
-        font-size: 10px;
+    .dt-roadmap-beads {
+        gap: 4px !important;
     }
 
-    .dt-dealt-card-slot {
-        width: 58px;
-        height: 84px;
+    .dt-bead {
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 10px !important;
     }
 
-    .dt-dealt-card-slot.dragon-slot {
-        right: 84px;
+    .dt-duel-arena {
+        padding: 2px 0 !important;
+        gap: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-around !important;
     }
 
-    .dt-dealt-card-slot.tiger-slot {
-        left: 84px;
+    .dt-player-box {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 3px !important;
     }
 
-    .dt-casino-card,
-    .dt-card-placeholder {
-        width: 56px;
-        height: 82px;
+    .dt-mascot-frame {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 8px !important;
     }
 
-    .dt-card-front .card-idx {
-        font-size: 11px;
+    .dt-mascot-badge {
+        font-size: 8px !important;
+        padding: 1px 5px !important;
     }
 
-    .dt-card-front .card-center-suit {
-        font-size: 22px;
+    .dt-card-slot {
+        width: 52px !important;
+        height: 74px !important;
+        border-radius: 6px !important;
     }
 
-    .dt-casino-chip {
-        width: 42px;
-        height: 42px;
+    .dt-slot-placeholder {
+        font-size: 11px !important;
+        letter-spacing: 1px !important;
     }
 
-    .dt-casino-chip.selected {
-        transform: translateY(-5px) scale(1.12);
+    .dt-card-center {
+        font-size: 18px !important;
     }
 
-    .dt-deal-overlay-bar {
-        padding: 10px 14px;
-        gap: 10px;
+    .dt-card-corner {
+        font-size: 9px !important;
+        top: 2px !important;
+        left: 3px !important;
     }
 
-    .dt-primary-deal-btn {
-        font-size: 13px;
-        height: 40px;
+    .dt-vs-emblem {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
     }
 
-    .dt-cancel-clear-btn {
-        height: 40px;
-        padding: 0 12px;
-        font-size: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .dt-stage-board {
-        height: 210px;
+    .dt-bet-zones {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+        gap: 6px !important;
+        margin: 2px 0 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    .dt-center-medallion {
-        width: 132px;
-        height: 132px;
+    .dt-bet-zone {
+        padding: 5px 2px !important;
+        min-height: 42px !important;
+        border-radius: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 1px !important;
+        overflow: visible !important;
     }
 
-    .dt-dealt-card-slot.dragon-slot {
-        right: 72px;
+    .dt-zone-name {
+        font-size: 11px !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.5px !important;
+        line-height: 1.2 !important;
     }
 
-    .dt-dealt-card-slot.tiger-slot {
-        left: 72px;
+    .dt-zone-payout {
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        line-height: 1.2 !important;
+        display: block !important;
     }
 
-    .dt-casino-card,
-    .dt-card-placeholder {
-        width: 48px;
-        height: 70px;
+    .dt-zone-chips {
+        font-size: 9px !important;
+        padding: 1px 6px !important;
+        margin-top: 1px !important;
     }
 
-    .dt-roadmap-counts {
-        gap: 8px;
+    .dt-controls-card,
+    .dt-controls-panel {
+        flex-shrink: 0 !important;
+        padding: 8px 10px !important;
+        background: #0f131a !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
     }
 
-    .dt-predictor-btn {
-        padding: 0 10px;
-        font-size: 11px;
+    .dt-chip-selector {
+        width: 100% !important;
+        overflow: visible !important;
+    }
+
+    .dt-label {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .dt-chips-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 4px !important;
+        width: 100% !important;
+        overflow: visible !important;
+        scrollbar-width: none !important;
+        padding: 10px 4px 6px !important;
+        margin-top: -2px !important;
+        box-sizing: border-box !important;
+    }
+
+    .dt-chip-btn {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        border-radius: 50% !important;
+        font-size: 11px !important;
+        font-weight: 900 !important;
+        position: relative !important;
+    }
+
+    .dt-chip-btn.selected {
+        transform: translateY(-4px) scale(1.12) !important;
+        border-color: #ffd700 !important;
+        outline: 2px solid #ffd700 !important;
+        box-shadow: 
+            0 8px 18px rgba(0, 0, 0, 0.8),
+            0 0 14px rgba(255, 215, 0, 0.65),
+            inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
+        z-index: 2 !important;
+    }
+
+    .dt-controls-card .ant-input-number {
+        height: 32px !important;
+    }
+
+    .dt-controls-card .ant-btn-group .ant-btn {
+        height: 32px !important;
+        padding: 0 8px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+    }
+
+    .dt-total-bet-display {
+        padding: 4px 8px !important;
+        margin: 2px 0 !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    .dt-total-bet-display strong {
+        font-size: 15px !important;
+    }
+
+    .dt-actions-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1.6fr !important;
+        gap: 6px !important;
+        margin-top: 2px !important;
+        width: 100% !important;
+    }
+
+    .dt-clear-btn {
+        height: 38px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        padding: 0 6px !important;
+    }
+
+    .dt-deal-btn {
+        height: 38px !important;
+        min-height: 38px !important;
+        font-size: 14px !important;
+        font-weight: 900 !important;
+        margin-top: 0 !important;
+        padding: 0 10px !important;
+    }
+
+    .dt-footer-actions {
+        display: flex !important;
+        gap: 6px !important;
+        margin-top: 2px !important;
+        width: 100% !important;
+    }
+
+    .dt-btn-secondary {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 8px !important;
+    }
+
+    .dt-fairness-strip {
+        display: none !important;
     }
 }

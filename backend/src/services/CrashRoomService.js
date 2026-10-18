@@ -229,7 +229,7 @@ export class CrashRoomService {
         bet.multiplier = capped.multiplier
 
         try {
-            const updatedUser = await db.withUserLock(bet.userId, async () => {
+            await db.withUserLock(bet.userId, async () => {
                 db.updateUserBalance(bet.userId, bet.currency, payout, `Crash Multiplayer Auto-Cashout (${targetMultiplier}x)`)
                 const betRecord = db.recordBet({
                     userId: bet.userId,
@@ -245,7 +245,6 @@ export class CrashRoomService {
                     hash: this.secretHash || this.hash
                 })
                 broadcastEvent('NEW_BET', betRecord)
-                return db.findUserById(bet.userId)
             })
 
             broadcastEvent('CRASH_ROOM_CASHOUT', {
@@ -254,8 +253,7 @@ export class CrashRoomService {
                 username: bet.username,
                 roundId: this.roundId,
                 multiplier: targetMultiplier,
-                payout,
-                balances: updatedUser ? updatedUser.balances : null
+                payout
             })
         } catch (e) {
             console.error('[CRASH ROOM] Error executing auto cashout:', e.message)
@@ -436,8 +434,7 @@ export class CrashRoomService {
             username: bet.username,
             roundId: this.roundId,
             multiplier,
-            payout,
-            balances: updatedUser ? updatedUser.balances : null
+            payout
         })
 
         return {
@@ -447,41 +444,6 @@ export class CrashRoomService {
             payout,
             panelId: numericPanelId,
             balances: updatedUser.balances
-        }
-    }
-
-    async cancelBet({ userId, panelId = 1 }) {
-        if (this.state !== 'WAITING') {
-            const err = new Error('Cannot cancel bet once the flight countdown has ended.')
-            err.status = 400
-            throw err
-        }
-        const numericPanelId = parseInt(panelId, 10) || 1
-        const betKey = numericPanelId === 1 ? (this.activeBets.has(`${userId}:1`) ? `${userId}:1` : userId) : `${userId}:${numericPanelId}`
-        const bet = this.activeBets.get(betKey)
-        if (!bet) {
-            const err = new Error('No active bet found in this slot.')
-            err.status = 404
-            throw err
-        }
-
-        this.activeBets.delete(betKey)
-
-        const updatedUser = await db.withUserLock(userId, async () => {
-            db.updateUserBalance(userId, bet.currency, bet.betAmount, 'Crash Multiplayer Bet Cancelled')
-            return db.findUserById(userId)
-        })
-
-        broadcastEvent('CRASH_ROOM_BET_CANCEL', {
-            userId,
-            panelId: numericPanelId,
-            roundId: this.roundId
-        })
-
-        return {
-            success: true,
-            refundedAmount: bet.betAmount,
-            balances: updatedUser ? updatedUser.balances : null
         }
     }
 

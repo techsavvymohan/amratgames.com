@@ -92,25 +92,17 @@ export function AuthProvider({ children }) {
         setIsAuthModalOpen(false)
     }, [])
 
-    // Login with Email OR Phone OR Username + Password (with Mandatory Email OTP)
-    const login = async (loginId, password, otp = undefined) => {
+    // Login with Email OR Phone OR Username + Password
+    const login = async (loginId, password) => {
         try {
-            const payload = { login: String(loginId).trim(), password }
-            if (otp !== undefined && otp !== null && String(otp).trim()) {
-                payload.otp = String(otp).trim()
-            }
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ login: String(loginId).trim(), password })
             })
             const data = await res.json()
             if (!res.ok || !data.success) {
                 throw new Error(data.error || 'Login failed')
-            }
-            // If server requires Email OTP verification code
-            if (data.requireOtp) {
-                return data
             }
             saveAuth(data.token, data.user)
             setIsAuthModalOpen(false)
@@ -306,24 +298,6 @@ export function AuthProvider({ children }) {
         return data
     }
 
-    // Update balances on user state and persist in local storage
-    const updateUserBalances = useCallback((newBalances) => {
-        setUser(prev => {
-            if (!prev) return prev
-            const updated = {
-                ...prev,
-                balances: {
-                    ...(prev.balances || {}),
-                    ...newBalances
-                }
-            }
-            try {
-                localStorage.setItem(USER_KEY, JSON.stringify(updated))
-            } catch {}
-            return updated
-        })
-    }, [])
-
     const value = {
         user,
         token,
@@ -348,8 +322,7 @@ export function AuthProvider({ children }) {
         getBetsHistory,
         getPaymentsHistory,
         checkAuthStatus,
-        saveAuth,
-        updateUserBalances
+        saveAuth
     }
 
     return (

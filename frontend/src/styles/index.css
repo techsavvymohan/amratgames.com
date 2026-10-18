@@ -769,18 +769,18 @@ a {
     background: var(--bg-tertiary);
 }
 
-/* ===== Wallet Toasts (clean, viewport-anchored, non-intrusive) ===== */
+/* ===== Wallet Toasts (compact on top-right, non-intrusive) ===== */
 .wallet-toast-container {
     position: fixed;
-    top: calc(var(--mobile-header-height, 56px) + 12px);
-    right: 16px;
+    top: calc(var(--mobile-header-height, 56px) + 8px);
+    right: 12px;
     left: auto;
     transform: none;
-    z-index: 99999;
+    z-index: 500;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
+    gap: 4px;
     pointer-events: none;
     max-width: min(92vw, 380px);
 }
@@ -788,62 +788,46 @@ a {
 .wallet-toast {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.96);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(26, 44, 56, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #2f4553;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
-    animation: walletToastSlide 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: walletToastSlide 0.22s ease-out;
     white-space: normal;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-    .wallet-toast-container {
-        top: calc(var(--mobile-header-height, 56px) + 8px);
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: calc(100% - 24px);
-        max-width: 400px;
-        align-items: stretch;
-    }
+    max-width: 100%;
 }
 
 @keyframes walletToastSlide {
     from {
         opacity: 0;
-        transform: translateY(-8px) scale(0.96);
+        transform: translateX(14px);
     }
+
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateX(0);
     }
 }
 
 .wallet-toast-bet {
-    border-color: rgba(247, 147, 26, 0.45);
-    background: linear-gradient(135deg, rgba(35, 25, 15, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(247, 147, 26, 0.4);
 }
 
 .wallet-toast-win {
-    border-color: rgba(16, 185, 129, 0.45);
-    background: linear-gradient(135deg, rgba(16, 35, 28, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(53, 208, 111, 0.4);
 }
 
 .wallet-toast-loss {
-    border-color: rgba(239, 68, 68, 0.45);
-    background: linear-gradient(135deg, rgba(35, 18, 22, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(237, 66, 69, 0.4);
 }
 
 .wallet-toast-error {
-    border-color: rgba(247, 147, 26, 0.5);
-    background: linear-gradient(135deg, rgba(35, 25, 18, 0.98), rgba(15, 23, 42, 0.98));
+    border-color: rgba(247, 147, 26, 0.4);
 }
 
 .wallet-toast-icon {
@@ -856,46 +840,32 @@ a {
 
 .wallet-toast-content {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    flex: 1;
+    align-items: center;
+    gap: 6px;
 }
 
 .wallet-toast-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f8fafc;
-    letter-spacing: -0.2px;
-    line-height: 1.25;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
 }
 
 .wallet-toast-desc {
-    font-size: 12px;
-    font-weight: 500;
-    color: #94a3b8;
-    line-height: 1.35;
-    word-break: break-word;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
 }
 
 .wallet-toast-win .wallet-toast-desc {
-    color: #34d399;
+    color: var(--success);
 }
 
 .wallet-toast-loss .wallet-toast-desc {
-    color: #f87171;
+    color: #ed4245;
 }
 
 .wallet-toast-bet .wallet-toast-desc {
-    color: #f5af19;
-}
-
-.wallet-toast-error .wallet-toast-title {
-    color: #fbbf24;
-}
-
-.wallet-toast-error .wallet-toast-desc {
-    color: #e2e8f0;
+    color: #f7931a;
 }
 
 /* ===== App Layout ===== */
@@ -1965,7 +1935,7 @@ a {
         overflow-y: auto;
     }
 
-    /* Mobile Viewport for All Casino Games: Structured Single-Page Cockpit + Smooth Vertical Scroll for Live Round History */
+    /* Zero-Scroll Single Page Viewport for All Casino Games on Mobile */
     .main-content:has(.plinko-page),
     .main-content:has(.mines-game),
     .main-content:has(.crash-game),
@@ -1973,12 +1943,10 @@ a {
     .main-content:has(.dragon-tiger-page),
     .main-content:has(.color-match-page),
     .main-content:has(.coin-toss-wrapper) {
-        padding-bottom: calc(var(--mobile-nav-space, 65px) + 20px) !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch;
-        height: auto !important;
-        min-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;
+        padding-bottom: 0 !important;
+        overflow: hidden !important;
+        height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;
+        max-height: calc(100dvh - var(--mobile-header-height) - var(--mobile-nav-space)) !important;
     }
 
     .app-sidebar {

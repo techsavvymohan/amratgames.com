@@ -1214,7 +1214,8 @@
 /* Floating Real-Time Coin Win/Loss Feedback Overlay */
 .plinko-landing-popup {
     position: absolute;
-    bottom: 58px;
+    top: 55px;
+    left: 50%;
     transform: translateX(-50%);
     z-index: 99;
     display: inline-flex;
@@ -1225,7 +1226,7 @@
     font-size: 14px;
     font-weight: 700;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    animation: plinkoPopupFloat 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: plinkoPopupPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     pointer-events: none;
     backdrop-filter: blur(6px);
 }
@@ -1259,10 +1260,7 @@
     letter-spacing: 0.3px;
 }
 
-@keyframes plinkoPopupFloat {
-    0% { transform: translateX(-50%) translateY(15px) scale(0.65); opacity: 0; }
-    15% { transform: translateX(-50%) translateY(0) scale(1.08); opacity: 1; }
-    25% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
-    80% { transform: translateX(-50%) translateY(-20px) scale(1); opacity: 1; }
-    100% { transform: translateX(-50%) translateY(-45px) scale(0.85); opacity: 0; }
+@keyframes plinkoPopupPop {
+    0% { transform: translateX(-50%) scale(0.6); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }

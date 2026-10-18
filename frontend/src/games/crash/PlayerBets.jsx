@@ -9,7 +9,7 @@ const { Text } = Typography
 // Diverse avatars for players matching high-roller casino aesthetic
 const AVATAR_EMOJIS = ['😎', '🧔', '🦊', '🐼', '🐯', '🦁', '🚀', '👑', '💎', '🎩', '⚡', '🔥', '🎲', '🪙', '🦅']
 
-// Expanded realistic player pool (Indian, VIP, Aviator pro handles)
+// Realistic player username handles (Indian & Global)
 const BOT_NAMES_POOL = [
     'aarav_99', 'rohit_kumar', 'vikram_singh', 'priya_p', 'rahul_sh',
     'amit_verma', 'deepak_raj', 'neha_r', 'sachin_g', 'raj_malhotra',
@@ -18,50 +18,47 @@ const BOT_NAMES_POOL = [
     'aviator_pro', 'sky_ace', 'tiger_k', 'royal_bengal', 'speedy_r',
     'vicky_roy', 'pooja_m', 'sanjay_t', 'ankit_sh', 'dev_pandey',
     'harsh_v', 'ritesh_k', 'ashish_b', 'varun_d', 'kartik_s',
-    'meera_j', 'rohan_m', 'shivam_t', 'prateek_g', 'nikhil_r',
-    'punjab_king', 'delhi_bull', 'mumbai_ace', 'bangalore_tech', 'jaipur_royals',
-    'super_striker', 'jet_master', 'speed_racer', 'vip_raj', 'gold_miner_7',
-    'amrat_champ', 'casino_king_in', 'lucky_pete', 'crypto_god', 'blaze_99',
-    'alpha_wolf', 'apex_pilot', 'falcon_eye', 'thunder_bolt', 'zenith_star'
+    'meera_j', 'rohan_m', 'shivam_t', 'prateek_g', 'nikhil_r'
 ]
 
 // Weighted realistic stake amounts
 const REALISTIC_STAKES = [
     50, 100, 100, 150, 200, 200, 250, 300, 500, 500, 750, 1000, 1000,
-    1250, 1500, 2000, 2000, 2500, 3000, 4500, 5000, 6000, 7500, 10000, 12500, 15000
+    1250, 1500, 2000, 2000, 2500, 3000, 4500, 5000, 6000, 7000, 8500, 10000
 ]
 
-function generateRandomBots(count = 32) {
+function generateRandomBots(count = 30) {
     const shuffledNames = [...BOT_NAMES_POOL].sort(() => 0.5 - Math.random())
     const bots = []
 
     for (let i = 0; i < Math.min(count, shuffledNames.length); i++) {
         const username = shuffledNames[i]
         const rawStake = REALISTIC_STAKES[Math.floor(Math.random() * REALISTIC_STAKES.length)]
-        const betAmount = Math.random() < 0.35 ? rawStake + parseFloat((Math.random() * 95).toFixed(2)) : rawStake
+        // Add occasional realistic decimals
+        const betAmount = Math.random() < 0.25 ? rawStake + parseFloat((Math.random() * 99).toFixed(2)) : rawStake
 
-        // Realistic organic cashout targets with micro-jitter
+        // Weighted target multiplier distribution
         const r = Math.random()
         let targetMultiplier
-        if (r < 0.35) {
-            // Early steady safe cashouts (1.10x - 1.48x)
-            targetMultiplier = parseFloat((1.10 + Math.random() * 0.38).toFixed(2))
-        } else if (r < 0.70) {
-            // Mid sweet-spot cashouts (1.49x - 2.50x)
-            targetMultiplier = parseFloat((1.49 + Math.random() * 1.01).toFixed(2))
-        } else if (r < 0.88) {
-            // Higher adrenaline cashouts (2.51x - 5.50x)
-            targetMultiplier = parseFloat((2.51 + Math.random() * 2.99).toFixed(2))
-        } else if (r < 0.96) {
-            // Rocket high flyers (5.51x - 12.0x)
-            targetMultiplier = parseFloat((5.51 + Math.random() * 6.49).toFixed(2))
+        if (r < 0.30) {
+            // Early safe cashouts (1.12x - 1.45x)
+            targetMultiplier = parseFloat((1.12 + Math.random() * 0.33).toFixed(2))
+        } else if (r < 0.65) {
+            // Mid steady cashouts (1.46x - 2.25x)
+            targetMultiplier = parseFloat((1.46 + Math.random() * 0.79).toFixed(2))
+        } else if (r < 0.85) {
+            // Higher cashouts (2.26x - 4.80x)
+            targetMultiplier = parseFloat((2.26 + Math.random() * 2.54).toFixed(2))
+        } else if (r < 0.95) {
+            // High flyers (4.81x - 9.50x)
+            targetMultiplier = parseFloat((4.81 + Math.random() * 4.69).toFixed(2))
         } else {
-            // Rare moon shots (12.1x - 35.0x)
-            targetMultiplier = parseFloat((12.1 + Math.random() * 22.9).toFixed(2))
+            // Moon shots (10x - 30x)
+            targetMultiplier = parseFloat((10.0 + Math.random() * 20.0).toFixed(2))
         }
 
         bots.push({
-            id: `bot_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+            id: `bot_${Date.now()}_${i}`,
             username,
             betAmount,
             targetMultiplier,
@@ -72,7 +69,7 @@ function generateRandomBots(count = 32) {
         })
     }
 
-    // Sort descending by bet amount for high-roller casino aesthetic
+    // Sort bots descending by bet amount
     return bots.sort((a, b) => b.betAmount - a.betAmount)
 }
 
@@ -91,23 +88,14 @@ function PlayerBets({
     // Dynamic simulated bots state
     const [simulatedBots, setSimulatedBots] = useState(() => generateRandomBots(32))
     const lastPhaseRef = useRef(phase)
-    const prevMultiplierRef = useRef(multiplier)
 
-    // Generate fresh, completely randomized pool of bets on EVERY new round
+    // Generate fresh pool of simulated bets when a new round starts
     useEffect(() => {
-        const curM = parseFloat(multiplier) || 1.0
-        const prevM = parseFloat(prevMultiplierRef.current) || 1.0
-        const isNewRound = (phase === 'waiting' && lastPhaseRef.current !== 'waiting') ||
-                            (phase === 'running' && lastPhaseRef.current !== 'running' && curM <= 1.05) ||
-                            (curM <= 1.02 && prevM > 1.05)
-
-        if (isNewRound) {
-            setSimulatedBots(generateRandomBots(Math.floor(28 + Math.random() * 12)))
+        if (phase === 'waiting' && lastPhaseRef.current !== 'waiting') {
+            setSimulatedBots(generateRandomBots(Math.floor(26 + Math.random() * 10)))
         }
-
         lastPhaseRef.current = phase
-        prevMultiplierRef.current = multiplier
-    }, [phase, multiplier])
+    }, [phase])
 
     // Mask name like j***7, m***n
     const maskUsername = (name) => {
@@ -135,7 +123,7 @@ function PlayerBets({
         })
     }, [simulatedBots, multiplier, phase])
 
-    // Consolidated bets list: Real player STRICTLY pinned at top, followed by bots/room
+    // Consolidated bets list: Real player pinned at top, followed by bots/room
     const allBetsList = useMemo(() => {
         let baseList = []
 
@@ -153,27 +141,21 @@ function PlayerBets({
             activeUserBets.push(userBetData)
         }
 
-        // Remove duplicates and pin real player at index 0
+        // Remove duplicates and pin real player at index 0 & 1
         const nonUserList = baseList.filter(
             (b) => !b.isUser && !activeUserBets.some((u) => u.userId && u.userId === b.userId)
         )
 
-        const formattedUserBets = activeUserBets.map((ub, idx) => {
-            const isCashed = Boolean(ub.cashedOut || (ub.payout && ub.payout > 0) || (ub.multiplier && ub.multiplier > 0))
-            return {
-                ...ub,
-                id: ub.id || `user-bet-${idx}`,
-                isUser: true,
-                username: ub.username || 'You',
-                avatarEmoji: '👑',
-                cashedOut: isCashed,
-                multiplier: ub.multiplier || (isCashed ? parseFloat(multiplier) : null),
-                payout: ub.payout || (isCashed ? parseFloat(((ub.betAmount || 0) * (ub.multiplier || parseFloat(multiplier))).toFixed(2)) : 0)
-            }
-        })
+        const formattedUserBets = activeUserBets.map((ub, idx) => ({
+            ...ub,
+            id: ub.id || `user-bet-${idx}`,
+            isUser: true,
+            username: ub.username || 'You',
+            avatarEmoji: '👑'
+        }))
 
         return [...formattedUserBets, ...nonUserList]
-    }, [roomBets, liveBots, userBets, userBetData, multiplier])
+    }, [roomBets, liveBots, userBets, userBetData])
 
     // Real-time turnover & total wins dynamically calculated as bots cash out
     const stats = useMemo(() => {
@@ -191,31 +173,23 @@ function PlayerBets({
         }
     }, [allBetsList])
 
-    // Persistent previous user bets (stored in localStorage so it NEVER deletes on leave)
-    const [persistedUserHistory, setPersistedUserHistory] = useState(() => {
+    // Persistent previous user bets (stored in localStorage)
+    const persistedUserHistory = useMemo(() => {
         try {
             const raw = localStorage.getItem('amrat_crash_history')
-            return raw ? JSON.parse(raw) : []
-        } catch {
-            return []
-        }
-    })
-
-    useEffect(() => {
-        if (Array.isArray(userHistory) && userHistory.length > 0) {
-            setPersistedUserHistory((prev) => {
+            const parsed = raw ? JSON.parse(raw) : []
+            if (Array.isArray(userHistory) && userHistory.length > 0) {
                 const combined = [...userHistory]
-                for (const p of prev) {
-                    if (!combined.some(c => c.id === p.id)) {
+                for (const p of parsed) {
+                    if (!combined.some((c) => c.id === p.id)) {
                         combined.push(p)
                     }
                 }
-                const sliced = combined.slice(0, 50)
-                try {
-                    localStorage.setItem('amrat_crash_history', JSON.stringify(sliced))
-                } catch {}
-                return sliced
-            })
+                return combined.slice(0, 40)
+            }
+            return parsed.slice(0, 40)
+        } catch {
+            return userHistory || []
         }
     }, [userHistory])
 

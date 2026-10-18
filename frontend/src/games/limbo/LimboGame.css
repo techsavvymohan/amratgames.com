@@ -14,7 +14,9 @@
 
 @media (min-width: 901px) {
     .limbo-page {
-        min-height: calc(100vh - 60px);
+        height: calc(100vh - 60px);
+        max-height: calc(100vh - 60px);
+        overflow: hidden;
         display: flex;
         flex-direction: column;
     }
@@ -540,92 +542,69 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
 /* ── Mobile Viewport Fit ── */
 @media (max-width: 900px) {
     .limbo-page {
-        height: auto !important;
-        max-height: none !important;
-        min-height: 100% !important;
-        overflow-y: visible !important;
-        overflow-x: hidden !important;
-        padding: 6px 10px 84px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 4px 8px 0 !important;
         display: flex !important;
         flex-direction: column !important;
-        box-sizing: border-box !important;
+        justify-content: space-between !important;
     }
 
     .limbo-container {
-        height: auto !important;
-        max-height: none !important;
+        height: 100% !important;
+        max-height: 100% !important;
         min-height: 0 !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        justify-content: space-between !important;
         grid-template-columns: 1fr !important;
-        gap: 10px !important;
+        gap: 6px !important;
         padding: 0 !important;
     }
 
     .limbo-arena {
-        flex: 0 0 auto !important;
-        min-height: 190px !important;
-        padding: 12px 14px !important;
-        border-radius: 16px !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        padding: 10px 12px !important;
+        border-radius: 14px !important;
         justify-content: space-between !important;
     }
 
-    .limbo-history-bar {
-        align-items: center !important;
-        min-height: 28px !important;
-        gap: 6px !important;
-    }
-
-    .limbo-live-status {
-        font-size: 10.5px !important;
-        padding: 2px 7px !important;
-        flex-shrink: 0 !important;
-    }
-
     .limbo-display {
-        padding: 8px 0 !important;
+        padding: 6px 0 !important;
     }
 
     .limbo-multiplier-number {
-        font-size: clamp(3rem, 9vw, 4.2rem) !important;
+        font-size: clamp(2.8rem, 8.5vh, 4rem) !important;
     }
 
     .limbo-target-badge {
-        margin-top: 6px !important;
-        padding: 3px 10px !important;
-        font-size: 11.5px !important;
+        margin-top: 4px !important;
+        padding: 2px 8px !important;
+        font-size: 11px !important;
     }
 
     .limbo-payout-toast {
-        margin-top: 6px !important;
-        padding: 4px 12px !important;
-        font-size: 11.5px !important;
+        margin-top: 4px !important;
+        padding: 3px 10px !important;
+        font-size: 11px !important;
     }
 
     .limbo-arena-footer {
-        display: flex !important;
-        justify-content: center !important;
-        gap: 12px !important;
-        padding-top: 8px !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
-    }
-
-    .limbo-arena-footer .limbo-btn-secondary {
-        font-size: 11px !important;
-        height: 28px !important;
-        padding: 0 8px !important;
-        color: #94a3b8 !important;
+        display: none !important;
     }
 
     .limbo-controls-card {
         flex-shrink: 0 !important;
-        padding: 12px 14px 14px !important;
-        gap: 8px !important;
+        padding: 6px 10px 8px !important;
+        gap: 6px !important;
         background: #0f131c !important;
-        border-radius: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        border-radius: 12px 12px 0 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
     }
 
     .limbo-mode-tabs {
@@ -638,7 +617,7 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
     }
 
     .limbo-control-group {
-        gap: 4px !important;
+        gap: 2px !important;
     }
 
     .limbo-label {
@@ -650,66 +629,44 @@ button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo
         font-size: 14px !important;
     }
 
-    .limbo-quick-actions {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 4px !important;
-    }
-
     .limbo-quick-actions button {
-        height: 34px !important;
-        min-height: 34px !important;
-        padding: 0 4px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        padding: 0 10px !important;
         font-size: 12px !important;
         font-weight: 700 !important;
     }
 
     .limbo-presets-row {
-        display: grid !important;
-        grid-template-columns: repeat(6, 1fr) !important;
-        gap: 4px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
+        gap: 6px !important;
     }
 
     .limbo-preset-chip {
-        height: 34px !important;
-        min-height: 34px !important;
-        padding: 0 2px !important;
-        font-size: 11.5px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
         font-weight: 700 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
     }
 
     .limbo-grid-two {
-        gap: 8px !important;
+        gap: 6px !important;
     }
 
     .limbo-profit-preview {
-        padding: 6px 10px !important;
-        font-size: 11.5px !important;
+        padding: 4px 8px !important;
+        font-size: 11px !important;
     }
 
     .text-gold {
-        font-size: 12.5px !important;
+        font-size: 12px !important;
     }
 
     .limbo-bet-btn {
-        min-height: 48px !important;
-        height: 48px !important;
+        min-height: 46px !important;
+        height: 46px !important;
         font-size: 15px !important;
         font-weight: 800 !important;
         margin-top: 4px !important;
-        border-radius: 12px !important;
-    }
-
-    .limbo-bottom-history-section {
-        margin-top: 16px !important;
-        padding: 0 !important;
     }
 }

@@ -204,15 +204,10 @@ class PlinkoEngine {
         const payouts = BIN_PAYOUTS[this.rowCount]?.[this.riskLevel];
 
         if (payouts && binIndex >= 0 && binIndex < payouts.length) {
-            const betAmount = this.betAmountOfExistingBalls[ball.id] ?? this.betAmount ?? 0;
+            const betAmount = this.betAmountOfExistingBalls[ball.id] || 0;
             const multiplier = payouts[binIndex];
             const payoutValue = betAmount * multiplier;
             const profit = payoutValue - betAmount;
-
-            // Commit winning coins to wallet balance upon visual landing
-            if (typeof ball.commitBalance === 'function') {
-                ball.commitBalance();
-            }
 
             this.onBallEnterBin({
                 betAmount,
@@ -239,11 +234,8 @@ class PlinkoEngine {
      * Drop a ball to a specific bin
      * @param {number} binIndex - The target bin index (0 = leftmost, rowCount = rightmost)
      * @param {string} ballType - The identifier for the ball type being dropped
-     * @param {boolean} isDemo - Whether this is a demo drop
-     * @param {number|null} betAmount - Specific bet amount for this ball (preserves special ball cost)
-     * @param {function|null} commitBalance - Callback to commit payout on landing
      */
-    dropBall(binIndex, ballType, isDemo = false, betAmount = null, commitBalance = null) {
+    dropBall(binIndex, ballType, isDemo = false) {
         if (this.getActiveBallCount() >= MAX_ACTIVE_BALLS) return null;
 
         // Get pre-calculated X for this bin
@@ -268,16 +260,19 @@ class PlinkoEngine {
             physics.hFriction,
             physics.vFriction,
             this.ballImage,
-            (pinId) => this.triggerPinAnimation(pinId), // Pass collision callback
-            binIndex // targetBinIndex
+            (pinId) => this.triggerPinAnimation(pinId) // Pass collision callback
         );
 
         ball.id = Math.random().toString(36).substr(2, 9);
         ball.type = ballType; // Attach ballType to preserve it
         ball.isDemo = Boolean(isDemo);
-        ball.commitBalance = commitBalance;
         this.balls.push(ball);
-        this.betAmountOfExistingBalls[ball.id] = (betAmount !== null && betAmount !== undefined) ? betAmount : this.betAmount;
+        this.betAmountOfExistingBalls[ball.id] = this.betAmount;
+
+        // Notify balance change only for real bets
+        if (!isDemo) {
+            this.onBalanceChange(-this.betAmount);
+        }
 
         return ball;
     }

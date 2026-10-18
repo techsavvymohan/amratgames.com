@@ -48,7 +48,6 @@ export default function PvPDuelsArena() {
     // Battle Modal & Provably Fair reveal
     const [battleModal, setBattleModal] = useState(null) // { duel, spinning: bool, outcome: string, won: bool }
     const [showSeeds, setShowSeeds] = useState(false)
-    const activeBattleDuelIdRef = useRef(null)
 
     // Stake multipliers
     const multiplyStake = (factor) => {
@@ -108,9 +107,6 @@ export default function PvPDuelsArena() {
     // Trigger duel resolution animation
     const triggerDuelBattle = useCallback(
         (resolvedDuel) => {
-            if (!resolvedDuel || activeBattleDuelIdRef.current === resolvedDuel.id) return
-            activeBattleDuelIdRef.current = resolvedDuel.id
-
             const isUserCreator = user && resolvedDuel.creatorId === user.id
             const isUserOpponent = user && resolvedDuel.opponentId === user.id
             const isUserParticipant = isUserCreator || isUserOpponent
@@ -836,10 +832,7 @@ export default function PvPDuelsArena() {
                                     type="button"
                                     className="pvp-create-btn"
                                     style={{ width: '100%', marginTop: 12, padding: 10 }}
-                                    onClick={() => {
-                                        setBattleModal(null)
-                                        activeBattleDuelIdRef.current = null
-                                    }}
+                                    onClick={() => setBattleModal(null)}
                                 >
                                     CONTINUE ARENA
                                 </button>

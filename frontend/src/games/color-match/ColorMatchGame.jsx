@@ -69,21 +69,8 @@ function ColorMatchGame() {
         { period: 202609220057, num: 7, colors: ['green'], bigSmall: 'big' }
     ])
 
-    // Player personal bets record (persisted across sessions)
-    const [myBets, setMyBets] = useState(() => {
-        try {
-            const saved = localStorage.getItem('amrat_colormatch_history')
-            return saved ? JSON.parse(saved) : []
-        } catch {
-            return []
-        }
-    })
-
-    useEffect(() => {
-        try {
-            localStorage.setItem('amrat_colormatch_history', JSON.stringify(myBets.slice(0, 50)))
-        } catch (e) {}
-    }, [myBets])
+    // Player personal bets record
+    const [myBets, setMyBets] = useState([])
     const [activeTab, setActiveTab] = useState('history')
 
     // Modals & Drawers
@@ -145,21 +132,16 @@ function ColorMatchGame() {
         const isWin = Boolean(betResponse.won ?? evalData.won)
         const activeBets = { ...bets }
 
-        // Deferred balance settlement on visual animation finish
-        if (typeof betResponse?.commitBalance === 'function') {
-            betResponse.commitBalance()
-        }
-
         // Apply visual/sound notifications
         if (isWin && totalWin > 0) {
-            notifyWin?.(totalWin, totalStaked > 0 ? (totalWin / totalStaked).toFixed(2) : 1)
+            notifyWin?.(`Won ${currencySymbol}${totalWin.toLocaleString()} on Color Match #${periodId}!`)
             if ((totalWin / (totalStaked || 1)) >= 3) {
                 casinoAudio.playBigWin()
             } else {
                 casinoAudio.playWin()
             }
         } else if (Object.keys(activeBets).length > 0) {
-            notifyLoss?.(totalStaked)
+            notifyLoss?.(`Round #${periodId} result: ${winningNum}. Better luck next round!`)
             casinoAudio.playLoss()
         }
 
@@ -167,7 +149,6 @@ function ColorMatchGame() {
         if (Object.keys(activeBets).length > 0) {
             setMyBets(prev => [
                 {
-                    id: `cm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
                     period: periodId,
                     betAmount: totalStaked,
                     stake: totalStaked,
@@ -177,11 +158,10 @@ function ColorMatchGame() {
                     outcome: `#${periodId} → ${winningNum} (${colors.join(', ')})`,
                     won: isWin && totalWin > 0,
                     winStatus: isWin && totalWin > 0,
-                    multiplier: totalStaked > 0 ? parseFloat((totalWin / totalStaked).toFixed(2)) : 0,
-                    time: Date.now(),
-                    createdAt: new Date().toISOString()
+                    multiplier: totalStaked > 0 ? (totalWin / totalStaked) : 0,
+                    time: Date.now()
                 },
-                ...prev.slice(0, 49)
+                ...prev.slice(0, 19)
             ])
         }
 
@@ -218,15 +198,14 @@ function ColorMatchGame() {
         setIsLocked(true)
         casinoAudio.playCardDeal?.()
 
-        // Submit to server-authoritative Provably Fair engine with deferred balance
+        // Submit to server-authoritative Provably Fair engine
         let betResponse
         try {
             betResponse = await executeGameBet({
                 game: 'color-match',
                 gameName: 'Color Match',
                 betAmount: totalStaked,
-                bets: { ...bets },
-                deferBalanceUpdate: true
+                bets: { ...bets }
             })
         } catch (err) {
             console.error('[ColorMatch] Error submitting bet:', err)
@@ -789,15 +768,6 @@ function ColorMatchGame() {
                 )}
             </div>
         </div>
-    </div>
-
-    {/* Live Persistent Bet History Table (Directly Beneath Main Game Board) */}
-    <div className="cm-bottom-history-section" style={{ width: '100%', maxWidth: '1200px', margin: '24px auto 0', padding: '0 12px' }}>
-        <GameBottomHistory
-            gameKey="color-match"
-            gameTitle="Color Match"
-            localRounds={myBets}
-        />
     </div>
 
     {/* Mobile Sticky Bottom Wager Bar */}

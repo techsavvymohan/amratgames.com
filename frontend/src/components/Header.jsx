@@ -84,8 +84,7 @@ function Header({
     })
 
     return (
-        <>
-            <header className={`header ${isHomePage ? 'header-home' : ''}`}>
+        <header className={`header ${isHomePage ? 'header-home' : ''}`}>
             <div className="header-left">
                 <Link to="/" className="logo-link" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
                     <img src="/amrat-logo.png" alt="AmratGames" className="header-logo-img" style={{ height: '32px', width: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(245, 175, 25, 0.5))' }} />
@@ -174,6 +173,43 @@ function Header({
                         </>
                     )}
                 </div>
+
+                    {/* Game Toasts */}
+                    {isGamePage && toasts.length > 0 && (
+                        <div className="wallet-toast-container">
+                            {toasts.map(toast => (
+                                <div key={toast.id} className={`wallet-toast wallet-toast-${toast.type}`}>
+                                    <div className="wallet-toast-icon">
+                                        {toast.type === 'bet' && (
+                                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={20} fontSize={11} />
+                                        )}
+                                        {toast.type === 'win' && (
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        )}
+                                        {toast.type === 'loss' && (
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ed4245" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                            </svg>
+                                        )}
+                                        {toast.type === 'error' && (
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f7931a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <div className="wallet-toast-content">
+                                        <span className="wallet-toast-title">{toast.title}</span>
+                                        <span className="wallet-toast-desc">{toast.description}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 {!isGamePage && (
                     <div className="search-input-wrapper" ref={searchRef} style={{ position: 'relative' }}>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--text-secondary)" className="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
@@ -490,44 +526,6 @@ function Header({
                 </button>
             </div>
         </header>
-
-        {/* 🚀 Viewport-Anchored Game & Cashier Toasts (Never trapped inside transformed header containers) */}
-        {isGamePage && toasts.length > 0 && (
-            <div className="wallet-toast-container" role="status" aria-live="polite">
-                {toasts.map(toast => (
-                    <div key={toast.id} className={`wallet-toast wallet-toast-${toast.type}`}>
-                        <div className="wallet-toast-icon">
-                            {toast.type === 'bet' && (
-                                <CurrencyIcon symbol={currencySymbol} currency={currency} size={20} fontSize={11} />
-                            )}
-                            {toast.type === 'win' && (
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            )}
-                            {toast.type === 'loss' && (
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ed4245" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            )}
-                            {toast.type === 'error' && (
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f7931a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                            )}
-                        </div>
-                        <div className="wallet-toast-content">
-                            <span className="wallet-toast-title">{toast.title}</span>
-                            <span className="wallet-toast-desc">{toast.description}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        )}
-        </>
     )
 }
 

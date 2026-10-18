@@ -100,7 +100,6 @@ export function WalletProvider({ children }) {
     const currencyRef = useRef(currency)
     const [transactions, setTransactions] = useState([])
     const [userWithdrawals, setUserWithdrawals] = useState([])
-    const inFlightDeferredBetsRef = useRef(0)
 
     // Fetch user's submitted withdrawal requests
     const refreshWithdrawals = useCallback(async () => {
@@ -150,9 +149,6 @@ export function WalletProvider({ children }) {
                     try {
                         localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyRef.current}`, rounded.toString())
                     } catch { /* ignore */ }
-                    if (authContext?.updateUserBalances && data.balances) {
-                        authContext.updateUserBalances(data.balances)
-                    }
                 }
                 if (typeof data.totalDeposited === 'number') {
                     setTotalDeposited(data.totalDeposited)
@@ -248,11 +244,8 @@ export function WalletProvider({ children }) {
         try {
             localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyRef.current}`, rounded.toString())
         } catch (e) { /* ignore */ }
-        if (authContext?.updateUserBalances) {
-            authContext.updateUserBalances({ [currencyRef.current]: rounded })
-        }
         return rounded
-    }, [authContext])
+    }, [])
 
     // Update balance and persist to localStorage
     const updateBalance = useCallback((newBalance) => {
@@ -342,16 +335,6 @@ export function WalletProvider({ children }) {
             authContext?.openAuthModal?.('register')
             return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
         }
-        const { deferBalanceUpdate, ...payloadToSend } = betPayload || {}
-        const parsedBet = parseFloat(payloadToSend.betAmount) || 0
-
-        // If deferBalanceUpdate is requested (e.g. Plinko ball falling, Coin spinning, Cards dealing),
-        // deduct the bet immediately from the visual balance so the user sees their stake placed in real time
-        if (deferBalanceUpdate && parsedBet > 0) {
-            inFlightDeferredBetsRef.current += 1
-            setStoredBalance(Math.max(0, balanceRef.current - parsedBet))
-        }
-
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
@@ -362,96 +345,27 @@ export function WalletProvider({ children }) {
                 headers,
                 body: JSON.stringify({
                     currency: currencyRef.current,
-                    ...payloadToSend
+                    ...betPayload
                 })
             })
             const data = await res.json()
             if (data.success) {
-                const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
-                const targetBal = (data.balances && typeof data.balances[currencyRef.current] === 'number')
-                    ? data.balances[currencyRef.current]
-                    : Math.max(0, balanceRef.current - (deferBalanceUpdate ? 0 : parsedBet) + payout)
-
-                if (deferBalanceUpdate) {
-                    let hasCommitted = false
-                    let safetyTimer = null
-
-                    // Provide a commitBalance callback that the game triggers when the visual animation completes
-                    data.commitBalance = () => {
-                        if (hasCommitted) return
-                        hasCommitted = true
-                        if (safetyTimer) {
-                            clearTimeout(safetyTimer)
-                            safetyTimer = null
-                        }
-                        inFlightDeferredBetsRef.current = Math.max(0, inFlightDeferredBetsRef.current - 1)
-
-                        // 1. If there is a payout, add it directly to current live balance (avoids overwriting concurrent bets)
-                        if (payout > 0) {
-                            setStoredBalance(balanceRef.current + payout)
-                        }
-
-                        // 2. If all concurrent in-flight bets have settled, reconcile to latest authoritative server balance
-                        if (inFlightDeferredBetsRef.current === 0) {
-                            if (refreshBalance) {
-                                refreshBalance()
-                            } else if (data.balances && typeof data.balances[currencyRef.current] === 'number') {
-                                setStoredBalance(data.balances[currencyRef.current])
-                            }
-                        }
-
-                        // 3. Record in live transactions log
-                        setTransactions(txs => [{
-                            id: Date.now() + Math.random(),
-                            type: payout >= parsedBet ? 'win' : 'bet',
-                            currency: currencyRef.current,
-                            symbol: CURRENCIES[currencyRef.current]?.symbol || '₹',
-                            amount: payout > 0 ? payout - parsedBet : -parsedBet,
-                            balance: balanceRef.current,
-                            timestamp: new Date()
-                        }, ...txs].slice(0, 100))
+                if (data.balances) {
+                    const updatedBal = data.balances[currencyRef.current]
+                    if (typeof updatedBal === 'number') {
+                        setStoredBalance(updatedBal)
                     }
-
-                    // Failsafe: If animation is interrupted, tab switched, or unmounted, ensure balance commits within 12s
-                    safetyTimer = setTimeout(() => {
-                        if (!hasCommitted && typeof data.commitBalance === 'function') {
-                            data.commitBalance()
-                        }
-                    }, 12000)
                 } else {
-                    // Non-deferred bet (instant): if there are in-flight deferred bets, apply delta; otherwise targetBal
-                    if (inFlightDeferredBetsRef.current > 0) {
-                        setStoredBalance(balanceRef.current - parsedBet + payout)
-                    } else {
-                        setStoredBalance(targetBal)
-                    }
-                    setTransactions(txs => [{
-                        id: Date.now() + Math.random(),
-                        type: payout >= parsedBet ? 'win' : 'bet',
-                        currency: currencyRef.current,
-                        symbol: CURRENCIES[currencyRef.current]?.symbol || '₹',
-                        amount: payout > 0 ? payout - parsedBet : -parsedBet,
-                        balance: balanceRef.current,
-                        timestamp: new Date()
-                    }, ...txs].slice(0, 100))
-                }
-            } else {
-                // If server rejected the bet, restore the optimistically deducted stake immediately!
-                if (deferBalanceUpdate && parsedBet > 0) {
-                    inFlightDeferredBetsRef.current = Math.max(0, inFlightDeferredBetsRef.current - 1)
-                    setStoredBalance(balanceRef.current + parsedBet)
+                    const parsedBet = parseFloat(betPayload.betAmount) || 0
+                    const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
+                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet + payout))
                 }
             }
             return data
         } catch (err) {
-            // On network failure, restore the deducted stake immediately!
-            if (deferBalanceUpdate && parsedBet > 0) {
-                inFlightDeferredBetsRef.current = Math.max(0, inFlightDeferredBetsRef.current - 1)
-                setStoredBalance(balanceRef.current + parsedBet)
-            }
             return { success: false, error: err.message }
         }
-    }, [user, authContext, token, setStoredBalance, refreshBalance])
+    }, [user, authContext, token, setStoredBalance])
 
     // Server-Authoritative Mines Lifecycle Methods
     const startMinesRound = useCallback(async ({ betAmount, minesCount, clientSeed }) => {
@@ -676,26 +590,6 @@ export function WalletProvider({ children }) {
             const headers = { 'Content-Type': 'application/json' }
             if (token) headers.Authorization = `Bearer ${token}`
             const res = await fetch('/api/games/crash/room/cashout', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ panelId: panelId || 1 })
-            })
-            const data = await res.json()
-            if (data.success && data.balances) {
-                const updatedBal = data.balances[currencyRef.current]
-                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
-            }
-            return data
-        } catch (err) {
-            return { success: false, error: err.message }
-        }
-    }, [token, setStoredBalance])
-
-    const cancelRoomCrashBet = useCallback(async ({ panelId = 1 } = {}) => {
-        try {
-            const headers = { 'Content-Type': 'application/json' }
-            if (token) headers.Authorization = `Bearer ${token}`
-            const res = await fetch('/api/games/crash/room/cancel', {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({ panelId: panelId || 1 })
@@ -954,22 +848,12 @@ export function WalletProvider({ children }) {
     }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 
     const notifyWin = useCallback((amount, mult) => {
-        if (typeof amount === 'string' && isNaN(Number(amount))) {
-            showToast('win', 'Won', amount, 2500)
-            return
-        }
-        const numAmt = Number(amount || 0)
-        const multText = mult && !isNaN(Number(mult)) ? ` (${Number(mult).toFixed(2)}x)` : ''
-        showToast('win', 'Won', `+${currencySymbol}${numAmt.toFixed(2)}${multText}`, 2000)
+        const multText = mult ? ` (${Number(mult).toFixed(2)}x)` : ''
+        showToast('win', 'Won', `+${currencySymbol}${Number(amount || 0).toFixed(2)}${multText}`, 2000)
     }, [showToast, currencySymbol])
 
     const notifyLoss = useCallback((amount) => {
-        if (typeof amount === 'string' && isNaN(Number(amount))) {
-            showToast('loss', 'Loss', amount, 2000)
-            return
-        }
-        const numAmt = Number(amount || 0)
-        showToast('loss', 'Loss', `-${currencySymbol}${numAmt.toFixed(2)}`, 1400)
+        showToast('loss', 'Loss', `-${currencySymbol}${Number(amount || 0).toFixed(2)}`, 1400)
     }, [showToast, currencySymbol])
 
     const value = {
@@ -1007,7 +891,6 @@ export function WalletProvider({ children }) {
         getActiveCrashRound,
         placeRoomCrashBet,
         cashoutRoomCrash,
-        cancelRoomCrashBet,
         getRoomCrashState,
         getVipStatus,
         claimVipRakeback,

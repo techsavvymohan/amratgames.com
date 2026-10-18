@@ -221,8 +221,7 @@ export default function CoinTossGame() {
                     gameName: 'Coin Toss (Heads or Tails)',
                     betAmount: currentBet,
                     choice: choice,
-                    targetMultiplier: MULTIPLIER,
-                    deferBalanceUpdate: true
+                    targetMultiplier: MULTIPLIER
                 })
             }
         } catch (err) {
@@ -244,11 +243,6 @@ export default function CoinTossGame() {
 
         setTimeout(() => {
             clearInterval(tickTimer)
-
-            // Commit winning coins to user balance at moment of impact
-            if (typeof res.commitBalance === 'function') {
-                res.commitBalance()
-            }
 
             // Determine outcome from provably-fair server result
             const outcome = res.evaluation?.outcome || (res.won ? choice : (choice === 'heads' ? 'tails' : 'heads'))
@@ -699,15 +693,6 @@ export default function CoinTossGame() {
                 </div>
             </div>
             )}
-
-            {/* Live Persistent Bet History Table (Directly Beneath Main Game Arena) */}
-            <div className="cointoss-bottom-history-section" style={{ width: '100%', maxWidth: '1100px', margin: '24px auto 0', padding: '0 16px' }}>
-                <GameBottomHistory
-                    gameKey="coin-toss"
-                    gameTitle="Royal Coin Toss"
-                    localRounds={history}
-                />
-            </div>
 
             {/* Slide-out Game Specific Round History Drawer */}
             <Drawer

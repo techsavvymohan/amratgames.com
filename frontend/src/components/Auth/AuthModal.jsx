@@ -23,15 +23,10 @@ export default function AuthModal() {
     const [signInMethod, setSignInMethod] = useState(authModalMode === 'otp' ? 'otp' : 'password')
 
     // Form States
-    // Form States
-    // 1. Password Login + Mandatory Email OTP Verification
+    // 1. Password Login
     const [loginId, setLoginId] = useState('')
     const [loginPassword, setLoginPassword] = useState('')
     const [showLoginPassword, setShowLoginPassword] = useState(false)
-    const [loginOtpRequired, setLoginOtpRequired] = useState(false)
-    const [loginMaskedEmail, setLoginMaskedEmail] = useState('')
-    const [loginCleanEmail, setLoginCleanEmail] = useState('')
-    const [loginOtpCode, setLoginOtpCode] = useState('')
 
     // 2. Fast OTP Login
     const [otpIdentifier, setOtpIdentifier] = useState('')
@@ -67,8 +62,6 @@ export default function AuthModal() {
         } else if (authModalMode === 'login') {
             setSignInMethod('password')
         }
-        setLoginOtpRequired(false)
-        setLoginOtpCode('')
         setErrorMsg(null)
         setSuccessMsg(null)
     }, [authModalMode])
@@ -112,67 +105,13 @@ export default function AuthModal() {
 
         try {
             setLoading(true)
-            const res = await login(loginId.trim(), loginPassword)
-            if (res && res.requireOtp) {
-                setLoginOtpRequired(true)
-                setLoginMaskedEmail(res.email)
-                setLoginCleanEmail(res.cleanEmail || loginId.trim())
-                setResendCountdown(30)
-                setSuccessMsg(res.message || 'Verification code sent to your registered email')
-                return
-            }
-            setSuccessMsg(`Welcome back, ${res.username}!`)
+            const user = await login(loginId.trim(), loginPassword)
+            setSuccessMsg(`Welcome back, ${user.username}!`)
         } catch (err) {
             setErrorMsg(err.message || 'Authentication failed. Please check your credentials.')
         } finally {
             setLoading(false)
         }
-    }
-
-    // ── Handle Verify Password Login OTP ──
-    const handleVerifyLoginOtp = async (e) => {
-        e.preventDefault()
-        setErrorMsg(null)
-        setSuccessMsg(null)
-
-        if (!loginOtpCode.trim() || loginOtpCode.trim().length < 6) {
-            setErrorMsg('Please enter the 6-digit verification code sent to your email')
-            return
-        }
-
-        try {
-            setLoading(true)
-            const user = await login(loginId.trim(), loginPassword, loginOtpCode.trim())
-            setSuccessMsg(`Welcome back, ${user.username}!`)
-        } catch (err) {
-            setErrorMsg(err.message || 'Invalid or expired OTP code. Please check your email or click resend.')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    // ── Handle Resend Login OTP ──
-    const handleResendLoginOtp = async () => {
-        if (resendCountdown > 0) return
-        setErrorMsg(null)
-        setSuccessMsg(null)
-        try {
-            setLoading(true)
-            const res = await sendOtp(loginCleanEmail || loginId.trim(), 'email', 'login')
-            setResendCountdown(30)
-            setSuccessMsg(res.message || 'Fresh verification code dispatched to your email!')
-        } catch (err) {
-            setErrorMsg(err.message || 'Failed to resend verification code')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleBackToPassword = () => {
-        setLoginOtpRequired(false)
-        setLoginOtpCode('')
-        setErrorMsg(null)
-        setSuccessMsg(null)
     }
 
     // ── Handle Send OTP with Purpose Guard ──
@@ -405,193 +344,115 @@ export default function AuthModal() {
                    ══════════════════════════════════════════════════════════ */}
                 {mode === 'login' && (
                     <div>
-                        {/* Sub-Method Switcher (Hidden when OTP step is active) */}
-                        {!loginOtpRequired && (
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '8px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSignInMethod('password'); setErrorMsg(null); }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '6px 10px',
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        background: signInMethod === 'password' ? '#f59e0b' : 'transparent',
-                                        color: signInMethod === 'password' ? '#000' : '#94a3b8',
-                                        fontWeight: signInMethod === 'password' ? 700 : 500,
-                                        fontSize: '0.78rem',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    🔑 Password Login
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { setSignInMethod('otp'); setErrorMsg(null); }}
-                                    style={{
-                                        flex: 1,
-                                        padding: '6px 10px',
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        background: signInMethod === 'otp' ? '#f59e0b' : 'transparent',
-                                        color: signInMethod === 'otp' ? '#000' : '#94a3b8',
-                                        fontWeight: signInMethod === 'otp' ? 700 : 500,
-                                        fontSize: '0.78rem',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    ⚡ Fast Email OTP
-                                </button>
-                            </div>
-                        )}
+                        {/* Sub-Method Switcher */}
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '8px' }}>
+                            <button
+                                type="button"
+                                onClick={() => { setSignInMethod('password'); setErrorMsg(null); }}
+                                style={{
+                                    flex: 1,
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: signInMethod === 'password' ? '#f59e0b' : 'transparent',
+                                    color: signInMethod === 'password' ? '#000' : '#94a3b8',
+                                    fontWeight: signInMethod === 'password' ? 700 : 500,
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                🔑 Password Login
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setSignInMethod('otp'); setErrorMsg(null); }}
+                                style={{
+                                    flex: 1,
+                                    padding: '6px 10px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: signInMethod === 'otp' ? '#f59e0b' : 'transparent',
+                                    color: signInMethod === 'otp' ? '#000' : '#94a3b8',
+                                    fontWeight: signInMethod === 'otp' ? 700 : 500,
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                ⚡ Fast Email OTP
+                            </button>
+                        </div>
 
                         {/* Sub-Mode A: Password Sign In */}
                         {signInMethod === 'password' && (
-                            loginOtpRequired ? (
-                                <form onSubmit={handleVerifyLoginOtp} className="amrat-auth-form">
-                                    <div style={{
-                                        background: 'linear-gradient(135deg, rgba(245, 175, 25, 0.12) 0%, rgba(15, 23, 42, 0.6) 100%)',
-                                        border: '1px solid rgba(245, 175, 25, 0.3)',
-                                        borderRadius: '10px',
-                                        padding: '14px',
-                                        marginBottom: '16px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '1.6rem', marginBottom: '6px' }}>✉️</div>
-                                        <div style={{ color: '#fbbf24', fontWeight: 800, fontSize: '0.9rem', marginBottom: '4px' }}>
-                                            Email Verification Required
-                                        </div>
-                                        <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: '1.4' }}>
-                                            We sent a 6-digit verification code to <br />
-                                            <strong style={{ color: '#f8fafc', fontSize: '0.85rem' }}>{loginMaskedEmail}</strong>
-                                        </div>
+                            <form onSubmit={handlePasswordLogin} className="amrat-auth-form">
+                                <div className="amrat-form-group">
+                                    <label className="amrat-form-label">
+                                        <span>Phone, Email or Username</span>
+                                    </label>
+                                    <div className="amrat-input-wrapper">
+                                        <input
+                                            type="text"
+                                            className="amrat-input"
+                                            placeholder="Enter phone, email or username"
+                                            value={loginId}
+                                            onChange={(e) => setLoginId(e.target.value)}
+                                            autoFocus
+                                            required
+                                        />
                                     </div>
+                                </div>
 
-                                    <div className="amrat-form-group">
-                                        <label className="amrat-form-label">
-                                            <span>Enter 6-Digit Email OTP</span>
-                                        </label>
-                                        <div className="amrat-input-wrapper">
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                                maxLength={6}
-                                                className="amrat-input"
-                                                placeholder="••••••"
-                                                style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.25rem', fontWeight: 800 }}
-                                                value={loginOtpCode}
-                                                onChange={(e) => setLoginOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                                autoFocus
-                                                required
-                                            />
-                                        </div>
+                                <div className="amrat-form-group">
+                                    <label className="amrat-form-label">
+                                        <span>Password</span>
+                                    </label>
+                                    <div className="amrat-input-wrapper">
+                                        <input
+                                            type={showLoginPassword ? 'text' : 'password'}
+                                            className="amrat-input"
+                                            placeholder="••••••••••••"
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="amrat-input-toggle-pwd"
+                                            onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                            title="Show/Hide Password"
+                                        >
+                                            {showLoginPassword ? '🙈' : '👁️'}
+                                        </button>
                                     </div>
+                                </div>
 
+                                <button
+                                    type="submit"
+                                    className="amrat-submit-btn"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Signing in...' : 'Sign In'}
+                                </button>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                                     <button
-                                        type="submit"
-                                        className="amrat-submit-btn"
-                                        disabled={loading || loginOtpCode.length < 6}
+                                        type="button"
+                                        onClick={() => { setAuthModalMode('forgot-password'); setForgotStep(1) }}
+                                        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                                     >
-                                        {loading ? 'Verifying Code...' : 'Verify & Sign In'}
+                                        Forgot Password?
                                     </button>
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={handleBackToPassword}
-                                            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.78rem', cursor: 'pointer' }}
-                                        >
-                                            ← Back to Password
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleResendLoginOtp}
-                                            disabled={resendCountdown > 0 || loading}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: resendCountdown > 0 ? '#64748b' : '#fbbf24',
-                                                fontSize: '0.78rem',
-                                                cursor: resendCountdown > 0 ? 'not-allowed' : 'pointer',
-                                                fontWeight: 600
-                                            }}
-                                        >
-                                            {resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Code'}
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <form onSubmit={handlePasswordLogin} className="amrat-auth-form">
-                                    <div className="amrat-form-group">
-                                        <label className="amrat-form-label">
-                                            <span>Phone, Email or Username</span>
-                                        </label>
-                                        <div className="amrat-input-wrapper">
-                                            <input
-                                                type="text"
-                                                className="amrat-input"
-                                                placeholder="Enter phone, email or username"
-                                                value={loginId}
-                                                onChange={(e) => setLoginId(e.target.value)}
-                                                autoFocus
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="amrat-form-group">
-                                        <label className="amrat-form-label">
-                                            <span>Password</span>
-                                        </label>
-                                        <div className="amrat-input-wrapper">
-                                            <input
-                                                type={showLoginPassword ? 'text' : 'password'}
-                                                className="amrat-input"
-                                                placeholder="••••••••••••"
-                                                value={loginPassword}
-                                                onChange={(e) => setLoginPassword(e.target.value)}
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                className="amrat-input-toggle-pwd"
-                                                onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                                title="Show/Hide Password"
-                                            >
-                                                {showLoginPassword ? '🙈' : '👁️'}
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <button
-                                        type="submit"
-                                        className="amrat-submit-btn"
-                                        disabled={loading}
+                                        type="button"
+                                        onClick={() => setAuthModalMode('register')}
+                                        style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                                     >
-                                        {loading ? 'Verifying & Sending OTP...' : 'Sign In with Email OTP'}
+                                        Need an account? Register →
                                     </button>
-
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setAuthModalMode('forgot-password'); setForgotStep(1) }}
-                                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                        >
-                                            Forgot Password?
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setAuthModalMode('register')}
-                                            style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                        >
-                                            Need an account? Register →
-                                        </button>
-                                    </div>
-                                </form>
-                            )
+                                </div>
+                            </form>
                         )}
 
                         {/* Sub-Mode B: OTP Sign In (Restricted to Registered Accounts) */}

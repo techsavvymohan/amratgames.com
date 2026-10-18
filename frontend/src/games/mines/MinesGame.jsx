@@ -63,8 +63,7 @@ function MinesGame() {
         startMinesRound,
         revealMinesTile,
         cashoutMinesRound,
-        getActiveMinesRound,
-        refreshBalance
+        getActiveMinesRound
     } = useWallet();
     const [isPlaying, setIsPlaying] = useState(false);
     const [roundId, setRoundId] = useState(null);
@@ -113,14 +112,6 @@ function MinesGame() {
     const [statsDrawerOpen, setStatsDrawerOpen] = useState(false);
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [winRecords, setWinRecords] = useState([]);
-    const [gameHistory, setGameHistory] = useState(() => {
-        try {
-            const raw = localStorage.getItem('amrat_mines_history');
-            return raw ? JSON.parse(raw) : [];
-        } catch {
-            return [];
-        }
-    });
     const [totalProfit, setTotalProfit] = useState(0);
     const [winsCount, setWinsCount] = useState(0);
     const [lossesCount, setLossesCount] = useState(0);
@@ -461,26 +452,6 @@ function MinesGame() {
             setWinRecords(prev => [...prev, profit]);
             profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
-            // Record complete round details for persistent history
-            const cashoutRecord = {
-                id: `mines_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                game: 'mines',
-                gameName: 'Royal Mines',
-                betAmount,
-                minesCount,
-                gemsRevealed: revealedTiles.length,
-                multiplier: res.multiplier || currentMultiplier,
-                payout: res.payout,
-                profit,
-                won: true,
-                createdAt: new Date().toISOString()
-            };
-            setGameHistory(prev => {
-                const updated = [cashoutRecord, ...prev.slice(0, 49)];
-                try { localStorage.setItem('amrat_mines_history', JSON.stringify(updated)); } catch {}
-                return updated;
-            });
-
             showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000);
             if (res.multiplier >= 3) {
                 playSound('bigWin');
@@ -491,7 +462,6 @@ function MinesGame() {
                 setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
             }
             setRoundId(null);
-            if (refreshBalance) refreshBalance();
         } finally {
             isCashingOutRef.current = false;
         }
@@ -525,8 +495,7 @@ function MinesGame() {
 
             if (res.hitMine) {
                 // Hit a mine!
-                const updatedRevealed = revealedTiles.includes(index) ? revealedTiles : [...revealedTiles, index];
-                setRevealedTiles(updatedRevealed);
+                setRevealedTiles(prev => prev.includes(index) ? prev : [...prev, index]);
                 setMineLocations(res.allMines || []);
                 setIsPlaying(false);
                 setGameOverState('loss');
@@ -536,32 +505,12 @@ function MinesGame() {
                 setWinRecords(prev => [...prev, -betAmount]);
                 profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
 
-                const lossRecord = {
-                    id: `mines_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                    game: 'mines',
-                    gameName: 'Royal Mines',
-                    betAmount,
-                    minesCount,
-                    gemsRevealed: updatedRevealed.length - 1,
-                    multiplier: 0,
-                    payout: 0,
-                    profit: -betAmount,
-                    won: false,
-                    createdAt: new Date().toISOString()
-                };
-                setGameHistory(prev => {
-                    const updated = [lossRecord, ...prev.slice(0, 49)];
-                    try { localStorage.setItem('amrat_mines_history', JSON.stringify(updated)); } catch {}
-                    return updated;
-                });
-
                 showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
                 playSound('explosion');
                 if (res.serverSeed) {
                     setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
                 }
                 setRoundId(null);
-                if (refreshBalance) refreshBalance();
             } else {
                 // Hit a safe diamond gem!
                 setRevealedTiles(prev => {
@@ -581,32 +530,12 @@ function MinesGame() {
                     setWinRecords(prev => [...prev, profit]);
                     profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
-                    const autoWinRecord = {
-                        id: `mines_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                        game: 'mines',
-                        gameName: 'Royal Mines',
-                        betAmount,
-                        minesCount,
-                        gemsRevealed: 25 - minesCount,
-                        multiplier: res.currentMultiplier,
-                        payout: res.payout,
-                        profit,
-                        won: true,
-                        createdAt: new Date().toISOString()
-                    };
-                    setGameHistory(prev => {
-                        const updated = [autoWinRecord, ...prev.slice(0, 49)];
-                        try { localStorage.setItem('amrat_mines_history', JSON.stringify(updated)); } catch {}
-                        return updated;
-                    });
-
                     showToast('win', 'Cleared All Gems!', `+${currencySymbol}${profit.toFixed(2)} at ${res.currentMultiplier.toFixed(2)}×`, 4000);
                     playSound('bigWin');
                     if (res.serverSeed) {
                         setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
                     }
                     setRoundId(null);
-                    if (refreshBalance) refreshBalance();
                 }
             }
         } finally {
@@ -857,15 +786,6 @@ function MinesGame() {
                 </div>
             </div>
 
-            {/* Live Persistent Bet History Table (Directly Beneath Main Game Board) */}
-            <div className="mines-bottom-history-section" style={{ width: '100%', maxWidth: '1200px', margin: '24px auto 0', padding: '0 16px' }}>
-                <GameBottomHistory
-                    gameKey="mines"
-                    gameTitle="Royal Mines"
-                    localRounds={gameHistory}
-                />
-            </div>
-
             <Modal
                 title={
                     <Space>
@@ -1082,8 +1002,8 @@ function MinesGame() {
                     <div className="dashboard-section" style={{ marginTop: '20px' }}>
                         <GameBottomHistory
                             gameKey="mines"
-                            gameTitle="Royal Mines"
-                            localRounds={gameHistory}
+                            gameTitle="Mines"
+                            localRounds={winRecords}
                         />
                     </div>
                 </div>
