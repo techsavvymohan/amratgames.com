@@ -8,7 +8,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "icon-128.png",
+      "src": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_128,h_128/v1792395452/amratgames/amrat-logo.png",
       "type": "image/png",
       "sizes": "128x128"
     }

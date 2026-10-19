@@ -51,7 +51,7 @@ export default function Footer() {
       <div className="wrap grid gap-10 py-14 sm:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
-            <img src="/amrat-logo.png" alt="AmratGames" className="h-8 w-8 object-contain drop-shadow-[0_0_8px_rgba(245,175,25,0.4)]" />
+            <img src="https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_96/v1792395452/amratgames/amrat-logo.png" alt="AmratGames" className="h-8 w-8 object-contain drop-shadow-[0_0_8px_rgba(245,175,25,0.4)]" />
             <span className="display text-base font-bold tracking-tight gold-gradient-text">AmratGames.com</span>
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-moss">

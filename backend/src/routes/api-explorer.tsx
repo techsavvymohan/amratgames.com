@@ -606,7 +606,7 @@ executeQuery();`
       <div className="flex flex-col items-start justify-between gap-6 pb-8 sm:flex-row sm:items-end">
         <div>
           <div className="gold-badge mb-3">
-            <img src="/amrat-logo.png" alt="" className="h-4 w-4 object-contain" />
+            <img src="https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_64/v1792395452/amratgames/amrat-logo.png" alt="" className="h-4 w-4 object-contain" />
             <span>AmratGames.com · Amrat GraphQL API Studio</span>
           </div>
           <h1 className="display text-3xl font-black tracking-tight sm:text-5xl gold-gradient-text">

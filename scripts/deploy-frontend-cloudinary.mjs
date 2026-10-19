@@ -70,6 +70,7 @@ conn.on('ready', () => {
                 `mkdir -p "${remoteDestDir}"`,
                 `tar -xzf "${remoteTarPath}" -C "${remoteDestDir}"`,
                 `rm -f "${remoteTarPath}"`,
+                `cd /var/www/amratgames.com && git pull origin main`,
                 `nginx -t && systemctl reload nginx`,
                 `pm2 reload amratgames-backend 2>/dev/null || true`,
                 `echo "Deployment finished successfully."`

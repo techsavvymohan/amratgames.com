@@ -46,7 +46,7 @@ function Home() {
       <section className="wrap grid items-center gap-14 pt-16 pb-24 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pt-24">
         <div>
           <div className="rise inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-semibold text-amber-400">
-            <img src="/amrat-logo.png" alt="" className="h-4 w-4 object-contain" />
+            <img src="https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_64/v1792395452/amratgames/amrat-logo.png" alt="" className="h-4 w-4 object-contain" />
             <span>AmratGames.com · Premier Slot Workbench & Amrat API</span>
           </div>
 
@@ -183,7 +183,7 @@ function Home() {
                 'radial-gradient(560px 260px at 50% 0%, rgba(245, 175, 25, 0.15), transparent 70%)',
             }}
           />
-          <img src="/amrat-logo.png" alt="AmratGames" className="relative mx-auto h-16 w-16 object-contain mb-4 drop-shadow-[0_0_15px_rgba(245,175,25,0.6)]" />
+          <img src="https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_128/v1792395452/amratgames/amrat-logo.png" alt="AmratGames" className="relative mx-auto h-16 w-16 object-contain mb-4 drop-shadow-[0_0_15px_rgba(245,175,25,0.6)]" />
           <h2 className="display relative mt-0 mb-0 text-3xl font-extrabold sm:text-4xl gold-gradient-text">
             Elevate Your Game Development to Royalty.
           </h2>

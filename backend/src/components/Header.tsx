@@ -15,7 +15,7 @@ export default function Header() {
       <div className="wrap flex flex-wrap items-center justify-between gap-x-4 gap-y-0 py-3 md:h-16 md:py-0">
         <Link to="/" className="flex items-center gap-2.5 no-underline group">
           <img
-            src="/amrat-logo.png"
+            src="https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_96/v1792395452/amratgames/amrat-logo.png"
             alt="AmratGames"
             className="h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_0_8px_rgba(245,175,25,0.5)]"
           />

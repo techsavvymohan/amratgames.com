@@ -8,7 +8,13 @@
   "theme_color": "#f5af19",
   "icons": [
     {
-      "src": "/amrat-logo.png",
+      "src": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_192,h_192/v1792395452/amratgames/amrat-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_512,h_512/v1792395452/amratgames/amrat-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
