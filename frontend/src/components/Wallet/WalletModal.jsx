@@ -130,6 +130,31 @@ export default function WalletModal() {
         }
     }
 
+    // Save / Download QR Code directly to device (Gallery / Downloads)
+    const handleSaveQr = async () => {
+        try {
+            const response = await fetch(QR_IMAGE_PATH)
+            const blob = await response.blob()
+            const blobUrl = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = blobUrl
+            link.download = 'AmratGames_Deposit_QR.png'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
+            showToast?.('success', 'QR Code Saved', 'Deposit QR code saved to your device')
+        } catch {
+            const link = document.createElement('a')
+            link.href = QR_IMAGE_PATH
+            link.download = 'AmratGames_Deposit_QR.png'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            showToast?.('success', 'QR Code Saved', 'Deposit QR code saved to your device')
+        }
+    }
+
     const handleCopyCrypto = async (addr) => {
         try {
             await navigator.clipboard.writeText(addr)
@@ -498,11 +523,11 @@ export default function WalletModal() {
                                         ) : null}
                                     </div>
                                 ) : (
-                                    <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                        {/* UPI ID Box with One-Click Copy */}
+                                    <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        {/* UPI ID Bar with One-Click Copy */}
                                         <div className="amrat-upi-box">
                                             <div className="amrat-upi-details">
-                                                <span className="amrat-upi-lbl">Official Deposit UPI ID (INR)</span>
+                                                <span className="amrat-upi-lbl">Official Deposit UPI ID</span>
                                                 <span className="amrat-upi-val">{OFFICIAL_UPI_ID}</span>
                                             </div>
                                             <button
@@ -514,17 +539,25 @@ export default function WalletModal() {
                                             </button>
                                         </div>
 
-                                        {/* QR Code Card */}
-                                        <div className="amrat-qr-container">
+                                        {/* Pure QR Code (No bulky white box) + Simplest Save Button */}
+                                        <div className="amrat-qr-row">
                                             <img
                                                 src={QR_IMAGE_PATH}
                                                 alt="PhonePe UPI QR Code"
-                                                className="amrat-qr-img"
+                                                className="amrat-qr-clean"
                                             />
-                                            <span className="amrat-qr-caption">
-                                                <span>📲</span>
-                                                <span>Scan with PhonePe / GPay / Paytm / BHIM</span>
-                                            </span>
+                                            <div className="amrat-qr-details">
+                                                <button
+                                                    type="button"
+                                                    className="amrat-save-qr-btn"
+                                                    onClick={handleSaveQr}
+                                                    title="Save QR Code image to device"
+                                                >
+                                                    <span>💾</span>
+                                                    <span>Save QR Code</span>
+                                                </button>
+                                                <span className="amrat-qr-subtext">PhonePe • GPay • Paytm • BHIM</span>
+                                            </div>
                                         </div>
 
                                         {/* Step 1: Amount Selection */}

@@ -55,7 +55,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 10px 14px;
     background: rgba(18, 26, 38, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -64,7 +64,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.05rem;
+    font-size: 0.96rem;
     font-weight: 800;
     color: #fff;
     letter-spacing: -0.01em;
@@ -74,13 +74,13 @@
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
@@ -95,7 +95,7 @@
 .amrat-wallet-balance-card {
     background: linear-gradient(135deg, rgba(245, 175, 25, 0.12) 0%, rgba(212, 145, 16, 0.04) 100%);
     border-bottom: 1px solid rgba(245, 175, 25, 0.15);
-    padding: 12px 18px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -104,11 +104,11 @@
 .amrat-wallet-balance-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .amrat-wallet-balance-lbl {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: #fbbf24;
@@ -116,8 +116,8 @@
 }
 
 .amrat-wallet-balance-val {
-    font-size: 1.55rem;
-    font-weight: 900;
+    font-size: 1.25rem;
+    font-weight: 800;
     color: #fff;
     line-height: 1.1;
     display: flex;
@@ -127,16 +127,16 @@
 
 .amrat-wallet-balance-val span {
     color: #fbbf24;
-    font-size: 1.25rem;
+    font-size: 1.05rem;
 }
 
 .amrat-wallet-badge {
     background: rgba(245, 175, 25, 0.18);
     border: 1px solid rgba(245, 175, 25, 0.35);
     color: #fbbf24;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 999px;
     letter-spacing: 0.03em;
 }
@@ -145,25 +145,25 @@
 .amrat-wallet-tabs {
     display: flex;
     background: rgba(0, 0, 0, 0.25);
-    padding: 6px 14px;
-    gap: 6px;
+    padding: 4px 10px;
+    gap: 4px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .amrat-wallet-tab-btn {
     flex: 1;
-    padding: 9px 8px;
+    padding: 7px 6px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 6px;
     background: transparent;
     color: #94a3b8;
-    font-size: 0.84rem;
+    font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
     transition: all 0.18s ease;
 }
 
@@ -187,12 +187,12 @@
 
 /* Modal Body (Scrollable) */
 .amrat-wallet-body {
-    padding: 16px 18px;
+    padding: 10px 14px;
     overflow-y: auto;
-    max-height: calc(92vh - 170px);
+    max-height: calc(94vh - 140px);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 8px;
 }
 
 /* Custom Scrollbar */
@@ -208,33 +208,33 @@
 .amrat-upi-box {
     background: rgba(16, 185, 129, 0.06);
     border: 1px solid rgba(16, 185, 129, 0.25);
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: 8px;
+    padding: 6px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
 }
 
 .amrat-upi-details {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     overflow: hidden;
 }
 
 .amrat-upi-lbl {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     color: #34d399;
     font-weight: 700;
 }
 
 .amrat-upi-val {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.95rem;
-    font-weight: 800;
+    font-size: 0.84rem;
+    font-weight: 700;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
@@ -246,14 +246,14 @@
     background: #10b981;
     color: #042f2e;
     border: none;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 5px 9px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     white-space: nowrap;
     transition: all 0.18s ease;
 }
@@ -268,57 +268,112 @@
     color: #fff;
 }
 
-/* QR Code Display Container */
+/* Optimized Clean QR Code Display (No bulky white box) */
+.amrat-qr-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 8px 12px;
+    background: rgba(16, 24, 38, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+
+.amrat-qr-clean {
+    width: 90px;
+    height: 90px;
+    min-width: 90px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    background: #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    display: block;
+}
+
+.amrat-qr-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.amrat-save-qr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(245, 175, 25, 0.14);
+    border: 1px solid rgba(245, 175, 25, 0.45);
+    border-radius: 6px;
+    color: #fbbf24;
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.amrat-save-qr-btn:hover {
+    background: rgba(245, 175, 25, 0.25);
+    border-color: #fbbf24;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.amrat-qr-subtext {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* Fallback for legacy class references if any */
 .amrat-qr-container {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    border: 3px solid rgba(245, 175, 25, 0.4);
+    gap: 6px;
     margin: 0 auto;
-    width: fit-content;
-    max-width: 100%;
 }
 
 .amrat-qr-img {
-    width: 180px;
-    height: 180px;
-    max-width: 60vw;
-    max-height: 60vw;
+    width: 90px;
+    height: 90px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(245, 175, 25, 0.35);
+    background: #000;
     display: block;
 }
 
 .amrat-qr-caption {
-    color: #0f172a;
-    font-size: 0.75rem;
-    font-weight: 700;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 600;
     text-align: center;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 /* Amount Selector Grid */
 .amrat-presets-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
+    gap: 5px;
 }
 
 .amrat-preset-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #cbd5e1;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    padding: 8px 4px;
-    border-radius: 8px;
+    padding: 5px 2px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: center;
@@ -341,11 +396,11 @@
 .amrat-field-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
 }
 
 .amrat-field-lbl {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: #94a3b8;
     display: flex;
@@ -365,10 +420,10 @@
 
 .amrat-input-prefix {
     position: absolute;
-    left: 14px;
+    left: 10px;
     color: #fbbf24;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: 0.88rem;
     pointer-events: none;
 }
 
@@ -377,16 +432,16 @@
     background: rgba(7, 11, 18, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #fff;
-    padding: 10px 14px;
-    border-radius: 9px;
-    font-size: 0.92rem;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 0.86rem;
     font-weight: 600;
     box-sizing: border-box;
     transition: all 0.18s ease;
 }
 
 .amrat-field-input.has-prefix {
-    padding-left: 32px;
+    padding-left: 26px;
 }
 
 .amrat-field-input:focus {
@@ -402,29 +457,30 @@
 }
 
 .amrat-field-hint {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #64748b;
-    line-height: 1.35;
+    line-height: 1.25;
+    margin-top: 2px;
 }
 
 /* Action Buttons */
 .amrat-submit-deposit-btn {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #022c22;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
     transition: all 0.18s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .amrat-submit-deposit-btn:hover:not(:disabled) {
