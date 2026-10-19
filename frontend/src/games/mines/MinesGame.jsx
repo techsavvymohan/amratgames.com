@@ -426,7 +426,7 @@ function MinesGame() {
                     nonce: res.nonce || 1
                 }));
             }
-            showToast('bet', 'Game Started', `${currencySymbol}${betAmount.toFixed(2)} bet placed`);
+            showToast('bet', `-${currencySymbol}${betAmount.toFixed(2)}`, 'Placed', 1000);
         } finally {
             isStartingRef.current = false;
         }
@@ -453,7 +453,7 @@ function MinesGame() {
             setWinRecords(prev => [...prev, profit]);
             profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
-            showToast('win', 'Cashed Out!', `+${currencySymbol}${profit.toFixed(2)} at ${res.multiplier.toFixed(2)}×`, 4000);
+            showToast('win', `+${currencySymbol}${profit.toFixed(2)}`, `${res.multiplier.toFixed(2)}x`, 1000);
             if (res.multiplier >= 3) {
                 playSound('bigWin');
             } else {
@@ -506,7 +506,7 @@ function MinesGame() {
                 setWinRecords(prev => [...prev, -betAmount]);
                 profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] - betAmount);
 
-                showToast('loss', 'Boom! Hit a Mine', `-${currencySymbol}${betAmount.toFixed(2)}`, 3000);
+                showToast('loss', `-${currencySymbol}${betAmount.toFixed(2)}`, 'Mine', 1000);
                 playSound('explosion');
                 if (res.serverSeed) {
                     setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });
@@ -531,7 +531,7 @@ function MinesGame() {
                     setWinRecords(prev => [...prev, profit]);
                     profitHistoryRef.current.push(profitHistoryRef.current[profitHistoryRef.current.length - 1] + profit);
 
-                    showToast('win', 'Cleared All Gems!', `+${currencySymbol}${profit.toFixed(2)} at ${res.currentMultiplier.toFixed(2)}×`, 4000);
+                    showToast('win', `+${currencySymbol}${profit.toFixed(2)}`, `${res.currentMultiplier.toFixed(2)}x`, 1000);
                     playSound('bigWin');
                     if (res.serverSeed) {
                         setRevealedSeed({ serverSeed: res.serverSeed, hash: res.hash });

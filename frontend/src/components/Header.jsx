@@ -175,28 +175,28 @@ function Header({
                     )}
                 </div>
 
-                    {/* Game Toasts */}
+                    {/* Compact Game Micro-Toast (Simplest, shortest, non-intrusive) */}
                     {isGamePage && toasts.length > 0 && (
                         <div className="wallet-toast-container">
                             {toasts.map(toast => (
                                 <div key={toast.id} className={`wallet-toast wallet-toast-${toast.type}`}>
                                     <div className="wallet-toast-icon">
                                         {toast.type === 'bet' && (
-                                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={20} fontSize={11} />
+                                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={13} fontSize={9} />
                                         )}
                                         {toast.type === 'win' && (
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                                 <polyline points="20 6 9 17 4 12" />
                                             </svg>
                                         )}
                                         {toast.type === 'loss' && (
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ed4245" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                                 <line x1="18" y1="6" x2="6" y2="18" />
                                                 <line x1="6" y1="6" x2="18" y2="18" />
                                             </svg>
                                         )}
-                                        {toast.type === 'error' && (
-                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f7931a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        {toast.type !== 'bet' && toast.type !== 'win' && toast.type !== 'loss' && (
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                 <circle cx="12" cy="12" r="10" />
                                                 <line x1="12" y1="8" x2="12" y2="12" />
                                                 <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -204,8 +204,9 @@ function Header({
                                         )}
                                     </div>
                                     <div className="wallet-toast-content">
-                                        <span className="wallet-toast-title">{toast.title}</span>
-                                        <span className="wallet-toast-desc">{toast.description}</span>
+                                        {toast.title && <span className="wallet-toast-title">{toast.title}</span>}
+                                        {toast.title && toast.description && <span className="wallet-toast-dot">·</span>}
+                                        {toast.description && <span className="wallet-toast-desc">{toast.description}</span>}
                                     </div>
                                 </div>
                             ))}

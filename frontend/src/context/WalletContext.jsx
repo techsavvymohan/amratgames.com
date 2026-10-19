@@ -204,6 +204,7 @@ export function WalletProvider({ children }) {
     // Toast system
     const [toasts, setToasts] = useState([])
     const toastIdRef = useRef(0)
+    const activeToastTimeoutRef = useRef(null)
 
     const currencyConfig = CURRENCIES[currency] || CURRENCIES.INR
     const currencySymbol = currencyConfig.symbol
@@ -225,16 +226,21 @@ export function WalletProvider({ children }) {
         setBalance(curBal)
     }, [user])
 
-    const showToast = useCallback((type, title, description, duration = 1800) => {
+    const showToast = useCallback((type, title, description, duration = 1000) => {
         const id = ++toastIdRef.current
-        setToasts(prev => {
-            // Keep at most 1 active toast so notifications never stack into a wall
-            const trimmed = prev.slice(-1)
-            return [...trimmed, { id, type, title, description }]
-        })
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id))
-        }, duration)
+        // Enforce maximum 1-second display duration for all game result notifications
+        const activeDuration = 1000
+
+        if (activeToastTimeoutRef.current) {
+            clearTimeout(activeToastTimeoutRef.current)
+        }
+
+        // Keep strictly 1 active toast to prevent stacking or obscuring gameplay
+        setToasts([{ id, type, title, description }])
+
+        activeToastTimeoutRef.current = setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id === id ? false : true))
+        }, activeDuration)
     }, [])
 
     const setStoredBalance = useCallback((nextBalance) => {
@@ -868,12 +874,31 @@ export function WalletProvider({ children }) {
     }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 
     const notifyWin = useCallback((amount, mult) => {
-        const multText = mult ? ` (${Number(mult).toFixed(2)}x)` : ''
-        showToast('win', 'Won', `+${currencySymbol}${Number(amount || 0).toFixed(2)}${multText}`, 2000)
+        let title = 'Win'
+        let desc = ''
+        if (typeof amount === 'number') {
+            title = `+${currencySymbol}${amount.toFixed(2)}`
+            desc = mult ? `${Number(mult).toFixed(2)}x` : ''
+        } else if (typeof amount === 'string') {
+            const num = parseFloat(amount.replace(/[^0-9.]/g, ''))
+            title = !isNaN(num) ? `+${currencySymbol}${num.toFixed(2)}` : 'Win'
+            desc = mult ? `${mult}` : ''
+        }
+        showToast('win', title, desc, 1000)
     }, [showToast, currencySymbol])
 
-    const notifyLoss = useCallback((amount) => {
-        showToast('loss', 'Loss', `-${currencySymbol}${Number(amount || 0).toFixed(2)}`, 1400)
+    const notifyLoss = useCallback((amount, mult) => {
+        let title = 'Loss'
+        let desc = ''
+        if (typeof amount === 'number') {
+            title = `-${currencySymbol}${amount.toFixed(2)}`
+            desc = mult ? `${Number(mult).toFixed(2)}x` : ''
+        } else if (typeof amount === 'string') {
+            const num = parseFloat(amount.replace(/[^0-9.]/g, ''))
+            title = !isNaN(num) ? `-${currencySymbol}${num.toFixed(2)}` : 'Loss'
+            desc = mult ? `${mult}` : ''
+        }
+        showToast('loss', title, desc, 1000)
     }, [showToast, currencySymbol])
 
     const value = {

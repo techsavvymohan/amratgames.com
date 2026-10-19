@@ -288,11 +288,11 @@ function PlinkoGame() {
         // Real bet placed & settled: clear spectator missed win prompt
         setSpectatorMissedWin(null);
 
-        // Prominent toast notification showing coins won / lost
+        // Compact micro toast notification (simplest, shortest, 1 second)
         if (profit > 0) {
-            showToast?.('win', `Plinko Win! ${actualMultiplier.toFixed(2)}x`, `+${currencySymbol}${finalPayout.toFixed(2)} (Profit: +${currencySymbol}${profit.toFixed(2)})`, 3000);
+            showToast?.('win', `+${currencySymbol}${profit.toFixed(2)}`, `${actualMultiplier.toFixed(2)}x`, 1000);
         } else {
-            showToast?.('info', `Plinko Landed: ${actualMultiplier.toFixed(2)}x`, `Payout: ${currencySymbol}${finalPayout.toFixed(2)} (-${currencySymbol}${Math.abs(profit).toFixed(2)})`, 2500);
+            showToast?.('loss', `-${currencySymbol}${Math.abs(profit).toFixed(2)}`, `${actualMultiplier.toFixed(2)}x`, 1000);
         }
 
         const newRecord = {

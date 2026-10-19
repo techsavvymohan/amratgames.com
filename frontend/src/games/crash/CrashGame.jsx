@@ -348,7 +348,7 @@ function CrashGame() {
                 // If user had placed bets that didn't cash out, record loss
                 setPanel1(p => {
                     if (p.betPlaced && !p.cashedOut) {
-                        showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                        showToast('loss', `-${currencySymbol}${p.amount.toFixed(2)}`, `${bustPoint.toFixed(2)}x`, 1000)
                         setGameRecords(prev => [{
                             id: Date.now() + Math.random(),
                             multiplier: bustPoint,
@@ -362,7 +362,7 @@ function CrashGame() {
                 })
                 setPanel2(p => {
                     if (p.betPlaced && !p.cashedOut) {
-                        showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                        showToast('loss', `-${currencySymbol}${p.amount.toFixed(2)}`, `${bustPoint.toFixed(2)}x`, 1000)
                         setGameRecords(prev => [{
                             id: Date.now() + Math.random(),
                             multiplier: bustPoint,
@@ -402,7 +402,7 @@ function CrashGame() {
                         cashedOut: true,
                         payout: payload.payout
                     }))
-                    showToast('win', 'Cashed Out!', `+${currencySymbol}${payload.payout.toFixed(2)} at ${payload.multiplier.toFixed(2)}x`, 4000)
+                    showToast('win', `+${currencySymbol}${payload.payout.toFixed(2)}`, `${payload.multiplier.toFixed(2)}x`, 1000)
                     casinoAudio.playCashout?.()
 
                     // Add record
@@ -431,7 +431,7 @@ function CrashGame() {
                     casinoAudio.playCrash?.()
                     setPanel1(p => {
                         if (p.betPlaced && !p.cashedOut) {
-                            showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                            showToast('loss', `-${currencySymbol}${p.amount.toFixed(2)}`, `${bustPoint.toFixed(2)}x`, 1000)
                             setGameRecords(prev => [{
                                 id: Date.now() + Math.random(),
                                 multiplier: bustPoint,
@@ -556,7 +556,7 @@ function CrashGame() {
             if (res && res.success) {
                 const updatePanel = panelId === 1 ? setPanel1 : setPanel2
                 updatePanel(prev => ({ ...prev, betPlaced: false, cashedOut: true, payout: res.payout }))
-                showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${res.multiplier.toFixed(2)}x`, 4000)
+                showToast('win', `+${currencySymbol}${res.payout.toFixed(2)}`, `${res.multiplier.toFixed(2)}x`, 1000)
                 casinoAudio.playCashout?.()
             }
             return
@@ -568,7 +568,7 @@ function CrashGame() {
         const res = await cashoutCrashRound({ roundId: activeRoundIdRef.current, multiplier: currentM })
         if (res && res.success) {
             setPanel1(prev => ({ ...prev, betPlaced: false, cashedOut: true, payout: res.payout }))
-            showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${currentM.toFixed(2)}x`, 4000)
+            showToast('win', `+${currencySymbol}${res.payout.toFixed(2)}`, `${currentM.toFixed(2)}x`, 1000)
             casinoAudio.playCashout?.()
 
             setGameRecords(prev => [{
