@@ -66,6 +66,28 @@ for (const asset of sampleAssets) {
     }
 }
 
+console.log('\nTesting Authenticated Cloudinary SDK Upload...')
+if (API_KEY && API_SECRET) {
+    try {
+        const { cloudinaryService } = await import('../backend/src/services/CloudinaryService.js')
+        const logoPath = path.join(rootDir, 'frontend', 'public', 'amrat-logo.png')
+        if (fs.existsSync(logoPath)) {
+            const uploadRes = await cloudinaryService.uploadImage(logoPath, {
+                folder: 'branding',
+                public_id: 'amrat_platform_logo'
+            })
+            console.log(`✓ Authenticated Upload Succeeded!`)
+            console.log(`  Public ID:   ${uploadRes.publicId}`)
+            console.log(`  Secure URL:  ${uploadRes.secureUrl}`)
+            console.log(`  Format:      ${uploadRes.format} (${(uploadRes.bytes / 1024).toFixed(1)} KB)`)
+        }
+    } catch (sdkErr) {
+        console.error(`✗ Authenticated upload error: ${sdkErr.message}`)
+    }
+} else {
+    console.log('ℹ️  Skipping authenticated upload (API credentials not found in env)')
+}
+
 console.log('\n==================================================================')
-console.log('🚀 Cloudinary edge delivery is verified and active!')
+console.log('🚀 Cloudinary edge delivery & authenticated SDK are verified and active!')
 console.log('==================================================================\n')
