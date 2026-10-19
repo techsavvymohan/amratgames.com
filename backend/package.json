@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test test/typeContracts.test.js test/databaseDriver.test.js test/integrity.test.js test/otpEngine.test.js"
+    "test": "node --test test/gatewayBridge.test.js && node --test test/typeContracts.test.js && node --test test/databaseDriver.test.js && node --test test/otpEngine.test.js"
   },
   "dependencies": {
     "@supabase/server": "^1.9.0",

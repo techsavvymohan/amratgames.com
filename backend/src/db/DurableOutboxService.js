@@ -65,6 +65,7 @@ export class DurableOutboxService {
     }
 
     startWorker() {
+        if (process.env.NODE_ENV === 'test') return
         if (this._drainTimer) return
         this._drainTimer = setInterval(() => {
             this.drain().catch(() => {})
@@ -225,12 +226,15 @@ export class DurableOutboxService {
                     this._stats.lastError = `Users sync error: ${error.message}`
                     // Fallback: sync individually to isolate poisoned items
                     for (const u of usersToSync) {
-                        if (!u.username && !u.email) {
-                            this.pendingUsers.delete(u.id)
-                            continue
+                        if (!u.username) {
+                            u.username = u.email ? u.email.split('@')[0] : (u.id ? 'player_' + u.id.slice(-6) : 'Player')
                         }
                         const sRes = await supabaseSync.syncUser(u)
-                        if (sRes) this.pendingUsers.delete(u.id)
+                        if (sRes || !u.id || (u._retryCount && u._retryCount >= 2)) {
+                            this.pendingUsers.delete(u.id)
+                        } else {
+                            u._retryCount = (u._retryCount || 0) + 1
+                        }
                     }
                 }
             }

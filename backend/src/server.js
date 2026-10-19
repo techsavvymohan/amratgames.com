@@ -20,6 +20,7 @@ import vipRoutes from './routes/vip.routes.js'
 import communityRoutes from './routes/community.routes.js'
 import pvpRoutes from './routes/pvp.routes.js'
 import vaultRoutes from './routes/vault.routes.js'
+import gatewayRoutes from './routes/gateway.routes.js'
 import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
@@ -108,6 +109,7 @@ app.use('/api/affiliate', affiliateRoutes)
 app.use('/api/vault', vaultRoutes)
 app.use('/api/vip', vipRoutes)
 app.use('/api/community', communityRoutes)
+app.use('/api/gateway', gatewayRoutes)
 
 // 404 handler
 app.use('/api/*', (req, res) => {

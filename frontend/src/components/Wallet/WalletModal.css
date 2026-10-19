@@ -842,3 +842,58 @@
     flex-direction: column;
     gap: 4px;
 }
+
+/* Instant One-Tap Pay via Gateway */
+.amrat-instant-pay-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    border-radius: 9px;
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
+    transition: all 0.2s ease;
+    margin-top: 4px;
+}
+
+.amrat-instant-pay-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+.amrat-instant-pay-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: grayscale(30%);
+}
+
+.amrat-deposit-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 8px 0;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.amrat-deposit-divider::before,
+.amrat-deposit-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.amrat-deposit-divider span {
+    padding: 0 8px;
+}
+

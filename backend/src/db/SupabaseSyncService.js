@@ -38,7 +38,7 @@ export class SupabaseSyncService {
         try {
             const payload = {
                 id: user.id,
-                username: user.username,
+                username: user.username || (user.id ? 'player_' + user.id.slice(-6) : 'Player'),
                 email: user.email || null,
                 phone: user.phone || null,
                 password_hash: this._resolvePasswordHash(user),
@@ -68,14 +68,18 @@ export class SupabaseSyncService {
                 .single()
 
             if (error) {
-                if (error.code === '23505' && error.message?.includes('users_username_key')) {
-                    const { data: updated, error: updateErr } = await client
-                        .from('users')
-                        .update(payload)
-                        .eq('username', payload.username)
-                        .select()
-                        .single()
-                    if (!updateErr) return updated
+                if (error.code === '23505') {
+                    const matchCol = error.message?.includes('users_email_key') ? 'email' : 'username'
+                    const matchVal = payload[matchCol]
+                    if (matchVal) {
+                        const { data: updated, error: updateErr } = await client
+                            .from('users')
+                            .update(payload)
+                            .eq(matchCol, matchVal)
+                            .select()
+                            .single()
+                        if (!updateErr) return updated
+                    }
                 }
                 console.warn(`[SUPABASE] syncUser failed for ${user.username}:`, error.message)
                 return null

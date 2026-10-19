@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
+import { paymentBridge } from '../../services/PaymentBridge'
 import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
@@ -37,6 +38,7 @@ export default function WalletModal() {
     const [depositAmount, setDepositAmount] = useState('300')
     const [utrNumber, setUtrNumber] = useState('')
     const [isDepositing, setIsDepositing] = useState(false)
+    const [isInstantPaying, setIsInstantPaying] = useState(false)
     const [depositSuccess, setDepositSuccess] = useState(null)
     const [depositChannel, setDepositChannel] = useState('UPI') // 'UPI' | 'CRYPTO'
     const [cryptoNetwork, setCryptoNetwork] = useState('TRC20') // 'TRC20' | 'TON'
@@ -214,6 +216,36 @@ export default function WalletModal() {
             showToast?.('error', 'Deposit Failed', err?.message || 'Please verify UTR number and retry')
         } finally {
             setIsDepositing(false)
+        }
+    }
+
+    // ⚡ Instant Automated UPI Payment via Sovereign Gateway
+    const handleInstantPay = async () => {
+        const amt = parseFloat(depositAmount)
+        if (isNaN(amt) || amt < 100) {
+            showToast?.('error', 'Minimum Deposit', 'Minimum deposit is ₹100 for instant payment')
+            return
+        }
+        if (!effectiveToken) {
+            showToast?.('error', 'Login Required', 'Please log in to initiate instant deposit')
+            closeWalletModal()
+            openAuthModal?.('login')
+            return
+        }
+
+        try {
+            setIsInstantPaying(true)
+            const session = await paymentBridge.requestSession(amt, effectiveToken, 'youpi')
+            if (session.checkoutUrl) {
+                paymentBridge.launchSession(session)
+                showToast?.('success', 'UPI Gateway Connected', 'Complete payment in the checkout window. Your balance will be credited automatically!')
+            } else if (session.requiresUtr) {
+                showToast?.('info', 'Manual Gateway Mode', 'Please scan the QR code above and enter the 12-digit UTR below.')
+            }
+        } catch (err) {
+            showToast?.('warning', 'Instant Gateway Offline', 'Please scan the QR code above and submit your 12-digit UTR.')
+        } finally {
+            setIsInstantPaying(false)
         }
     }
 
@@ -588,6 +620,21 @@ export default function WalletModal() {
                                                     required
                                                 />
                                             </div>
+                                        </div>
+
+                                        {/* ⚡ Instant Pay Action Button */}
+                                        <button
+                                            type="button"
+                                            className="amrat-instant-pay-btn"
+                                            onClick={handleInstantPay}
+                                            disabled={isInstantPaying || !depositAmount || parseFloat(depositAmount) <= 0}
+                                        >
+                                            <span>{isInstantPaying ? '⏳ Connecting UPI Gateway…' : '⚡ Pay Instantly via UPI (Auto-Credit)'}</span>
+                                        </button>
+
+                                        {/* Seamless Visual Divider to Manual Fallback */}
+                                        <div className="amrat-deposit-divider">
+                                            <span>OR PAY MANUALLY VIA QR &amp; ENTER UTR</span>
                                         </div>
 
                                         {/* Step 2: 12-Digit UTR Input */}
