@@ -539,25 +539,22 @@ export default function WalletModal() {
                                             </button>
                                         </div>
 
-                                        {/* Pure QR Code (No bulky white box) + Simplest Save Button */}
-                                        <div className="amrat-qr-row">
+                                        {/* Pure Big QR Code (No bulky white box) + Simple Save Button */}
+                                        <div className="amrat-qr-wrapper">
                                             <img
                                                 src={QR_IMAGE_PATH}
                                                 alt="PhonePe UPI QR Code"
-                                                className="amrat-qr-clean"
+                                                className="amrat-qr-img"
                                             />
-                                            <div className="amrat-qr-details">
-                                                <button
-                                                    type="button"
-                                                    className="amrat-save-qr-btn"
-                                                    onClick={handleSaveQr}
-                                                    title="Save QR Code image to device"
-                                                >
-                                                    <span>💾</span>
-                                                    <span>Save QR Code</span>
-                                                </button>
-                                                <span className="amrat-qr-subtext">PhonePe • GPay • Paytm • BHIM</span>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className="amrat-save-qr-btn"
+                                                onClick={handleSaveQr}
+                                                title="Save QR Code image to device"
+                                            >
+                                                <span>💾</span>
+                                                <span>Save QR</span>
+                                            </button>
                                         </div>
 
                                         {/* Step 1: Amount Selection */}
