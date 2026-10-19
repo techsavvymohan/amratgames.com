@@ -12,7 +12,13 @@ const filesToSync = [
     'backend/src/admin-panel/controllers/AdminController.js',
     'backend/src/admin-panel/routes/admin.routes.js',
     'backend/src/gateways/PaymentGatewayManager.js',
-    'backend/src/repositories/BetRepository.js'
+    'backend/src/repositories/BetRepository.js',
+    'backend/src/routes/__root.tsx',
+    'backend/src/routes/index.tsx',
+    'backend/src/routes/api-explorer.tsx',
+    'backend/src/components/Header.tsx',
+    'backend/src/components/Footer.tsx',
+    'backend/public/manifest.json'
 ];
 
 const conn = new Client();
