@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { paymentBridge } from '../../services/PaymentBridge'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
@@ -435,7 +436,7 @@ export default function WalletModal() {
                 {/* Header */}
                 <div className="amrat-wallet-header">
                     <div className="amrat-wallet-header-title">
-                        <img src="/amrat-logo.png" alt="AmratGames" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                        <img src={getOptimizedImageUrl('/amrat-logo.png', { width: 64 })} alt="AmratGames" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
                         <span>Wallet &amp; Cashier</span>
                     </div>
                     <button

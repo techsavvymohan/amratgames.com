@@ -21,6 +21,7 @@ import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFai
 import CoinParticles from './CoinParticles'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import PvPDuelsArena from './PvPDuelsArena'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './CoinTossGame.css'
 
 const MULTIPLIER = 1.96 // 96% RTP / 4% House Edge Provably Fair
@@ -28,8 +29,8 @@ const MIN_BET = 10
 const MAX_BET = 100000
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000]
 
-const HEADS_ASSET = '/images/coin-toss/heads.jpg'
-const TAILS_ASSET = '/images/coin-toss/tails.jpg'
+const HEADS_ASSET = getOptimizedImageUrl('/images/coin-toss/heads.jpg', { width: 300 })
+const TAILS_ASSET = getOptimizedImageUrl('/images/coin-toss/tails.jpg', { width: 300 })
 
 export default function CoinTossGame() {
     const { balance, currencySymbol, executeGameBet, showToast } = useWallet()

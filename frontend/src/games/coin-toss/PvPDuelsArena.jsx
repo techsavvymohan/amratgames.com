@@ -14,10 +14,11 @@ import { useAuth } from '../../context/AuthContext'
 import { useWallet } from '../../context/WalletContext'
 import { useWebSocket } from '../../context/WebSocketContext'
 import casinoAudio from '../../utils/casinoAudio'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './PvPDuelsArena.css'
 
-const HEADS_ASSET = '/images/coin-toss/heads.jpg'
-const TAILS_ASSET = '/images/coin-toss/tails.jpg'
+const HEADS_ASSET = getOptimizedImageUrl('/images/coin-toss/heads.jpg', { width: 300 })
+const TAILS_ASSET = getOptimizedImageUrl('/images/coin-toss/tails.jpg', { width: 300 })
 
 export default function PvPDuelsArena() {
     const { user, token, openAuthModal } = useAuth()

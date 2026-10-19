@@ -4,6 +4,7 @@ import { GAMES } from '../games'
 import { useWallet } from '../context/WalletContext'
 import { useAuth } from '../context/AuthContext'
 import LivePlatformBets from '../components/LivePlatformBets'
+import { getGameCoverUrl } from '../utils/cloudinary'
 import '../styles/home.css'
 
 const ALL_GAMES = [
@@ -472,7 +473,7 @@ function HomePage() {
                                 </div>
                                 <div className="coin-preview-showcase" style={{ textAlign: 'center', padding: '12px 0 8px 0' }}>
                                     <img
-                                        src="/images/coin-toss.jpg?v=1"
+                                        src={getGameCoverUrl('/images/coin-toss.jpg')}
                                         alt="Coin Toss Banner"
                                         style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '10px' }}
                                     />

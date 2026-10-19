@@ -13,6 +13,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './ColorMatchGame.css'
 
 const { Text } = Typography
@@ -364,7 +365,7 @@ function ColorMatchGame() {
                             >
                                 <div className="cm-gem-frame">
                                     <img
-                                        src="/images/gem-emerald.jpg"
+                                        src={getOptimizedImageUrl('/images/gem-emerald.jpg', { width: 180 })}
                                         alt="Emerald Gem"
                                         className="cm-gem-img"
                                     />
@@ -385,7 +386,7 @@ function ColorMatchGame() {
                             >
                                 <div className="cm-gem-frame">
                                     <img
-                                        src="/images/gem-violet.jpg"
+                                        src={getOptimizedImageUrl('/images/gem-violet.jpg', { width: 180 })}
                                         alt="Violet Amethyst Gem"
                                         className="cm-gem-img"
                                     />
@@ -406,7 +407,7 @@ function ColorMatchGame() {
                             >
                                 <div className="cm-gem-frame">
                                     <img
-                                        src="/images/gem-ruby.jpg"
+                                        src={getOptimizedImageUrl('/images/gem-ruby.jpg', { width: 180 })}
                                         alt="Ruby Gem"
                                         className="cm-gem-img"
                                     />

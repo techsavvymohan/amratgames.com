@@ -10,6 +10,7 @@ import {
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './DragonTigerGame.css'
 
 const { Text, Title } = Typography
@@ -214,7 +215,7 @@ function DragonTigerGame() {
                         <div className={`dt-player-box dragon ${roundResult === 'dragon' ? 'winner' : ''}`}>
                             <div className="dt-mascot-frame dragon">
                                 <img
-                                    src="/images/dragon-mascot.jpg"
+                                    src={getOptimizedImageUrl('/images/dragon-mascot.jpg', { width: 350 })}
                                     alt="3D Crimson Dragon"
                                     className="dt-mascot-img"
                                 />
@@ -256,7 +257,7 @@ function DragonTigerGame() {
                         <div className={`dt-player-box tiger ${roundResult === 'tiger' ? 'winner' : ''}`}>
                             <div className="dt-mascot-frame tiger">
                                 <img
-                                    src="/images/tiger-mascot.jpg"
+                                    src={getOptimizedImageUrl('/images/tiger-mascot.jpg', { width: 350 })}
                                     alt="3D Sapphire Tiger"
                                     className="dt-mascot-img"
                                 />
