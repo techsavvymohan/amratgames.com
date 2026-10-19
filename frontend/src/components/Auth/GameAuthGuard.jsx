@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { recordGamePlay } from '../../utils/userGamePreferences'
 import './GameAuthGuard.css'
 
 /**
@@ -7,8 +9,15 @@ import './GameAuthGuard.css'
  * Displays a premium Casino Gatekeeper overlay and automatically triggers the registration modal.
  */
 export function GameAuthGuard({ children, gameName = 'this game' }) {
+    const location = useLocation()
     const { user, token, openAuthModal } = useAuth()
     const isAuthenticated = Boolean(user && token)
+
+    useEffect(() => {
+        if (location.pathname) {
+            recordGamePlay(location.pathname)
+        }
+    }, [location.pathname])
 
     useEffect(() => {
         if (!isAuthenticated) {

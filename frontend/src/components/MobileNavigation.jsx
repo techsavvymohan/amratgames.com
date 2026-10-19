@@ -93,7 +93,12 @@ const primaryRoutes = [
     })),
 ]
 
-const comingSoon = ['Favourites', 'Recent', 'Challenges', 'My Bets']
+const hubNavItems = [
+    { label: 'Favourites', path: '/favourites', icon: '⭐' },
+    { label: 'Recent', path: '/recent', icon: '🕒' },
+    { label: 'Challenges', path: '/challenges', icon: '🏆' },
+    { label: 'My Bets', path: '/my-bets', icon: '📋' },
+]
 
 function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
@@ -393,11 +398,29 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                         <span>Live Support: support@amratgames.com</span>
                     </a>
                 </div>
-                <div className="mobile-coming-soon" aria-label="Coming soon">
-                    {comingSoon.map(label => (
-                        <button key={label} type="button" disabled>
-                            <span>{label}</span>
-                            <small>Coming soon</small>
+                <div className="mobile-coming-soon" aria-label="Casino Hub Shortcuts">
+                    {hubNavItems.map(item => (
+                        <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => {
+                                onClose()
+                                navigate(item.path)
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                color: '#f7fbff',
+                                fontWeight: 700
+                            }}
+                        >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{item.icon}</span>
+                                <span>{item.label}</span>
+                            </span>
+                            <span style={{ color: '#fbbf24', fontSize: '13px' }}>→</span>
                         </button>
                     ))}
                 </div>

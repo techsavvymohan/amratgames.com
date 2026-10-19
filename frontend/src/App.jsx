@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -24,6 +24,10 @@ const ColorMatchPage = lazy(loadColorMatch)
 const CoinTossPage = lazy(loadCoinToss)
 const AdminPage = lazy(loadAdmin)
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const FavouritesPage = lazy(() => import('./pages/FavouritesPage'))
+const RecentPage = lazy(() => import('./pages/RecentPage'))
+const ChallengesPage = lazy(() => import('./pages/ChallengesPage'))
+const MyBetsPage = lazy(() => import('./pages/MyBetsPage'))
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -86,10 +90,17 @@ function App() {
                             <Route path="color-match" element={<GameAuthGuard gameName="Color Match"><ColorMatchPage /></GameAuthGuard>} />
                             <Route path="coin-toss" element={<GameAuthGuard gameName="Coin Toss"><CoinTossPage /></GameAuthGuard>} />
                             <Route path="profile" element={<ProfilePage />} />
+                            <Route path="favourites" element={<FavouritesPage />} />
+                            <Route path="recent" element={<RecentPage />} />
+                            <Route path="challenges" element={<ChallengesPage />} />
+                            <Route path="my-bets" element={<MyBetsPage />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
                         <Route path="/admin" element={<AdminPage />} />
+
+                        {/* Graceful Catch-All Fallback (Prevent blank screens on unmatched routes) */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Suspense>
             </ErrorBoundary>
