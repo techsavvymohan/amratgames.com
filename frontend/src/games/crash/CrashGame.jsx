@@ -678,8 +678,14 @@ function CrashGame() {
                                 className={`mode-toggle-btn ${gameMode === 'arena' ? 'active' : ''}`}
                                 onClick={() => {
                                     setGameMode('arena')
+                                    setFlightStartTime(null)
+                                    flightStartTimeRef.current = null
+                                    activeRoundIdRef.current = null
                                     setPanel1(p => ({ ...p, betPlaced: false }))
                                     setPanel2(p => ({ ...p, betPlaced: false }))
+                                    getRoomCrashState().then(room => {
+                                        if (room) syncRoomState(room)
+                                    }).catch(() => {})
                                 }}
                                 title="Multiplayer Synchronized Arena"
                             >
@@ -691,8 +697,15 @@ function CrashGame() {
                                 onClick={() => {
                                     setGameMode('solo')
                                     setPhase(PHASE.IDLE)
-                                    setPanel1(p => ({ ...p, betPlaced: false }))
-                                    setPanel2(p => ({ ...p, betPlaced: false }))
+                                    setMultiplier(1.00)
+                                    setElapsedTime(0)
+                                    multiplierRef.current = 1.00
+                                    elapsedTimeRef.current = 0
+                                    flightStartTimeRef.current = null
+                                    setFlightStartTime(null)
+                                    activeRoundIdRef.current = null
+                                    setPanel1(p => ({ ...p, betPlaced: false, cashedOut: false }))
+                                    setPanel2(p => ({ ...p, betPlaced: false, cashedOut: false }))
                                 }}
                                 title="Solo Flight"
                             >
