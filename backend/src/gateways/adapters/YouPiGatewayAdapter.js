@@ -213,7 +213,9 @@ export class YouPiGatewayAdapter extends IPaymentGateway {
                 amountPaise: result.amountPaise || amountPaise,
                 currency: result.currency || 'INR',
                 status: result.status || 'INITIATED',
-                checkoutUrl: result.checkoutUrl || `${this.checkoutUrl}/checkout/${result.paymentId}`,
+                checkoutUrl: (result.checkoutUrl && !result.checkoutUrl.includes('localhost')) 
+                    ? result.checkoutUrl 
+                    : `${this.checkoutUrl}/checkout/${result.paymentId}`,
                 qrPayload: result.qrPayload || null,
                 upiIntent: result.upiIntent || null,
                 raw: result

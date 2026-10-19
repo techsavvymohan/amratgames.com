@@ -17,7 +17,9 @@
     "test:backend": "pnpm --filter ./backend test",
     "test:frontend": "pnpm --filter ./frontend test",
     "check": "node --check backend/src/server.js && node --check backend/src/config.js",
-    "setup:env": "node scripts/setup-env.js"
+    "setup:env": "node scripts/setup-env.js",
+    "deploy:gateway": "node scripts/deploy-gateway-vps.mjs",
+    "optimize:nginx": "node scripts/optimize-nginx.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
