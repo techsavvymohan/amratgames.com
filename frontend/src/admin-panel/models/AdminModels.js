@@ -228,6 +228,19 @@ export class DepositModel {
         return this.status === 'rejected'
     }
 
+    isAutomatedGateway() {
+        return (
+            (this.paymentMethod && this.paymentMethod.toUpperCase().includes('YOUPI')) ||
+            (this.paymentMethod && this.paymentMethod.toUpperCase().includes('GATEWAY')) ||
+            (this.approvedBy && this.approvedBy.toUpperCase().includes('WEBHOOK'))
+        )
+    }
+
+    getChannelLabel() {
+        if (this.isAutomatedGateway()) return 'YouPi Gateway'
+        return 'Manual UPI'
+    }
+
     getFormattedAmount() {
         return `₹${this.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     }

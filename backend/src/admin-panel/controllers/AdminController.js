@@ -7,6 +7,7 @@ import { db } from '../../db/db.js'
 import { testSupabaseConnection } from '../../db/SupabaseClient.js'
 import { broadcastEvent } from '../../websocket.js'
 import { antiFraudService } from '../../services/AntiFraudService.js'
+import { paymentGatewayManager } from '../../gateways/PaymentGatewayManager.js'
 
 /**
  * AdminController — OOP Controller orchestrating admin API requests
@@ -44,6 +45,8 @@ export class AdminController {
         this.rejectKYC = this.rejectKYC.bind(this)
         this.toggleMaintenance = this.toggleMaintenance.bind(this)
         this.toggleGameKillSwitch = this.toggleGameKillSwitch.bind(this)
+        this.getGatewayStatus = this.getGatewayStatus.bind(this)
+        this.updateGatewayConfig = this.updateGatewayConfig.bind(this)
     }
 
     async getStats(req, res) {
@@ -415,6 +418,94 @@ export class AdminController {
                 kycRejectedAt: new Date().toISOString()
             })
             res.json({ success: true, message: `KYC for ${user.username} rejected.`, user: updated })
+        } catch (err) {
+            res.status(400).json({ success: false, error: err.message })
+        }
+    }
+
+    async getGatewayStatus(req, res) {
+        try {
+            const youpiAdapter = paymentGatewayManager.getAdapter('youpi')
+            const manualAdapter = paymentGatewayManager.getAdapter('manual')
+
+            const youpiAvailable = youpiAdapter ? await youpiAdapter.isAvailable() : false
+            const youpiCircuitTripped = youpiAdapter ? youpiAdapter._isCircuitTripped() : false
+            const manualAvailable = manualAdapter ? await manualAdapter.isAvailable() : true
+
+            const allDeposits = db.getAllDeposits() || []
+            
+            const automatedDeposits = allDeposits.filter(d => 
+                (d.paymentMethod && d.paymentMethod.includes('YOUPI')) || 
+                (d.approvedBy && d.approvedBy.includes('WEBHOOK'))
+            )
+            const manualDeposits = allDeposits.filter(d => 
+                !(d.paymentMethod && d.paymentMethod.includes('YOUPI')) && 
+                !(d.approvedBy && d.approvedBy.includes('WEBHOOK'))
+            )
+
+            const pendingManual = manualDeposits.filter(d => d.status === 'pending')
+
+            const automatedAmount = automatedDeposits.reduce((sum, d) => sum + (d.amount || 0), 0)
+            const manualCompletedAmount = manualDeposits.filter(d => d.status === 'completed').reduce((sum, d) => sum + (d.amount || 0), 0)
+            const pendingManualAmount = pendingManual.reduce((sum, d) => sum + (d.amount || 0), 0)
+
+            const activePrimary = db?.data?.settings?.primaryGateway || paymentGatewayManager.primaryGatewayName || 'youpi'
+
+            res.json({
+                success: true,
+                gateway: {
+                    activePrimary,
+                    fallback: paymentGatewayManager.fallbackGatewayName,
+                    corporateVpa: process.env.UPI_MERCHANT_VPA || 'shanviientrrprisee@ybl',
+                    corporatePayeeName: 'Shanvii Enterprise',
+                    youpi: {
+                        name: 'YouPI-PG Sovereign UPI Gateway',
+                        available: youpiAvailable,
+                        circuitTripped: youpiCircuitTripped,
+                        apiEndpoint: 'http://127.0.0.1:6100',
+                        checkoutUrlTemplate: 'https://amratgames.com/checkout/:id',
+                        adminPortalUrl: '/youpi-admin/'
+                    },
+                    manual: {
+                        name: 'Manual UPI Fallback (Intent & QR)',
+                        available: manualAvailable
+                    },
+                    stats: {
+                        totalDepositsCount: allDeposits.length,
+                        automatedDepositsCount: automatedDeposits.length,
+                        automatedDepositsAmount: automatedAmount,
+                        manualDepositsCount: manualDeposits.length,
+                        manualDepositsAmount: manualCompletedAmount,
+                        pendingManualCount: pendingManual.length,
+                        pendingManualAmount: pendingManualAmount
+                    }
+                }
+            })
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message })
+        }
+    }
+
+    async updateGatewayConfig(req, res) {
+        try {
+            const { primaryGateway } = req.body
+            if (!primaryGateway || !['youpi', 'manual'].includes(primaryGateway)) {
+                return res.status(400).json({ success: false, error: 'Valid primaryGateway ("youpi" or "manual") required' })
+            }
+
+            paymentGatewayManager.setPrimaryGateway(primaryGateway)
+
+            broadcastEvent('GATEWAY_CONFIG_UPDATED', {
+                primaryGateway,
+                updatedBy: req.user?.username || 'admin',
+                timestamp: new Date().toISOString()
+            })
+
+            res.json({
+                success: true,
+                primaryGateway,
+                message: `Active primary payment gateway switched to "${primaryGateway.toUpperCase()}".`
+            })
         } catch (err) {
             res.status(400).json({ success: false, error: err.message })
         }

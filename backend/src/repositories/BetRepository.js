@@ -165,6 +165,16 @@ export class BetRepository extends BaseRepository {
         const netHouseProfitINR = totalWageredINR - totalPayoutINR
         const ggr = totalWageredINR > 0 ? ((netHouseProfitINR / totalWageredINR) * 100).toFixed(2) : '1.00'
 
+        const allCompletedDeposits = (this.data.deposits || []).filter(d => d.status === 'completed')
+        const automatedDeposits = allCompletedDeposits.filter(d =>
+            (d.paymentMethod && d.paymentMethod.includes('YOUPI')) ||
+            (d.approvedBy && d.approvedBy.includes('WEBHOOK'))
+        )
+        const automatedDepositsAmount = automatedDeposits.reduce((sum, d) => sum + (d.amount || 0), 0)
+        const manualDepositsAmount = allCompletedDeposits
+            .filter(d => !(d.paymentMethod && d.paymentMethod.includes('YOUPI')) && !(d.approvedBy && d.approvedBy.includes('WEBHOOK')))
+            .reduce((sum, d) => sum + (d.amount || 0), 0)
+
         return {
             totalUsers,
             activeUsers,
@@ -176,7 +186,12 @@ export class BetRepository extends BaseRepository {
             settings: this.data.settings,
             treasury: this.data.settings.tokenTreasury,
             recentAirdropsCount: (this.data.airdrops || []).length,
-            withdrawalStats: this.db.getWithdrawalStats()
+            withdrawalStats: this.db.getWithdrawalStats(),
+            gatewayStats: {
+                automatedDepositsAmount: Math.round(automatedDepositsAmount),
+                automatedDepositsCount: automatedDeposits.length,
+                manualDepositsAmount: Math.round(manualDepositsAmount)
+            }
         }
     }
 

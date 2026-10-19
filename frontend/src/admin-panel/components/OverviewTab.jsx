@@ -102,6 +102,20 @@ export default function OverviewTab({ stats, treasury, users = [], liveBets = []
                         Available $AMRAT reserve
                     </div>
                 </div>
+
+                {/* 5. YouPi Gateway Inflow */}
+                <div className="kpi-card" onClick={() => onSwitchTab?.('deposits')} style={{ cursor: 'pointer' }} title="Click to view Deposit Verification & Gateway Review">
+                    <div className="kpi-label">
+                        <span>Gateway Deposits</span>
+                        <span>⚡</span>
+                    </div>
+                    <div className="kpi-value green" style={{ color: '#34d399' }}>
+                        ₹{(stats?.gatewayStats?.automatedDepositsAmount || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="kpi-subtext" style={{ color: '#6ee7b7' }}>
+                        ● {stats?.gatewayStats?.automatedDepositsCount || 0} auto-credited via YouPi
+                    </div>
+                </div>
             </div>
 
             {/* Split Section: Live Game Stream & Quick Shortcuts */}

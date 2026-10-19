@@ -42,6 +42,16 @@ export class PaymentGatewayManager {
         return this.adapters.get(name) || null
     }
 
+    setPrimaryGateway(name) {
+        if (!this.adapters.has(name)) {
+            throw new Error(`Gateway adapter "${name}" is not registered.`)
+        }
+        this.primaryGatewayName = name
+        if (!db.data.settings) db.data.settings = {}
+        db.data.settings.primaryGateway = name
+        db.persist()
+    }
+
     /**
      * Resolves the healthiest active gateway adapter, falling back to manual if necessary.
      * 
@@ -49,7 +59,8 @@ export class PaymentGatewayManager {
      * @returns {Promise<import('./contracts/IPaymentGateway.js').IPaymentGateway>}
      */
     async resolveActiveGateway(preferredName) {
-        const candidateName = preferredName || this.primaryGatewayName
+        const configuredPrimary = db?.data?.settings?.primaryGateway || this.primaryGatewayName
+        const candidateName = preferredName || configuredPrimary
         const candidate = this.getAdapter(candidateName)
 
         if (candidate) {

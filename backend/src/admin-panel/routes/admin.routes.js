@@ -29,6 +29,10 @@ export function createAdminRouter() {
     router.post('/deposits/:id/approve', controller.approveDeposit)
     router.post('/deposits/:id/reject', controller.rejectDeposit)
 
+    // Sovereign Payment Gateway (YouPi-PG) Management & Telemetry
+    router.get('/gateway/status', controller.getGatewayStatus)
+    router.post('/gateway/config', controller.updateGatewayConfig)
+
     // Player KYC Compliance Review
     router.post('/users/:id/kyc/approve', controller.approveKYC)
     router.post('/users/:id/kyc/reject', controller.rejectKYC)

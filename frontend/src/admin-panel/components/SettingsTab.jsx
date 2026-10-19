@@ -14,6 +14,11 @@ export default function SettingsTab({
     const [migrating, setMigrating] = useState(false)
     const [migrationReport, setMigrationReport] = useState(null)
 
+    // Sovereign Payment Gateway (YouPi-PG) State
+    const [gatewayData, setGatewayData] = useState(null)
+    const [loadingGateway, setLoadingGateway] = useState(false)
+    const [updatingGateway, setUpdatingGateway] = useState(false)
+
     const checkSupabase = async () => {
         if (!apiClient) return
         setCheckingStatus(true)
@@ -27,8 +32,36 @@ export default function SettingsTab({
         }
     }
 
+    const fetchGatewayStatus = async () => {
+        if (!apiClient) return
+        setLoadingGateway(true)
+        try {
+            const data = await apiClient.getGatewayStatus()
+            setGatewayData(data)
+        } catch (err) {
+            console.error('Failed to probe gateway status:', err)
+        } finally {
+            setLoadingGateway(false)
+        }
+    }
+
+    const handleSwitchGateway = async (newPrimary) => {
+        if (!apiClient || updatingGateway) return
+        setUpdatingGateway(true)
+        try {
+            const res = await apiClient.updateGatewayConfig({ primaryGateway: newPrimary })
+            triggerToast?.(`✓ ${res.message || 'Payment gateway updated'}`)
+            fetchGatewayStatus()
+        } catch (err) {
+            triggerToast?.(`✕ Gateway switch failed: ${err.message}`)
+        } finally {
+            setUpdatingGateway(false)
+        }
+    }
+
     useEffect(() => {
         checkSupabase()
+        fetchGatewayStatus()
     }, [])
 
     const handleMigrate = async () => {
@@ -180,7 +213,154 @@ export default function SettingsTab({
                 </form>
             </div>
 
-            {/* 2. Supabase Cloud Database Management */}
+            {/* 2. Sovereign Payment Gateway Controls (YouPi-PG) */}
+            <div className="admin-card-section">
+                <div className="section-header">
+                    <div>
+                        <h2>
+                            <span>💳</span>
+                            <span>Sovereign Payment Gateway (YouPi-PG)</span>
+                        </h2>
+                        <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: '4px 0 0' }}>
+                            Orchestrate primary automated UPI gateway, dynamic QR pairing, and instant cashier settlements.
+                        </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            type="button"
+                            className="btn-action"
+                            onClick={fetchGatewayStatus}
+                            disabled={loadingGateway}
+                            style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+                            title="Test connectivity to YouPi-PG API"
+                        >
+                            {loadingGateway ? 'Probing...' : '🔄 Probe Gateway'}
+                        </button>
+                        <a
+                            href="/youpi-admin/"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-action gold"
+                            style={{ fontSize: '0.82rem', padding: '6px 12px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                            <span>Merchant Hub</span>
+                            <span>↗</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    {/* Live Cluster Status & VPA Info */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>GATEWAY STATUS</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                <span style={{
+                                    display: 'inline-block',
+                                    width: '10px',
+                                    height: '10px',
+                                    borderRadius: '50%',
+                                    backgroundColor: gatewayData?.youpi?.available ? '#10b981' : '#f59e0b'
+                                }} />
+                                <span style={{ fontWeight: 800, color: gatewayData?.youpi?.available ? '#34d399' : '#fbbf24', fontSize: '0.92rem' }}>
+                                    {gatewayData?.youpi?.available ? 'YouPi-PG Online (Active)' : 'Gateway Online'}
+                                </span>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                                Port 6100 (API) · Port 7000 (Checkout)
+                            </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>RECEIVING CORPORATE VPA</div>
+                            <div style={{ fontWeight: 800, color: '#f8fafc', fontSize: '0.92rem', marginTop: '4px', fontFamily: 'monospace' }}>
+                                {gatewayData?.corporateVpa || 'shanviientrrprisee@ybl'}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: '#38bdf8', marginTop: '2px' }}>
+                                {gatewayData?.corporatePayeeName || 'Shanvii Enterprise'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Active Gateway Selection Switch */}
+                    <div style={{ marginTop: '12px' }}>
+                        <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f8fafc', marginBottom: '8px', display: 'block' }}>
+                            Active Cashier Mode for Player Deposits:
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                            <div
+                                onClick={() => handleSwitchGateway('youpi')}
+                                style={{
+                                    cursor: 'pointer',
+                                    padding: '12px 14px',
+                                    borderRadius: '8px',
+                                    border: (gatewayData?.activePrimary || 'youpi') === 'youpi'
+                                        ? '2px solid #10b981'
+                                        : '1px solid rgba(255,255,255,0.1)',
+                                    background: (gatewayData?.activePrimary || 'youpi') === 'youpi'
+                                        ? 'rgba(16, 185, 129, 0.12)'
+                                        : 'rgba(255,255,255,0.02)'
+                                }}
+                            >
+                                <div style={{ fontWeight: 800, color: (gatewayData?.activePrimary || 'youpi') === 'youpi' ? '#34d399' : '#f8fafc', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>⚡ YouPi Automated (Recommended)</span>
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '3px' }}>
+                                    Instant PhonePe/GPay app switch &amp; auto-crediting webhook
+                                </div>
+                            </div>
+
+                            <div
+                                onClick={() => handleSwitchGateway('manual')}
+                                style={{
+                                    cursor: 'pointer',
+                                    padding: '12px 14px',
+                                    borderRadius: '8px',
+                                    border: (gatewayData?.activePrimary || 'youpi') === 'manual'
+                                        ? '2px solid #f5af19'
+                                        : '1px solid rgba(255,255,255,0.1)',
+                                    background: (gatewayData?.activePrimary || 'youpi') === 'manual'
+                                        ? 'rgba(245, 175, 25, 0.12)'
+                                        : 'rgba(255,255,255,0.02)'
+                                }}
+                            >
+                                <div style={{ fontWeight: 800, color: (gatewayData?.activePrimary || 'youpi') === 'manual' ? '#fbbf24' : '#f8fafc', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>🖐️ Manual UPI Fallback</span>
+                                </div>
+                                <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '3px' }}>
+                                    Direct QR code; admin manually verifies UTR in Deposits tab
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Settlement Metrics */}
+                    {gatewayData?.stats && (
+                        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', fontSize: '0.8rem' }}>
+                            <div>
+                                <span style={{ color: '#94a3b8' }}>Auto-Credited:</span>
+                                <div style={{ fontWeight: 700, color: '#34d399', fontSize: '0.92rem' }}>
+                                    ₹{gatewayData.stats.automatedDepositsAmount.toLocaleString('en-IN')}
+                                </div>
+                            </div>
+                            <div>
+                                <span style={{ color: '#94a3b8' }}>Manual Approved:</span>
+                                <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem' }}>
+                                    ₹{gatewayData.stats.manualDepositsAmount.toLocaleString('en-IN')}
+                                </div>
+                            </div>
+                            <div>
+                                <span style={{ color: '#94a3b8' }}>Pending Manual:</span>
+                                <div style={{ fontWeight: 700, color: '#fbbf24', fontSize: '0.92rem' }}>
+                                    ₹{gatewayData.stats.pendingManualAmount.toLocaleString('en-IN')} ({gatewayData.stats.pendingManualCount})
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 3. Supabase Cloud Database Management */}
             <div className="admin-card-section">
                 <div className="section-header">
                     <div>

@@ -9,6 +9,7 @@ export default function DepositsTab({
     triggerToast
 }) {
     const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'pending' | 'completed' | 'rejected'
+    const [channelFilter, setChannelFilter] = useState('all') // 'all' | 'youpi' | 'manual'
     const [searchQuery, setSearchQuery] = useState('')
 
     // Modal state for Approval
@@ -36,6 +37,15 @@ export default function DepositsTab({
         return deposits.filter(d => {
             if (statusFilter !== 'all' && d.status !== statusFilter) return false
 
+            const isAuto = Boolean(
+                d.isAutomatedGateway?.() ||
+                (d.paymentMethod && d.paymentMethod.toUpperCase().includes('YOUPI')) ||
+                (d.approvedBy && d.approvedBy.toUpperCase().includes('WEBHOOK'))
+            )
+
+            if (channelFilter === 'youpi' && !isAuto) return false
+            if (channelFilter === 'manual' && isAuto) return false
+
             if (searchQuery.trim()) {
                 const q = searchQuery.toLowerCase().trim()
                 const matchesUsername = d.username?.toLowerCase().includes(q)
@@ -50,23 +60,37 @@ export default function DepositsTab({
 
             return true
         })
-    }, [deposits, statusFilter, searchQuery])
+    }, [deposits, statusFilter, channelFilter, searchQuery])
 
     // KPI Metrics
     const stats = useMemo(() => {
-        const pending = deposits.filter(d => d.status === 'pending')
-        const completed = deposits.filter(d => d.status === 'completed')
+        const automated = deposits.filter(d =>
+            d.isAutomatedGateway?.() ||
+            (d.paymentMethod && d.paymentMethod.toUpperCase().includes('YOUPI')) ||
+            (d.approvedBy && d.approvedBy.toUpperCase().includes('WEBHOOK'))
+        )
+        const manual = deposits.filter(d =>
+            !d.isAutomatedGateway?.() &&
+            !(d.paymentMethod && d.paymentMethod.toUpperCase().includes('YOUPI')) &&
+            !(d.approvedBy && d.approvedBy.toUpperCase().includes('WEBHOOK'))
+        )
+
+        const pending = manual.filter(d => d.status === 'pending')
+        const manualCompleted = manual.filter(d => d.status === 'completed')
         const rejected = deposits.filter(d => d.status === 'rejected')
 
+        const automatedAmount = automated.reduce((sum, d) => sum + (d.amount || 0), 0)
         const pendingAmount = pending.reduce((sum, d) => sum + (d.amount || 0), 0)
-        const completedAmount = completed.reduce((sum, d) => sum + (d.amount || 0), 0)
+        const manualCompletedAmount = manualCompleted.reduce((sum, d) => sum + (d.amount || 0), 0)
 
         return {
             totalCount: deposits.length,
+            automatedCount: automated.length,
+            automatedAmount,
             pendingCount: pending.length,
             pendingAmount,
-            completedCount: completed.length,
-            completedAmount,
+            manualCompletedCount: manualCompleted.length,
+            manualCompletedAmount,
             rejectedCount: rejected.length
         }
     }, [deposits])
@@ -124,6 +148,52 @@ export default function DepositsTab({
                 </button>
             </div>
 
+            {/* Gateway Banner */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 95, 70, 0.2))',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                borderRadius: '12px',
+                padding: '14px 20px',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '26px' }}>⚡</span>
+                    <div>
+                        <div style={{ fontWeight: 800, color: '#34d399', fontSize: '0.94rem' }}>
+                            YouPi-PG Sovereign Payment Gateway Synchronized
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '2px' }}>
+                            Automated deposits are verified &amp; credited via webhook in real-time. Manual UPI deposits require UTR review.
+                        </div>
+                    </div>
+                </div>
+                <a
+                    href="/youpi-admin/"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
+                >
+                    <span>YouPi Merchant Hub</span>
+                    <span>↗</span>
+                </a>
+            </div>
+
             {/* Quick KPI Stat Tiles */}
             <div style={{
                 display: 'grid',
@@ -132,12 +202,27 @@ export default function DepositsTab({
                 marginBottom: '18px'
             }}>
                 <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '10px',
+                    padding: '14px'
+                }}>
+                    <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: 700 }}>⚡ YOUPI AUTO-CREDITED</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
+                        ₹{stats.automatedAmount.toLocaleString('en-IN')}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#6ee7b7', marginTop: '2px' }}>
+                        {stats.automatedCount} gateway webhook deposits
+                    </div>
+                </div>
+
+                <div style={{
                     background: stats.pendingCount > 0 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255, 255, 255, 0.03)',
                     border: stats.pendingCount > 0 ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '10px',
                     padding: '14px'
                 }}>
-                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>PENDING REVIEW</div>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>PENDING MANUAL REVIEW</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 800, color: stats.pendingCount > 0 ? '#fbbf24' : '#fff', marginTop: '4px' }}>
                         {stats.pendingCount} <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>requests</span>
                     </div>
@@ -147,17 +232,17 @@ export default function DepositsTab({
                 </div>
 
                 <div style={{
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '10px',
                     padding: '14px'
                 }}>
-                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>VERIFIED &amp; CREDITED</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
-                        ₹{stats.completedAmount.toLocaleString('en-IN')}
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>MANUAL VERIFIED</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', marginTop: '4px' }}>
+                        ₹{stats.manualCompletedAmount.toLocaleString('en-IN')}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#6ee7b7', marginTop: '2px' }}>
-                        {stats.completedCount} transactions approved
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {stats.manualCompletedCount} manual UTRs approved
                     </div>
                 </div>
 
@@ -172,7 +257,7 @@ export default function DepositsTab({
                         {stats.totalCount}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                        {stats.rejectedCount} rejected / invalid UTRs
+                        {stats.rejectedCount} rejected / invalid
                     </div>
                 </div>
             </div>
@@ -188,12 +273,22 @@ export default function DepositsTab({
                 />
                 <select
                     className="admin-select"
+                    value={channelFilter}
+                    onChange={(e) => setChannelFilter(e.target.value)}
+                    style={{ minWidth: '170px' }}
+                >
+                    <option value="all">All Channels ({deposits.length})</option>
+                    <option value="youpi">⚡ YouPi Gateway ({stats.automatedCount})</option>
+                    <option value="manual">🖐️ Manual UPI ({stats.pendingCount + stats.manualCompletedCount})</option>
+                </select>
+                <select
+                    className="admin-select"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                    <option value="all">All Deposits ({deposits.length})</option>
+                    <option value="all">All Statuses</option>
                     <option value="pending">⏳ Pending Review ({stats.pendingCount})</option>
-                    <option value="completed">✓ Verified &amp; Completed ({stats.completedCount})</option>
+                    <option value="completed">✓ Verified &amp; Completed</option>
                     <option value="rejected">✕ Rejected ({stats.rejectedCount})</option>
                 </select>
             </div>
@@ -244,17 +339,34 @@ export default function DepositsTab({
                                         ₹{d.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </td>
                                     <td>
-                                        <span style={{
-                                            fontSize: '0.78rem',
-                                            fontWeight: 700,
-                                            padding: '3px 8px',
-                                            borderRadius: '6px',
-                                            background: 'rgba(99, 102, 241, 0.15)',
-                                            color: '#818cf8',
-                                            border: '1px solid rgba(99, 102, 241, 0.3)'
-                                        }}>
-                                            {d.paymentMethod || 'UPI'}
-                                        </span>
+                                        {d.isAutomatedGateway?.() || (d.paymentMethod && d.paymentMethod.toUpperCase().includes('YOUPI')) || (d.approvedBy && d.approvedBy.toUpperCase().includes('WEBHOOK')) ? (
+                                            <span style={{
+                                                fontSize: '0.78rem',
+                                                fontWeight: 800,
+                                                padding: '3px 8px',
+                                                borderRadius: '6px',
+                                                background: 'rgba(16, 185, 129, 0.18)',
+                                                color: '#34d399',
+                                                border: '1px solid rgba(16, 185, 129, 0.4)',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                ⚡ YouPi Auto
+                                            </span>
+                                        ) : (
+                                            <span style={{
+                                                fontSize: '0.78rem',
+                                                fontWeight: 700,
+                                                padding: '3px 8px',
+                                                borderRadius: '6px',
+                                                background: 'rgba(99, 102, 241, 0.15)',
+                                                color: '#818cf8',
+                                                border: '1px solid rgba(99, 102, 241, 0.3)'
+                                            }}>
+                                                🖐️ Manual UPI
+                                            </span>
+                                        )}
                                     </td>
                                     <td>
                                         {d.utrNumber ? (
@@ -328,7 +440,19 @@ export default function DepositsTab({
                                         ) : (
                                             <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.3 }}>
                                                 {d.status === 'completed' && (
-                                                    <span>By <strong>{d.approvedBy || 'Admin'}</strong></span>
+                                                    d.isAutomatedGateway?.() || (d.paymentMethod && d.paymentMethod.toUpperCase().includes('YOUPI')) || (d.approvedBy && d.approvedBy.toUpperCase().includes('WEBHOOK')) ? (
+                                                        <span style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            color: '#34d399',
+                                                            fontWeight: 700
+                                                        }}>
+                                                            <span>⚡ Auto-Credited</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span>By <strong>{d.approvedBy || 'Admin'}</strong></span>
+                                                    )
                                                 )}
                                                 {d.status === 'rejected' && (
                                                     <span style={{ color: '#f87171' }}>{d.rejectionReason || 'Rejected'}</span>
