@@ -11,7 +11,9 @@ import {
     ClockCircleFilled,
     PlayCircleOutlined,
     PauseCircleOutlined,
-    HistoryOutlined
+    HistoryOutlined,
+    PlusOutlined,
+    MinusOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
@@ -503,24 +505,20 @@ export default function CoinTossGame() {
                             className={`coin-shadow ${isFlipping ? (turboMode ? 'shadow-turbo' : 'shadow-floating') : ''}`}
                         />
 
-                        {/* Real Result Splash Badge (Only shown when user bet) */}
+                        {/* Real Result Splash Badge (Ultra-compact floating pill) */}
                         {lastResult && !isFlipping && (
                             <div className={`result-splash-badge ${lastResult.won ? 'won' : 'lost'}`}>
-                                <div className="splash-icon">
-                                    {lastResult.won ? '🎉' : '💀'}
-                                </div>
-                                <div className="splash-info">
-                                    <div className="splash-title">
-                                        {lastResult.won
-                                            ? `YOU WON ${currencySymbol}${lastResult.payout.toLocaleString('en-IN')}!`
-                                            : `COIN LANDED ON ${lastResult.outcome.toUpperCase()}`}
-                                    </div>
-                                    <div className="splash-subtitle">
-                                        {lastResult.won
-                                            ? `Multiplier 1.96x • Net Profit +${currencySymbol}${(lastResult.payout - lastResult.betAmount).toLocaleString('en-IN')}`
-                                            : `Better luck next flip! Press Space to try again.`}
-                                    </div>
-                                </div>
+                                {lastResult.won ? (
+                                    <PlusOutlined className="splash-op-icon" />
+                                ) : (
+                                    <MinusOutlined className="splash-op-icon" />
+                                )}
+                                <span className="splash-coins">
+                                    {currencySymbol}
+                                    {lastResult.won
+                                        ? lastResult.payout.toLocaleString('en-IN')
+                                        : (lastResult.betAmount || 0).toLocaleString('en-IN')}
+                                </span>
                             </div>
                         )}
 

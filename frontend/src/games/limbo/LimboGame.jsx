@@ -6,7 +6,9 @@ import {
     HistoryOutlined,
     PlayCircleOutlined,
     PauseCircleOutlined,
-    RedoOutlined
+    RedoOutlined,
+    PlusOutlined,
+    MinusOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
@@ -358,13 +360,14 @@ function LimboGame() {
                         {/* Interactive Dynamic Payout Toast */}
                         {gameResult === 'win' && (
                             <div className="limbo-payout-toast win">
-                                <span>🎉 TARGET HIT</span>
-                                <strong>+{currencySymbol}{(betAmount * targetMultiplier).toFixed(2)}</strong>
+                                <PlusOutlined style={{ fontSize: '11px' }} />
+                                <strong>{currencySymbol}{(betAmount * targetMultiplier).toFixed(2)}</strong>
                             </div>
                         )}
                         {gameResult === 'lose' && (
                             <div className="limbo-payout-toast lose">
-                                <span>BUSTED BELOW TARGET</span>
+                                <MinusOutlined style={{ fontSize: '11px' }} />
+                                <strong>{currencySymbol}{Number(betAmount).toFixed(2)}</strong>
                             </div>
                         )}
 
