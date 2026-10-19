@@ -1,13 +1,42 @@
 /* 👑 AmratGames.com — Hub Pages Stylesheet (Favourites, Recent, Challenges, My Bets) */
 
 .hub-page-container {
-    min-height: calc(100vh - 70px);
+    height: 100%;
+    max-height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     background: radial-gradient(circle at 50% 0%, rgba(30, 58, 95, 0.28) 0%, rgba(7, 20, 38, 0.98) 75%), var(--bg-app, #071426);
-    padding: 32px 28px 80px 28px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 32px 28px calc(var(--mobile-nav-space, 64px) + 50px) 28px;
     color: var(--text-primary, #f7fbff);
     animation: fadeIn 0.25s ease-out;
+    box-sizing: border-box;
+}
+
+.hub-page-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Custom Sleek Gold Scrollbar for Hub Pages */
+.hub-page-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.hub-page-container::-webkit-scrollbar-track {
+    background: rgba(7, 20, 38, 0.6);
+}
+
+.hub-page-container::-webkit-scrollbar-thumb {
+    background: rgba(245, 175, 25, 0.35);
+    border-radius: 4px;
+}
+
+.hub-page-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 175, 25, 0.65);
 }
 
 @keyframes fadeIn {
@@ -662,7 +691,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .hub-page-container {
-        padding: 20px 16px 80px 16px;
+        padding: 20px 16px calc(var(--mobile-nav-space, 64px) + 70px) 16px;
     }
     .hub-title-wrap h1 {
         font-size: 1.4rem;

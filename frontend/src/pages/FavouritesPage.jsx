@@ -39,7 +39,8 @@ export default function FavouritesPage() {
 
     return (
         <div className="hub-page-container">
-            {/* Header */}
+            <div className="hub-page-content">
+                {/* Header */}
             <div className="hub-header">
                 <div className="hub-header-left">
                     <div className="hub-header-icon" aria-hidden="true">⭐</div>
@@ -203,6 +204,7 @@ export default function FavouritesPage() {
                     </div>
                 </>
             )}
+            </div>
         </div>
     )
 }
