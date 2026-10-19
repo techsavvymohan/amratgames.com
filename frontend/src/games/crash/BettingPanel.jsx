@@ -200,10 +200,15 @@ function BettingPanel({
                                     <input
                                         type="number"
                                         className="stepper-input"
-                                        value={amount}
+                                        value={amount === 0 ? '' : amount}
                                         onChange={(e) => {
-                                            const val = parseFloat(e.target.value)
-                                            setAmount(isNaN(val) ? 0 : val)
+                                            const raw = e.target.value
+                                            if (raw === '') {
+                                                setAmount(0)
+                                                return
+                                            }
+                                            const val = parseFloat(raw)
+                                            if (!isNaN(val)) setAmount(val)
                                         }}
                                         min="1"
                                         step="1"

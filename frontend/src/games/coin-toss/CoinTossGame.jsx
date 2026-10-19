@@ -309,6 +309,9 @@ export default function CoinTossGame() {
 
 
     // Keyboard Shortcuts
+    const handleLockInBetRef = useRef(handleLockInBet)
+    handleLockInBetRef.current = handleLockInBet
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (gameMode !== 'solo') return
@@ -319,7 +322,7 @@ export default function CoinTossGame() {
                 handleSelectChoice('tails')
             } else if (e.key === ' ') {
                 e.preventDefault()
-                handleLockInBet()
+                handleLockInBetRef.current?.()
             }
         }
         window.addEventListener('keydown', handleKeyDown)

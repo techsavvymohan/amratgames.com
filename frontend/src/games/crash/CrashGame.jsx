@@ -93,6 +93,11 @@ function CrashGame() {
         autoCashout: null
     })
 
+    const panel1Ref = useRef(panel1)
+    panel1Ref.current = panel1
+    const panel2Ref = useRef(panel2)
+    panel2Ref.current = panel2
+
     const [showSecondPanel, setShowSecondPanel] = useState(true)
 
     // UI & Modal States
@@ -344,12 +349,28 @@ function CrashGame() {
                 setPanel1(p => {
                     if (p.betPlaced && !p.cashedOut) {
                         showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                        setGameRecords(prev => [{
+                            id: Date.now() + Math.random(),
+                            multiplier: bustPoint,
+                            cashedOutAt: null,
+                            bet: p.amount,
+                            profit: -p.amount,
+                            createdAt: new Date().toISOString()
+                        }, ...prev])
                     }
                     return { ...p, betPlaced: false }
                 })
                 setPanel2(p => {
                     if (p.betPlaced && !p.cashedOut) {
                         showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                        setGameRecords(prev => [{
+                            id: Date.now() + Math.random(),
+                            multiplier: bustPoint,
+                            cashedOutAt: null,
+                            bet: p.amount,
+                            profit: -p.amount,
+                            createdAt: new Date().toISOString()
+                        }, ...prev])
                     }
                     return { ...p, betPlaced: false }
                 })
@@ -385,12 +406,14 @@ function CrashGame() {
                     casinoAudio.playCashout?.()
 
                     // Add record
+                    const betStake = payload.betAmount || (panelKey === 1 ? panel1Ref.current.amount : panel2Ref.current.amount)
                     setGameRecords(prev => [{
                         id: Date.now(),
                         multiplier: payload.multiplier,
                         cashedOutAt: payload.multiplier,
-                        bet: payload.betAmount || (panelKey === 1 ? panel1.amount : panel2.amount),
-                        profit: payload.payout - (payload.betAmount || (panelKey === 1 ? panel1.amount : panel2.amount))
+                        bet: betStake,
+                        profit: payload.payout - betStake,
+                        createdAt: new Date().toISOString()
                     }, ...prev])
                 }
             }),
@@ -408,6 +431,14 @@ function CrashGame() {
                     setPanel1(p => {
                         if (p.betPlaced && !p.cashedOut) {
                             showToast('loss', 'Flight Crashed', `-${currencySymbol}${p.amount.toFixed(2)} at ${bustPoint.toFixed(2)}x`, 3500)
+                            setGameRecords(prev => [{
+                                id: Date.now() + Math.random(),
+                                multiplier: bustPoint,
+                                cashedOutAt: null,
+                                bet: p.amount,
+                                profit: -p.amount,
+                                createdAt: new Date().toISOString()
+                            }, ...prev])
                         }
                         return { ...p, betPlaced: false }
                     })
@@ -421,7 +452,7 @@ function CrashGame() {
                 if (typeof unsub === 'function') unsub()
             })
         }
-    }, [gameMode, syncRoomState, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson, panel1.amount, panel2.amount])
+    }, [gameMode, syncRoomState, user, currencySymbol, getRoomCrashState, showToast, subscribe, sendJson])
 
     // Place Bet Handler (for Panel 1 or Panel 2)
     const handleBet = async (amount, autoCashoutTarget, panelId = 1) => {
@@ -532,13 +563,52 @@ function CrashGame() {
 
         // Solo mode cashout
         if (phase !== PHASE.RUNNING || !panel1.betPlaced || !activeRoundIdRef.current) return
-        const res = await cashoutCrashRound({ roundId: activeRoundIdRef.current, multiplier })
+        const currentM = multiplierRef.current || multiplier || 1.00
+        const res = await cashoutCrashRound({ roundId: activeRoundIdRef.current, multiplier: currentM })
         if (res && res.success) {
             setPanel1(prev => ({ ...prev, betPlaced: false, cashedOut: true, payout: res.payout }))
-            showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${multiplier.toFixed(2)}x`, 4000)
+            showToast('win', 'Cashed Out!', `+${currencySymbol}${res.payout.toFixed(2)} at ${currentM.toFixed(2)}x`, 4000)
             casinoAudio.playCashout?.()
+
+            setGameRecords(prev => [{
+                id: Date.now(),
+                multiplier: currentM,
+                cashedOutAt: currentM,
+                bet: panel1Ref.current.amount,
+                profit: res.payout - panel1Ref.current.amount,
+                createdAt: new Date().toISOString()
+            }, ...prev])
         }
     }
+
+    // Solo Flight Progression & Auto-Cashout Animation Loop
+    useEffect(() => {
+        if (gameMode !== 'solo' || phase !== PHASE.RUNNING || !flightStartTime) return
+
+        let animFrame
+        const updateSoloFlight = () => {
+            const elapsed = Math.max(0, (Date.now() - flightStartTime) / 1000)
+            const curMult = Math.min(1000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)))
+
+            setMultiplier(curMult)
+            setElapsedTime(elapsed)
+            multiplierRef.current = curMult
+            elapsedTimeRef.current = elapsed
+
+            // Check auto-cashout for Solo flight (Panel 1)
+            const p1 = panel1Ref.current
+            if (p1.betPlaced && !p1.cashedOut && p1.autoCashout && curMult >= p1.autoCashout) {
+                handleCashout(1)
+            }
+
+            animFrame = requestAnimationFrame(updateSoloFlight)
+        }
+
+        animFrame = requestAnimationFrame(updateSoloFlight)
+        return () => {
+            if (animFrame) cancelAnimationFrame(animFrame)
+        }
+    }, [gameMode, phase, flightStartTime])
 
     // Ensure page begins at the very top so the Aviator header and arena are immediately visible
     useEffect(() => {
