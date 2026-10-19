@@ -427,6 +427,7 @@ function CrashGame() {
                     flightStartTimeRef.current = null
                     setFlightStartTime(null)
                     activeRoundIdRef.current = null
+                    setHistory(prev => [bustPoint, ...prev.slice(0, 24)])
                     casinoAudio.playCrash?.()
                     setPanel1(p => {
                         if (p.betPlaced && !p.cashedOut) {
