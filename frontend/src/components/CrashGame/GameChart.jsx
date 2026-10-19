@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo, useCallback } from 'react'
 import { Tag, Typography, Badge } from 'antd'
 import { WifiOutlined } from '@ant-design/icons'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 
 const { Text, Title } = Typography
 
@@ -223,7 +224,7 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
                         explosionRef.current.style.display = 'block'
                         explosionRef.current.style.left = `${endX}px`
                         explosionRef.current.style.top = `${endY}px`
-                        explosionRef.current.src = '/images/explosions/normal_explosion.gif?' + Date.now()
+                        explosionRef.current.src = getOptimizedImageUrl('/images/explosions/normal_explosion.gif') + '?' + Date.now()
 
                         setTimeout(() => {
                             if (explosionRef.current) {
@@ -325,19 +326,19 @@ function GameChart({ phase, multiplier, elapsedTime, countdown }) {
             {/* In-game Overlay Assets */}
             <img
                 ref={rocketRef}
-                src="/images/spaceship.png"
+                src={getOptimizedImageUrl('/images/spaceship.png')}
                 alt="Rocket"
                 className="crash-rocket-img"
             />
             <img
                 ref={exhaustRef}
-                src="/images/exhaust/exhaust02_preview.gif"
+                src={getOptimizedImageUrl('/images/exhaust/exhaust02_preview.gif')}
                 alt="Exhaust"
                 className="crash-exhaust-img"
             />
             <img
                 ref={explosionRef}
-                src="/images/explosions/normal_explosion.gif"
+                src={getOptimizedImageUrl('/images/explosions/normal_explosion.gif')}
                 alt="Explosion"
                 className="crash-explosion-img"
             />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './AuthModal.css'
 
 export default function AuthModal() {
@@ -287,7 +288,7 @@ export default function AuthModal() {
                 {/* Header */}
                 <div className="amrat-auth-header">
                     <img
-                        src="/amrat-logo.png"
+                        src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })}
                         alt="AmratGames"
                         className="amrat-auth-logo"
                     />

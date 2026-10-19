@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 
 export default function LockScreen({
     loginEmail,
@@ -35,7 +36,7 @@ export default function LockScreen({
 
             <div className="admin-lock-logo-wrapper">
                 <img
-                    src="/amrat-logo.png"
+                    src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })}
                     alt="AmratGames"
                     className="admin-lock-logo"
                 />

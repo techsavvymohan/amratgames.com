@@ -15,6 +15,7 @@ import BalanceModal from './components/BalanceModal'
 import LockScreen from './components/LockScreen'
 
 import './AdminPanel.css'
+import { getOptimizedImageUrl } from '../utils/cloudinary'
 
 export default function AdminPanel() {
     const { user, token, isAdmin, login, quickAdminLogin, logout, backendOnline } = useAuth()
@@ -379,7 +380,7 @@ export default function AdminPanel() {
             <div className="admin-header">
                 <div className="admin-title-area">
                     <img
-                        src="/amrat-logo.png"
+                        src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })}
                         alt="AmratGames"
                         className="admin-logo-badge"
                     />

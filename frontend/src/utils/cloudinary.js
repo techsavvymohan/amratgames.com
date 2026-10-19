@@ -6,11 +6,16 @@
  * responsive scaling (w_auto or fixed bounds), and global edge CDN caching.
  */
 
+import { CLOUDINARY_MANIFEST, getCloudinaryAsset } from './cloudinaryAssets'
+
+export { CLOUDINARY_MANIFEST, getCloudinaryAsset }
+
 export const CLOUDINARY_CLOUD_NAME = 'r1fegrxo'
 export const PRODUCTION_DOMAIN = 'https://amratgames.com'
 
 /**
  * Transforms an image path into a high-performance Cloudinary CDN delivery URL.
+ * Prioritizes directly uploaded assets from CLOUDINARY_MANIFEST, with dynamic CDN fallback.
  * 
  * @param {string} src - Relative local path (e.g. '/images/crash.jpg') or absolute URL
  * @param {Object} [options]
@@ -24,8 +29,8 @@ export const PRODUCTION_DOMAIN = 'https://amratgames.com'
 export function getOptimizedImageUrl(src, options = {}) {
     if (!src || typeof src !== 'string') return ''
 
-    // Skip optimization for data URIs, blobs, or SVGs (vector graphics are already scalable)
-    if (src.startsWith('data:') || src.startsWith('blob:') || src.endsWith('.svg')) {
+    // Skip optimization for data URIs or blobs
+    if (src.startsWith('data:') || src.startsWith('blob:')) {
         return src
     }
 
@@ -34,6 +39,23 @@ export function getOptimizedImageUrl(src, options = {}) {
         return src
     }
 
+    // 1. Direct match in pre-compiled Cloudinary manifest
+    const cleanPath = src.split('?')[0].trim()
+    const directEntry = CLOUDINARY_MANIFEST[cleanPath] || CLOUDINARY_MANIFEST['/' + cleanPath.replace(/^\/+/, '')]
+    if (directEntry && directEntry.secureUrl) {
+        // If SVG and no dimension changes requested, return original SVG secureUrl
+        if (cleanPath.endsWith('.svg') && !options.width && !options.height) {
+            return directEntry.secureUrl
+        }
+        return getCloudinaryAsset(cleanPath, options)
+    }
+
+    // 2. If already a Cloudinary URL, return as-is
+    if (src.includes('res.cloudinary.com')) {
+        return src
+    }
+
+    // 3. Fallback: Dynamic Cloudinary Fetch Delivery
     const {
         width,
         height,
@@ -42,26 +64,16 @@ export function getOptimizedImageUrl(src, options = {}) {
         format = 'auto'
     } = options
 
-    // Build transformation flags
     const transforms = [`f_${format}`, `q_${quality}`]
     if (width) transforms.push(`w_${width}`)
     if (height) transforms.push(`h_${height}`)
     if (width || height) transforms.push(`c_${crop}`)
-
     const transformStr = transforms.join(',')
 
-    // Determine target absolute URL
     let targetUrl = src
-    if (src.startsWith('http://') || src.startsWith('https://')) {
-        // If already a Cloudinary URL, return as-is or inject transformations
-        if (src.includes('res.cloudinary.com')) {
-            return src
-        }
-        targetUrl = src
-    } else {
-        // Relative path: resolve against production origin for Cloudinary fetch ingress
-        const cleanPath = src.startsWith('/') ? src : `/${src}`
-        targetUrl = `${PRODUCTION_DOMAIN}${cleanPath}`
+    if (!src.startsWith('http://') && !src.startsWith('https://')) {
+        const cleanLeadingSlash = src.startsWith('/') ? src : `/${src}`
+        targetUrl = `${PRODUCTION_DOMAIN}${cleanLeadingSlash}`
     }
 
     return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/fetch/${transformStr}/${encodeURI(targetUrl)}`

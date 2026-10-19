@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { recordGamePlay } from '../../utils/userGamePreferences'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './GameAuthGuard.css'
 
 /**
@@ -36,7 +37,7 @@ export function GameAuthGuard({ children, gameName = 'this game' }) {
     return (
         <div className="amrat-game-gate">
             <div className="amrat-gate-card">
-                <img src="/amrat-logo.png" alt="AmratGames" className="amrat-gate-logo" />
+                <img src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })} alt="AmratGames" className="amrat-gate-logo" />
                 <div className="amrat-gate-badge">AUTHENTICATION REQUIRED</div>
                 
                 <h1 className="amrat-gate-title">Create Account to Play</h1>

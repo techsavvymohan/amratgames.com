@@ -1,5 +1,6 @@
 // Main PlinkoGame - Enhanced with Special Balls & Colorful UI
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getOptimizedImageUrl } from '../../utils/cloudinary';
 import {
     Button,
     Space,
@@ -59,7 +60,7 @@ const BALL_TYPES = {
         color: '#ff4d4f',
         multiplierBonus: 1,
         icon: '🪙',
-        image: '/images/coins/coin_original.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_original.svg'),
         description: 'Standard payout (1x)',
         cost: 1
     },
@@ -70,7 +71,7 @@ const BALL_TYPES = {
         color: '#cd7f32',
         multiplierBonus: 2,
         icon: '🟤',
-        image: '/images/coins/coin_bronze.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_bronze.svg'),
         description: 'All payouts multiplied by 2x',
         cost: 2
     },
@@ -81,7 +82,7 @@ const BALL_TYPES = {
         color: '#bdc3c7',
         multiplierBonus: 3,
         icon: '⚪',
-        image: '/images/coins/coin_silver.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_silver.svg'),
         description: 'All payouts multiplied by 3x',
         cost: 3
     },
@@ -92,7 +93,7 @@ const BALL_TYPES = {
         color: '#2ecc71',
         multiplierBonus: 5,
         icon: '🟢',
-        image: '/images/coins/coin_emerald.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_emerald.svg'),
         description: 'All payouts multiplied by 5x',
         cost: 5
     },
@@ -103,7 +104,7 @@ const BALL_TYPES = {
         color: '#e74c3c',
         multiplierBonus: 10,
         icon: '🔴',
-        image: '/images/coins/coin_ruby.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_ruby.svg'),
         description: 'All payouts multiplied by 10x',
         cost: 10
     },
@@ -114,7 +115,7 @@ const BALL_TYPES = {
         color: '#3498db',
         multiplierBonus: 20,
         icon: '🔵',
-        image: '/images/coins/coin_sapphire.svg',
+        image: getOptimizedImageUrl('/images/coins/coin_sapphire.svg'),
         description: 'All payouts multiplied by 20x',
         cost: 20
     }

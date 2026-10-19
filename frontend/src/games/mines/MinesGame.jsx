@@ -23,6 +23,7 @@ import casinoAudio from '../../utils/casinoAudio'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { CurrencyIcon } from '../../components/Header'
+import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import ProvablyFair from '../../utils/ProvablyFair'
 import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import MobileBetSheet from '../../components/MobileBetSheet'
@@ -557,19 +558,19 @@ function MinesGame() {
                 statusClass = `revealed ${isMine ? 'bomb-tile' : 'gem-tile'}`;
                 content = isMine ? (
                     <>
-                        <img src="/images/mines/bomb.svg" alt="Bomb" className="reveal-anim" />
-                        <img src="/images/mines/bomb_effect.gif" alt="Explosion" className="bomb-effect" />
+                        <img src={getOptimizedImageUrl('/images/mines/bomb.svg')} alt="Bomb" className="reveal-anim" />
+                        <img src={getOptimizedImageUrl('/images/mines/bomb_effect.gif')} alt="Explosion" className="bomb-effect" />
                     </>
                 ) : (
-                    <img src="/images/mines/diamond.svg" alt="Gem" className="reveal-anim" />
+                    <img src={getOptimizedImageUrl('/images/mines/diamond.svg')} alt="Gem" className="reveal-anim" />
                 );
             } else if (isGameOver) {
                 // Show remaining tiles semi-transparently
                 statusClass = `revealed game-over-reveal`;
                 content = isMine ? (
-                    <img src="/images/mines/bomb.svg" alt="Bomb" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
+                    <img src={getOptimizedImageUrl('/images/mines/bomb.svg')} alt="Bomb" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
                 ) : (
-                    <img src="/images/mines/diamond.svg" alt="Gem" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
+                    <img src={getOptimizedImageUrl('/images/mines/diamond.svg')} alt="Gem" style={{ filter: 'grayscale(100%) opacity(0.5)' }} />
                 );
             }
 

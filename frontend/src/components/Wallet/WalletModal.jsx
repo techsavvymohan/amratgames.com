@@ -7,13 +7,13 @@ import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
 export const OFFICIAL_PAYEE_NAME = 'Shanvii Enterprise'
-export const QR_IMAGE_PATH = '/images/upi-qr.png'
+export const QR_IMAGE_PATH = getOptimizedImageUrl('/images/upi-qr.png', { width: 600 })
 
 export const UPI_APPS = [
     {
         id: 'phonepe',
         name: 'PhonePe',
-        icon: '/images/upi-apps/phonepe.png',
+        icon: getOptimizedImageUrl('/images/upi-apps/phonepe.png'),
         badge: 'Recommended',
         color: '#5f259f',
         packageName: 'com.phonepe.app',
@@ -22,7 +22,7 @@ export const UPI_APPS = [
     {
         id: 'gpay',
         name: 'Google Pay',
-        icon: '/images/upi-apps/gpay.png',
+        icon: getOptimizedImageUrl('/images/upi-apps/gpay.png'),
         badge: 'Fast',
         color: '#4285f4',
         packageName: 'com.google.android.apps.nbu.paisa.user',
@@ -31,7 +31,7 @@ export const UPI_APPS = [
     {
         id: 'paytm',
         name: 'Paytm',
-        icon: '/images/upi-apps/paytm.png',
+        icon: getOptimizedImageUrl('/images/upi-apps/paytm.png'),
         badge: 'Popular',
         color: '#00baf2',
         packageName: 'net.one97.paytm',
@@ -40,7 +40,7 @@ export const UPI_APPS = [
     {
         id: 'bhim',
         name: 'BHIM UPI',
-        icon: '/images/upi-apps/bhim.png',
+        icon: getOptimizedImageUrl('/images/upi-apps/bhim.png'),
         badge: 'NPCI',
         color: '#0087ff',
         packageName: 'in.org.npci.upiapp',
@@ -49,7 +49,7 @@ export const UPI_APPS = [
     {
         id: 'cred',
         name: 'CRED UPI',
-        icon: '/images/upi-apps/cred.png',
+        icon: getOptimizedImageUrl('/images/upi-apps/cred.png'),
         badge: 'Cashback',
         color: '#121212',
         packageName: 'com.dreamplug.androidapp',
@@ -58,7 +58,7 @@ export const UPI_APPS = [
     {
         id: 'other',
         name: 'Other UPI',
-        icon: '/images/upi-apps/upi.svg',
+        icon: getOptimizedImageUrl('/images/upi-apps/upi.svg'),
         badge: 'Any App',
         color: '#10b981',
         packageName: '',
