@@ -5,7 +5,65 @@ import { paymentBridge } from '../../services/PaymentBridge'
 import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
+export const OFFICIAL_PAYEE_NAME = 'Shanvii Enterprise'
 export const QR_IMAGE_PATH = '/images/upi-qr.png'
+
+export const UPI_APPS = [
+    {
+        id: 'phonepe',
+        name: 'PhonePe',
+        icon: '/images/upi-apps/phonepe.png',
+        badge: 'Recommended',
+        color: '#5f259f',
+        packageName: 'com.phonepe.app',
+        customScheme: (vpa, name, amt, ref) => `phonepe://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    },
+    {
+        id: 'gpay',
+        name: 'Google Pay',
+        icon: '/images/upi-apps/gpay.png',
+        badge: 'Fast',
+        color: '#4285f4',
+        packageName: 'com.google.android.apps.nbu.paisa.user',
+        customScheme: (vpa, name, amt, ref) => `tez://upi/pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    },
+    {
+        id: 'paytm',
+        name: 'Paytm',
+        icon: '/images/upi-apps/paytm.png',
+        badge: 'Popular',
+        color: '#00baf2',
+        packageName: 'net.one97.paytm',
+        customScheme: (vpa, name, amt, ref) => `paytmmp://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    },
+    {
+        id: 'bhim',
+        name: 'BHIM UPI',
+        icon: '/images/upi-apps/bhim.png',
+        badge: 'NPCI',
+        color: '#0087ff',
+        packageName: 'in.org.npci.upiapp',
+        customScheme: (vpa, name, amt, ref) => `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    },
+    {
+        id: 'cred',
+        name: 'CRED UPI',
+        icon: '/images/upi-apps/cred.png',
+        badge: 'Cashback',
+        color: '#121212',
+        packageName: 'com.dreamplug.androidapp',
+        customScheme: (vpa, name, amt, ref) => `cred://upi/pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    },
+    {
+        id: 'other',
+        name: 'Other UPI',
+        icon: '/images/upi-apps/upi.svg',
+        badge: 'Any App',
+        color: '#10b981',
+        packageName: '',
+        customScheme: (vpa, name, amt, ref) => `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(name)}&am=${encodeURIComponent(amt)}&cu=INR&tn=${encodeURIComponent(ref)}`
+    }
+]
 
 export default function WalletModal() {
     const {
@@ -39,6 +97,7 @@ export default function WalletModal() {
     const [utrNumber, setUtrNumber] = useState('')
     const [isDepositing, setIsDepositing] = useState(false)
     const [isInstantPaying, setIsInstantPaying] = useState(false)
+    const [loadingApp, setLoadingApp] = useState(null)
     const [depositSuccess, setDepositSuccess] = useState(null)
     const [depositChannel, setDepositChannel] = useState('UPI') // 'UPI' | 'CRYPTO'
     const [cryptoNetwork, setCryptoNetwork] = useState('TRC20') // 'TRC20' | 'TON'
@@ -132,28 +191,74 @@ export default function WalletModal() {
         }
     }
 
-    // Save / Download QR Code directly to device (Gallery / Downloads)
-    const handleSaveQr = async () => {
+    // ⚡ 1-Click Instant UPI App Redirection (PhonePe, GPay, Paytm, BHIM, CRED)
+    const handleAppPay = async (app) => {
+        const amt = parseFloat(depositAmount)
+        if (isNaN(amt) || amt < 100) {
+            showToast?.('error', 'Minimum Deposit', 'Minimum deposit is ₹100 for instant payment')
+            return
+        }
+        if (!effectiveToken) {
+            showToast?.('error', 'Login Required', 'Please log in to initiate deposit')
+            closeWalletModal()
+            openAuthModal?.('login')
+            return
+        }
+
         try {
-            const response = await fetch(QR_IMAGE_PATH)
-            const blob = await response.blob()
-            const blobUrl = window.URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = blobUrl
-            link.download = 'AmratGames_Deposit_QR.png'
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
-            showToast?.('success', 'QR Code Saved', 'Deposit QR code saved to your device')
-        } catch {
-            const link = document.createElement('a')
-            link.href = QR_IMAGE_PATH
-            link.download = 'AmratGames_Deposit_QR.png'
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            showToast?.('success', 'QR Code Saved', 'Deposit QR code saved to your device')
+            setLoadingApp(app.id)
+            const amtStr = amt.toFixed(2)
+
+            // Attempt to create session with sovereign YouPI-PG
+            let session = null
+            try {
+                session = await paymentBridge.requestSession(amt, effectiveToken, 'youpi')
+            } catch (sessionErr) {
+                console.warn('[SESSION INIT WARNING]', sessionErr)
+            }
+
+            const orderRef = session?.orderId || `DEP_${Date.now()}`
+            const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
+            const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
+            const isMobile = isAndroid || isIOS
+
+            if (isMobile) {
+                let redirectUri = ''
+                if (isAndroid && app.packageName) {
+                    const upiQuery = `pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent(orderRef)}`
+                    redirectUri = `intent://pay?${upiQuery}#Intent;scheme=upi;package=${app.packageName};end`
+                } else {
+                    redirectUri = app.customScheme(OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, amtStr, orderRef)
+                }
+
+                showToast?.('info', `Opening ${app.name}`, `Redirecting to ${app.name} to complete payment...`)
+                window.location.href = redirectUri
+
+                if (session?.checkoutUrl) {
+                    setTimeout(() => {
+                        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                            window.location.href = session.checkoutUrl
+                        }
+                    }, 2500)
+                }
+            } else {
+                // Desktop browser
+                try {
+                    await navigator.clipboard.writeText(OFFICIAL_UPI_ID)
+                } catch {}
+
+                if (session?.checkoutUrl) {
+                    paymentBridge.launchSession(session)
+                    showToast?.('success', `Opening ${app.name} Checkout`, `${OFFICIAL_UPI_ID} copied! Complete payment in the checkout window.`)
+                } else {
+                    showToast?.('success', 'UPI ID Copied', `${OFFICIAL_UPI_ID} copied to clipboard! Open ${app.name} on your mobile to complete payment.`)
+                }
+            }
+        } catch (err) {
+            console.error('[HANDLE APP PAY ERROR]', err)
+            showToast?.('error', 'Checkout Error', err?.message || 'Failed to initialize payment')
+        } finally {
+            setLoadingApp(null)
         }
     }
 
@@ -555,44 +660,11 @@ export default function WalletModal() {
                                         ) : null}
                                     </div>
                                 ) : (
-                                    <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        {/* UPI ID Bar with One-Click Copy */}
-                                        <div className="amrat-upi-box">
-                                            <div className="amrat-upi-details">
-                                                <span className="amrat-upi-lbl">Official Deposit UPI ID</span>
-                                                <span className="amrat-upi-val">{OFFICIAL_UPI_ID}</span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={`amrat-copy-btn ${copied ? 'copied' : ''}`}
-                                                onClick={handleCopyUpi}
-                                            >
-                                                {copied ? '✓ Copied' : '📋 Copy UPI'}
-                                            </button>
-                                        </div>
-
-                                        {/* Pure Big QR Code (No bulky white box) + Simple Save Button */}
-                                        <div className="amrat-qr-wrapper">
-                                            <img
-                                                src={QR_IMAGE_PATH}
-                                                alt="PhonePe UPI QR Code"
-                                                className="amrat-qr-img"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="amrat-save-qr-btn"
-                                                onClick={handleSaveQr}
-                                                title="Save QR Code image to device"
-                                            >
-                                                <span>💾</span>
-                                                <span>Save QR</span>
-                                            </button>
-                                        </div>
-
+                                    <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {/* Step 1: Amount Selection */}
                                         <div className="amrat-field-group">
                                             <label className="amrat-field-lbl">
-                                                <span>1. Deposit Amount (INR ₹)</span>
+                                                <span>1. Select Deposit Amount (INR ₹)</span>
                                                 <span className="accent">Min ₹100</span>
                                             </label>
                                             <div className="amrat-presets-grid">
@@ -622,25 +694,76 @@ export default function WalletModal() {
                                             </div>
                                         </div>
 
+                                        {/* Step 2: Instant 1-Click UPI App Redirection */}
+                                        <div className="amrat-field-group">
+                                            <label className="amrat-field-lbl">
+                                                <span>2. Tap App to Pay (Instant Auto-Credit)</span>
+                                                <span className="accent">⚡ 1-Click Redirect</span>
+                                            </label>
+
+                                            <div className="amrat-upi-apps-grid">
+                                                {UPI_APPS.map((app) => (
+                                                    <button
+                                                        key={app.id}
+                                                        type="button"
+                                                        className={`amrat-upi-app-btn app-${app.id} ${loadingApp === app.id ? 'loading' : ''}`}
+                                                        onClick={() => handleAppPay(app)}
+                                                        disabled={loadingApp !== null || isInstantPaying}
+                                                        title={`Pay ₹${depositAmount || '0'} via ${app.name}`}
+                                                    >
+                                                        <div className="amrat-upi-app-icon-wrap">
+                                                            <img
+                                                                src={app.icon}
+                                                                alt={app.name}
+                                                                className="amrat-upi-app-icon"
+                                                            />
+                                                        </div>
+                                                        <div className="amrat-upi-app-meta">
+                                                            <span className="amrat-upi-app-name">{app.name}</span>
+                                                            <span className="amrat-upi-app-sub">
+                                                                {loadingApp === app.id ? 'Opening…' : (app.badge || 'Instant')}
+                                                            </span>
+                                                        </div>
+                                                        <span className="amrat-upi-app-arrow">➔</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         {/* ⚡ Instant Pay Action Button */}
                                         <button
                                             type="button"
                                             className="amrat-instant-pay-btn"
                                             onClick={handleInstantPay}
-                                            disabled={isInstantPaying || !depositAmount || parseFloat(depositAmount) <= 0}
+                                            disabled={isInstantPaying || loadingApp !== null || !depositAmount || parseFloat(depositAmount) <= 0}
                                         >
                                             <span>{isInstantPaying ? '⏳ Connecting UPI Gateway…' : '⚡ Pay Instantly via UPI (Auto-Credit)'}</span>
                                         </button>
 
-                                        {/* Seamless Visual Divider to Manual Fallback */}
-                                        <div className="amrat-deposit-divider">
-                                            <span>OR PAY MANUALLY VIA QR &amp; ENTER UTR</span>
+                                        {/* UPI ID Bar with One-Click Copy */}
+                                        <div className="amrat-upi-box">
+                                            <div className="amrat-upi-details">
+                                                <span className="amrat-upi-lbl">Official Deposit UPI ID</span>
+                                                <span className="amrat-upi-val">{OFFICIAL_UPI_ID}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`amrat-copy-btn ${copied ? 'copied' : ''}`}
+                                                onClick={handleCopyUpi}
+                                            >
+                                                {copied ? '✓ Copied' : '📋 Copy UPI'}
+                                            </button>
                                         </div>
 
-                                        {/* Step 2: 12-Digit UTR Input */}
+                                        {/* Seamless Visual Divider to Manual Fallback */}
+                                        <div className="amrat-deposit-divider">
+                                            <span>OR PAY MANUALLY VIA UPI ID &amp; ENTER UTR</span>
+                                        </div>
+
+                                        {/* Step 3: 12-Digit UTR Input */}
                                         <div className="amrat-field-group">
                                             <label className="amrat-field-lbl">
-                                                <span>2. Enter 12-Digit UPI Ref / UTR No.</span>
+                                                <span>3. Enter 12-Digit UPI Ref / UTR No.</span>
                                                 <span className="accent">{utrNumber.length}/12</span>
                                             </label>
                                             <input
@@ -653,7 +776,7 @@ export default function WalletModal() {
                                                 required
                                             />
                                             <span className="amrat-field-hint">
-                                                After paying via PhonePe or any UPI app, copy the 12-digit UTR/Ref number from your payment receipt and enter it above.
+                                                After paying via PhonePe, Paytm, GPay or any UPI app, copy the 12-digit UTR/Ref number from your payment receipt and enter it above.
                                             </span>
                                         </div>
 
