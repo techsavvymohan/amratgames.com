@@ -14,26 +14,9 @@ export class CoinTossEngine {
         const oppositeChoice = selectedChoice === 'heads' ? 'tails' : 'heads'
         const totalBet = parseFloat(betAmount) || 0
 
-        // 1. Base Win Threshold (48.0% player win probability = 4% house edge at 1.96x)
-        let winThreshold = 0.480
-
-        // 2. Anti-Martingale & Streak Safeguard
-        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
-            userBets,
-            gameKey: 'cointoss',
-            currentBet: totalBet
-        })
-        if (isMartingale) {
-            // Anti-martingale penalty: prevents mathematical doubling exploit
-            winThreshold = 0.420
-        } else if (consecutiveWins >= 2) {
-            // Streak breaker: tightens win rate on consecutive runs
-            winThreshold = 0.430
-        }
-
-        // 3. Determine Outcome
-        const won = floatVal < winThreshold
-        const outcome = won ? selectedChoice : oppositeChoice
+        // 1. Determine Pure Provably Fair Outcome (100% HMAC-SHA256)
+        const outcome = (floatVal < 0.50) ? 'heads' : 'tails'
+        const won = selectedChoice === outcome
         const multiplier = won ? 1.96 : 0
         const payout = won ? parseFloat((totalBet * multiplier).toFixed(2)) : 0
 

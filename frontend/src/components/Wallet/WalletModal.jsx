@@ -561,6 +561,27 @@ export default function WalletModal() {
 
                                 {depositChannel === 'CRYPTO' ? (
                                     <div className="amrat-crypto-card">
+                                        <div style={{
+                                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
+                                            border: '1px solid rgba(16, 185, 129, 0.4)',
+                                            borderRadius: '8px',
+                                            padding: '10px 14px',
+                                            marginBottom: '14px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px'
+                                        }}>
+                                            <span style={{ fontSize: '1.3rem' }}>🎁</span>
+                                            <div>
+                                                <div style={{ color: '#10b981', fontWeight: 700, fontSize: '0.85rem' }}>
+                                                    +3% Extra Balance Bonus on All Crypto Deposits!
+                                                </div>
+                                                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                                                    Deposit with USDT or Bitcoin to automatically receive +3% free extra credit directly into your wallet.
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="amrat-crypto-header">
                                             <span className="amrat-crypto-badge">
                                                 <span>⚡</span>

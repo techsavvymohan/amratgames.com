@@ -24,10 +24,18 @@ export class BetRepository extends BaseRepository {
             }
 
             // 1. Deduct bet amount immediately under exclusive lock
-            const balanceAfterDeduct = Math.max(0, parseFloat((currentBal - betAmount).toFixed(4)))
+            const curr = String(currency || 'INR').toUpperCase()
+            const precision = curr === 'BTC' ? 8 : (curr === 'USDT' ? 4 : 2)
+            const balanceAfterDeduct = Math.max(0, parseFloat((currentBal - betAmount).toFixed(precision)))
             user.balances[currency] = balanceAfterDeduct
-            user.totalWagered = parseFloat(((user.totalWagered || 0) + betAmount).toFixed(2))
-            this.db.accumulateWagerRewards(user, betAmount)
+            if (curr === 'INR') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + betAmount).toFixed(2))
+            } else if (curr === 'USDT') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + (betAmount * 90.0)).toFixed(2))
+            } else if (curr === 'BTC') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + (betAmount * 8500000.0)).toFixed(2))
+            }
+            this.db.accumulateWagerRewards(user, betAmount, currency)
 
             // 2. Evaluate Provably Fair outcome
             const evaluation = await evaluator()
@@ -48,11 +56,11 @@ export class BetRepository extends BaseRepository {
                 evaluation.wasCapped = capped.wasCapped
                 evaluation.maxProfitCap = capped.maxProfitCap
             }
-            const profit = parseFloat((payout - betAmount).toFixed(2))
+            const profit = parseFloat((payout - betAmount).toFixed(precision))
 
             // 3. Credit payout whenever there is a return (including partial returns)
             if (payout > 0) {
-                user.balances[currency] = parseFloat((user.balances[currency] + payout).toFixed(4))
+                user.balances[currency] = parseFloat((user.balances[currency] + payout).toFixed(precision))
             }
             const finalBal = user.balances[currency]
 

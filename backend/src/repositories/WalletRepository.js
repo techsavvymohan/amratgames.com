@@ -14,14 +14,24 @@ export class WalletRepository extends BaseRepository {
         if (!user) return null
         if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
 
+        const curr = String(currency || 'INR').toUpperCase()
+        const precision = curr === 'BTC' ? 8 : (curr === 'USDT' ? 4 : 2)
         const currentBal = user.balances[currency] || 0
-        const newBal = Math.max(0, parseFloat((currentBal + delta).toFixed(4)))
+        const newBal = Math.max(0, parseFloat((currentBal + delta).toFixed(precision)))
         user.balances[currency] = newBal
 
         // Accumulate totalWagered on game bet deductions (AML Turnover tracking)
         if (delta < 0 && typeof note === 'string' && /(bet|launch|mines|crash|wager)/i.test(note)) {
-            user.totalWagered = parseFloat(((user.totalWagered || 0) + Math.abs(delta)).toFixed(2))
-            this.db.accumulateWagerRewards(user, Math.abs(delta))
+            const wagerAmount = Math.abs(delta)
+            // 🛡️ Only real currencies count towards AML deposit turnover
+            if (curr === 'INR') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + wagerAmount).toFixed(2))
+            } else if (curr === 'USDT') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + (wagerAmount * 90.0)).toFixed(2))
+            } else if (curr === 'BTC') {
+                user.totalWagered = parseFloat(((user.totalWagered || 0) + (wagerAmount * 8500000.0)).toFixed(2))
+            }
+            this.db.accumulateWagerRewards(user, wagerAmount, currency)
         }
 
         // Record transaction
@@ -59,7 +69,9 @@ export class WalletRepository extends BaseRepository {
             throw new Error(`Insufficient ${currency} balance (Available: ₹${currentBal.toLocaleString('en-IN')})`)
         }
 
-        const newBal = Math.max(0, parseFloat((currentBal - amount).toFixed(4)))
+        const curr = String(currency || 'INR').toUpperCase()
+        const precision = curr === 'BTC' ? 8 : (curr === 'USDT' ? 4 : 2)
+        const newBal = Math.max(0, parseFloat((currentBal - amount).toFixed(precision)))
         user.balances[currency] = newBal
 
         const withdrawalId = 'wd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
@@ -265,7 +277,7 @@ export class WalletRepository extends BaseRepository {
         }
 
         const cleanUtr = String(utrNumber || '').trim()
-        if (cleanUtr && cleanUtr.length < 6) {
+        if (!cleanUtr || cleanUtr.length < 6) {
             throw new Error('Please enter a valid 12-digit UPI UTR / Transaction Reference Number')
         }
 

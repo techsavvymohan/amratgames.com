@@ -18,21 +18,10 @@ export class LimboEngine {
             currentBet: totalBet
         })
 
-        // Standard 5% instant bust house edge, dynamically adjusted if martingale doubling or streak detected
-        let bustChance = 0.05
-        let baseRtp = 95.0
-
-        if (isMartingale) {
-            bustChance = 0.09
-            baseRtp = 91.0
-        } else if (consecutiveWins >= 2) {
-            bustChance = 0.08
-            baseRtp = 92.5
-        }
-
+        // 100% Provably Fair HMAC-SHA256 outcome (98.00% RTP with 2% instant bust)
         let roll = 1.00
-        if (floatVal >= bustChance) {
-            roll = Math.floor((baseRtp / (1 - floatVal))) / 100
+        if (floatVal >= 0.02) {
+            roll = Math.floor((98.0 / (1 - floatVal))) / 100
         }
         roll = Math.max(1.00, Math.min(roll, 1000000.0))
 

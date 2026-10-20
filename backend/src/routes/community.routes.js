@@ -94,11 +94,13 @@ router.get('/leaderboard/daily-race', (req, res) => {
                 wagered: 0
             }
 
+            // Exclude virtual demo tokens from real cash race leaderboard
+            if (b.currency === 'AMRAT') continue
+
             // Normalize currency to INR
             let inrAmount = parseFloat(b.betAmount || 0)
-            if (b.currency === 'USDT') inrAmount *= 86
+            if (b.currency === 'USDT') inrAmount *= 90
             else if (b.currency === 'BTC') inrAmount *= 8500000
-            else if (b.currency === 'AMRAT') inrAmount *= 10
 
             prev.wagered += inrAmount
             turnoverMap.set(uid, prev)

@@ -16,18 +16,8 @@ export class ColorMatchEngine {
             currentBet: totalBet
         })
 
-        let luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
-
-        // Anti-martingale / pattern breaker:
-        if (isMartingale || consecutiveWins >= 2) {
-            const picked = String(choice || (bets?.green ? 'green' : (bets?.red ? 'red' : 'violet'))).toLowerCase()
-            // If picked is green and luckyNumber would award green, shift to red (or vice versa)
-            if (picked === 'green' && [1, 3, 5, 7, 9].includes(luckyNumber)) {
-                luckyNumber = (luckyNumber + 1) % 10 // Shifts to even (red)
-            } else if (picked === 'red' && [0, 2, 4, 6, 8].includes(luckyNumber)) {
-                luckyNumber = (luckyNumber + 1) % 10 // Shifts to odd (green)
-            }
-        }
+        // Cryptographic lucky number (100% Provably Fair HMAC-SHA256)
+        const luckyNumber = parseInt(hash.slice(0, 4), 16) % 10
 
         const colors = []
         if (luckyNumber === 0) colors.push('red', 'violet')

@@ -18,7 +18,7 @@ import './AdminPanel.css'
 import { getOptimizedImageUrl } from '../utils/cloudinary'
 
 export default function AdminPanel() {
-    const { user, token, isAdmin, login, quickAdminLogin, logout, backendOnline } = useAuth()
+    const { user, token, isAdmin, login, logout, backendOnline } = useAuth()
     const { subscribe } = useWebSocket()
 
     const apiClient = useMemo(() => new AdminApiClient(() => token), [token])
@@ -170,12 +170,7 @@ export default function AdminPanel() {
     }
 
     const handleQuickAdmin = async () => {
-        setLoginError('')
-        try {
-            await quickAdminLogin()
-        } catch (err) {
-            setLoginError(err.message || 'Quick sign-in failed')
-        }
+        setLoginError('Quick sign-in disabled in production. Please enter credentials.')
     }
 
     const handleAdjustBalanceSubmit = async (e) => {

@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { isGamePath } from '../games'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNavigation from './MobileNavigation'
@@ -8,8 +10,13 @@ import WalletModal from './Wallet/WalletModal'
 import DailyWagerRaceModal from './Tournament/DailyWagerRaceModal'
 import ProvablyFairVerifierModal from './ProvablyFair/ProvablyFairVerifierModal'
 import SEOManager from './SEO/SEOManager'
+import Footer from './Footer/Footer'
 
 function Layout() {
+    const location = useLocation()
+    const { user, token } = useAuth()
+    const isAuthenticated = Boolean(user && token)
+    const showFooter = !isGamePath(location.pathname) || !isAuthenticated
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isRaceOpen, setIsRaceOpen] = useState(false)
@@ -41,6 +48,12 @@ function Layout() {
                 />
                 <main className="main-content">
                     <Outlet />
+                    {showFooter && (
+                        <Footer
+                            onOpenRace={() => setIsRaceOpen(true)}
+                            onOpenVerifier={handleOpenVerifier}
+                        />
+                    )}
                 </main>
             </div>
             <MobileNavigation

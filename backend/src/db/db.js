@@ -316,8 +316,8 @@ export class Database {
         return this.userRepository.updateUser(id, updates)
     }
 
-    accumulateWagerRewards(user, betAmount) {
-        return this.userRepository.accumulateWagerRewards(user, betAmount)
+    accumulateWagerRewards(user, betAmount, currency = 'INR') {
+        return this.userRepository.accumulateWagerRewards(user, betAmount, currency)
     }
 
     getAffiliateStats(userId) {

@@ -74,7 +74,8 @@ export class AutomatedSettlementService {
             minDeposit: curr === 'USDT' ? minDepositUsdt : 0.0001,
             minDepositInr,
             rateInr: this.exchangeRates[curr] || 90.00,
-            instructions: `Send ${curr} (${net}) to the address above. You MUST include Memo/Tag: ${userTag} for instant zero-confirmation balance crediting.`,
+            cryptoIncentivePercent: 3,
+            instructions: `Send ${curr} (${net}) to the address above. You MUST include Memo/Tag: ${userTag} for instant zero-confirmation balance crediting. 🎁 Launch Special: +3% Extra Balance automatically added to your wallet!`,
             confirmationsRequired: 1,
             estimatedTimeSeconds: 45
         }
@@ -258,16 +259,20 @@ export class AutomatedSettlementService {
 
             // Calculate INR equivalent if crediting INR balance, or credit USDT directly
             const targetCurrency = payload.creditCurrency === 'INR' ? 'INR' : (currency || 'USDT')
-            const creditAmount = targetCurrency === 'INR'
+            const cryptoIncentiveMultiplier = 1.03 // +3% extra credit on crypto deposits
+            const baseAmount = targetCurrency === 'INR'
                 ? parseFloat((parsedAmount * (this.exchangeRates[currency] || 90.00)).toFixed(2))
                 : parsedAmount
+            const creditAmount = targetCurrency === 'BTC'
+                ? parseFloat((baseAmount * cryptoIncentiveMultiplier).toFixed(8))
+                : parseFloat((baseAmount * cryptoIncentiveMultiplier).toFixed(2))
 
             // 1. Credit balance
             database.updateUserBalance(
                 user.id,
                 targetCurrency,
                 creditAmount,
-                `Instant Crypto Deposit (${currency} ${parsedAmount} via ${network} [Tx: ${txHash.slice(0, 10)}...])`
+                `Instant Crypto Deposit (+3% Extra Credit) (${currency} ${parsedAmount} via ${network} [Tx: ${txHash.slice(0, 10)}...])`
             )
 
             // 2. Increment lifetime deposited

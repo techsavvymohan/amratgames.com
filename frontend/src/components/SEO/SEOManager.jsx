@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 
 const SEO_ROUTES = {
     '/': {
-        title: "AmratGames.com — India's Premier Online Casino | Instant UPI & Bank Withdrawal",
+        title: "AmratGames — Online Casino India | Instant UPI & Bank Payouts",
         description: "Play genuine online casino games in Indian Rupees (₹). Instant UPI deposits, 24/7 bank withdrawals, 99% Return to Player (RTP) across Rocket Crash, Plinko, Mines & Limbo.",
         canonical: 'https://amratgames.com/',
         heading: "India's Premier Online Casino & Provably Fair Gaming Platform",
@@ -141,6 +141,86 @@ const SEO_ROUTES = {
             "name": "Player Profile — AmratGames",
             "url": "https://amratgames.com/profile"
         }
+    },
+    '/provably-fair': {
+        title: "Provably Fair Cryptographic System & 99% RTP Proof | AmratGames",
+        description: "Learn how AmratGames mathematically guarantees tamper-proof outcomes using HMAC-SHA256 seed commitments with certified 99% Return to Player (RTP).",
+        canonical: 'https://amratgames.com/provably-fair',
+        heading: "Provably Fair Cryptographic Verification & Mathematical RTP",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "name": "AmratGames Provably Fair HMAC-SHA256 System",
+            "description": "Cryptographic specification and audit protocol for Provably Fair online casino games."
+        }
+    },
+    '/responsible-gambling': {
+        title: "Responsible Gaming Policy (18+ Only) | AmratGames",
+        description: "AmratGames is committed to player protection, self-exclusion tools, deposit limits, and 18+ strict age verification.",
+        canonical: 'https://amratgames.com/responsible-gambling',
+        heading: "Responsible Gaming, Player Well-being & Self-Protection",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Responsible Gaming Policy — AmratGames",
+            "url": "https://amratgames.com/responsible-gambling"
+        }
+    },
+    '/terms': {
+        title: "Terms of Service & Betting Rules | AmratGames",
+        description: "Official player terms of service, payment settlement rules, anti-fraud standards, and dispute resolution policies for AmratGames.com.",
+        canonical: 'https://amratgames.com/terms',
+        heading: "AmratGames Terms of Service & User Agreement",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Terms of Service — AmratGames",
+            "url": "https://amratgames.com/terms"
+        }
+    },
+    '/privacy': {
+        title: "Privacy Policy & Data Protection | AmratGames",
+        description: "How AmratGames safeguards your data with TLS 1.3 encryption, zero data selling, and strict player confidentiality.",
+        canonical: 'https://amratgames.com/privacy',
+        heading: "AmratGames Privacy Policy & Data Security",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Privacy Policy — AmratGames",
+            "url": "https://amratgames.com/privacy"
+        }
+    },
+    '/favourites': {
+        title: "My Pinned Casino Favourites | AmratGames",
+        description: "Quick access to your favorite Provably Fair originals with 1-click launch on AmratGames.",
+        canonical: 'https://amratgames.com/favourites',
+        heading: "Pinned Favourites & Custom Games Lobby",
+        hasOwnH1: true
+    },
+    '/recent': {
+        title: "Recently Played Casino Games | AmratGames",
+        description: "Resume your recently played games, track recent multipliers and continue playing on AmratGames.",
+        canonical: 'https://amratgames.com/recent',
+        heading: "Recently Played Games Lobby",
+        hasOwnH1: true
+    },
+    '/challenges': {
+        title: "Casino Challenges & Tournament Quests | AmratGames",
+        description: "Complete daily and weekly casino multiplier challenges to win extra cash prizes and VIP rewards on AmratGames.",
+        canonical: 'https://amratgames.com/challenges',
+        heading: "Player Challenges, Multiplier Quests & Tournaments",
+        hasOwnH1: true
+    },
+    '/my-bets': {
+        title: "Live Bet History & Verification Logs | AmratGames",
+        description: "Audit your past wagers, view multiplier outcomes, and verify HMAC-SHA256 hashes for every round on AmratGames.",
+        canonical: 'https://amratgames.com/my-bets',
+        heading: "Personal Bet History & Cryptographic Audits",
+        hasOwnH1: true
     },
     '/admin': {
         title: "Admin Portal & Risk Command Console | AmratGames",

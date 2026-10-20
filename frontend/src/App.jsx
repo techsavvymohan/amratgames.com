@@ -28,6 +28,10 @@ const FavouritesPage = lazy(() => import('./pages/FavouritesPage'))
 const RecentPage = lazy(() => import('./pages/RecentPage'))
 const ChallengesPage = lazy(() => import('./pages/ChallengesPage'))
 const MyBetsPage = lazy(() => import('./pages/MyBetsPage'))
+const ProvablyFairPage = lazy(() => import('./pages/ProvablyFairPage'))
+const ResponsibleGamblingPage = lazy(() => import('./pages/ResponsibleGamblingPage'))
+const TermsPage = lazy(() => import('./pages/TermsPage'))
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -94,6 +98,10 @@ function App() {
                             <Route path="recent" element={<RecentPage />} />
                             <Route path="challenges" element={<ChallengesPage />} />
                             <Route path="my-bets" element={<MyBetsPage />} />
+                            <Route path="provably-fair" element={<ProvablyFairPage />} />
+                            <Route path="responsible-gambling" element={<ResponsibleGamblingPage />} />
+                            <Route path="terms" element={<TermsPage />} />
+                            <Route path="privacy" element={<PrivacyPage />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}

@@ -74,17 +74,8 @@ export class PlinkoEngine {
             const rowDigest = rowHmac.digest('hex')
             const intVal = parseInt(rowDigest.slice(0, 4), 16)
 
-            // Standard fair coin bounce per pin
-            let direction = (intVal % 2 === 1) ? 1 : 0
-
-            // If aggressive martingale or streak botting detected, prevent outer jackpot exploitation
-            if ((isMartingale || consecutiveWins >= 3) && (i === 0 || i === numRows - 1)) {
-                if (rightBounces < Math.floor(numRows / 2)) {
-                    direction = 1
-                } else {
-                    direction = 0
-                }
-            }
+            // Standard fair coin bounce per pin (100% Provably Fair)
+            const direction = (intVal % 2 === 1) ? 1 : 0
 
             path.push(direction)
             if (direction === 1) rightBounces++

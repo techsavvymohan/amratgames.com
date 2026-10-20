@@ -103,8 +103,9 @@ export const CONFIG = {
     TOKEN_SYMBOL: process.env.TOKEN_SYMBOL || 'AMRAT',
     TOKEN_INITIAL_TREASURY: parseFloat(process.env.TOKEN_INITIAL_TREASURY) || 100000000,
     TOKEN_DECIMALS: parseInt(process.env.TOKEN_DECIMALS, 10) || 2,
-    DEFAULT_RTP: parseFloat(process.env.DEFAULT_RTP) || 99.00,
-    HOUSE_EDGE: parseFloat(process.env.HOUSE_EDGE) || 1.00,
+    DEFAULT_RTP: parseFloat(process.env.DEFAULT_RTP) || 98.00,
+    HOUSE_EDGE: parseFloat(process.env.HOUSE_EDGE) || 2.00,
+    PVP_HOUSE_RAKE_RATE: parseFloat(process.env.PVP_HOUSE_RAKE_RATE) || 0.04,
     MIN_BET_INR: parseFloat(process.env.MIN_BET_INR) || 10,
     MAX_BET_INR: parseFloat(process.env.MAX_BET_INR) || 200000,
 }

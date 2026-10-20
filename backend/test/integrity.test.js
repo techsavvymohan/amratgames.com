@@ -1023,9 +1023,9 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         }, db)
 
         assert.equal(creditResult.success, true)
-        assert.equal(creditResult.creditedAmount, 900)
-        assert.equal(cryptoPlayer.balances.INR, initialBal + 900)
-        assert.equal(cryptoPlayer.totalDeposited >= 900, true)
+        assert.equal(creditResult.creditedAmount, 927)
+        assert.equal(cryptoPlayer.balances.INR, initialBal + 927)
+        assert.equal(cryptoPlayer.totalDeposited >= 927, true)
 
         // 2. Prevent replay attacks: duplicate txHash must be safely recognized and rejected
         const replayResult = await automatedSettlement.processCryptoDepositWebhook({
@@ -1039,7 +1039,7 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
 
         assert.equal(replayResult.duplicate, true)
         // Balance must not change on duplicate
-        assert.equal(cryptoPlayer.balances.INR, initialBal + 900)
+        assert.equal(cryptoPlayer.balances.INR, initialBal + 927)
     })
 
     it('verifies Pillar 4 PvP duel creation locks creator balance and initializes Provably Fair seeds', async () => {
@@ -1070,7 +1070,7 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.equal(creator.balances.INR, balanceBefore - 500)
     })
 
-    it('verifies Pillar 4 PvP duel acceptance resolves outcome, credits winner 97%, and extracts 3% zero-risk house rake', async () => {
+    it('verifies Pillar 4 PvP duel acceptance resolves outcome, credits winner 96%, and extracts 4% zero-risk house rake', async () => {
         const p1 = db.createUser({
             username: 'player_one_' + Date.now(),
             email: `p1_${Date.now()}@test.com`,
@@ -1115,15 +1115,15 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
         assert.ok(joinRes.outcome === 'heads' || joinRes.outcome === 'tails')
         assert.ok(joinRes.winnerId === p1.id || joinRes.winnerId === p2.id)
 
-        // Pot = 500 * 2 = 1000. 3% Rake = 30. Winner payout = 970.
-        assert.equal(joinRes.houseRakeAmount, 30.00, 'Platform must collect exactly 3% risk-free house rake')
-        assert.equal(joinRes.winnerPayout, 970.00, 'Winner must receive 97% of the total pot')
+        // Pot = 500 * 2 = 1000. 4% Rake = 40. Winner payout = 960.
+        assert.equal(joinRes.houseRakeAmount, 40.00, 'Platform must collect exactly 4% risk-free house rake')
+        assert.equal(joinRes.winnerPayout, 960.00, 'Winner must receive 96% of the total pot')
 
         // Verify winner balance
         const winner = db.findUserById(joinRes.winnerId)
         const loser = db.findUserById(joinRes.winnerId === p1.id ? p2.id : p1.id)
 
-        const expectedWinner = (joinRes.winnerId === p1.id ? p1Initial : p2Initial) + 1000 - 500 + 970
+        const expectedWinner = (joinRes.winnerId === p1.id ? p1Initial : p2Initial) + 1000 - 500 + 960
         const expectedLoser = (joinRes.winnerId === p1.id ? p2Initial : p1Initial) + 1000 - 500
 
         assert.equal(winner.balances.INR, expectedWinner)

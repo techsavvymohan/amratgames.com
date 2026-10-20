@@ -85,12 +85,12 @@ export class CrashRoomService {
         const intVal = parseInt(hexSub, 16)
         const floatVal = intVal / Math.pow(2, 52)
 
-        // 8% instant bust (Spribe Aviator standard RTP = 96.00%)
+        // 2% instant bust (98.00% RTP standard matching single-player crash & verifier)
         let point = 1.00
-        if (floatVal >= 0.08) {
-            point = Math.floor((96.0 / (1 - floatVal))) / 100
+        if (floatVal >= 0.02) {
+            point = Math.floor((98.0 / (1 - floatVal))) / 100
         }
-        this.crashPoint = Math.max(1.00, Math.min(point, 100.00))
+        this.crashPoint = Math.max(1.00, Math.min(point, 1000.00))
 
         broadcastEvent('CRASH_ROOM_STATE', this.getState())
     }

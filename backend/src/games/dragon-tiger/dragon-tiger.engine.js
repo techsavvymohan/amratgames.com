@@ -16,24 +16,13 @@ export class DragonTigerEngine {
             currentBet: totalBet
         })
 
-        // Draw cards with cryptographic entropy
-        let dVal = (parseInt(hash.slice(0, 4), 16) % 13) + 1
-        let tVal = (parseInt(hash.slice(4, 8), 16) % 13) + 1
+        // Draw cards with cryptographic entropy (100% Provably Fair HMAC-SHA256)
+        const dVal = (parseInt(hash.slice(0, 4), 16) % 13) + 1
+        const tVal = (parseInt(hash.slice(4, 8), 16) % 13) + 1
 
         const suits = ['♠', '♥', '♦', '♣']
         const dSuit = suits[parseInt(hash.slice(8, 9), 16) % 4]
         const tSuit = suits[parseInt(hash.slice(9, 10), 16) % 4]
-
-        // Anti-martingale / streak safeguard: If player is aggressively doubling after loss or on 3+ win streak
-        if (isMartingale || consecutiveWins >= 3) {
-            const chosen = String(choice || (bets?.dragon ? 'dragon' : 'tiger')).toLowerCase()
-            if (chosen === 'dragon' && dVal > tVal) {
-                // Break predictable win by swapping card values
-                [dVal, tVal] = [tVal, dVal]
-            } else if (chosen === 'tiger' && tVal > dVal) {
-                [dVal, tVal] = [tVal, dVal]
-            }
-        }
 
         let winner = 'tie'
         if (dVal > tVal) winner = 'dragon'

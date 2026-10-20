@@ -13,7 +13,7 @@ import { houseVaultService } from './HouseVaultService.js'
 export class PvPService {
     constructor() {
         this.activeDuels = new Map() // duelId -> duel object
-        this.houseRakeRate = 0.03    // 3.0% platform house rake (zero bankroll risk)
+        this.houseRakeRate = CONFIG.PVP_HOUSE_RAKE_RATE || 0.04    // 4.0% platform house rake (zero bankroll risk)
         this.minStake = 10.00        // ₹10 INR minimum duel stake
         this.maxStake = 50000.00     // ₹50,000 INR maximum duel stake
         this.duelExpiryMs = 15 * 60 * 1000 // 15 mins timeout before auto-refund

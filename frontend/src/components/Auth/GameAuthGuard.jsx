@@ -3,11 +3,12 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { recordGamePlay } from '../../utils/userGamePreferences'
 import { getOptimizedImageUrl } from '../../utils/cloudinary'
+import GameSeoContent from '../SEO/GameSeoContent'
 import './GameAuthGuard.css'
 
 /**
  * GameAuthGuard — Forces players to sign up or log in before playing any game.
- * Displays a premium Casino Gatekeeper overlay and automatically triggers the registration modal.
+ * Displays a premium Casino Gatekeeper overlay with rich, indexable SEO content and game guides.
  */
 export function GameAuthGuard({ children, gameName = 'this game' }) {
     const location = useLocation()
@@ -35,50 +36,55 @@ export function GameAuthGuard({ children, gameName = 'this game' }) {
     }
 
     return (
-        <div className="amrat-game-gate">
-            <div className="amrat-gate-card">
-                <img src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })} alt="AmratGames" className="amrat-gate-logo" />
-                <div className="amrat-gate-badge">AUTHENTICATION REQUIRED</div>
-                
-                <h1 className="amrat-gate-title">Create Account to Play</h1>
-                
-                <p className="amrat-gate-desc">
-                    Sign up now to unlock <strong>{gameName}</strong> and claim your instant{' '}
-                    <span className="amrat-gate-highlight">₹100 Free Welcome Bonus</span>!
-                </p>
+        <div className="amrat-game-gatekeeper-wrapper">
+            <div className="amrat-game-gate">
+                <div className="amrat-gate-card">
+                    <img src={getOptimizedImageUrl('/amrat-logo.png', { width: 96 })} alt="AmratGames" className="amrat-gate-logo" />
+                    <div className="amrat-gate-badge">AUTHENTICATION REQUIRED</div>
+                    
+                    <h2 className="amrat-gate-title">Create Account to Play</h2>
+                    
+                    <p className="amrat-gate-desc">
+                        Sign up now to unlock <strong>{gameName}</strong> and claim your instant{' '}
+                        <span className="amrat-gate-highlight">₹100 Free Welcome Bonus</span>!
+                    </p>
 
-                <div className="amrat-gate-perks">
-                    <div className="gate-perk">
-                        <span className="perk-icon">🎁</span>
-                        <span>₹100 Instant Welcome Bonus</span>
+                    <div className="amrat-gate-perks">
+                        <div className="gate-perk">
+                            <span className="perk-icon">🎁</span>
+                            <span>₹100 Instant Welcome Bonus</span>
+                        </div>
+                        <div className="gate-perk">
+                            <span className="perk-icon">⚡</span>
+                            <span>Instant UPI & QR Withdrawals</span>
+                        </div>
+                        <div className="gate-perk">
+                            <span className="perk-icon">🛡️</span>
+                            <span>100% Provably Fair Gaming</span>
+                        </div>
                     </div>
-                    <div className="gate-perk">
-                        <span className="perk-icon">⚡</span>
-                        <span>Instant UPI & QR Withdrawals</span>
-                    </div>
-                    <div className="gate-perk">
-                        <span className="perk-icon">🛡️</span>
-                        <span>100% Provably Fair Gaming</span>
-                    </div>
-                </div>
 
-                <div className="amrat-gate-actions">
-                    <button
-                        type="button"
-                        className="gate-btn-primary"
-                        onClick={() => openAuthModal('register')}
-                    >
-                        🎁 Create Free Account (Claim ₹100)
-                    </button>
-                    <button
-                        type="button"
-                        className="gate-btn-secondary"
-                        onClick={() => openAuthModal('login')}
-                    >
-                        🔑 Already have an account? Sign In
-                    </button>
+                    <div className="amrat-gate-actions">
+                        <button
+                            type="button"
+                            className="gate-btn-primary"
+                            onClick={() => openAuthModal('register')}
+                        >
+                            🎁 Create Free Account (Claim ₹100)
+                        </button>
+                        <button
+                            type="button"
+                            className="gate-btn-secondary"
+                            onClick={() => openAuthModal('login')}
+                        >
+                            🔑 Already have an account? Sign In
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Rich indexable content for crawlers and players across all screens */}
+            <GameSeoContent pathname={location.pathname} onOpenAuth={openAuthModal} />
         </div>
     )
 }

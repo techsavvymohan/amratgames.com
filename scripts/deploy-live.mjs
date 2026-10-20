@@ -40,8 +40,7 @@ conn.on('ready', () => {
                 
                 echo "Reloading PM2 service with updated config..."
                 cd /var/www/amratgames.com
-                pm2 delete all 2>/dev/null || true
-                pm2 start ecosystem.config.cjs
+                pm2 reload amratgames-backend --update-env || pm2 start ecosystem.config.cjs
                 pm2 save
                 
                 echo "Checking health endpoint..."

@@ -250,12 +250,21 @@ export class UserRepository extends BaseRepository {
         return updated
     }
 
-    accumulateWagerRewards(user, betAmount) {
+    accumulateWagerRewards(user, betAmount, currency = 'INR') {
         if (!user || betAmount <= 0) return
+        const curr = String(currency || 'INR').toUpperCase()
+
+        // 🛡️ CRITICAL FIX: Virtual demo tokens (AMRAT) NEVER generate real commissions or rakeback
+        if (curr === 'AMRAT') return
+
+        // Standardize turnover to INR equivalent for unified platform VIP & affiliate rewards
+        let inrEquivalent = betAmount
+        if (curr === 'USDT') inrEquivalent = betAmount * 90.0
+        if (curr === 'BTC') inrEquivalent = betAmount * 8500000.0
 
         // 1. VIP Tier & Rakeback Accumulation
         const tier = getVipTier(user.totalWagered)
-        const rakeback = parseFloat((betAmount * 0.01 * tier.rakebackRate).toFixed(4))
+        const rakeback = parseFloat((inrEquivalent * 0.01 * tier.rakebackRate).toFixed(4))
         user.unclaimedRakeback = parseFloat(((user.unclaimedRakeback || 0) + rakeback).toFixed(4))
         user.totalRakebackEarned = parseFloat(((user.totalRakebackEarned || 0) + rakeback).toFixed(4))
 
@@ -277,9 +286,9 @@ export class UserRepository extends BaseRepository {
                         tier3Earned: 0
                     }
                 }
-                const comm1 = parseFloat((betAmount * 0.003).toFixed(4))
-                tier1User.affiliateStats.totalTurnover = parseFloat(((tier1User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
-                tier1User.affiliateStats.tier1Turnover = parseFloat(((tier1User.affiliateStats.tier1Turnover || 0) + betAmount).toFixed(2))
+                const comm1 = parseFloat((inrEquivalent * 0.003).toFixed(4))
+                tier1User.affiliateStats.totalTurnover = parseFloat(((tier1User.affiliateStats.totalTurnover || 0) + inrEquivalent).toFixed(2))
+                tier1User.affiliateStats.tier1Turnover = parseFloat(((tier1User.affiliateStats.tier1Turnover || 0) + inrEquivalent).toFixed(2))
                 tier1User.affiliateStats.totalEarned = parseFloat(((tier1User.affiliateStats.totalEarned || 0) + comm1).toFixed(4))
                 tier1User.affiliateStats.tier1Earned = parseFloat(((tier1User.affiliateStats.tier1Earned || 0) + comm1).toFixed(4))
                 tier1User.affiliateStats.unclaimedEarnings = parseFloat(((tier1User.affiliateStats.unclaimedEarnings || 0) + comm1).toFixed(4))
@@ -301,9 +310,9 @@ export class UserRepository extends BaseRepository {
                                 tier3Earned: 0
                             }
                         }
-                        const comm2 = parseFloat((betAmount * 0.001).toFixed(4))
-                        tier2User.affiliateStats.totalTurnover = parseFloat(((tier2User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
-                        tier2User.affiliateStats.tier2Turnover = parseFloat(((tier2User.affiliateStats.tier2Turnover || 0) + betAmount).toFixed(2))
+                        const comm2 = parseFloat((inrEquivalent * 0.001).toFixed(4))
+                        tier2User.affiliateStats.totalTurnover = parseFloat(((tier2User.affiliateStats.totalTurnover || 0) + inrEquivalent).toFixed(2))
+                        tier2User.affiliateStats.tier2Turnover = parseFloat(((tier2User.affiliateStats.tier2Turnover || 0) + inrEquivalent).toFixed(2))
                         tier2User.affiliateStats.totalEarned = parseFloat(((tier2User.affiliateStats.totalEarned || 0) + comm2).toFixed(4))
                         tier2User.affiliateStats.tier2Earned = parseFloat(((tier2User.affiliateStats.tier2Earned || 0) + comm2).toFixed(4))
                         tier2User.affiliateStats.unclaimedEarnings = parseFloat(((tier2User.affiliateStats.unclaimedEarnings || 0) + comm2).toFixed(4))
@@ -325,9 +334,9 @@ export class UserRepository extends BaseRepository {
                                         tier3Earned: 0
                                     }
                                 }
-                                const comm3 = parseFloat((betAmount * 0.0005).toFixed(4))
-                                tier3User.affiliateStats.totalTurnover = parseFloat(((tier3User.affiliateStats.totalTurnover || 0) + betAmount).toFixed(2))
-                                tier3User.affiliateStats.tier3Turnover = parseFloat(((tier3User.affiliateStats.tier3Turnover || 0) + betAmount).toFixed(2))
+                                const comm3 = parseFloat((inrEquivalent * 0.0005).toFixed(4))
+                                tier3User.affiliateStats.totalTurnover = parseFloat(((tier3User.affiliateStats.totalTurnover || 0) + inrEquivalent).toFixed(2))
+                                tier3User.affiliateStats.tier3Turnover = parseFloat(((tier3User.affiliateStats.tier3Turnover || 0) + inrEquivalent).toFixed(2))
                                 tier3User.affiliateStats.totalEarned = parseFloat(((tier3User.affiliateStats.totalEarned || 0) + comm3).toFixed(4))
                                 tier3User.affiliateStats.tier3Earned = parseFloat(((tier3User.affiliateStats.tier3Earned || 0) + comm3).toFixed(4))
                                 tier3User.affiliateStats.unclaimedEarnings = parseFloat(((tier3User.affiliateStats.unclaimedEarnings || 0) + comm3).toFixed(4))
@@ -341,7 +350,7 @@ export class UserRepository extends BaseRepository {
         // 3. Yield to House Liquidity Vault
         try {
             if (houseVaultService && houseVaultService.distributeGameYield) {
-                houseVaultService.distributeGameYield(betAmount)
+                houseVaultService.distributeGameYield(inrEquivalent)
             }
         } catch {}
     }

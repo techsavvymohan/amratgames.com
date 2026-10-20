@@ -1,0 +1,424 @@
+/* ==========================================================================
+   🎮 GameSeoContent Styles — Multi-Screen Responsive Layout
+   Supports Mobile (320px-600px), Tablet (601px-1024px), Desktop (1025px+)
+   ========================================================================== */
+
+.game-seo-section {
+    width: 100%;
+    max-width: 960px;
+    margin: 28px auto 40px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.game-seo-card {
+    background: rgba(17, 24, 39, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+}
+
+/* Badge Row */
+.game-seo-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.game-seo-badge {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.game-seo-rtp-pill {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.game-seo-payout-pill {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+/* Overview Content */
+.game-seo-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 10px 0;
+    line-height: 1.3;
+}
+
+.game-seo-desc {
+    font-size: 0.92rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin: 0 0 20px 0;
+}
+
+/* Specs Grid */
+.game-seo-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.game-spec-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spec-label {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.spec-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.highlight-green {
+    color: #34d399;
+}
+
+.highlight-gold {
+    color: #fbbf24;
+}
+
+.highlight-blue {
+    color: #38bdf8;
+}
+
+/* Section Titles */
+.game-seo-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.section-title-icon {
+    font-size: 1.25rem;
+}
+
+.game-seo-section-title h3 {
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0;
+}
+
+/* How to Play 3-Step Grid */
+.how-to-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.how-to-step-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 18px 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0b0f19;
+    font-weight: 900;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+}
+
+.step-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.step-desc {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Feature Highlights Grid */
+.game-features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.game-feature-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.feature-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feature-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0;
+}
+
+.feature-desc {
+    font-size: 0.83rem;
+    color: #94a3b8;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* FAQs */
+.game-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.game-faq-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.game-faq-item.open {
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.game-faq-question {
+    width: 100%;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    color: #f1f5f9;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    gap: 12px;
+}
+
+.faq-chevron {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.game-faq-answer {
+    padding: 0 16px 14px 16px;
+    font-size: 0.86rem;
+    color: #94a3b8;
+    line-height: 1.55;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding-top: 10px;
+}
+
+/* Bottom CTA Strip */
+.game-seo-cta-strip {
+    background: radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.12) 0%, rgba(17, 24, 39, 0.9) 70%);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.cta-copy h4 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 4px 0;
+}
+
+.cta-copy p {
+    font-size: 0.86rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.cta-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.game-seo-btn-primary {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0b0f19;
+    font-weight: 800;
+    font-size: 0.88rem;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    transition: transform 0.2s ease, filter 0.2s ease;
+    white-space: nowrap;
+}
+
+.game-seo-btn-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.game-seo-btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.game-seo-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   📱 Responsive Breakpoints
+   ========================================================================== */
+
+/* Tablet (max-width: 900px) */
+@media (max-width: 900px) {
+    .game-seo-specs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .how-to-steps-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .game-seo-cta-strip {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .cta-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .game-seo-btn-primary,
+    .game-seo-btn-secondary {
+        width: 100%;
+    }
+}
+
+/* Mobile Screens (max-width: 600px) */
+@media (max-width: 600px) {
+    .game-seo-section {
+        padding: 0 10px;
+        margin-top: 16px;
+        margin-bottom: 24px;
+        gap: 14px;
+    }
+
+    .game-seo-card {
+        padding: 16px 14px;
+        border-radius: 14px;
+    }
+
+    .game-seo-title {
+        font-size: 1.18rem;
+    }
+
+    .game-seo-desc {
+        font-size: 0.84rem;
+        margin-bottom: 14px;
+    }
+
+    .game-features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .game-spec-item {
+        padding: 10px 12px;
+    }
+
+    .spec-val {
+        font-size: 0.88rem;
+    }
+
+    .game-faq-question {
+        padding: 12px 14px;
+        font-size: 0.86rem;
+    }
+}

@@ -100,6 +100,13 @@ const hubNavItems = [
     { label: 'My Bets', path: '/my-bets', icon: '📋' },
 ]
 
+const legalNavItems = [
+    { label: 'Provably Fair (99% RTP)', path: '/provably-fair', icon: '🛡️' },
+    { label: 'Responsible Gaming (18+)', path: '/responsible-gambling', icon: '🎯' },
+    { label: 'Terms of Service', path: '/terms', icon: '📜' },
+    { label: 'Privacy Policy', path: '/privacy', icon: '🔒' },
+]
+
 function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const location = useLocation()
     const navigate = useNavigate()
@@ -421,6 +428,37 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                                 <span>{item.label}</span>
                             </span>
                             <span style={{ color: '#fbbf24', fontSize: '13px' }}>→</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mobile-coming-soon" aria-label="Transparency & Legal Policies" style={{ marginTop: '12px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.8px', padding: '4px 8px 8px 8px', textTransform: 'uppercase' }}>
+                        Fair Play &amp; Compliance
+                    </div>
+                    {legalNavItems.map(item => (
+                        <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => {
+                                onClose()
+                                navigate(item.path)
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                cursor: 'pointer',
+                                color: '#cbd5e1',
+                                fontWeight: 600,
+                                fontSize: '0.86rem'
+                            }}
+                        >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>{item.icon}</span>
+                                <span>{item.label}</span>
+                            </span>
+                            <span style={{ color: '#94a3b8', fontSize: '13px' }}>→</span>
                         </button>
                     ))}
                 </div>

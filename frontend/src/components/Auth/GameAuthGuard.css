@@ -1,11 +1,22 @@
-.amrat-game-gate {
-    flex: 1;
+.amrat-game-gatekeeper-wrapper {
     width: 100%;
     min-height: 100%;
     display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+.amrat-game-gate {
+    flex-shrink: 0;
+    width: 100%;
+    min-height: auto;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 16px;
+    padding: 32px 16px;
     background: radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.08) 0%, rgba(11, 15, 25, 0.98) 70%);
     box-sizing: border-box;
 }

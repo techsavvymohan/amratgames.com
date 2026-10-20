@@ -89,6 +89,31 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
 
                 <div className="nav-section" style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                    <h3 className="nav-title" style={{ color: '#94a3b8' }}>Fair Play &amp; Trust</h3>
+                    <NavLink
+                        to="/provably-fair"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon" style={{ fontSize: '15px' }}>🛡️</span>
+                        <span>Provably Fair</span>
+                    </NavLink>
+                    <NavLink
+                        to="/responsible-gambling"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon" style={{ fontSize: '15px' }}>🎯</span>
+                        <span>18+ Responsible</span>
+                    </NavLink>
+                    <NavLink
+                        to="/terms"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <span className="nav-icon" style={{ fontSize: '15px' }}>📜</span>
+                        <span>Terms &amp; Rules</span>
+                    </NavLink>
+                </div>
+
+                <div className="nav-section" style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
                     <h3 className="nav-title" style={{ color: '#94a3b8' }}>Support</h3>
                     <a
                         href="mailto:support@amratgames.com"

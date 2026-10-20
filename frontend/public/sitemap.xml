@@ -73,12 +73,36 @@
   </url>
   <url>
     <loc>https://amratgames.com/coin-toss</loc>
-    <lastmod>2026-10-10</lastmod>
+    <lastmod>2026-10-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <image:image>
       <image:loc>https://amratgames.com/images/coin-toss.jpg</image:loc>
       <image:title>Amrat Coin Toss - Heads or Tails 1.98x 3D Casino Game</image:title>
     </image:image>
+  </url>
+  <url>
+    <loc>https://amratgames.com/provably-fair</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://amratgames.com/responsible-gambling</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://amratgames.com/terms</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://amratgames.com/privacy</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

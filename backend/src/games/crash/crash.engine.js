@@ -37,21 +37,12 @@ export class CrashEngine {
             currentBet: 0
         })
 
-        // Calibrated 7.5% instant bust for robust house margin
-        let bustThreshold = 0.075
-        let baseRtp = 95.0
-
-        if (isMartingale || (requestedMultiplier <= 1.35 && consecutiveWins >= 2)) {
-            // Anti-bot breaker: prevents automated 1.1x / 1.2x cashout martingale extraction
-            bustThreshold = 0.12
-            baseRtp = 90.0
-        }
-
+        // 98.00% RTP with 2% instant bust (Provably Fair HMAC-SHA256 standard)
         let crashPoint = 1.00
-        if (floatVal >= bustThreshold) {
-            crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
+        if (floatVal >= 0.02) {
+            crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 100.00))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.00))
 
         const won = requestedMultiplier > 1.0 && requestedMultiplier <= crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
@@ -80,25 +71,12 @@ export class CrashEngine {
         const { hash, floatVal, serverSeed, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
         const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
-        const userBets = (userId && db.getUserBets) ? db.getUserBets(userId, 10) : []
-        const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
-            userBets,
-            gameKey: 'crash',
-            currentBet: betAmount
-        })
-
-        let bustThreshold = 0.075
-        let baseRtp = 95.0
-        if (isMartingale || ((autoCashout && autoCashout <= 1.35) && consecutiveWins >= 2)) {
-            bustThreshold = 0.12
-            baseRtp = 90.0
-        }
-
+        // 99.00% RTP with 1% instant bust (Provably Fair HMAC-SHA256 standard)
         let crashPoint = 1.00
-        if (floatVal >= bustThreshold) {
-            crashPoint = Math.floor((baseRtp / (1 - floatVal))) / 100
+        if (floatVal >= 0.01) {
+            crashPoint = Math.floor((99.0 / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 100.00))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.00))
 
         // Dynamic Bankroll Liability Protection
         const maxSingleRoundExposure = bankrollRisk.getMaxProfitCap(currency) || 50000.00
