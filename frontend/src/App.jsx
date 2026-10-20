@@ -32,6 +32,10 @@ const ProvablyFairPage = lazy(() => import('./pages/ProvablyFairPage'))
 const ResponsibleGamblingPage = lazy(() => import('./pages/ResponsibleGamblingPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
+const CrashStrategyPage = lazy(() => import('./pages/CrashStrategyPage'))
+const PlinkoOddsPage = lazy(() => import('./pages/PlinkoOddsPage'))
+const UpiWithdrawalsGuidePage = lazy(() => import('./pages/UpiWithdrawalsGuidePage'))
+const VipRewardsPage = lazy(() => import('./pages/VipRewardsPage'))
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
@@ -102,6 +106,10 @@ function App() {
                             <Route path="responsible-gambling" element={<ResponsibleGamblingPage />} />
                             <Route path="terms" element={<TermsPage />} />
                             <Route path="privacy" element={<PrivacyPage />} />
+                            <Route path="guides/crash-strategy" element={<CrashStrategyPage />} />
+                            <Route path="guides/plinko-odds" element={<PlinkoOddsPage />} />
+                            <Route path="payments/instant-upi-withdrawals" element={<UpiWithdrawalsGuidePage />} />
+                            <Route path="vip-rewards" element={<VipRewardsPage />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}

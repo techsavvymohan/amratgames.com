@@ -222,6 +222,58 @@ const SEO_ROUTES = {
         heading: "Personal Bet History & Cryptographic Audits",
         hasOwnH1: true
     },
+    '/guides/crash-strategy': {
+        title: "Aviator & Crash Game Strategy Guide — 99% RTP Math | AmratGames",
+        description: "Master proven Crash rocket betting strategies: low-multiplier compounding, flat-wager auto-cashout, and dual-bet hedging on AmratGames.",
+        canonical: 'https://amratgames.com/guides/crash-strategy',
+        heading: "Aviator & Crash Multiplier Strategies & Probability Math",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "HowTo",
+            "name": "How to Win at Aviator Crash Rocket Game",
+            "description": "Proven mathematical betting systems and bankroll management tactics for Crash."
+        }
+    },
+    '/guides/plinko-odds': {
+        title: "Plinko Odds, Rows & 1,000x Multiplier Guide | AmratGames",
+        description: "Detailed binomial probability analysis of 8-16 rows, Low vs High risk profiles, and 1,000x jackpot distribution in Plinko.",
+        canonical: 'https://amratgames.com/guides/plinko-odds',
+        heading: "Plinko Odds, Binomial Distribution & Multiplier Calculator",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "name": "Plinko Binomial Distribution & Physics Probability Guide",
+            "description": "Mathematical breakdown of Galton board peg deflections and high-multiplier odds."
+        }
+    },
+    '/payments/instant-upi-withdrawals': {
+        title: "Instant UPI & Bank Withdrawal Guide (Google Pay, PhonePe, Paytm) | AmratGames",
+        description: "Play in Indian Rupees (₹) with zero conversion fees. Instant automated UPI deposits and 24/7 bank withdrawals in under 5 minutes.",
+        canonical: 'https://amratgames.com/payments/instant-upi-withdrawals',
+        heading: "Instant UPI, PhonePe, Google Pay & Bank Withdrawal Cashier Guide",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Instant UPI & Bank Payout Cashier Guide",
+            "description": "Official guide on UPI deposits, UTR verification, and automated 24/7 withdrawals."
+        }
+    },
+    '/vip-rewards': {
+        title: "VIP Loyalty Club, 25% Rakeback & Daily ₹50k Race | AmratGames",
+        description: "Earn up to 25% instant wager-free house edge rakeback, compete in daily ₹50,000 race tournaments, and earn 3-tier affiliate commissions.",
+        canonical: 'https://amratgames.com/vip-rewards',
+        heading: "VIP Loyalty Club, Turnover Rakeback & Affiliate Commissions",
+        hasOwnH1: true,
+        schema: {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "VIP Loyalty Club & Rakeback Rewards",
+            "description": "Official schedule of VIP tiers, rakeback percentages, and tournament cash prizes."
+        }
+    },
     '/admin': {
         title: "Admin Portal & Risk Command Console | AmratGames",
         description: "Official AmratGames administrative and cashier settlement dashboard.",

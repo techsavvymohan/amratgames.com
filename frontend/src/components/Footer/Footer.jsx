@@ -85,7 +85,18 @@ export default function Footer({ onOpenVerifier, onOpenRace }) {
                         </ul>
                     </div>
 
-                    {/* Column 3: Transparency & Trust (E-E-A-T) */}
+                    {/* Column 3: Guides & Cashier */}
+                    <div className="footer-col">
+                        <h4 className="footer-col-title">Guides &amp; VIP</h4>
+                        <ul className="footer-links-list">
+                            <li><Link to="/guides/crash-strategy">Crash Multiplier Strategy</Link></li>
+                            <li><Link to="/guides/plinko-odds">Plinko Odds &amp; Physics</Link></li>
+                            <li><Link to="/payments/instant-upi-withdrawals">Instant UPI Cashier</Link></li>
+                            <li><Link to="/vip-rewards">VIP Rakeback &amp; Club</Link></li>
+                        </ul>
+                    </div>
+
+                    {/* Column 4: Transparency & Trust (E-E-A-T) */}
                     <div className="footer-col">
                         <h4 className="footer-col-title">Trust &amp; Legal</h4>
                         <ul className="footer-links-list">
@@ -97,7 +108,7 @@ export default function Footer({ onOpenVerifier, onOpenRace }) {
                         </ul>
                     </div>
 
-                    {/* Column 4: Guarantees */}
+                    {/* Column 5: Guarantees */}
                     <div className="footer-col">
                         <h4 className="footer-col-title">Security &amp; Guarantees</h4>
                         <div className="footer-guarantees">
