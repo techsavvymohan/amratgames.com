@@ -2,11 +2,10 @@
 
 /* ===== Landing Page ===== */
 .home-page-container {
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    width: 100%;
+    min-height: auto;
     background: var(--bg-primary);
-    padding-bottom: calc(var(--mobile-nav-space, 64px) + 24px);
+    padding-bottom: 32px;
 }
 
 .home-page-hero {

@@ -15,8 +15,8 @@ import Footer from './Footer/Footer'
 function Layout() {
     const location = useLocation()
     const { user, token } = useAuth()
-    const isAuthenticated = Boolean(user && token)
-    const showFooter = !isGamePath(location.pathname) || !isAuthenticated
+    const isGame = isGamePath(location.pathname)
+    const showFooter = !isGame
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isRaceOpen, setIsRaceOpen] = useState(false)
@@ -46,7 +46,7 @@ function Layout() {
                     onOpenRace={() => setIsRaceOpen(true)}
                     onOpenVerifier={handleOpenVerifier}
                 />
-                <main className="main-content">
+                <main className={`main-content ${isGame ? 'main-content-game' : 'main-content-scrollable'}`}>
                     <Outlet />
                     {showFooter && (
                         <Footer

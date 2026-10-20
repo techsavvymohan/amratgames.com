@@ -242,7 +242,15 @@ function HomePage() {
         })
     }, [activeCategory, searchQuery])
 
-    const focusGames = () => requestAnimationFrame(() => document.getElementById('amrat-originals')?.focus())
+    const focusGames = () => {
+        requestAnimationFrame(() => {
+            const el = document.getElementById('amrat-originals')
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                el.focus()
+            }
+        })
+    }
 
     return (
         <div className="home-page-container">

@@ -1101,8 +1101,31 @@ a {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     background: var(--bg-primary);
+    position: relative;
+}
+
+.main-content.main-content-game {
+    height: 100%;
+    overflow: hidden;
+}
+
+.main-content.main-content-scrollable {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure scrollable page containers expand naturally within .main-content-scrollable so all games and sections are fully visible and the footer sits at the bottom */
+.main-content.main-content-scrollable .home-page-container,
+.main-content.main-content-scrollable .hub-page-container,
+.main-content.main-content-scrollable .legal-page-container,
+.main-content.main-content-scrollable .profile-page-container {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
 }
 
 /* ===== Game Title Bar ===== */
