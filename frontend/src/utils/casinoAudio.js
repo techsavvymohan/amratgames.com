@@ -583,6 +583,197 @@ class CasinoAudioEngine {
             bounceOsc.stop(bounceNow + 0.16)
         }, 110)
     }
+
+    /**
+     * Subtle jet engine sound acceleration as multiplier crosses 5x, 10x, and 50x milestones in Aviator
+     * @param {number} level - 5, 10, or 50 multiplier milestone
+     */
+    playJetAcceleration(level = 5) {
+        if (this.isMuted) return
+        const ctx = this.initContext()
+        if (!ctx) return
+
+        const now = ctx.currentTime
+
+        if (level >= 50) {
+            // ── 50x: Hypersonic Afterburner Surge & Sonic Boom Overtones ──
+            this.vibrate([50, 30, 50, 30])
+
+            // 1. Deep Sub-Bass Thruster Rumble (85Hz -> 260Hz)
+            const subOsc = ctx.createOscillator()
+            const subGain = ctx.createGain()
+            subOsc.type = 'sawtooth'
+            subOsc.frequency.setValueAtTime(85, now)
+            subOsc.frequency.exponentialRampToValueAtTime(260, now + 0.9)
+            subGain.gain.setValueAtTime(0.22, now)
+            subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.1)
+
+            const subFilter = ctx.createBiquadFilter()
+            subFilter.type = 'lowpass'
+            subFilter.frequency.setValueAtTime(320, now)
+            subFilter.frequency.exponentialRampToValueAtTime(550, now + 0.8)
+
+            subOsc.connect(subFilter)
+            subFilter.connect(subGain)
+            subGain.connect(this.masterGain)
+            subOsc.start(now)
+            subOsc.stop(now + 1.12)
+
+            // 2. High-Altitude Turbine Whine (580Hz -> 1450Hz)
+            const whineOsc = ctx.createOscillator()
+            const whineGain = ctx.createGain()
+            whineOsc.type = 'sine'
+            whineOsc.frequency.setValueAtTime(580, now)
+            whineOsc.frequency.exponentialRampToValueAtTime(1450, now + 0.85)
+            whineGain.gain.setValueAtTime(0.14, now)
+            whineGain.gain.exponentialRampToValueAtTime(0.001, now + 0.95)
+
+            whineOsc.connect(whineGain)
+            whineGain.connect(this.masterGain)
+            whineOsc.start(now)
+            whineOsc.stop(now + 0.96)
+
+            // 3. Supersonic Atmospheric Air Rush (Filtered White Noise Swept)
+            this._synthesizeAirWhoosh(ctx, now, {
+                duration: 0.95,
+                startFreq: 600,
+                endFreq: 2200,
+                volume: 0.18
+            })
+
+            // 4. Golden Milestone Chime (1046.5Hz / C6 + 1318.5Hz / E6)
+            this._playToneChime(ctx, now + 0.08, [1046.5, 1318.51, 1567.98], 0.16)
+
+        } else if (level >= 10) {
+            // ── 10x: Double-Digit High-Speed Turbine Acceleration ──
+            this.vibrate([35, 25, 35])
+
+            // 1. Dual Harmonized Turbine Surge (220Hz -> 480Hz)
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.type = 'triangle'
+            osc.frequency.setValueAtTime(220, now)
+            osc.frequency.exponentialRampToValueAtTime(490, now + 0.75)
+            gain.gain.setValueAtTime(0.18, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8)
+
+            const filter = ctx.createBiquadFilter()
+            filter.type = 'bandpass'
+            filter.frequency.setValueAtTime(450, now)
+            filter.frequency.exponentialRampToValueAtTime(950, now + 0.7)
+            filter.Q.value = 1.8
+
+            osc.connect(filter)
+            filter.connect(gain)
+            gain.connect(this.masterGain)
+            osc.start(now)
+            osc.stop(now + 0.82)
+
+            // 2. Air stream acceleration whoosh
+            this._synthesizeAirWhoosh(ctx, now, {
+                duration: 0.75,
+                startFreq: 450,
+                endFreq: 1400,
+                volume: 0.14
+            })
+
+            // 3. Crisp Milestone Harmonic (880Hz / A5 + 1108.7Hz / C#6)
+            this._playToneChime(ctx, now + 0.05, [880.0, 1108.73], 0.13)
+
+        } else {
+            // ── 5x: Initial Altitude Spool-Up & Climb Acceleration ──
+            this.vibrate([25, 20])
+
+            // 1. Turbine Spool-Up (160Hz -> 340Hz)
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.type = 'triangle'
+            osc.frequency.setValueAtTime(160, now)
+            osc.frequency.exponentialRampToValueAtTime(340, now + 0.6)
+            gain.gain.setValueAtTime(0.15, now)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65)
+
+            const filter = ctx.createBiquadFilter()
+            filter.type = 'bandpass'
+            filter.frequency.setValueAtTime(320, now)
+            filter.frequency.exponentialRampToValueAtTime(700, now + 0.55)
+            filter.Q.value = 1.4
+
+            osc.connect(filter)
+            filter.connect(gain)
+            gain.connect(this.masterGain)
+            osc.start(now)
+            osc.stop(now + 0.67)
+
+            // 2. Subtle air whoosh
+            this._synthesizeAirWhoosh(ctx, now, {
+                duration: 0.6,
+                startFreq: 350,
+                endFreq: 850,
+                volume: 0.11
+            })
+
+            // 3. Gentle harmonic bell (659.25Hz / E5)
+            this._playToneChime(ctx, now + 0.04, [659.25], 0.11)
+        }
+    }
+
+    /**
+     * White-noise synthesized air whoosh with bandpass frequency ramp
+     */
+    _synthesizeAirWhoosh(ctx, startTime, { duration = 0.6, startFreq = 400, endFreq = 1200, volume = 0.12 } = {}) {
+        const bufferSize = Math.floor(ctx.sampleRate * duration)
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+        const data = buffer.getChannelData(0)
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1
+        }
+
+        const noise = ctx.createBufferSource()
+        noise.buffer = buffer
+
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'bandpass'
+        filter.frequency.setValueAtTime(startFreq, startTime)
+        filter.frequency.exponentialRampToValueAtTime(endFreq, startTime + duration * 0.8)
+        filter.Q.value = 2.0
+
+        const gain = ctx.createGain()
+        gain.gain.setValueAtTime(volume, startTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+
+        noise.connect(filter)
+        filter.connect(gain)
+        gain.connect(this.masterGain)
+        noise.start(startTime)
+        noise.stop(startTime + duration + 0.01)
+    }
+
+    /**
+     * Subtle milestone musical chime triad or harmonic
+     */
+    _playToneChime(ctx, startTime, freqs = [880], volume = 0.12) {
+        freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(freq, startTime + idx * 0.02)
+            gain.gain.setValueAtTime(volume, startTime + idx * 0.02)
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + idx * 0.02 + 0.35)
+
+            osc.connect(gain)
+            gain.connect(this.masterGain)
+            osc.start(startTime + idx * 0.02)
+            osc.stop(startTime + idx * 0.02 + 0.36)
+        })
+    }
+
+    /**
+     * Aviator Crash / Explosion
+     */
+    playCrash() {
+        return this.playExplosion()
+    }
 }
 
 export const casinoAudio = new CasinoAudioEngine()

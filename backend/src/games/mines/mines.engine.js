@@ -153,7 +153,8 @@ export class MinesEngine {
             session.active = false
             this.activeMinesRounds.delete(roundId)
 
-            const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+            const precision = bankrollRisk.getCurrencyDecimals(session.currency)
+            const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(precision))
             capped = bankrollRisk.enforceWinCap({
                 betAmount: session.betAmount,
                 multiplier: session.currentMultiplier,
@@ -194,7 +195,8 @@ export class MinesEngine {
         session.active = false
         this.activeMinesRounds.delete(roundId)
 
-        const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(2))
+        const precision = bankrollRisk.getCurrencyDecimals(session.currency)
+        const rawPayout = parseFloat((session.betAmount * session.currentMultiplier).toFixed(precision))
         const capped = bankrollRisk.enforceWinCap({
             betAmount: session.betAmount,
             multiplier: session.currentMultiplier,

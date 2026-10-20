@@ -3,6 +3,13 @@ import { useAuth } from './AuthContext'
 
 const WalletContext = createContext(null)
 
+export const getCurrencyDecimals = (curr) => {
+    const c = String(curr || 'INR').toUpperCase()
+    if (c === 'BTC') return 8
+    if (c === 'USDT') return 4
+    return 2
+}
+
 export const CURRENCIES = {
     INR: {
         id: 'INR',
@@ -14,6 +21,7 @@ export const CURRENCIES = {
         minBet: 10,
         maxBet: 100000,
         step: 50,
+        decimals: 2,
         paymentMethods: 'UPI · NetBanking · IMPS · Paytm · GPay',
     },
     BTC: {
@@ -22,10 +30,11 @@ export const CURRENCIES = {
         name: 'Bitcoin Crypto',
         flag: '₿',
         initial: 0.00,
-        presets: [100, 500, 1000, 5000],
-        minBet: 1,
-        maxBet: 10000,
-        step: 10,
+        presets: [0.0001, 0.0005, 0.001, 0.005],
+        minBet: 0.00001,
+        maxBet: 0.008,
+        step: 0.00001,
+        decimals: 8,
         paymentMethods: 'BTC Lightning · Layer 1 Network',
     },
     USDT: {
@@ -34,10 +43,11 @@ export const CURRENCIES = {
         name: 'USDT Tether',
         flag: '₮',
         initial: 0.00,
-        presets: [100, 500, 1000, 5000],
-        minBet: 1,
-        maxBet: 10000,
-        step: 10,
+        presets: [1, 5, 10, 25, 50],
+        minBet: 0.1,
+        maxBet: 600,
+        step: 0.5,
+        decimals: 4,
         paymentMethods: 'TRC20 · ERC20 · Polygon',
     },
     AMRAT: {
@@ -50,6 +60,7 @@ export const CURRENCIES = {
         minBet: 10,
         maxBet: 50000,
         step: 50,
+        decimals: 2,
         paymentMethods: 'Royal Staking · Loyalty Airdrops · VIP Yield',
     }
 }
@@ -143,7 +154,8 @@ export function WalletProvider({ children }) {
             const data = await res.json()
             if (data.success) {
                 if (data.balances?.[currencyRef.current] !== undefined) {
-                    const rounded = parseFloat(data.balances[currencyRef.current].toFixed(2))
+                    const precision = getCurrencyDecimals(currencyRef.current)
+                    const rounded = parseFloat(data.balances[currencyRef.current].toFixed(precision))
                     balanceRef.current = rounded
                     setBalance(rounded)
                     try {
@@ -173,8 +185,9 @@ export function WalletProvider({ children }) {
         if (user && user.balances) {
             const userBal = user.balances[currencyRef.current]
             if (userBal !== undefined && typeof userBal === 'number') {
-                let rounded = parseFloat(userBal.toFixed(2))
-                if (rounded >= 50000) rounded = 100.00
+                const precision = getCurrencyDecimals(currencyRef.current)
+                let rounded = parseFloat(userBal.toFixed(precision))
+                if (currencyRef.current === 'INR' && rounded >= 50000) rounded = 100.00
                 balanceRef.current = rounded
                 setBalance(rounded)
                 try {
@@ -218,8 +231,9 @@ export function WalletProvider({ children }) {
         // Load balance for that currency (prefer user balance if logged in)
         let curBal = getStoredBalance(newCurr)
         if (user && user.balances && user.balances[newCurr] !== undefined) {
-            let uBal = parseFloat(user.balances[newCurr].toFixed(2))
-            if (uBal >= 50000) uBal = 100.00
+            const precision = getCurrencyDecimals(newCurr)
+            let uBal = parseFloat(user.balances[newCurr].toFixed(precision))
+            if (newCurr === 'INR' && uBal >= 50000) uBal = 100.00
             curBal = uBal
         }
         balanceRef.current = curBal
@@ -244,7 +258,8 @@ export function WalletProvider({ children }) {
     }, [])
 
     const setStoredBalance = useCallback((nextBalance) => {
-        const rounded = parseFloat(nextBalance.toFixed(2))
+        const precision = getCurrencyDecimals(currencyRef.current)
+        const rounded = parseFloat(nextBalance.toFixed(precision))
         balanceRef.current = rounded
         setBalance(rounded)
         try {
@@ -876,12 +891,13 @@ export function WalletProvider({ children }) {
     const notifyWin = useCallback((amount, mult) => {
         let title = 'Win'
         let desc = ''
+        const precision = getCurrencyDecimals(currencyRef.current)
         if (typeof amount === 'number') {
-            title = `+${currencySymbol}${amount.toFixed(2)}`
+            title = `+${currencySymbol}${amount.toFixed(precision)}`
             desc = mult ? `${Number(mult).toFixed(2)}x` : ''
         } else if (typeof amount === 'string') {
             const num = parseFloat(amount.replace(/[^0-9.]/g, ''))
-            title = !isNaN(num) ? `+${currencySymbol}${num.toFixed(2)}` : 'Win'
+            title = !isNaN(num) ? `+${currencySymbol}${num.toFixed(precision)}` : 'Win'
             desc = mult ? `${mult}` : ''
         }
         showToast('win', title, desc, 1000)
@@ -890,12 +906,13 @@ export function WalletProvider({ children }) {
     const notifyLoss = useCallback((amount, mult) => {
         let title = 'Loss'
         let desc = ''
+        const precision = getCurrencyDecimals(currencyRef.current)
         if (typeof amount === 'number') {
-            title = `-${currencySymbol}${amount.toFixed(2)}`
+            title = `-${currencySymbol}${amount.toFixed(precision)}`
             desc = mult ? `${Number(mult).toFixed(2)}x` : ''
         } else if (typeof amount === 'string') {
             const num = parseFloat(amount.replace(/[^0-9.]/g, ''))
-            title = !isNaN(num) ? `-${currencySymbol}${num.toFixed(2)}` : 'Loss'
+            title = !isNaN(num) ? `-${currencySymbol}${num.toFixed(precision)}` : 'Loss'
             desc = mult ? `${mult}` : ''
         }
         showToast('loss', title, desc, 1000)

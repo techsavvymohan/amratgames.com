@@ -186,7 +186,8 @@ export class CrashEngine {
 
         const won = requestedMultiplier <= session.crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
-        const rawPayout = won ? parseFloat((session.betAmount * actualMultiplier).toFixed(2)) : 0
+        const precision = bankrollRisk.getCurrencyDecimals(session.currency)
+        const rawPayout = won ? parseFloat((session.betAmount * actualMultiplier).toFixed(precision)) : 0
 
         const capped = won ? bankrollRisk.enforceWinCap({
             betAmount: session.betAmount,

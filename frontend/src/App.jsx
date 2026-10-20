@@ -90,7 +90,8 @@ function App() {
                         {/* Casino Games & Player Portal (Wrapped in Casino Layout) */}
                         <Route path="/" element={<Layout />}>
                             <Route index element={<HomePage />} />
-                            <Route path="crash" element={<GameAuthGuard gameName="Crash (JetX)"><CrashPage /></GameAuthGuard>} />
+                            <Route path="crash" element={<GameAuthGuard gameName="Aviator"><CrashPage /></GameAuthGuard>} />
+                            <Route path="aviator" element={<GameAuthGuard gameName="Aviator"><CrashPage /></GameAuthGuard>} />
                             <Route path="plinko" element={<GameAuthGuard gameName="Plinko"><PlinkoPage /></GameAuthGuard>} />
                             <Route path="mines" element={<GameAuthGuard gameName="Mines"><MinesPage /></GameAuthGuard>} />
                             <Route path="limbo" element={<GameAuthGuard gameName="Limbo"><LimboPage /></GameAuthGuard>} />

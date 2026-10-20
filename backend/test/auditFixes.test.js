@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import { db } from '../src/db/db.js'
 import { gameEngine } from '../src/services/GameEngine.js'
+import { pvpService } from '../src/services/PvPService.js'
 
 describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
     it('verifies AMRAT wagers are strictly excluded from real INR rakeback, turnover, and affiliate commissions', async () => {
@@ -159,6 +160,102 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
         expectedRoll = Math.max(1.00, Math.min(expectedRoll, 1000000.0))
 
         assert.equal(result.roll, expectedRoll, 'Limbo roll must strictly match 98% RTP mathematical curve')
+    })
+
+    it('verifies BTC withdrawal rejection preserves full 8-decimal Satoshi precision on refund', () => {
+        const btcUser = db.createUser({
+            username: 'btc_refund_' + Date.now(),
+            email: `btc_refund_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        btcUser.balances.BTC = 0.00543219
+
+        const wdResult = db.requestWithdrawal({
+            userId: btcUser.id,
+            currency: 'BTC',
+            amount: 0.00543219,
+            payoutMethod: 'Crypto',
+            payoutDestination: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+        })
+
+        assert.equal(wdResult.user.balances.BTC, 0)
+
+        // Reject withdrawal and refund
+        const rejectResult = db.rejectWithdrawal(wdResult.withdrawal.id, {
+            adminUsername: 'admin',
+            rejectionReason: 'Invalid crypto address'
+        })
+
+        assert.equal(rejectResult.user.balances.BTC, 0.00543219, 'BTC balance must restore all 8 Satoshi decimals on rejection refund')
+    })
+
+    it('verifies approved crypto deposits properly accumulate totalDeposited in INR equivalent', () => {
+        const cryptoUser = db.createUser({
+            username: 'usdt_depositor_' + Date.now(),
+            email: `usdt_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        const initialTotal = cryptoUser.totalDeposited || 0
+
+        // Create deposit request for 100 USDT
+        const { deposit } = db.requestDeposit({
+            userId: cryptoUser.id,
+            currency: 'USDT',
+            amount: 100,
+            paymentMethod: 'CRYPTO_TRC20',
+            utrNumber: 'TX_USDT_' + Date.now()
+        })
+
+        // Admin approves deposit
+        const approval = db.approveDeposit(deposit.id, { adminUsername: 'admin' })
+
+        // 100 USDT * ₹90 = ₹9,000 INR equivalent added to totalDeposited
+        assert.equal(approval.user.totalDeposited, initialTotal + 9000, 'USDT deposits must convert to INR equivalent for withdrawal threshold')
+    })
+
+    it('verifies PvP Bitcoin duels preserve full 8-decimal Satoshi precision without truncation', async () => {
+        const creator = db.createUser({
+            username: 'pvp_btc_creator_' + Date.now(),
+            email: `pvp_btc_1_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const opponent = db.createUser({
+            username: 'pvp_btc_challenger_' + Date.now(),
+            email: `pvp_btc_2_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        creator.balances.BTC = 0.005
+        opponent.balances.BTC = 0.005
+
+        // Create duel with 0.001 BTC
+        const createRes = await pvpService.createDuel({
+            userId: creator.id,
+            stake: 0.001,
+            choice: 'heads',
+            currency: 'BTC'
+        })
+
+        assert.equal(createRes.duel.stake, 0.001)
+        assert.equal(createRes.duel.totalPot, 0.002)
+        assert.equal(createRes.duel.houseRakeAmount, 0.00008) // 0.002 * 0.04
+        assert.equal(createRes.duel.winnerPayout, 0.00192) // 0.002 - 0.00008
+
+        // Join and resolve duel
+        const joinRes = await pvpService.joinDuel({
+            duelId: createRes.duel.id,
+            userId: opponent.id
+        })
+
+        assert.equal(joinRes.duel.status, 'resolved')
+        assert.equal(joinRes.duel.winnerPayout, 0.00192, 'Winner payout must preserve 8-decimal Satoshi precision')
+        assert.ok((creator.totalWagered || 0) > 0 || (opponent.totalWagered || 0) > 0, 'Turnover in INR equivalent must be recorded')
     })
 
     // Clean exit for node test runner when Redis is not running locally

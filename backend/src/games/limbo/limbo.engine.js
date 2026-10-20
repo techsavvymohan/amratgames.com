@@ -7,7 +7,7 @@ import { bankrollRisk } from '../../services/BankrollRiskService.js'
  * Calibrated with Anti-Exploit Jitter & Cryptographic Unpredictability
  */
 export class LimboEngine {
-    static evaluate({ betAmount, targetMultiplier, clientSeed, nonce, userId, userBets = [] }) {
+    static evaluate({ betAmount, targetMultiplier, currency = 'INR', clientSeed, nonce, userId, userBets = [] }) {
         const target = Math.max(1.01, Math.min(parseFloat(targetMultiplier) || 2.0, 1000000.0))
         const { hash, floatVal, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
@@ -26,13 +26,14 @@ export class LimboEngine {
         roll = Math.max(1.00, Math.min(roll, 1000000.0))
 
         const won = roll >= target
-        const rawPayout = won ? parseFloat((totalBet * target).toFixed(2)) : 0
+        const precision = bankrollRisk.getCurrencyDecimals(currency)
+        const rawPayout = won ? parseFloat((totalBet * target).toFixed(precision)) : 0
 
         const capped = won ? bankrollRisk.enforceWinCap({
             betAmount: totalBet,
             multiplier: target,
             rawPayout,
-            currency: 'INR'
+            currency
         }) : { payout: 0, multiplier: 0, wasCapped: false }
 
         return {

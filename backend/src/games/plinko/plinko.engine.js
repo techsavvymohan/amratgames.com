@@ -52,7 +52,7 @@ export const PLINKO_PAYOUTS = {
 }
 
 export class PlinkoEngine {
-    static evaluate({ betAmount, rows = 16, risk = 'medium', clientSeed, nonce, userId, userBets = [] }) {
+    static evaluate({ betAmount, rows = 16, risk = 'medium', currency = 'INR', clientSeed, nonce, userId, userBets = [] }) {
         const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))
         const riskLevel = ['low', 'medium', 'high'].includes(risk) ? risk : 'medium'
         const { hash, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
@@ -84,7 +84,8 @@ export class PlinkoEngine {
         const binIndex = rightBounces
         const matrix = PLINKO_PAYOUTS[numRows]?.[riskLevel] || PLINKO_PAYOUTS[16].medium
         const multiplier = matrix[binIndex] || 0.5
-        const payout = parseFloat((totalBet * multiplier).toFixed(2))
+        const precision = currency === 'BTC' ? 8 : (currency === 'USDT' ? 4 : 2)
+        const payout = parseFloat((totalBet * multiplier).toFixed(precision))
         const won = multiplier >= 1.0
 
         return {

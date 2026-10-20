@@ -235,7 +235,7 @@ export default function RecentPage() {
                             <div className="hub-empty-icon">🎲</div>
                             <div className="hub-empty-title">Ready for Your Next Win?</div>
                             <p className="hub-empty-desc">
-                                As you play Crash, Mines, Limbo, or Coin Toss, your recent game sessions will be recorded here for instant access.
+                                As you play Aviator, Mines, Limbo, or Coin Toss, your recent game sessions will be recorded here for instant access.
                             </p>
                         </div>
                     )}
@@ -426,7 +426,7 @@ export default function RecentPage() {
                                     ) : (
                                         <tr>
                                             <td colSpan="5" style={{ textAlign: 'center', padding: '36px', color: '#64748b' }}>
-                                                No bets played yet on this account. Try Crash or Limbo!
+                                                No bets played yet on this account. Try Aviator or Limbo!
                                             </td>
                                         </tr>
                                     )}

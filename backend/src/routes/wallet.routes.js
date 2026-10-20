@@ -291,8 +291,14 @@ router.post('/webhook', async (req, res) => {
                 // 1. Credit balance legitimately
                 db.updateUserBalance(userId, currency, amount, `Automated Gateway Deposit (Ref: ${utrNumber})`)
 
-                // 2. Accumulate totalDeposited (unlocking withdrawal qualification)
-                user.totalDeposited = parseFloat(((user.totalDeposited || 0) + amount).toFixed(2))
+                // 2. Accumulate totalDeposited in INR equivalent (unlocking withdrawal qualification)
+                const curr = String(currency || 'INR').toUpperCase()
+                let depositInr = amount
+                if (curr === 'USDT') depositInr = amount * 90.0
+                else if (curr === 'BTC') depositInr = amount * 8500000.0
+                else if (curr === 'AMRAT') depositInr = 0
+
+                user.totalDeposited = parseFloat(((user.totalDeposited || 0) + depositInr).toFixed(2))
 
                 // 3. Record completed deposit record in db
                 const depositRecord = {

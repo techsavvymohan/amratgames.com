@@ -79,9 +79,11 @@ function Header({
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const formattedBalance = balance.toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+    const maxDecimals = currency === 'BTC' ? 8 : (currency === 'USDT' ? 4 : 2)
+    const minDecimals = currency === 'BTC' ? 4 : 2
+    const formattedBalance = balance.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
+        minimumFractionDigits: minDecimals,
+        maximumFractionDigits: maxDecimals,
     })
 
     return (

@@ -18,6 +18,7 @@ router.use(checkGameMaintenance)
 // ── Mount Isolated Game Routers ──────────────────────────────
 router.use('/mines', minesRoutes)
 router.use('/crash', crashRoutes)
+router.use('/aviator', crashRoutes)
 router.use('/coin-toss', coinTossRoutes)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
@@ -98,7 +99,7 @@ router.post('/provably-fair/verify', (req, res) => {
             }
             roll = Math.max(1.00, Math.min(roll, 1000000.0))
             result = { game: 'limbo', roll, floatVal }
-        } else if (gameType === 'crash' || isMultiplayerCrash) {
+        } else if (gameType === 'crash' || gameType === 'aviator' || isMultiplayerCrash) {
             let crashPoint = 1.00
             if (floatVal >= 0.01) {
                 crashPoint = Math.floor((99 / (1 - floatVal))) / 100
@@ -199,6 +200,7 @@ router.post('/provably-fair/verify', (req, res) => {
 function evaluateGameRound({
     game,
     parsedAmount,
+    currency = 'INR',
     targetMultiplier,
     rows,
     risk,
@@ -219,6 +221,7 @@ function evaluateGameRound({
             evaluation = gameEngine.evaluateLimbo({
                 betAmount: parsedAmount,
                 targetMultiplier: targetMultiplier || reqBody.multiplier || 2.0,
+                currency,
                 clientSeed,
                 nonce,
                 userId,
@@ -232,6 +235,7 @@ function evaluateGameRound({
                 betAmount: parsedAmount,
                 rows: rows || reqBody.rows || 16,
                 risk: risk || reqBody.risk || 'medium',
+                currency,
                 clientSeed,
                 nonce,
                 userId,
@@ -275,7 +279,8 @@ function evaluateGameRound({
                 userId,
                 userBets
             })
-            evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(2)) : 0
+            const precision = bankrollRisk.getCurrencyDecimals(currency)
+            evaluation.payout = evaluation.won ? parseFloat((parsedAmount * evaluation.multiplier).toFixed(precision)) : 0
             break
         }
 
@@ -304,7 +309,8 @@ function evaluateGameRound({
             const { floatVal, hash } = gameEngine.generateHmacFloat(clientSeed, nonce)
             const won = floatVal < 0.495
             const multiplier = won ? 2.0 : 0
-            const payout = won ? parseFloat((parsedAmount * 2.0).toFixed(2)) : 0
+            const precision = bankrollRisk.getCurrencyDecimals(currency)
+            const payout = won ? parseFloat((parsedAmount * 2.0).toFixed(precision)) : 0
             evaluation = { won, multiplier, payout, hash }
             break
         }
@@ -368,6 +374,7 @@ router.post('/bet', authenticate, async (req, res) => {
                 return evaluateGameRound({
                     game,
                     parsedAmount,
+                    currency,
                     targetMultiplier,
                     rows,
                     risk,

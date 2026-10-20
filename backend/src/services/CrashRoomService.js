@@ -232,7 +232,8 @@ export class CrashRoomService {
         bet.cashedOut = true
         bet.won = true
 
-        const rawPayout = parseFloat((bet.betAmount * targetMultiplier).toFixed(2))
+        const precision = bankrollRisk.getCurrencyDecimals(bet.currency)
+        const rawPayout = parseFloat((bet.betAmount * targetMultiplier).toFixed(precision))
         const capped = bankrollRisk.enforceWinCap({
             betAmount: bet.betAmount,
             multiplier: targetMultiplier,
@@ -413,7 +414,8 @@ export class CrashRoomService {
         bet.cashedOut = true
         bet.won = true
 
-        const rawPayout = parseFloat((bet.betAmount * multiplier).toFixed(2))
+        const precision = bankrollRisk.getCurrencyDecimals(bet.currency)
+        const rawPayout = parseFloat((bet.betAmount * multiplier).toFixed(precision))
         const capped = bankrollRisk.enforceWinCap({
             betAmount: bet.betAmount,
             multiplier,

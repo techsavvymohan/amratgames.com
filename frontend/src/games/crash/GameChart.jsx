@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useMemo, useCallback } from 'react'
 import { Tag, Typography } from 'antd'
+import casinoAudio from '../../utils/casinoAudio'
 
 const { Text } = Typography
 
@@ -103,6 +104,8 @@ function GameChart({
     const multiplierNumberRef = useRef(null)
     const centerCardRef = useRef(null)
     const flewAwayRef = useRef(null)
+    const milestoneFlashRef = useRef(null)
+    const milestonesCrossedRef = useRef({ 5: false, 10: false, 50: false })
 
     // Canvas size & device pixel ratio
     const canvasSizeRef = useRef({ width: 0, height: 0, dpr: 1 })
@@ -114,6 +117,15 @@ function GameChart({
     const lastRenderedRef = useRef({ elapsed: 0, multiplier: 1.00 })
     const phaseRef = useRef(phase)
     phaseRef.current = phase
+
+    // Trigger sonic visual pulse on chart arena
+    const triggerMilestoneFlash = useCallback((level) => {
+        if (!milestoneFlashRef.current) return
+        const el = milestoneFlashRef.current
+        el.className = 'aviator-sonic-pulse'
+        void el.offsetWidth // force DOM reflow to restart CSS animation
+        el.className = `aviator-sonic-pulse pulse-${level}x`
+    }, [])
 
     // Draw Aviator Radar Sunburst background + curved flight trajectory
     const drawScene = useCallback((curElapsed, curMult, isCrashed = false) => {
@@ -359,6 +371,7 @@ function GameChart({
     // 60fps/120fps flight animation loop with strict bounds check
     useEffect(() => {
         if (phase === 'running') {
+            milestonesCrossedRef.current = { 5: false, 10: false, 50: false }
             let anchorTime = flightStartTime
             if (!anchorTime) {
                 const safeM = Math.min(1000.0, Math.max(1.0, multiplier || 1.0))
@@ -383,6 +396,24 @@ function GameChart({
                 maxElapsedRef.current = curElapsed
 
                 const curMult = Math.min(1000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * curElapsed)))
+
+                // Multiplayer Sound Atmosphere: subtle jet engine sound acceleration as multiplier crosses 5x, 10x, and 50x
+                if (curMult >= 5.0 && !milestonesCrossedRef.current[5]) {
+                    milestonesCrossedRef.current[5] = true
+                    casinoAudio.playJetAcceleration?.(5)
+                    triggerMilestoneFlash(5)
+                }
+                if (curMult >= 10.0 && !milestonesCrossedRef.current[10]) {
+                    milestonesCrossedRef.current[10] = true
+                    casinoAudio.playJetAcceleration?.(10)
+                    triggerMilestoneFlash(10)
+                }
+                if (curMult >= 50.0 && !milestonesCrossedRef.current[50]) {
+                    milestonesCrossedRef.current[50] = true
+                    casinoAudio.playJetAcceleration?.(50)
+                    triggerMilestoneFlash(50)
+                }
+
                 drawScene(curElapsed, curMult, false)
 
                 animFrameRef.current = requestAnimationFrame(loop)
@@ -470,6 +501,9 @@ function GameChart({
     return (
         <div className="aviator-chart-arena">
             <canvas ref={canvasRef} className="aviator-canvas" />
+
+            {/* Jet Engine Acceleration Sonic Flash Pulse */}
+            <div ref={milestoneFlashRef} className="aviator-sonic-pulse" />
 
             {/* Aviator Red Propeller Plane Element */}
             <div

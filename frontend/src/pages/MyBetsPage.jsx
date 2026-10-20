@@ -222,7 +222,7 @@ export default function MyBetsPage() {
                         }}
                     >
                         <option value="all">All Games</option>
-                        <option value="crash">Crash (Rocket)</option>
+                        <option value="crash">Aviator</option>
                         <option value="coin">Coin Toss</option>
                         <option value="mines">Mines (Diamonds)</option>
                         <option value="limbo">Limbo Turbo</option>

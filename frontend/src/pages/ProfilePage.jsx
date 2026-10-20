@@ -881,7 +881,7 @@ export default function ProfilePage() {
                     {loadingHistory ? (
                         <div style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>Loading bets...</div>
                     ) : betsData.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No bets played yet. Try Crash or Limbo!</div>
+                        <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No bets played yet. Try Aviator or Limbo!</div>
                     ) : (
                         <div>
                             {betsData

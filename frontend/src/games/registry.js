@@ -1,7 +1,7 @@
 import { getGameCoverUrl } from '../utils/cloudinary'
 
 export const GAMES = [
-    { id: 'crash', name: 'Crash (Rocket)', navLabel: 'Crash', path: '/crash', icon: 'crash', image: getGameCoverUrl('/images/crash.jpg'), rtp: '99% Return', volatility: 'Big Multiplier', badge: 'HOT', maxWin: '10,000x', category: 'Fast' },
+    { id: 'crash', name: 'Aviator', navLabel: 'Aviator', path: '/crash', aliasPaths: ['/aviator'], icon: 'crash', image: getGameCoverUrl('/images/crash.jpg'), rtp: '99% Return', volatility: 'Big Multiplier', badge: 'HOT', maxWin: '10,000x', category: 'Fast' },
     { id: 'plinko', name: 'Plinko', navLabel: 'Plinko', path: '/plinko', icon: 'plinko', image: getGameCoverUrl('/images/plinko.jpg'), rtp: '99% Return', volatility: 'Easy Play', badge: 'POPULAR', maxWin: '1,000x', category: 'Originals' },
     { id: 'mines', name: 'Mines (Diamonds)', navLabel: 'Mines', path: '/mines', icon: 'mines', image: getGameCoverUrl('/images/mines.jpg'), rtp: '99% Return', volatility: 'Pick & Win', badge: 'TRENDING', maxWin: '10,000x', category: 'Originals' },
     { id: 'limbo', name: 'Limbo', navLabel: 'Limbo', path: '/limbo', icon: 'limbo', image: getGameCoverUrl('/images/limbo.jpg'), rtp: '99% Return', volatility: 'Target Multiplier', badge: 'BIG WIN', maxWin: '100,000x', category: 'Fast' },
@@ -11,6 +11,6 @@ export const GAMES = [
 ]
 
 export function isGamePath(pathname) {
-    return GAMES.some((game) => pathname.startsWith(game.path))
+    return GAMES.some((game) => pathname.startsWith(game.path) || game.aliasPaths?.some(p => pathname.startsWith(p)))
 }
 

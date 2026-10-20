@@ -501,7 +501,7 @@ function CrashGame() {
             clientSeed: clientSeedInput || undefined
         })
         if (!res || !res.success) {
-            showToast('error', 'Launch Failed', res?.error || 'Unable to launch Crash flight')
+            showToast('error', 'Launch Failed', res?.error || 'Unable to launch Aviator flight')
             return
         }
 
@@ -841,7 +841,7 @@ function CrashGame() {
             <div className="aviator-bottom-history-section">
                 <GameBottomHistory
                     gameKey="crash"
-                    gameTitle="Aviator Crash"
+                    gameTitle="Aviator"
                     localRounds={gameRecords.map(r => ({
                         id: r.id,
                         betAmount: r.bet || r.betAmount || 25,

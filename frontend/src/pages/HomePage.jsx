@@ -102,7 +102,7 @@ const HERO_SLIDES = [
         titlePrefix: 'Deposit in 5 Seconds. ',
         titleHighlight: 'Withdraw Directly to Bank.',
         description: 'Add money using Google Pay, PhonePe, or Paytm with zero extra fees. When you win, get your cash directly in your bank account within minutes.',
-        primaryCta: { label: 'Play Rocket Game', icon: '🚀', to: '/crash' },
+        primaryCta: { label: 'Play Aviator Game', icon: '✈️', to: '/crash' },
         secondaryCta: null,
         navLabel: 'UPI & Fast Withdrawals',
         stats: [
@@ -124,13 +124,13 @@ const HERO_SLIDES = [
     },
     {
         id: 'crash-multipliers',
-        badge: '🚀 INDIA’S #1 ROCKET GAME',
-        titlePrefix: 'Watch Rocket Fly & ',
-        titleHighlight: 'Cash Out Before It Crashes!',
-        description: 'Watch the rocket fly higher and multiply your money: 2x, 5x, 10x, 100x! Click Cash Out anytime to collect your profit before it blasts. Quick rounds and big wins!',
-        primaryCta: { label: 'Play Rocket Now', icon: '🚀', to: '/crash' },
+        badge: '✈️ INDIA’S #1 AVIATOR GAME',
+        titlePrefix: 'Watch Plane Fly & ',
+        titleHighlight: 'Cash Out Before It Flies Away!',
+        description: 'Watch the Aviator plane fly higher and multiply your money: 2x, 5x, 10x, 100x! Click Cash Out anytime to collect your profit before it flies away. Quick rounds and big wins!',
+        primaryCta: { label: 'Play Aviator Now', icon: '✈️', to: '/crash' },
         secondaryCta: { label: 'Claim ₹100 & Play', icon: '🎮', to: '/crash' },
-        navLabel: 'Rocket Crash Game',
+        navLabel: 'Aviator Game',
         stats: [
             { label: 'Big Win Multipliers', value: 'Up to 1,000x', icon: '⚡' },
             { label: 'Fast 10-Second Rounds', value: 'Quick Rounds', icon: '⏱️' },
@@ -139,13 +139,13 @@ const HERO_SLIDES = [
         ],
         showcase: {
             type: 'crash',
-            tag: 'LIVE ROCKET ROUND',
-            title: 'Rocket Flying High',
+            tag: 'LIVE AVIATOR ROUND',
+            title: 'Aviator Plane Flying High',
             multiplier: '24.50x',
             status: 'Flying High Now',
             players: '2,400+ Playing Now',
             topWin: '₹3,40,000 Won Today',
-            cta: 'Launch Rocket Now',
+            cta: 'Launch Aviator Now',
             to: '/crash'
         }
     },
@@ -420,7 +420,7 @@ function HomePage() {
                                 </div>
                                 <div className="crash-multiplier-preview">
                                     <span className="crash-mult-val">{currentSlide.showcase.multiplier}</span>
-                                    <span className="crash-mult-label">Live Rocket Multiplier</span>
+                                    <span className="crash-mult-label">Live Aviator Multiplier</span>
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">

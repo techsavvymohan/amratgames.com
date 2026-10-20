@@ -203,8 +203,10 @@ export class WalletRepository extends BaseRepository {
         let refundTx = null
         if (user) {
             if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
+            const curr = String(w.currency || 'INR').toUpperCase()
+            const precision = curr === 'BTC' ? 8 : (curr === 'USDT' ? 4 : 2)
             const currentBal = user.balances[w.currency] || 0
-            const refundedBal = parseFloat((currentBal + w.amount).toFixed(4))
+            const refundedBal = parseFloat((currentBal + w.amount).toFixed(precision))
             user.balances[w.currency] = refundedBal
 
             refundTx = {
@@ -394,8 +396,15 @@ export class WalletRepository extends BaseRepository {
             `Deposit Verified via ${deposit.paymentMethod} (UTR: ${deposit.utrNumber || 'Verified'})`
         )
 
-        // 2. Accumulate legitimate totalDeposited (now unlocking withdrawals)
-        const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + deposit.amount).toFixed(2))
+        // 2. Accumulate legitimate totalDeposited in INR equivalent (now unlocking withdrawals)
+        const depCurr = String(deposit.currency || 'INR').toUpperCase()
+        let depositInr = deposit.amount
+        if (depCurr === 'USDT') depositInr = deposit.amount * 90.0
+        else if (depCurr === 'BTC') depositInr = deposit.amount * 8500000.0
+        else if (depCurr === 'AMRAT') depositInr = 0
+
+        const newTotalDeposit = parseFloat(((user.totalDeposited || 0) + depositInr).toFixed(2))
+        user.totalDeposited = newTotalDeposit
         this.db.updateUser(user.id, { totalDeposited: newTotalDeposit })
 
         // 3. Update original transaction

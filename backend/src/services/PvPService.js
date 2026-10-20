@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js'
 import { broadcastEvent } from '../websocket.js'
 import { chatService } from './ChatService.js'
 import { houseVaultService } from './HouseVaultService.js'
+import { bankrollRisk } from './BankrollRiskService.js'
 
 export class PvPService {
     constructor() {
@@ -48,14 +49,16 @@ export class PvPService {
             throw err
         }
 
+        const minStake = bankrollRisk.getMinBet(currency)
+        const maxStake = bankrollRisk.getMaxBet(currency)
         const parsedStake = parseFloat(stake)
-        if (isNaN(parsedStake) || parsedStake < this.minStake) {
-            const err = new Error(`Minimum duel stake is ₹${this.minStake}`)
+        if (isNaN(parsedStake) || parsedStake < minStake) {
+            const err = new Error(`Minimum duel stake is ${minStake} ${currency}`)
             err.status = 400
             throw err
         }
-        if (parsedStake > this.maxStake) {
-            const err = new Error(`Maximum duel stake is ₹${this.maxStake.toLocaleString('en-IN')}`)
+        if (parsedStake > maxStake) {
+            const err = new Error(`Maximum duel stake is ${maxStake} ${currency}`)
             err.status = 400
             throw err
         }
@@ -67,12 +70,12 @@ export class PvPService {
             const u = db.findUserById(userId)
             const currentBal = u?.balances?.[currency] || 0
             if (currentBal < parsedStake) {
-                const err = new Error(`Insufficient ${currency} balance (Available: ₹${currentBal.toLocaleString('en-IN')})`)
+                const err = new Error(`Insufficient ${currency} balance (Available: ${currentBal} ${currency})`)
                 err.status = 400
                 throw err
             }
 
-            db.updateUserBalance(userId, currency, -parsedStake, `PvP Coin Toss Stake Lock (₹${parsedStake})`)
+            db.updateUserBalance(userId, currency, -parsedStake, `PvP Coin Toss Stake Lock (${parsedStake} ${currency})`)
             return u.balances
         })
 
@@ -81,6 +84,7 @@ export class PvPService {
         const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
         const duelId = 'pvp_' + Date.now().toString(36) + crypto.randomBytes(3).toString('hex')
 
+        const decimals = bankrollRisk.getCurrencyDecimals(currency)
         const duel = {
             id: duelId,
             game: 'coin-toss',
@@ -93,10 +97,10 @@ export class PvPService {
             opponentId: null,
             opponentUsername: null,
             opponentChoice: null,
-            totalPot: parseFloat((parsedStake * 2).toFixed(2)),
+            totalPot: parseFloat((parsedStake * 2).toFixed(decimals)),
             houseRakeRate: this.houseRakeRate,
-            houseRakeAmount: parseFloat((parsedStake * 2 * this.houseRakeRate).toFixed(2)),
-            winnerPayout: parseFloat(((parsedStake * 2) * (1 - this.houseRakeRate)).toFixed(2)),
+            houseRakeAmount: parseFloat((parsedStake * 2 * this.houseRakeRate).toFixed(decimals)),
+            winnerPayout: parseFloat(((parsedStake * 2) * (1 - this.houseRakeRate)).toFixed(decimals)),
             winnerId: null,
             winnerUsername: null,
             loserId: null,
@@ -178,12 +182,12 @@ export class PvPService {
             const u = db.findUserById(userId)
             const currentBal = u?.balances?.[duel.currency] || 0
             if (currentBal < duel.stake) {
-                const err = new Error(`Insufficient ${duel.currency} balance to join duel (Required: ₹${duel.stake.toLocaleString('en-IN')})`)
+                const err = new Error(`Insufficient ${duel.currency} balance to join duel (Required: ${duel.stake} ${duel.currency})`)
                 err.status = 400
                 throw err
             }
 
-            db.updateUserBalance(userId, duel.currency, -duel.stake, `PvP Coin Toss Stake Lock (₹${duel.stake})`)
+            db.updateUserBalance(userId, duel.currency, -duel.stake, `PvP Coin Toss Stake Lock (${duel.stake} ${duel.currency})`)
         })
 
         // Opponent receives the opposite side
@@ -212,35 +216,57 @@ export class PvPService {
         const loserId = isCreatorWinner ? duel.opponentId : duel.creatorId
         const loserUsername = isCreatorWinner ? duel.opponentUsername : duel.creatorUsername
 
-        const totalPot = parseFloat((duel.stake * 2).toFixed(2))
-        const houseRakeAmount = parseFloat((totalPot * this.houseRakeRate).toFixed(2))
-        const winnerPayout = parseFloat((totalPot - houseRakeAmount).toFixed(2))
+        const decimals = bankrollRisk.getCurrencyDecimals(duel.currency)
+        const totalPot = parseFloat((duel.stake * 2).toFixed(decimals))
+        const houseRakeAmount = parseFloat((totalPot * this.houseRakeRate).toFixed(decimals))
+        const winnerPayout = parseFloat((totalPot - houseRakeAmount).toFixed(decimals))
 
         // Credit winner atomically
         await db.withUserLock(winnerId, async () => {
-            db.updateUserBalance(winnerId, duel.currency, winnerPayout, `PvP Coin Toss Duel Victory (Pot: ₹${totalPot}, Rake: ₹${houseRakeAmount})`)
+            db.updateUserBalance(winnerId, duel.currency, winnerPayout, `PvP Coin Toss Duel Victory (Pot: ${totalPot} ${duel.currency}, Rake: ${houseRakeAmount} ${duel.currency})`)
         })
 
         // Accumulate turnover for both players (contributes to AML and VIP progression)
+        const curr = String(duel.currency || 'INR').toUpperCase()
+        let stakeInr = duel.stake
+        if (curr === 'USDT') stakeInr = duel.stake * 90.0
+        else if (curr === 'BTC') stakeInr = duel.stake * 8500000.0
+        else if (curr === 'AMRAT') stakeInr = 0
+
         const creator = db.findUserById(duel.creatorId)
-        if (creator) {
-            creator.totalWagered = parseFloat(((creator.totalWagered || 0) + duel.stake).toFixed(2))
+        if (creator && curr !== 'AMRAT') {
+            creator.totalWagered = parseFloat(((creator.totalWagered || 0) + stakeInr).toFixed(2))
+            if (db.accumulateWagerRewards) db.accumulateWagerRewards(creator, duel.stake, duel.currency)
         }
         const opponentRecord = db.findUserById(duel.opponentId)
-        if (opponentRecord) {
-            opponentRecord.totalWagered = parseFloat(((opponentRecord.totalWagered || 0) + duel.stake).toFixed(2))
+        if (opponentRecord && curr !== 'AMRAT') {
+            opponentRecord.totalWagered = parseFloat(((opponentRecord.totalWagered || 0) + stakeInr).toFixed(2))
+            if (db.accumulateWagerRewards) db.accumulateWagerRewards(opponentRecord, duel.stake, duel.currency)
         }
 
         // Track platform revenue and statistics
+        let potInr = totalPot
+        let rakeInr = houseRakeAmount
+        if (curr === 'USDT') {
+            potInr = totalPot * 90.0
+            rakeInr = houseRakeAmount * 90.0
+        } else if (curr === 'BTC') {
+            potInr = totalPot * 8500000.0
+            rakeInr = houseRakeAmount * 8500000.0
+        } else if (curr === 'AMRAT') {
+            potInr = 0
+            rakeInr = 0
+        }
+
         if (!db.data.stats) db.data.stats = {}
-        db.data.stats.totalPvpVolume = parseFloat(((db.data.stats.totalPvpVolume || 0) + totalPot).toFixed(2))
-        db.data.stats.totalRakeCollected = parseFloat(((db.data.stats.totalRakeCollected || 0) + houseRakeAmount).toFixed(2))
+        db.data.stats.totalPvpVolume = parseFloat(((db.data.stats.totalPvpVolume || 0) + potInr).toFixed(2))
+        db.data.stats.totalRakeCollected = parseFloat(((db.data.stats.totalRakeCollected || 0) + rakeInr).toFixed(2))
         db.data.stats.totalDuelsResolved = (db.data.stats.totalDuelsResolved || 0) + 1
 
         // Route house edge yield to Community House Vault
         try {
-            if (houseVaultService && houseVaultService.distributeGameYield) {
-                houseVaultService.distributeGameYield(totalPot)
+            if (houseVaultService && houseVaultService.distributeGameYield && potInr > 0) {
+                houseVaultService.distributeGameYield(potInr)
             }
         } catch {}
 
@@ -313,7 +339,7 @@ export class PvPService {
 
         // Refund stake to creator
         const balanceResult = await db.withUserLock(userId, async () => {
-            db.updateUserBalance(userId, duel.currency, duel.stake, `PvP Duel Cancelled (Stake Refund: ₹${duel.stake})`)
+            db.updateUserBalance(userId, duel.currency, duel.stake, `PvP Duel Cancelled (Stake Refund: ${duel.stake} ${duel.currency})`)
             const u = db.findUserById(userId)
             return u?.balances
         })
@@ -340,7 +366,7 @@ export class PvPService {
             if (duel.status === 'open' && new Date(duel.expiresAt) < now) {
                 try {
                     await db.withUserLock(duel.creatorId, async () => {
-                        db.updateUserBalance(duel.creatorId, duel.currency, duel.stake, `PvP Duel Expired (Stake Refund: ₹${duel.stake})`)
+                        db.updateUserBalance(duel.creatorId, duel.currency, duel.stake, `PvP Duel Expired (Stake Refund: ${duel.stake} ${duel.currency})`)
                     })
                     duel.status = 'expired'
                     this.activeDuels.delete(id)
