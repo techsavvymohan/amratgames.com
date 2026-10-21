@@ -597,7 +597,7 @@ function HomePage() {
                                 </div>
                                 <div className="coin-preview-showcase" style={{ textAlign: 'center', padding: '12px 0 8px 0' }}>
                                     <img
-                                        src={getGameCoverUrl('/images/coin-toss.jpg')}
+                                        src={getGameCoverUrl('/images/coin-toss-v2.jpg')}
                                         alt="Coin Toss Banner"
                                         style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '10px' }}
                                     />

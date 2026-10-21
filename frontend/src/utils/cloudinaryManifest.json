@@ -49,15 +49,25 @@
     "height": 1024,
     "version": 1792395459
   },
+  "/images/coin-toss-v2.jpg": {
+    "publicId": "amratgames/images/coin-toss-v2",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556484/amratgames/images/coin-toss-v2.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556484/amratgames/images/coin-toss-v2.jpg",
+    "format": "jpg",
+    "bytes": 918066,
+    "width": 896,
+    "height": 1200,
+    "version": 1792556484
+  },
   "/images/coin-toss.jpg": {
     "publicId": "amratgames/images/coin-toss",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395460/amratgames/images/coin-toss.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395460/amratgames/images/coin-toss.jpg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556485/amratgames/images/coin-toss.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556485/amratgames/images/coin-toss.jpg",
     "format": "jpg",
-    "bytes": 964382,
-    "width": 1376,
-    "height": 768,
-    "version": 1792395460
+    "bytes": 918066,
+    "width": 896,
+    "height": 1200,
+    "version": 1792556485
   },
   "/images/coins/coin_bronze.svg": {
     "publicId": "amratgames/images/coins/coin_bronze",
@@ -129,25 +139,25 @@
     "height": 1200,
     "version": 1792395476
   },
-  "/images/crash.avif": {
-    "publicId": "amratgames/images/crash",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395478/amratgames/images/crash.avif",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395478/amratgames/images/crash.avif",
-    "format": "avif",
-    "bytes": 36282,
-    "width": 1086,
-    "height": 1448,
-    "version": 1792395478
+  "/images/crash-v2.jpg": {
+    "publicId": "amratgames/images/crash-v2",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556504/amratgames/images/crash-v2.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556504/amratgames/images/crash-v2.jpg",
+    "format": "jpg",
+    "bytes": 766510,
+    "width": 896,
+    "height": 1200,
+    "version": 1792556504
   },
   "/images/crash.jpg": {
     "publicId": "amratgames/images/crash",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395478/amratgames/images/crash.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395478/amratgames/images/crash.jpg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556506/amratgames/images/crash.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556506/amratgames/images/crash.jpg",
     "format": "jpg",
-    "bytes": 431410,
+    "bytes": 766510,
     "width": 896,
     "height": 1200,
-    "version": 1792395478
+    "version": 1792556506
   },
   "/images/dragon-mascot.jpg": {
     "publicId": "amratgames/images/dragon-mascot",
@@ -261,23 +271,23 @@
   },
   "/images/hero.avif": {
     "publicId": "amratgames/images/hero",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395493/amratgames/images/hero.avif",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395493/amratgames/images/hero.avif",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556520/amratgames/images/hero.avif",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556520/amratgames/images/hero.avif",
     "format": "avif",
     "bytes": 66789,
     "width": 2172,
     "height": 724,
-    "version": 1792395493
+    "version": 1792556520
   },
   "/images/hero.jpg": {
     "publicId": "amratgames/images/hero",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395496/amratgames/images/hero.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395496/amratgames/images/hero.jpg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556521/amratgames/images/hero.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556521/amratgames/images/hero.jpg",
     "format": "jpg",
     "bytes": 718100,
     "width": 1376,
     "height": 768,
-    "version": 1792395496
+    "version": 1792556521
   },
   "/images/landing-hero.jpg": {
     "publicId": "amratgames/images/landing-hero",
@@ -289,25 +299,35 @@
     "height": 768,
     "version": 1792395497
   },
-  "/images/limbo.jpg": {
-    "publicId": "amratgames/images/limbo",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395499/amratgames/images/limbo.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395499/amratgames/images/limbo.jpg",
+  "/images/limbo-v2.jpg": {
+    "publicId": "amratgames/images/limbo-v2",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556524/amratgames/images/limbo-v2.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556524/amratgames/images/limbo-v2.jpg",
     "format": "jpg",
-    "bytes": 581778,
+    "bytes": 760471,
     "width": 896,
     "height": 1200,
-    "version": 1792395499
+    "version": 1792556524
+  },
+  "/images/limbo.jpg": {
+    "publicId": "amratgames/images/limbo",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556525/amratgames/images/limbo.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556525/amratgames/images/limbo.jpg",
+    "format": "jpg",
+    "bytes": 760471,
+    "width": 896,
+    "height": 1200,
+    "version": 1792556525
   },
   "/images/limbo.svg": {
     "publicId": "amratgames/images/limbo",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395500/amratgames/images/limbo.svg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395500/amratgames/images/limbo.svg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556526/amratgames/images/limbo.svg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556526/amratgames/images/limbo.svg",
     "format": "svg",
     "bytes": 3726,
     "width": 450,
     "height": 600,
-    "version": 1792395500
+    "version": 1792556526
   },
   "/images/mines/bomb.svg": {
     "publicId": "amratgames/images/mines/bomb",
@@ -341,43 +361,43 @@
   },
   "/images/mines.avif": {
     "publicId": "amratgames/images/mines",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395516/amratgames/images/mines.avif",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395516/amratgames/images/mines.avif",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556542/amratgames/images/mines.avif",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556542/amratgames/images/mines.avif",
     "format": "avif",
     "bytes": 27501,
     "width": 1086,
     "height": 1448,
-    "version": 1792395516
+    "version": 1792556542
   },
   "/images/mines.jpg": {
     "publicId": "amratgames/images/mines",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395517/amratgames/images/mines.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395517/amratgames/images/mines.jpg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556543/amratgames/images/mines.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556543/amratgames/images/mines.jpg",
     "format": "jpg",
     "bytes": 531376,
     "width": 896,
     "height": 1200,
-    "version": 1792395517
+    "version": 1792556543
   },
   "/images/plinko.avif": {
     "publicId": "amratgames/images/plinko",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395518/amratgames/images/plinko.avif",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395518/amratgames/images/plinko.avif",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556544/amratgames/images/plinko.avif",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556544/amratgames/images/plinko.avif",
     "format": "avif",
     "bytes": 38669,
     "width": 1086,
     "height": 1448,
-    "version": 1792395518
+    "version": 1792556544
   },
   "/images/plinko.jpg": {
     "publicId": "amratgames/images/plinko",
-    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792395519/amratgames/images/plinko.jpg",
-    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792395519/amratgames/images/plinko.jpg",
+    "secureUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/v1792556549/amratgames/images/plinko.jpg",
+    "optimizedUrl": "https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto/v1792556549/amratgames/images/plinko.jpg",
     "format": "jpg",
     "bytes": 645153,
     "width": 896,
     "height": 1200,
-    "version": 1792395519
+    "version": 1792556549
   },
   "/images/spaceship.png": {
     "publicId": "amratgames/images/spaceship",
