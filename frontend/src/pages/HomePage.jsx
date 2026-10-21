@@ -200,6 +200,135 @@ const HERO_SLIDES = [
     }
 ]
 
+function AviatorShowcaseWidget({ showcase }) {
+    const [multiplier, setMultiplier] = useState(24.50)
+
+    useEffect(() => {
+        let current = 24.50
+        const interval = setInterval(() => {
+            current += 0.08 + Math.random() * 0.06
+            if (current > 48.0) {
+                current = 1.85 + Math.random() * 1.5
+            }
+            setMultiplier(current)
+        }, 110)
+        return () => clearInterval(interval)
+    }, [])
+
+    return (
+        <div className="showcase-card showcase-crash">
+            <div className="showcase-top-rim" />
+            <div className="showcase-header">
+                <div className="showcase-badge-group">
+                    <span className="live-radar-ping">
+                        <span className="radar-circle" />
+                        <span className="radar-dot" />
+                    </span>
+                    <span className="showcase-tag">LIVE AVIATOR ROUND</span>
+                </div>
+                <span className="showcase-live-pill is-pulse">
+                    <span className="live-dot-green" />
+                    <span>AIRBORNE</span>
+                </span>
+            </div>
+
+            {/* Flight Radar Arena */}
+            <div className="aviator-radar-arena">
+                <div className="aviator-radar-grid" />
+
+                <svg className="aviator-radar-canvas" viewBox="0 0 320 135" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="flightCurveGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#f5af19" stopOpacity="0.4" />
+                            <stop offset="50%" stopColor="#ef4444" stopOpacity="0.9" />
+                            <stop offset="100%" stopColor="#f43f5e" stopOpacity="1" />
+                        </linearGradient>
+                        <linearGradient id="flightAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.32" />
+                            <stop offset="100%" stopColor="#0b1120" stopOpacity="0.0" />
+                        </linearGradient>
+                        <filter id="flightGlow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3.5" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    {/* Flight Radar Altitude Level Guides */}
+                    <line x1="16" y1="110" x2="304" y2="110" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                    <line x1="16" y1="70" x2="304" y2="70" stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" />
+                    <line x1="16" y1="30" x2="304" y2="30" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+
+                    {/* Shaded Flight Area */}
+                    <path d="M 16 112 Q 130 106 270 24 L 270 112 Z" fill="url(#flightAreaGrad)" />
+
+                    {/* Flight Trajectory Curve */}
+                    <path
+                        d="M 16 112 Q 130 106 270 24"
+                        stroke="url(#flightCurveGrad)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        filter="url(#flightGlow)"
+                    />
+
+                    {/* Ascending Red & Gold Supersonic Jet */}
+                    <g transform="translate(266, 20) rotate(-22)">
+                        {/* Thruster exhaust glow */}
+                        <circle cx="-5" cy="8" r="4.5" fill="#fb923c" className="jet-exhaust-outer" />
+                        <circle cx="-2" cy="8" r="2.5" fill="#fef08a" className="jet-exhaust-inner" />
+                        {/* Fuselage */}
+                        <path d="M 2 8 L 14 8 L 22 10 L 26 8 L 22 6 L 14 8 Z" fill="#ffffff" />
+                        {/* Main swept wings */}
+                        <path d="M 12 8 L 4 0 L 7 0 L 16 8 L 7 16 L 4 16 Z" fill="#f5af19" />
+                        {/* Stabilizer fins */}
+                        <path d="M 3 8 L 0 3 L 2 3 L 5 8 Z" fill="#ef4444" />
+                    </g>
+                </svg>
+
+                {/* Overlaid Live Multiplier HUD */}
+                <div className="aviator-hud-overlay">
+                    <div className="aviator-live-mult">
+                        <span className="mult-number">{multiplier.toFixed(2)}</span>
+                        <span className="mult-suffix">x</span>
+                    </div>
+                    <div className="aviator-hud-tag">
+                        <span className="hud-beacon" />
+                        <span>LIVE FLIGHT ALTITUDE</span>
+                    </div>
+                </div>
+
+                <div className="aviator-telemetry-badge">
+                    <span>⚡ 1-TAP CASHOUT</span>
+                </div>
+            </div>
+
+            {/* Live Stats Row */}
+            <div className="showcase-stats-row">
+                <div className="showcase-stat">
+                    <div className="stat-icon-wrap">👥</div>
+                    <div className="stat-content">
+                        <span className="stat-label">Active Bets</span>
+                        <span className="stat-val">{showcase?.players || '2,400+ Live'}</span>
+                    </div>
+                </div>
+                <div className="showcase-stat">
+                    <div className="stat-icon-wrap gold">🏆</div>
+                    <div className="stat-content">
+                        <span className="stat-label">Top Payout</span>
+                        <span className="stat-val">{showcase?.topWin || '₹3,40,000 Won'}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <Link to={showcase?.to || '/crash'} className="showcase-cta-btn aviator-cta">
+                <span className="cta-icon">✈️</span>
+                <span className="cta-text">Take Flight & Cash Out</span>
+                <span className="cta-arrow">→</span>
+            </Link>
+        </div>
+    )
+}
+
 function HomePage() {
     const { openWalletModal } = useWallet()
     const { user, openAuthModal } = useAuth() || {}
@@ -375,6 +504,7 @@ function HomePage() {
                     <div className="hero-feature-showcase" aria-hidden="false">
                         {currentSlide.showcase?.type === 'deposit' && (
                             <div className="showcase-card showcase-deposit">
+                                <div className="showcase-top-rim" />
                                 <div className="showcase-header">
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
                                     <span className="showcase-live-pill">⚡ Instant Credit</span>
@@ -421,33 +551,12 @@ function HomePage() {
                         )}
 
                         {currentSlide.showcase?.type === 'crash' && (
-                            <div className="showcase-card showcase-crash">
-                                <div className="showcase-header">
-                                    <span className="showcase-tag">{currentSlide.showcase.tag}</span>
-                                    <span className="showcase-live-pill is-pulse">🟢 {currentSlide.showcase.status}</span>
-                                </div>
-                                <div className="crash-multiplier-preview">
-                                    <span className="crash-mult-val">{currentSlide.showcase.multiplier}</span>
-                                    <span className="crash-mult-label">Live Aviator Multiplier</span>
-                                </div>
-                                <div className="showcase-stats-row">
-                                    <div className="showcase-stat">
-                                        <span className="stat-label">Active Players</span>
-                                        <span className="stat-val">{currentSlide.showcase.players}</span>
-                                    </div>
-                                    <div className="showcase-stat">
-                                        <span className="stat-label">Top Payout</span>
-                                        <span className="stat-val">{currentSlide.showcase.topWin}</span>
-                                    </div>
-                                </div>
-                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn">
-                                    <span>🚀</span> <span>Launch Rocket Now</span>
-                                </Link>
-                            </div>
+                            <AviatorShowcaseWidget showcase={currentSlide.showcase} />
                         )}
 
                         {currentSlide.showcase?.type === 'fair' && (
                             <div className="showcase-card showcase-fair">
+                                <div className="showcase-top-rim" />
                                 <div className="showcase-header">
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
                                     <span className="showcase-live-pill">🛡️ 100% Honest</span>
@@ -459,12 +568,18 @@ function HomePage() {
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">
-                                        <span className="stat-label">Winning Return</span>
-                                        <span className="stat-val">99% Return Rate</span>
+                                        <div className="stat-icon-wrap gold">⭐</div>
+                                        <div className="stat-content">
+                                            <span className="stat-label">Winning Return</span>
+                                            <span className="stat-val">99% Return Rate</span>
+                                        </div>
                                     </div>
                                     <div className="showcase-stat">
-                                        <span className="stat-label">Security</span>
-                                        <span className="stat-val">100% Safe Games</span>
+                                        <div className="stat-icon-wrap">🛡️</div>
+                                        <div className="stat-content">
+                                            <span className="stat-label">Security</span>
+                                            <span className="stat-val">100% Safe Games</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <Link to={currentSlide.showcase.to} className="showcase-cta-btn">
@@ -475,6 +590,7 @@ function HomePage() {
 
                         {currentSlide.showcase?.type === 'coin-toss' && (
                             <div className="showcase-card showcase-coin">
+                                <div className="showcase-top-rim" />
                                 <div className="showcase-header">
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
                                     <span className="showcase-live-pill is-pulse">🪙 1.96x Payout</span>
@@ -492,15 +608,21 @@ function HomePage() {
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">
-                                        <span className="stat-label">Win Multiplier</span>
-                                        <span className="stat-val" style={{ color: '#10b981' }}>1.96x Instant</span>
+                                        <div className="stat-icon-wrap gold">🪙</div>
+                                        <div className="stat-content">
+                                            <span className="stat-label">Win Multiplier</span>
+                                            <span className="stat-val" style={{ color: '#10b981' }}>1.96x Instant</span>
+                                        </div>
                                     </div>
                                     <div className="showcase-stat">
-                                        <span className="stat-label">House Edge</span>
-                                        <span className="stat-val">4% (96% RTP)</span>
+                                        <div className="stat-icon-wrap">⚖️</div>
+                                        <div className="stat-content">
+                                            <span className="stat-label">House Edge</span>
+                                            <span className="stat-val">4% (96% RTP)</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#0b0f19', fontWeight: '700' }}>
+                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f5af19, #d97706)', color: '#0b0f19', fontWeight: '700' }}>
                                     <span>🪙</span> <span>Flip Coin & Win Now</span>
                                 </Link>
                             </div>
