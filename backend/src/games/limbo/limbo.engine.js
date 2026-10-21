@@ -9,7 +9,7 @@ import { bankrollRisk } from '../../services/BankrollRiskService.js'
 export class LimboEngine {
     static evaluate({ betAmount, targetMultiplier, currency = 'INR', clientSeed, nonce, userId, userBets = [] }) {
         const target = Math.max(1.01, Math.min(parseFloat(targetMultiplier) || 2.0, 1000000.0))
-        const { hash, floatVal, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, floatVal, serverSeedHash, clientSeed: cSeed, nonce: cNonce } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
         const totalBet = parseFloat(betAmount) || 0
         const { consecutiveWins, isMartingale, penaltyFactor } = AntiExploit.analyzeUserPattern({
@@ -45,7 +45,9 @@ export class LimboEngine {
             payout: capped.payout,
             wasCapped: capped.wasCapped,
             hash,
-            roundEntropy
+            serverSeedHash,
+            clientSeed: cSeed,
+            nonce: cNonce
         }
     }
 }

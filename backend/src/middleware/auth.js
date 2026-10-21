@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { CONFIG } from '../config.js'
 import { db } from '../db/db.js'
+import { antiFraudService } from '../services/AntiFraudService.js'
 
 // In-memory token revocation blacklist (with automatic cleanup)
 const revokedTokens = new Map() // token -> expiryTimestamp
@@ -57,6 +58,16 @@ export function authenticate(req, res, next) {
         }
         req.user = user
         req.token = token
+
+        // Track IP and session fingerprint for anti-sybil & cashier protection
+        try {
+            antiFraudService.trackSession(user.id, {
+                ip: req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+                userAgent: req.headers['user-agent'] || '',
+                fingerprint: req.headers['x-device-fingerprint'] || ''
+            })
+        } catch {}
+
         next()
     } catch (err) {
         req.user = null

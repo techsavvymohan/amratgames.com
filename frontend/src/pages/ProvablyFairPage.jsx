@@ -24,7 +24,7 @@ export default function ProvablyFairPage() {
                 <nav className="legal-nav-bar" aria-label="Provably Fair Sections">
                     <a href="#what-is-provably-fair" className="legal-nav-pill">1. What is Provably Fair?</a>
                     <a href="#how-it-works" className="legal-nav-pill">2. Core Hashing Algorithm</a>
-                    <a href="#rtp-verification" className="legal-nav-pill">3. 99% RTP Math</a>
+                    <a href="#rtp-verification" className="legal-nav-pill">3. 98% RTP Math</a>
                     <a href="#step-by-step-audit" className="legal-nav-pill">4. Step-by-Step Audit</a>
                 </nav>
 
@@ -84,23 +84,23 @@ export default function ProvablyFairPage() {
                 <section id="rtp-verification" className="legal-card">
                     <h2>
                         <span>📊</span>
-                        <span>3. Transparent 99% Return to Player (RTP)</span>
+                        <span>3. Transparent 98% Return to Player (RTP)</span>
                     </h2>
                     <p>
-                        All flagship Amrat Originals are engineered with a certified <strong>99.00% Return to Player (RTP)</strong>, translating to an industry-lowest <strong>1.00% house edge</strong>.
+                        All flagship Amrat Originals are engineered with a certified <strong>98.00% Return to Player (RTP)</strong>, translating to an industry-leading <strong>2.00% house edge</strong>.
                     </p>
                     <ul>
-                        <li><strong>Aviator:</strong> 99% RTP with an exponential probability curve calculated as <code>e^(0.06 * t)</code> with a 1% instant crash probability at 1.00x.</li>
-                        <li><strong>Plinko:</strong> 99% RTP with symmetrical binomial probability across 8 to 16 rows.</li>
-                        <li><strong>Mines:</strong> 99% RTP with hyper-geometric combinatoric odds calculated after each uncovered diamond.</li>
-                        <li><strong>Limbo:</strong> 99% RTP where win probability equals <code>(99 / Target_Multiplier)%</code>.</li>
+                        <li><strong>Aviator:</strong> 98% RTP with an exponential probability curve calculated as <code>e^(0.06 * t)</code> with a 2% instant crash probability at 1.00x.</li>
+                        <li><strong>Plinko:</strong> 98% RTP with symmetrical binomial probability across 8 to 16 rows.</li>
+                        <li><strong>Mines:</strong> 98% RTP with hyper-geometric combinatoric odds calculated after each uncovered diamond.</li>
+                        <li><strong>Limbo:</strong> 98% RTP where win probability equals <code>(98 / Target_Multiplier)%</code>.</li>
                     </ul>
 
                     <div className="legal-callout gold">
                         <span className="callout-icon">🏆</span>
                         <div className="callout-text">
-                            <h4>Why 99% RTP Matters</h4>
-                            <p>Most online casinos run games at 92% to 95% RTP. AmratGames returns ₹99 for every ₹100 wagered across platform volume, maximizing entertainment value for our players.</p>
+                            <h4>Why 98% RTP Matters</h4>
+                            <p>Most online casinos run games at 92% to 95% RTP. AmratGames returns ₹98 for every ₹100 wagered across platform volume, maximizing entertainment value for our players.</p>
                         </div>
                     </div>
                 </section>

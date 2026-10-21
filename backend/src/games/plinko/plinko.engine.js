@@ -55,7 +55,7 @@ export class PlinkoEngine {
     static evaluate({ betAmount, rows = 16, risk = 'medium', currency = 'INR', clientSeed, nonce, userId, userBets = [] }) {
         const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))
         const riskLevel = ['low', 'medium', 'high'].includes(risk) ? risk : 'medium'
-        const { hash, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, serverSeedHash, clientSeed: cSeed, nonce: cNonce } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
         const totalBet = parseFloat(betAmount) || 0
         const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
@@ -67,16 +67,10 @@ export class PlinkoEngine {
         const path = []
         let rightBounces = 0
 
-        // Cryptographically unpredictable pin reflection per row using SHA-256 HMAC
+        // Cryptographically fair pin reflection per row using 4-hex-character chunks from HMAC-SHA256
         for (let i = 0; i < numRows; i++) {
-            const rowHmac = crypto.createHmac('sha256', hash)
-            rowHmac.update(`${i}:${roundEntropy || ''}`)
-            const rowDigest = rowHmac.digest('hex')
-            const intVal = parseInt(rowDigest.slice(0, 4), 16)
-
-            // Standard fair coin bounce per pin (100% Provably Fair)
-            const direction = (intVal % 2 === 1) ? 1 : 0
-
+            const chunk = hash.slice(i * 4, (i + 1) * 4) || '7fff'
+            const direction = (parseInt(chunk, 16) % 2 === 1) ? 1 : 0
             path.push(direction)
             if (direction === 1) rightBounces++
         }
@@ -98,7 +92,9 @@ export class PlinkoEngine {
             payout,
             won,
             hash,
-            roundEntropy
+            serverSeedHash,
+            clientSeed: cSeed,
+            nonce: cNonce
         }
     }
 }

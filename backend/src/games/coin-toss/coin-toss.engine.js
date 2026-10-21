@@ -8,7 +8,7 @@ import { AntiExploit } from '../core/AntiExploit.js'
  */
 export class CoinTossEngine {
     static evaluate({ betAmount, choice = 'heads', clientSeed, nonce, userId, userBets = [] }) {
-        const { hash, floatVal, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, floatVal, serverSeedHash, clientSeed: cSeed, nonce: cNonce } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
         const selectedChoice = String(choice).toLowerCase().trim() === 'tails' ? 'tails' : 'heads'
         const oppositeChoice = selectedChoice === 'heads' ? 'tails' : 'heads'
@@ -29,7 +29,9 @@ export class CoinTossEngine {
             payout,
             floatVal,
             hash,
-            roundEntropy
+            serverSeedHash,
+            clientSeed: cSeed,
+            nonce: cNonce
         }
     }
 }

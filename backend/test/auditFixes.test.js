@@ -119,12 +119,13 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
             userBets: [{ won: true }, { won: true }, { won: true }] // Simulate 3-win streak
         })
 
-        // Recompute expected cards directly from HMAC-SHA256 with roundEntropy
+        // Recompute expected cards directly from canonical HMAC-SHA256
         const serverSeed = gameEngine.getServerSeed()
-        const hmac = crypto.createHmac('sha256', serverSeed).update(`${clientSeed}:${nonce}:${result.roundEntropy}`).digest('hex')
+        const hmac = crypto.createHmac('sha256', serverSeed).update(`${clientSeed}:${nonce}`).digest('hex')
         const expectedDVal = (parseInt(hmac.slice(0, 4), 16) % 13) + 1
         const expectedTVal = (parseInt(hmac.slice(4, 8), 16) % 13) + 1
 
+        assert.equal(result.hash, hmac, 'Result hash must strictly match HMAC hash')
         assert.equal(result.dragon.value, expectedDVal, 'Dragon card value must strictly match HMAC hash')
         assert.equal(result.tiger.value, expectedTVal, 'Tiger card value must strictly match HMAC hash')
     })

@@ -4,11 +4,12 @@
 // =============================================================================
 
 class MemorySlidingWindowLimiter {
-    constructor({ windowMs = 60000, max = 60, message = 'Too many requests', keyPrefix = 'rl' }) {
+    constructor({ windowMs = 60000, max = 60, message = 'Too many requests', keyPrefix = 'rl', skipSuccessfulRequests = false }) {
         this.windowMs = windowMs
         this.max = max
         this.message = message
         this.keyPrefix = keyPrefix
+        this.skipSuccessfulRequests = skipSuccessfulRequests
         this.hits = new Map() // key -> [timestamps]
 
         // Sweep stale keys every 2 minutes
@@ -51,8 +52,18 @@ class MemorySlidingWindowLimiter {
                 })
             }
 
-            timestamps.push(now)
-            this.hits.set(key, timestamps)
+            if (this.skipSuccessfulRequests) {
+                res.on('finish', () => {
+                    if (res.statusCode >= 400) {
+                        const current = (this.hits.get(key) || []).filter(t => Date.now() - t < this.windowMs)
+                        current.push(Date.now())
+                        this.hits.set(key, current)
+                    }
+                })
+            } else {
+                timestamps.push(now)
+                this.hits.set(key, timestamps)
+            }
 
             res.setHeader('X-RateLimit-Limit', this.max)
             res.setHeader('X-RateLimit-Remaining', Math.max(0, this.max - timestamps.length))
@@ -64,12 +75,13 @@ class MemorySlidingWindowLimiter {
 
 // ── Specific Rate Limiters ──────────────────────────────────────────────────
 
-// 1. Login Limiter: Max 5 attempts per 15 minutes per IP & Login target
+// 1. Login Limiter: Max 5 failed attempts per 15 minutes per IP & Login target
 export const loginRateLimiter = new MemorySlidingWindowLimiter({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: 'Too many failed login attempts. Account temporarily locked for 15 minutes.',
-    keyPrefix: 'login'
+    keyPrefix: 'login',
+    skipSuccessfulRequests: true
 }).middleware((req) => {
     const ip = req.ip || req.headers['x-forwarded-for'] || 'ip'
     const login = req.body?.login || req.body?.email || req.body?.phone || ''

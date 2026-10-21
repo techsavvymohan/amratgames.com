@@ -14,6 +14,9 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
     const [verificationResult, setVerificationResult] = useState(null)
     const [errorMsg, setErrorMsg] = useState('')
 
+    const [serverSeedHash, setServerSeedHash] = useState('')
+    const [roundId, setRoundId] = useState('')
+
     // Pre-populate if initialData provided (e.g. from bet slip or game seed)
     useEffect(() => {
         if (!isOpen) return
@@ -24,6 +27,12 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
         if (initialData?.serverSeed) {
             setServerSeed(initialData.serverSeed)
         }
+        if (initialData?.serverSeedHash) {
+            setServerSeedHash(initialData.serverSeedHash)
+        }
+        if (initialData?.roundId) {
+            setRoundId(initialData.roundId)
+        }
         if (initialData?.clientSeed) {
             setClientSeed(initialData.clientSeed)
         }
@@ -31,13 +40,13 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
             setNonce(String(initialData.nonce))
         }
 
-        // If empty server seed, fetch public seed hash as placeholder
-        if (!serverSeed && !initialData?.serverSeed) {
+        // Fetch public seed hash if not already provided
+        if (!initialData?.serverSeedHash) {
             fetch('/api/games/provably-fair/seed')
                 .then((res) => res.json())
                 .then((data) => {
-                    if (data.serverSeedHash) {
-                        setServerSeed('amrat_genesis_provably_fair_secret_seed_2025_99rtp_unbreakable')
+                    if (data?.serverSeedHash) {
+                        setServerSeedHash(data.serverSeedHash)
                     }
                 })
                 .catch(() => {})
@@ -65,6 +74,7 @@ export default function ProvablyFairVerifierModal({ isOpen, onClose, initialData
                     serverSeed: serverSeed.trim(),
                     clientSeed: clientSeed.trim(),
                     nonce: parseInt(nonce, 10) || 1,
+                    roundId: roundId.trim() || undefined,
                     rows: parseInt(plinkoRows, 10) || 16,
                     risk: plinkoRisk,
                     minesCount: parseInt(minesCount, 10) || 3

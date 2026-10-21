@@ -14,8 +14,8 @@ export class AntiFraudService {
     trackSession(userId, { ip = '127.0.0.1', userAgent = '', fingerprint = '' } = {}) {
         if (!userId) return
 
-        // Clean IPv6 prefix
-        const cleanIp = ip.replace(/^.*:/, '')
+        // Clean IPv4-mapped IPv6 prefix (::ffff:1.2.3.4 -> 1.2.3.4), preserving native IPv6
+        const cleanIp = String(ip || '127.0.0.1').trim().replace(/^::ffff:/i, '')
 
         if (!this.ipMap.has(cleanIp)) {
             this.ipMap.set(cleanIp, new Set())

@@ -25,6 +25,7 @@ import { checkPlatformMaintenance } from './middleware/circuitBreaker.js'
 
 const app = express()
 app.disable('x-powered-by')
+app.set('trust proxy', 1)
 
 const server = http.createServer(app)
 server.keepAliveTimeout = 65000
@@ -43,9 +44,12 @@ app.use(compression({
     }
 }))
 app.use(cors({
-    origin: '*',
+    origin: CONFIG.isProduction && CONFIG.CORS_ORIGIN !== '*'
+        ? CONFIG.CORS_ORIGIN
+        : true,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Webhook-Signature', 'X-Signature']
 }))
 app.use(express.json({
     limit: '1mb',
@@ -63,7 +67,7 @@ app.get('/api/health', async (req, res) => {
                 status: 'online',
                 platform: 'AmratGames.com Gaming & Casino Engine',
                 version: '2.0.0',
-                rtp: db.data.settings?.rtp || 99,
+                rtp: db.data.settings?.rtp || 98,
                 serverTime: new Date().toISOString(),
                 activePlayers: db.data.users ? db.data.users.filter(u => !u.isBanned).length : 0,
                 tokenTreasuryRemaining: db.data.settings?.tokenTreasury?.treasuryBalance || 0,

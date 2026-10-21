@@ -5,6 +5,7 @@ import { CONFIG } from '../config.js'
 import { requireAuth } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
 import { automatedSettlement } from '../services/AutomatedSettlementService.js'
+import { webhookSignatureVerifier } from '../gateways/security/WebhookSignatureVerifier.js'
 
 const router = express.Router()
 
@@ -254,12 +255,12 @@ router.post('/webhook', async (req, res) => {
         const rawSignature = req.headers['x-webhook-signature'] || req.headers['webhook-signature'] || req.headers['x-signature']
         const secret = CONFIG.DODO_PAYMENTS_WEBHOOK_SECRET || CONFIG.JWT_SECRET
 
-        // Cryptographic HMAC-SHA256 signature verification if secret is configured in production
+        // Cryptographic constant-time HMAC-SHA256 signature verification if secret is configured in production
         if (secret && CONFIG.isProduction) {
-            const payload = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body)
-            const expectedSig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
-            if (!rawSignature || rawSignature !== expectedSig) {
-                return res.status(401).json({ success: false, error: 'Invalid or missing cryptographic webhook signature' })
+            const payload = req.rawBody || JSON.stringify(req.body)
+            const verification = webhookSignatureVerifier.verifyHmacSha256(payload, rawSignature, secret)
+            if (!verification.valid) {
+                return res.status(401).json({ success: false, error: `Invalid or missing cryptographic webhook signature: ${verification.error || 'unauthorized'}` })
             }
         }
 

@@ -24,7 +24,11 @@ function sendLocalClients(type, payload) {
 }
 
 export function initWebSocketServer(server) {
-    wss = new WebSocketServer({ server, path: '/ws' })
+    wss = new WebSocketServer({
+        server,
+        path: '/ws',
+        maxPayload: 1024 * 1024 // 1MB payload cap to prevent memory exhaustion DoS
+    })
 
     // Start synchronized multiplayer Crash room loop (only on primary worker instance)
     const isPrimaryInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0'
@@ -62,6 +66,9 @@ export function initWebSocketServer(server) {
 
     wss.on('connection', (ws) => {
         ws.isAlive = true
+        ws.messageCount = 0
+        ws.lastMessageReset = Date.now()
+
         ws.on('pong', () => {
             ws.isAlive = true
         })
@@ -77,6 +84,17 @@ export function initWebSocketServer(server) {
 
         ws.on('message', async (message) => {
             try {
+                // Rate limit: max 50 messages per second per socket connection
+                const now = Date.now()
+                if (now - ws.lastMessageReset > 1000) {
+                    ws.messageCount = 0
+                    ws.lastMessageReset = now
+                }
+                ws.messageCount++
+                if (ws.messageCount > 50) {
+                    return ws.send(JSON.stringify({ type: 'RATE_LIMIT_EXCEEDED', error: 'Too many messages sent. Please slow down.' }))
+                }
+
                 const data = JSON.parse(message)
                 if (data.type === 'PING') {
                     ws.isAlive = true

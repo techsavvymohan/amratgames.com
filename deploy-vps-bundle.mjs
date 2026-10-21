@@ -5,10 +5,14 @@ import path from 'node:path'
 const require = createRequire(import.meta.url)
 const { Client } = require('./backend/node_modules/ssh2')
 
-const VPS_HOST = '103.216.168.84'
-const VPS_PORT = 22
-const VPS_USER = 'root'
-const VPS_PASS = 'Hj@KvB8*hDQv$j!Z'
+const VPS_HOST = process.env.VPS_HOST || '103.216.168.84'
+const VPS_PORT = Number(process.env.VPS_PORT || 22)
+const VPS_USER = process.env.VPS_USERNAME || 'root'
+const VPS_PASS = process.env.VPS_PASSWORD || ''
+if (!VPS_PASS && !process.env.VPS_SSH_KEY) {
+    console.error('[ERROR] VPS_PASSWORD or VPS_SSH_KEY environment variable is required.')
+    process.exit(1)
+}
 const BUNDLE_PATH = path.resolve('deploy_update.bundle')
 const REMOTE_DIR = '/var/www/amratgames.com'
 const REMOTE_BUNDLE = '/tmp/deploy_update.bundle'

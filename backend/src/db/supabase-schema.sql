@@ -102,8 +102,8 @@ CREATE INDEX IF NOT EXISTS idx_airdrops_created_at ON public.airdrops(created_at
 -- 7. PLATFORM SETTINGS & PROVABLY FAIR SEEDS
 CREATE TABLE IF NOT EXISTS public.platform_settings (
     id VARCHAR(32) PRIMARY KEY DEFAULT 'default',
-    rtp NUMERIC(6, 2) NOT NULL DEFAULT 99.00,
-    house_edge NUMERIC(6, 2) NOT NULL DEFAULT 1.00,
+    rtp NUMERIC(6, 2) NOT NULL DEFAULT 98.00,
+    house_edge NUMERIC(6, 2) NOT NULL DEFAULT 2.00,
     maintenance_mode BOOLEAN NOT NULL DEFAULT FALSE,
     active_announcements TEXT,
     current_server_seed TEXT,
@@ -126,18 +126,51 @@ CREATE TABLE IF NOT EXISTS public.otps (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 9. Insert Initial Platform Settings row if not exists
-INSERT INTO public.platform_settings (id, rtp, house_edge, maintenance_mode, active_announcements, current_server_seed, server_seed_hash)
+-- 9. DEPOSITS TABLE
+CREATE TABLE IF NOT EXISTS public.deposits (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) REFERENCES public.users(id) ON DELETE CASCADE,
+    username VARCHAR(64) NOT NULL,
+    amount NUMERIC(20, 4) NOT NULL,
+    currency VARCHAR(16) NOT NULL DEFAULT 'INR',
+    method VARCHAR(64) NOT NULL,
+    utr VARCHAR(128),
+    status VARCHAR(32) NOT NULL DEFAULT 'completed',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_deposits_user_id ON public.deposits(user_id);
+CREATE INDEX IF NOT EXISTS idx_deposits_created_at ON public.deposits(created_at DESC);
+
+-- 10. WITHDRAWALS TABLE
+CREATE TABLE IF NOT EXISTS public.withdrawals (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) REFERENCES public.users(id) ON DELETE CASCADE,
+    username VARCHAR(64) NOT NULL,
+    amount NUMERIC(20, 4) NOT NULL,
+    currency VARCHAR(16) NOT NULL DEFAULT 'INR',
+    payout_method VARCHAR(64) NOT NULL,
+    payout_details JSONB,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    reference_id VARCHAR(128),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_withdrawals_user_id ON public.withdrawals(user_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON public.withdrawals(status);
+CREATE INDEX IF NOT EXISTS idx_withdrawals_created_at ON public.withdrawals(created_at DESC);
+
+-- 11. Insert Initial Platform Settings row if not exists
+INSERT INTO public.platform_settings (id, rtp, house_edge, maintenance_mode, active_announcements)
 VALUES (
     'default',
-    99.00,
-    1.00,
+    98.00,
+    2.00,
     FALSE,
-    '👑 Welcome to AmratGames — Provably Fair Gaming',
-    'amrat_genesis_provably_fair_secret_seed_2025_99rtp_unbreakable',
-    encode(sha256('amrat_genesis_provably_fair_secret_seed_2025_99rtp_unbreakable'::bytea), 'hex')
+    '👑 Welcome to AmratGames — Provably Fair Gaming'
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET rtp = 98.00, house_edge = 2.00;
 
--- 10. Enable Supabase Realtime for live bet feed
+-- 12. Enable Supabase Realtime for live bet feed
 ALTER PUBLICATION supabase_realtime ADD TABLE public.bets;

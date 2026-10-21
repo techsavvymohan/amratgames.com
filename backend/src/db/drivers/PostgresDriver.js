@@ -1,4 +1,5 @@
 import { DatabaseAdapter } from '../DatabaseAdapter.js'
+import { JsonFileDriver } from './JsonFileDriver.js'
 import { CONFIG } from '../../config.js'
 
 /**
@@ -20,6 +21,7 @@ export class PostgresDriver extends DatabaseAdapter {
         this.pool = null
         this.client = null
         this.driverMode = 'direct_sql'
+        this.fileFallback = new JsonFileDriver(config)
     }
 
     getDriverName() {
@@ -156,16 +158,15 @@ export class PostgresDriver extends DatabaseAdapter {
     }
 
     loadState() {
-        // In PostgreSQL mode, state is queried dynamically per table
-        return null
+        return this.fileFallback.loadState()
     }
 
     async flushState(state) {
-        // No-op for direct relational model (mutations are written immediately)
+        return this.fileFallback.flushState(state)
     }
 
     flushStateSync(state) {
-        // No-op for direct relational model
+        return this.fileFallback.flushStateSync(state)
     }
 }
 

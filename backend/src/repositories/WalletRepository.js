@@ -125,6 +125,7 @@ export class WalletRepository extends BaseRepository {
         this.persist()
         this.enqueueOutbox('syncUser', user)
         this.enqueueOutbox('syncTransaction', tx)
+        this.enqueueOutbox('syncWithdrawal', withdrawal)
 
         broadcastEvent('NEW_WITHDRAWAL_REQUEST', withdrawal)
 
@@ -183,6 +184,7 @@ export class WalletRepository extends BaseRepository {
 
         this.persist()
         if (tx) this.enqueueOutbox('syncTransaction', tx)
+        this.enqueueOutbox('syncWithdrawal', w)
 
         broadcastEvent('WITHDRAWAL_STATUS_UPDATED', w)
         return w
@@ -240,6 +242,7 @@ export class WalletRepository extends BaseRepository {
         }
 
         this.persist()
+        this.enqueueOutbox('syncWithdrawal', w)
         broadcastEvent('WITHDRAWAL_STATUS_UPDATED', w)
 
         return { withdrawal: w, user, refundTransaction: refundTx }
@@ -336,6 +339,7 @@ export class WalletRepository extends BaseRepository {
         this.persist()
 
         this.enqueueOutbox('syncTransaction', tx)
+        this.enqueueOutbox('syncDeposit', depositRecord)
 
         broadcastEvent('NEW_DEPOSIT_REQUEST', depositRecord)
 
@@ -419,6 +423,7 @@ export class WalletRepository extends BaseRepository {
 
         this.enqueueOutbox('syncUser', user)
         if (tx) this.enqueueOutbox('syncTransaction', tx)
+        this.enqueueOutbox('syncDeposit', deposit)
 
         broadcastEvent('DEPOSIT_STATUS_UPDATED', deposit)
 
@@ -443,6 +448,7 @@ export class WalletRepository extends BaseRepository {
         }
 
         this.persist()
+        this.enqueueOutbox('syncDeposit', deposit)
 
         broadcastEvent('DEPOSIT_STATUS_UPDATED', deposit)
 

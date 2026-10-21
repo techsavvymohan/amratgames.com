@@ -7,7 +7,7 @@ import { AntiExploit } from '../core/AntiExploit.js'
  */
 export class ColorMatchEngine {
     static evaluate({ betAmount, choice = 'green', bets, clientSeed, nonce, userId, userBets = [] }) {
-        const { hash, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, floatVal, serverSeedHash, clientSeed: cSeed, nonce: cNonce } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
         const totalBet = parseFloat(betAmount) || 0
         const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
@@ -88,7 +88,9 @@ export class ColorMatchEngine {
             multiplier,
             payout,
             hash,
-            roundEntropy
+            serverSeedHash,
+            clientSeed: cSeed,
+            nonce: cNonce
         }
     }
 }

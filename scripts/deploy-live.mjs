@@ -71,7 +71,7 @@ conn.on('ready', () => {
 });
 
 conn.on('keyboard-interactive', (name, instr, lang, prompts, finish) => {
-    finish(['Hj@KvB8*hDQv$j!Z']);
+    finish([process.env.VPS_PASSWORD || '']);
 });
 
 conn.on('error', (err) => {
@@ -83,7 +83,7 @@ conn.connect({
     host: '103.216.168.84',
     port: 22,
     username: 'root',
-    password: 'Hj@KvB8*hDQv$j!Z',
+    password: process.env.VPS_PASSWORD || '',
     tryKeyboard: true,
     readyTimeout: 60000,
     keepaliveInterval: 10000

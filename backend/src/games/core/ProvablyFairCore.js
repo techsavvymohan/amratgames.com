@@ -43,21 +43,23 @@ class ProvablyFairCore {
 
     /**
      * Compute HMAC-SHA256 outcome hash and uniform float in [0, 1)
-     * Incorporates cryptographic round-level entropy to guarantee 100% unpredictability
+     * Follows canonical Provably Fair standard: HMAC-SHA256(serverSeed, `${clientSeed}:${nonce}`)
      */
-    generateHmacFloat(clientSeed = 'amrat-player', nonce = 1, serverSeedOverride = null, roundEntropy = null) {
+    generateHmacFloat(clientSeed = 'amrat-player', nonce = 1, serverSeedOverride = null) {
         const serverSeed = serverSeedOverride || this.getServerSeed()
-        const entropy = roundEntropy || crypto.randomBytes(16).toString('hex')
-        const message = `${String(clientSeed).trim()}:${nonce}:${entropy}`
+        const cleanClientSeed = String(clientSeed || 'amrat-player').trim()
+        const cleanNonce = parseInt(nonce, 10) || 1
+        const message = `${cleanClientSeed}:${cleanNonce}`
         const hmac = crypto.createHmac('sha256', serverSeed)
         hmac.update(message)
         const hash = hmac.digest('hex')
+        const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
         // First 8 hex characters (32 bits) divided by 2^32 gives uniform float [0, 1)
         const intVal = parseInt(hash.slice(0, 8), 16)
         const floatVal = intVal / 0x100000000
 
-        return { hash, floatVal, serverSeed, roundEntropy: entropy }
+        return { hash, floatVal, serverSeed, serverSeedHash, clientSeed: cleanClientSeed, nonce: cleanNonce }
     }
 }
 

@@ -562,6 +562,58 @@ export class Database {
                 this.data.bets = mappedBets
             }
 
+            // 4. Fetch deposits
+            const { data: cloudDeposits, error: dErr } = await client
+                .from('deposits')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(200)
+
+            if (!dErr && cloudDeposits && cloudDeposits.length > 0) {
+                const mappedDeposits = cloudDeposits.map(d => ({
+                    id: d.id,
+                    userId: d.user_id,
+                    username: d.username,
+                    amount: parseFloat(d.amount),
+                    currency: d.currency || 'INR',
+                    paymentMethod: d.method,
+                    utrNumber: d.utr,
+                    status: d.status,
+                    createdAt: d.created_at
+                }))
+                const depMap = new Map()
+                for (const ld of (this.data.deposits || [])) depMap.set(ld.id, ld)
+                for (const cd of mappedDeposits) depMap.set(cd.id, cd)
+                this.data.deposits = Array.from(depMap.values())
+            }
+
+            // 5. Fetch withdrawals
+            const { data: cloudWithdrawals, error: wErr } = await client
+                .from('withdrawals')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(200)
+
+            if (!wErr && cloudWithdrawals && cloudWithdrawals.length > 0) {
+                const mappedWithdrawals = cloudWithdrawals.map(w => ({
+                    id: w.id,
+                    userId: w.user_id,
+                    username: w.username,
+                    amount: parseFloat(w.amount),
+                    currency: w.currency || 'INR',
+                    payoutMethod: w.payout_method,
+                    payoutDetails: w.payout_details,
+                    status: w.status,
+                    referenceId: w.reference_id,
+                    createdAt: w.created_at,
+                    updatedAt: w.updated_at
+                }))
+                const wdMap = new Map()
+                for (const lw of (this.data.withdrawals || [])) wdMap.set(lw.id, lw)
+                for (const cw of mappedWithdrawals) wdMap.set(cw.id, cw)
+                this.data.withdrawals = Array.from(wdMap.values())
+            }
+
             this.updateTreasurySupply()
             this.persist()
             return true

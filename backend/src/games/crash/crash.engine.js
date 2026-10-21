@@ -68,13 +68,12 @@ export class CrashEngine {
             throw new Error(riskCheck.error)
         }
         const nonce = provablyFairCore.getNextNonce(userId)
-        const { hash, floatVal, serverSeed, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
-        const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
+        const { hash, floatVal, serverSeed, serverSeedHash } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
-        // 99.00% RTP with 1% instant bust (Provably Fair HMAC-SHA256 standard)
+        // 98.00% RTP with 2% instant bust (Provably Fair HMAC-SHA256 standard)
         let crashPoint = 1.00
-        if (floatVal >= 0.01) {
-            crashPoint = Math.floor((99.0 / (1 - floatVal))) / 100
+        if (floatVal >= 0.02) {
+            crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
         }
         crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.00))
 

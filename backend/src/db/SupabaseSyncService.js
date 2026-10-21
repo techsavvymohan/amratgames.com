@@ -251,6 +251,100 @@ export class SupabaseSyncService {
     }
 
     /**
+     * Record a deposit in Supabase
+     */
+    async syncDeposit(deposit) {
+        const client = this.getClient()
+        if (!client || !deposit) return null
+
+        try {
+            const payload = {
+                id: deposit.id,
+                user_id: deposit.userId,
+                username: deposit.username || 'Player',
+                amount: typeof deposit.amount === 'number' ? deposit.amount : (parseFloat(deposit.amount) || 0),
+                currency: deposit.currency || 'INR',
+                method: deposit.method || 'UPI',
+                utr: deposit.utr || null,
+                status: deposit.status || 'completed',
+                created_at: deposit.timestamp || deposit.createdAt || new Date().toISOString()
+            }
+
+            const { data, error } = await client
+                .from('deposits')
+                .upsert(payload, { onConflict: 'id' })
+                .select()
+                .single()
+
+            if (error) {
+                if (error.code === '23503' && payload.user_id) {
+                    payload.user_id = null
+                    const retry = await client
+                        .from('deposits')
+                        .upsert(payload, { onConflict: 'id' })
+                        .select()
+                        .single()
+                    if (!retry.error) return retry.data
+                }
+                console.warn(`[SUPABASE] syncDeposit failed for ${deposit.id}:`, error.message)
+                return null
+            }
+            return data
+        } catch (err) {
+            console.warn(`[SUPABASE] syncDeposit exception for ${deposit.id}:`, err.message)
+            return null
+        }
+    }
+
+    /**
+     * Record or update a withdrawal in Supabase
+     */
+    async syncWithdrawal(withdrawal) {
+        const client = this.getClient()
+        if (!client || !withdrawal) return null
+
+        try {
+            const payload = {
+                id: withdrawal.id,
+                user_id: withdrawal.userId,
+                username: withdrawal.username || 'Player',
+                amount: typeof withdrawal.amount === 'number' ? withdrawal.amount : (parseFloat(withdrawal.amount) || 0),
+                currency: withdrawal.currency || 'INR',
+                payout_method: withdrawal.payoutMethod || withdrawal.method || 'UPI',
+                payout_details: withdrawal.payoutDetails || withdrawal.details || null,
+                status: withdrawal.status || 'pending',
+                reference_id: withdrawal.referenceId || withdrawal.ref || null,
+                created_at: withdrawal.timestamp || withdrawal.createdAt || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }
+
+            const { data, error } = await client
+                .from('withdrawals')
+                .upsert(payload, { onConflict: 'id' })
+                .select()
+                .single()
+
+            if (error) {
+                if (error.code === '23503' && payload.user_id) {
+                    payload.user_id = null
+                    const retry = await client
+                        .from('withdrawals')
+                        .upsert(payload, { onConflict: 'id' })
+                        .select()
+                        .single()
+                    if (!retry.error) return retry.data
+                }
+                console.warn(`[SUPABASE] syncWithdrawal failed for ${withdrawal.id}:`, error.message)
+                return null
+            }
+            return data
+        } catch (err) {
+            console.warn(`[SUPABASE] syncWithdrawal exception for ${withdrawal.id}:`, err.message)
+            return null
+        }
+    }
+
+    /**
      * Sync platform settings and seed entropy to Supabase
      */
     async syncSettings(settings) {
@@ -260,8 +354,8 @@ export class SupabaseSyncService {
         try {
             const payload = {
                 id: 'default',
-                rtp: settings.rtp || 99.00,
-                house_edge: settings.houseEdge || 1.00,
+                rtp: settings.rtp || 98.00,
+                house_edge: settings.houseEdge || 2.00,
                 maintenance_mode: Boolean(settings.maintenanceMode),
                 active_announcements: settings.activeAnnouncements || '',
                 current_server_seed: settings.currentServerSeed || '',

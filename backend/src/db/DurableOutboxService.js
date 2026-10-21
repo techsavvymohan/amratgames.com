@@ -26,6 +26,8 @@ export class DurableOutboxService {
         this.pendingUsers = new Map()         // userId -> userObject
         this.pendingTransactions = new Map()  // txId -> txObject
         this.pendingBets = new Map()          // betId -> betObject
+        this.pendingDeposits = new Map()      // depositId -> depositObject
+        this.pendingWithdrawals = new Map()   // withdrawalId -> withdrawalObject
         this.pendingSettings = null           // latest settingsObject
         this.pendingOtps = new Map()          // identifier -> { otp, expiresAt, op: 'sync'|'delete' }
 
@@ -108,6 +110,18 @@ export class DurableOutboxService {
                 }
                 break
 
+            case 'syncDeposit':
+                if (payload.id) {
+                    this.pendingDeposits.set(payload.id, payload)
+                }
+                break
+
+            case 'syncWithdrawal':
+                if (payload.id) {
+                    this.pendingWithdrawals.set(payload.id, payload)
+                }
+                break
+
             case 'syncSettings':
                 this.pendingSettings = payload
                 break
@@ -129,7 +143,7 @@ export class DurableOutboxService {
         }
 
         // If queue exceeds threshold, trigger immediate drain
-        if (this.pendingUsers.size >= 25 || this.pendingTransactions.size >= 25) {
+        if (this.pendingUsers.size >= 25 || this.pendingTransactions.size >= 25 || this.pendingDeposits.size >= 25 || this.pendingWithdrawals.size >= 25) {
             setImmediate(() => this.drain().catch(() => {}))
         }
     }
@@ -144,6 +158,8 @@ export class DurableOutboxService {
         const hasWork = this.pendingUsers.size > 0 ||
             this.pendingTransactions.size > 0 ||
             this.pendingBets.size > 0 ||
+            this.pendingDeposits.size > 0 ||
+            this.pendingWithdrawals.size > 0 ||
             this.pendingSettings !== null ||
             this.pendingOtps.size > 0
 
@@ -332,6 +348,30 @@ export class DurableOutboxService {
                 }
             }
 
+            // 6. Drain Deposits
+            if (this.pendingDeposits.size > 0) {
+                const depsToSync = Array.from(this.pendingDeposits.values()).slice(0, 50)
+                for (const dep of depsToSync) {
+                    const res = await supabaseSync.syncDeposit(dep)
+                    if (res || !dep.id) {
+                        this.pendingDeposits.delete(dep.id)
+                    }
+                }
+                this._stats.totalProcessed += depsToSync.length
+            }
+
+            // 7. Drain Withdrawals
+            if (this.pendingWithdrawals.size > 0) {
+                const wdsToSync = Array.from(this.pendingWithdrawals.values()).slice(0, 50)
+                for (const wd of wdsToSync) {
+                    const res = await supabaseSync.syncWithdrawal(wd)
+                    if (res || !wd.id) {
+                        this.pendingWithdrawals.delete(wd.id)
+                    }
+                }
+                this._stats.totalProcessed += wdsToSync.length
+            }
+
             this._stats.lastDrainAt = new Date().toISOString()
             this._stats.lastDrainDurationMs = Date.now() - start
         } catch (err) {
@@ -346,7 +386,7 @@ export class DurableOutboxService {
 
     _scheduleJournalPersist() {
         // Only write journal if there are pending items
-        if (this.pendingUsers.size === 0 && this.pendingTransactions.size === 0 && this.pendingBets.size === 0) {
+        if (this.pendingUsers.size === 0 && this.pendingTransactions.size === 0 && this.pendingBets.size === 0 && this.pendingDeposits.size === 0 && this.pendingWithdrawals.size === 0) {
             if (fs.existsSync(this.journalFile)) {
                 try { fs.unlinkSync(this.journalFile) } catch {}
             }
@@ -361,6 +401,8 @@ export class DurableOutboxService {
                 pendingUsers: Array.from(this.pendingUsers.values()),
                 pendingTransactions: Array.from(this.pendingTransactions.values()),
                 pendingBets: Array.from(this.pendingBets.values()),
+                pendingDeposits: Array.from(this.pendingDeposits.values()),
+                pendingWithdrawals: Array.from(this.pendingWithdrawals.values()),
                 updatedAt: new Date().toISOString()
             }
             fs.writeFileSync(this.journalFile, JSON.stringify(data), 'utf-8')
@@ -381,6 +423,12 @@ export class DurableOutboxService {
             if (Array.isArray(parsed.pendingBets)) {
                 for (const b of parsed.pendingBets) this.pendingBets.set(b.id, b)
             }
+            if (Array.isArray(parsed.pendingDeposits)) {
+                for (const d of parsed.pendingDeposits) this.pendingDeposits.set(d.id, d)
+            }
+            if (Array.isArray(parsed.pendingWithdrawals)) {
+                for (const w of parsed.pendingWithdrawals) this.pendingWithdrawals.set(w.id, w)
+            }
         } catch {
             try { fs.unlinkSync(this.journalFile) } catch {}
         }
@@ -392,6 +440,8 @@ export class DurableOutboxService {
             pendingUsersCount: this.pendingUsers.size,
             pendingTransactionsCount: this.pendingTransactions.size,
             pendingBetsCount: this.pendingBets.size,
+            pendingDepositsCount: this.pendingDeposits.size,
+            pendingWithdrawalsCount: this.pendingWithdrawals.size,
             pendingOtpsCount: this.pendingOtps.size
         }
     }

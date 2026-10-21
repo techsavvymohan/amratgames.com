@@ -95,6 +95,9 @@ export class BetRepository extends BaseRepository {
                 profit,
                 won,
                 hash: evaluation.hash || crypto.randomBytes(16).toString('hex'),
+                serverSeedHash: evaluation.serverSeedHash || null,
+                clientSeed: evaluation.clientSeed || null,
+                nonce: evaluation.nonce || null,
                 timestamp: new Date().toISOString()
             }
             this.data.bets.unshift(betRecord)

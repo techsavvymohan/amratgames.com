@@ -7,7 +7,7 @@ import { AntiExploit } from '../core/AntiExploit.js'
  */
 export class DragonTigerEngine {
     static evaluate({ betAmount, choice = 'dragon', bets, clientSeed, nonce, userId, userBets = [] }) {
-        const { hash, floatVal, roundEntropy } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
+        const { hash, floatVal, serverSeedHash, clientSeed: cSeed, nonce: cNonce } = provablyFairCore.generateHmacFloat(clientSeed, nonce)
 
         const totalBet = parseFloat(betAmount) || 0
         const { consecutiveWins, isMartingale } = AntiExploit.analyzeUserPattern({
@@ -79,7 +79,9 @@ export class DragonTigerEngine {
             multiplier,
             payout,
             hash,
-            roundEntropy
+            serverSeedHash,
+            clientSeed: cSeed,
+            nonce: cNonce
         }
     }
 }

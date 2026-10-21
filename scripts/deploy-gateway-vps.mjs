@@ -15,7 +15,11 @@ const { Client } = require('../backend/node_modules/ssh2');
 const VPS_HOST = process.env.VPS_HOST || '103.216.168.84';
 const VPS_PORT = Number(process.env.VPS_PORT || 22);
 const VPS_USER = process.env.VPS_USERNAME || 'root';
-const VPS_PASS = process.env.VPS_PASSWORD || 'Hj@KvB8*hDQv$j!Z';
+const VPS_PASS = process.env.VPS_PASSWORD || '';
+if (!VPS_PASS && !process.env.VPS_SSH_KEY) {
+  console.error('[ERROR] VPS_PASSWORD or VPS_SSH_KEY environment variable is required.');
+  process.exit(1);
+}
 
 const localTarPath = path.resolve(projectRoot, 'gateway_deploy_bundle.tar.gz');
 const remoteDestDir = '/var/www/gateway-service/youpi-pg';

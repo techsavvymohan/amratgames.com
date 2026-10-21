@@ -161,21 +161,15 @@ export class AutomatedSettlementService {
             }
         }
 
-        // 4. Threshold Check for Autonomous Settlement
-        const maxThreshold = this.instantPayoutThresholds[curr] || this.instantPayoutThresholds.INR
-
-        if (parsedAmount <= maxThreshold) {
-            const dispatchRef = 'APO_' + crypto.randomBytes(6).toString('hex').toUpperCase()
-            return {
-                qualified: true,
-                instantPayout: true,
-                status: 'approved',
-                reason: 'AUTO_APPROVED_LOW_RISK',
-                reviewReason: 'Qualified for Autonomous Instant Settlement Rail (Sub-60s Execution)',
-                dispatchRef,
-                payoutRail: withdrawalParams.payoutMethod === 'BANK' ? 'IMPS_HIGH_SPEED' : 'UPI_AUTONOMOUS_RAIL',
-                eta: 'Instant (60 seconds)'
-            }
+        // 4. Safe Cashier Queuing (Prevent Ghost Settlements without active bank payout rails)
+        // All withdrawals remain pending for admin verification and 1-click cashier dispatch via UPI/IMPS
+        return {
+            qualified: true,
+            instantPayout: false,
+            status: 'pending',
+            reason: 'QUEUED_FOR_CASHIER_DISPATCH',
+            reviewReason: `Verified AML qualifications. Queued for 1-click cashier dispatch via ${withdrawalParams.payoutMethod || 'UPI'}.`,
+            eta: '10-30 minutes'
         }
 
         // High Roller Tier: Legitimate but exceeds instant auto-payout threshold

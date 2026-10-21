@@ -26,6 +26,6 @@ conn.connect({
     host: '103.216.168.84',
     port: 22,
     username: 'root',
-    password: 'Hj@KvB8*hDQv$j!Z',
+    password: process.env.VPS_PASSWORD || '',
     tryKeyboard: true
 });

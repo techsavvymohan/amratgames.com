@@ -47,8 +47,8 @@ router.get('/provably-fair/seed', (req, res) => {
         res.json({
             success: true,
             serverSeedHash: db.data.settings?.serverSeedHash,
-            rtp: db.data.settings?.rtp || 99.0,
-            houseEdge: db.data.settings?.houseEdge || 1.0,
+            rtp: db.data.settings?.rtp || 98.0,
+            houseEdge: db.data.settings?.houseEdge || 2.0,
             announcement: db.data.settings?.activeAnnouncements
         })
     } catch (err) {
@@ -65,15 +65,16 @@ router.post('/provably-fair/verify', (req, res) => {
         }
 
         const gameType = String(game || '').toLowerCase()
-        const cleanClientSeed = String(clientSeed).trim()
+        const cleanClientSeed = String(clientSeed || 'amrat-player').trim()
         const cleanNonce = parseInt(nonce, 10) || 1
         const serverSeedSha256 = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
         let isMultiplayerCrash = (gameType === 'crash-multiplayer' || gameType === 'crash_room') || (Boolean(req.body.roundId) && String(req.body.roundId).startsWith('room_'))
-        let message = roundEntropy ? `${cleanClientSeed}:${cleanNonce}:${roundEntropy}` : `${cleanClientSeed}:${cleanNonce}`
+        let message = `${cleanClientSeed}:${cleanNonce}`
         if (isMultiplayerCrash) {
             const roundId = req.body.roundId || 'room_default'
-            message = roundEntropy ? `${roundId}:${cleanClientSeed}:${roundEntropy}` : `${roundId}:${cleanClientSeed}`
+            const mpClientSeed = cleanClientSeed || 'amrat_multiplayer_public'
+            message = `${roundId}:${mpClientSeed}`
         }
 
         const hmac = crypto.createHmac('sha256', serverSeed)
@@ -94,15 +95,15 @@ router.post('/provably-fair/verify', (req, res) => {
 
         if (gameType === 'limbo') {
             let roll = 1.00
-            if (floatVal >= 0.01) {
-                roll = Math.floor((99 / (1 - floatVal))) / 100
+            if (floatVal >= 0.02) {
+                roll = Math.floor((98.0 / (1 - floatVal))) / 100
             }
             roll = Math.max(1.00, Math.min(roll, 1000000.0))
             result = { game: 'limbo', roll, floatVal }
         } else if (gameType === 'crash' || gameType === 'aviator' || isMultiplayerCrash) {
             let crashPoint = 1.00
-            if (floatVal >= 0.01) {
-                crashPoint = Math.floor((99 / (1 - floatVal))) / 100
+            if (floatVal >= 0.02) {
+                crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
             }
             crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
             result = { game: isMultiplayerCrash ? 'crash-multiplayer' : 'crash', crashPoint, floatVal }
@@ -112,7 +113,7 @@ router.post('/provably-fair/verify', (req, res) => {
             const path = []
             let rightBounces = 0
             for (let i = 0; i < numRows; i++) {
-                const chunk = hash.substr(i * 4, 4) || '7fff'
+                const chunk = hash.slice(i * 4, (i + 1) * 4) || '7fff'
                 const direction = (parseInt(chunk, 16) % 2 === 1) ? 1 : 0
                 path.push(direction)
                 if (direction === 1) rightBounces++
@@ -155,10 +156,14 @@ router.post('/provably-fair/verify', (req, res) => {
                 bigSmall: luckyNumber >= 5 ? 'big' : 'small'
             }
         } else if (gameType === 'mines') {
+            const entropyHash = crypto.createHmac('sha512', serverSeed)
+                .update(`${cleanClientSeed}:${cleanNonce}`)
+                .digest('hex')
+
             const tiles = Array.from({ length: 25 }, (_, i) => i)
             for (let i = 24; i > 0; i--) {
-                const offset = ((24 - i) * 4) % 60
-                const intVal = parseInt(hash.slice(offset, offset + 4), 16)
+                const offset = (24 - i) * 4
+                const intVal = parseInt(entropyHash.slice(offset, offset + 4), 16)
                 const j = Math.floor((intVal / 0x10000) * (i + 1))
                 const swapIdx = Math.min(j, i)
                 ;[tiles[i], tiles[swapIdx]] = [tiles[swapIdx], tiles[i]]
