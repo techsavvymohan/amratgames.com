@@ -364,7 +364,7 @@ function ColorMatchGame() {
                             onClick={() => handleModeSwitch(tab.id, tab.sec)}
                         >
                             <span className="cm-tab-icon">{tab.icon}</span>
-                            <span>{tab.label}</span>
+                            <span className="cm-tab-text">{tab.label}</span>
                         </button>
                     ))}
                 </div>
@@ -375,16 +375,18 @@ function ColorMatchGame() {
                         icon={<HistoryOutlined style={{ color: '#ffd700' }} />}
                         onClick={() => setHistoryDrawerOpen(true)}
                         className="cm-fair-btn"
+                        title="History"
                     >
-                        History
+                        <span className="cm-fair-btn-text">History</span>
                     </Button>
                     <Button
                         type="text"
                         icon={<SafetyCertificateOutlined style={{ color: '#00e676' }} />}
                         onClick={() => setFairnessOpen(true)}
                         className="cm-fair-btn"
+                        title="Fairness"
                     >
-                        Fairness
+                        <span className="cm-fair-btn-text">Fairness</span>
                     </Button>
                 </div>
             </div>

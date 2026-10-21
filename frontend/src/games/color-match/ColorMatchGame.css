@@ -1682,11 +1682,11 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-top-bar {
-        padding: 3px 8px !important;
-        min-height: 34px !important;
-        height: 34px !important;
-        border-radius: 9px !important;
-        gap: 5px !important;
+        padding: 3px 6px !important;
+        min-height: 36px !important;
+        height: auto !important;
+        border-radius: 10px !important;
+        gap: 6px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -1696,40 +1696,82 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-speed-tabs {
-        display: flex !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
         align-items: center !important;
         gap: 4px !important;
         flex: 1 !important;
-        overflow-x: auto !important;
-        scrollbar-width: none !important;
+        min-width: 0 !important;
         padding: 0 !important;
     }
 
     .cm-speed-tab {
-        padding: 3px 7px !important;
-        height: 26px !important;
-        font-size: 11px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        padding: 0 2px !important;
+        height: 28px !important;
+        font-size: 10.5px !important;
         font-weight: 800 !important;
-        border-radius: 7px !important;
-        gap: 3px !important;
+        border-radius: 8px !important;
+        gap: 2.5px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        transform: none !important;
+    }
+
+    .cm-speed-tab.active {
+        transform: none !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4) !important;
+    }
+
+    .cm-speed-tab:hover {
+        transform: none !important;
     }
 
     .cm-tab-icon {
-        font-size: 10px !important;
+        font-size: 10.5px !important;
+        flex-shrink: 0 !important;
+        line-height: 1 !important;
+    }
+
+    .cm-tab-text {
+        font-size: 10.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.2px !important;
+        line-height: 1 !important;
     }
 
     .cm-top-right {
         display: flex !important;
         gap: 4px !important;
         align-items: center !important;
+        flex-shrink: 0 !important;
     }
 
     .cm-fair-btn {
-        padding: 0 7px !important;
-        height: 26px !important;
-        font-size: 11px !important;
-        border-radius: 7px !important;
-        gap: 3px !important;
+        width: 28px !important;
+        min-width: 28px !important;
+        max-width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .cm-fair-btn .anticon {
+        font-size: 14px !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
+
+    .cm-fair-btn-text {
+        display: none !important;
     }
 
     .cm-main-split {
