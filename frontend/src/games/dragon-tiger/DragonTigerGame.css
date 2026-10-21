@@ -50,6 +50,47 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     gap: 12px;
 }
 
+/* Table Watermarks (Majestic 3D Dragon & Tiger Felt Watermarks) */
+.dt-felt-watermarks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.dt-watermark {
+    position: absolute;
+    top: 50%;
+    width: 380px;
+    height: 380px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    filter: contrast(1.15) brightness(1.1);
+    -webkit-mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+    mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+    transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+}
+
+.dt-watermark-dragon {
+    left: -40px;
+    transform: translateY(-46%) scale(1.02);
+}
+
+.dt-watermark-tiger {
+    right: -40px;
+    transform: translateY(-46%) scale(1.02);
+}
+
+.dt-watermark.active-winner {
+    opacity: 0.38;
+    filter: contrast(1.3) brightness(1.35);
+    transform: translateY(-46%) scale(1.08);
+}
+
 /* ==========================================================================
    2. MINIMAL LIGHT TREND ROADMAP BAR
    ========================================================================== */
@@ -478,6 +519,24 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
         min-height: 0 !important;
         gap: 8px !important;
         border-radius: 14px !important;
+    }
+
+    .dt-watermark {
+        width: 210px !important;
+        height: 210px !important;
+        opacity: 0.12 !important;
+    }
+
+    .dt-watermark-dragon {
+        left: -30px !important;
+    }
+
+    .dt-watermark-tiger {
+        right: -30px !important;
+    }
+
+    .dt-watermark.active-winner {
+        opacity: 0.32 !important;
     }
 
     .dt-compact-roadmap {

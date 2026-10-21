@@ -185,6 +185,18 @@ function DragonTigerGame() {
             <div className="dt-container">
                 {/* Table Felt Arena */}
                 <div className="dt-felt">
+                    {/* Background Dragon & Tiger Watermarks */}
+                    <div className="dt-felt-watermarks" aria-hidden="true">
+                        <div
+                            className={`dt-watermark dt-watermark-dragon ${roundResult === 'dragon' ? 'active-winner' : ''}`}
+                            style={{ backgroundImage: `url('/images/dragon-mascot.jpg')` }}
+                        />
+                        <div
+                            className={`dt-watermark dt-watermark-tiger ${roundResult === 'tiger' ? 'active-winner' : ''}`}
+                            style={{ backgroundImage: `url('/images/tiger-mascot.jpg')` }}
+                        />
+                    </div>
+
                     {/* Minimal Light Trend Roadmap */}
                     <div className="dt-compact-roadmap">
                         <div className="dt-streak-stats">

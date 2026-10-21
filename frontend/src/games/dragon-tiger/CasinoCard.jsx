@@ -219,10 +219,18 @@ export default function CasinoCard({
 }) {
     if (!card) {
         return (
-            <div className={`casino-card-placeholder ${theme} ${className}`}>
-                <div className="placeholder-felt-inner">
-                    <span className="placeholder-icon">{theme === 'dragon' ? '🐉' : '🐅'}</span>
-                    <span className="placeholder-label">WAITING</span>
+            <div className={`casino-card-wrapper ${size} ${className} is-standby`}>
+                <div className="casino-card-inner">
+                    <div className={`casino-card-face card-back ${theme}`}>
+                        <div className="card-back-margin">
+                            <div className="card-back-pattern">
+                                <div className="card-back-medallion">
+                                    <span className="medallion-crown">👑</span>
+                                    <span className="medallion-brand">AMRAT</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )

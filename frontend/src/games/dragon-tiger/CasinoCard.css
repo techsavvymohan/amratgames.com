@@ -330,51 +330,17 @@
     100% { transform: scale(1.02); opacity: 1; }
 }
 
-/* Empty Dealing Slot on Felt */
-.casino-card-placeholder {
-    width: 110px;
-    height: 158px;
-    border-radius: 10px;
-    border: 1.5px dashed rgba(255, 255, 255, 0.15);
-    background: rgba(0, 0, 0, 0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.casino-card-placeholder.dragon {
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-.casino-card-placeholder.tiger {
-    border-color: rgba(56, 189, 248, 0.3);
-}
-
-.placeholder-felt-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    opacity: 0.45;
-}
-
-.placeholder-icon {
-    font-size: 24px;
-}
-
-.placeholder-label {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    color: #94a3b8;
+/* Standby Card State (Deck Ready on Table) */
+.casino-card-wrapper.is-standby {
+    opacity: 0.9;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
 }
 
 /* ==========================================================================
    5. RESPONSIVE SIZING FOR MOBILE CASINO EXPERIENCE
    ========================================================================== */
 @media (max-width: 600px) {
-    .casino-card-wrapper,
-    .casino-card-placeholder {
+    .casino-card-wrapper {
         width: 86px;
         height: 124px;
     }
@@ -426,8 +392,7 @@
 }
 
 @media (max-width: 380px) {
-    .casino-card-wrapper,
-    .casino-card-placeholder {
+    .casino-card-wrapper {
         width: 76px;
         height: 110px;
     }
