@@ -5,6 +5,7 @@ import { useWallet } from '../context/WalletContext'
 import { useAuth } from '../context/AuthContext'
 import LivePlatformBets from '../components/LivePlatformBets'
 import { getGameCoverUrl } from '../utils/cloudinary'
+import AviatorPlane from '../games/crash/AviatorPlane'
 import '../styles/home.css'
 
 const ALL_GAMES = [
@@ -143,9 +144,9 @@ const HERO_SLIDES = [
             title: 'Aviator Plane Flying High',
             multiplier: '24.50x',
             status: 'Flying High Now',
-            players: '2,400+ Playing Now',
-            topWin: '₹3,40,000 Won Today',
-            cta: 'Launch Aviator Now',
+            players: '2,400+ Live',
+            topWin: '₹3,40,000',
+            cta: 'Take Flight & Cash Out',
             to: '/crash'
         }
     },
@@ -156,7 +157,7 @@ const HERO_SLIDES = [
         titleHighlight: '100% Fair Winning Chances.',
         description: 'Every round outcome is decided by automatic computer math with zero human interference. The casino cannot change your result. Play with complete trust and peace of mind.',
         primaryCta: { label: 'See All 7 Games', icon: '🎲', hash: '#amrat-originals' },
-        secondaryCta: { label: 'Play Mines & Diamonds', icon: '💎', to: '/mines' },
+        secondaryCta: { label: 'Check Fairness Math', icon: '🛡️', to: '/provably-fair' },
         navLabel: '100% Honest & Fair',
         stats: [
             { label: 'Zero Cheating or Tricks', value: '100% Genuine', icon: '🔒' },
@@ -171,8 +172,8 @@ const HERO_SLIDES = [
             hash: 'Verified Honest Game System',
             houseEdge: 'Highest Player Return (99%)',
             seedType: 'Tamper-Proof Guarantee',
-            cta: 'Play Mines & Diamonds',
-            to: '/mines'
+            cta: 'Verify Game Fairness',
+            to: '/provably-fair'
         }
     },
     {
@@ -259,30 +260,26 @@ function AviatorShowcaseWidget({ showcase }) {
                     <line x1="16" y1="30" x2="304" y2="30" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
 
                     {/* Shaded Flight Area */}
-                    <path d="M 16 112 Q 130 106 270 24 L 270 112 Z" fill="url(#flightAreaGrad)" />
+                    <path d="M 16 112 Q 130 106 252 38 L 252 112 Z" fill="url(#flightAreaGrad)" />
 
                     {/* Flight Trajectory Curve */}
                     <path
-                        d="M 16 112 Q 130 106 270 24"
+                        d="M 16 112 Q 130 106 252 38"
                         stroke="url(#flightCurveGrad)"
                         strokeWidth="3.5"
                         strokeLinecap="round"
                         filter="url(#flightGlow)"
                     />
 
-                    {/* Ascending Red & Gold Supersonic Jet */}
-                    <g transform="translate(266, 20) rotate(-22)">
-                        {/* Thruster exhaust glow */}
-                        <circle cx="-5" cy="8" r="4.5" fill="#fb923c" className="jet-exhaust-outer" />
-                        <circle cx="-2" cy="8" r="2.5" fill="#fef08a" className="jet-exhaust-inner" />
-                        {/* Fuselage */}
-                        <path d="M 2 8 L 14 8 L 22 10 L 26 8 L 22 6 L 14 8 Z" fill="#ffffff" />
-                        {/* Main swept wings */}
-                        <path d="M 12 8 L 4 0 L 7 0 L 16 8 L 7 16 L 4 16 Z" fill="#f5af19" />
-                        {/* Stabilizer fins */}
-                        <path d="M 3 8 L 0 3 L 2 3 L 5 8 Z" fill="#ef4444" />
-                    </g>
+                    {/* Flight Curve Jet Apex Beacon */}
+                    <circle cx="250" cy="38" r="4.5" fill="#fb923c" className="jet-exhaust-outer" />
+                    <circle cx="250" cy="38" r="2.5" fill="#fef08a" />
                 </svg>
+
+                {/* Authentic Red Aviator Monoplane at Flight Curve Apex */}
+                <div className="aviator-plane-showcase-anchor">
+                    <AviatorPlane isSpinning={true} width={76} height={38} />
+                </div>
 
                 {/* Overlaid Live Multiplier HUD */}
                 <div className="aviator-hud-overlay">
@@ -307,14 +304,18 @@ function AviatorShowcaseWidget({ showcase }) {
                     <div className="stat-icon-wrap">👥</div>
                     <div className="stat-content">
                         <span className="stat-label">Active Bets</span>
-                        <span className="stat-val">{showcase?.players || '2,400+ Live'}</span>
+                        <span className="stat-val" title={showcase?.players || '2,400+ Live'}>
+                            {showcase?.players || '2,400+ Live'}
+                        </span>
                     </div>
                 </div>
                 <div className="showcase-stat">
                     <div className="stat-icon-wrap gold">🏆</div>
                     <div className="stat-content">
                         <span className="stat-label">Top Payout</span>
-                        <span className="stat-val">{showcase?.topWin || '₹3,40,000 Won'}</span>
+                        <span className="stat-val" title={showcase?.topWin || '₹3,40,000'}>
+                            {showcase?.topWin || '₹3,40,000'}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -563,27 +564,34 @@ function HomePage() {
                                 </div>
                                 <h3 className="showcase-title">{currentSlide.showcase.title}</h3>
                                 <div className="fairness-hash-preview">
-                                    <span className="hash-label">Our Fair Play Guarantee</span>
-                                    <code className="hash-code">Every round result is verified & honest</code>
+                                    <div className="fair-guarantee-header">
+                                        <span className="hash-label">🔒 SHA-256 Provably Fair Math</span>
+                                        <span className="fair-cert-badge">Audited</span>
+                                    </div>
+                                    <div className="fair-hash-row">
+                                        <span className="hash-prefix">Hash:</span>
+                                        <code className="hash-code">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+                                    </div>
+                                    <span className="fair-sub-note">Verified unmanipulated by player & server seed</span>
                                 </div>
                                 <div className="showcase-stats-row">
                                     <div className="showcase-stat">
                                         <div className="stat-icon-wrap gold">⭐</div>
                                         <div className="stat-content">
-                                            <span className="stat-label">Winning Return</span>
-                                            <span className="stat-val">99% Return Rate</span>
+                                            <span className="stat-label">Player Return</span>
+                                            <span className="stat-val" style={{ color: '#10b981' }}>99% Win Rate</span>
                                         </div>
                                     </div>
                                     <div className="showcase-stat">
                                         <div className="stat-icon-wrap">🛡️</div>
                                         <div className="stat-content">
                                             <span className="stat-label">Security</span>
-                                            <span className="stat-val">100% Safe Games</span>
+                                            <span className="stat-val">100% Auditable</span>
                                         </div>
                                     </div>
                                 </div>
-                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn">
-                                    <span>💎</span> <span>Play Mines Game Now</span>
+                                <Link to="/provably-fair" className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#ffffff' }}>
+                                    <span>🛡️</span> <span>Verify Game Fairness</span> <span className="cta-arrow">→</span>
                                 </Link>
                             </div>
                         )}
@@ -595,15 +603,21 @@ function HomePage() {
                                     <span className="showcase-tag">{currentSlide.showcase.tag}</span>
                                     <span className="showcase-live-pill is-pulse">🪙 1.96x Payout</span>
                                 </div>
-                                <div className="coin-preview-showcase" style={{ textAlign: 'center', padding: '12px 0 8px 0' }}>
-                                    <img
-                                        src={getGameCoverUrl('/images/coin-toss-v2.jpg')}
-                                        alt="Coin Toss Banner"
-                                        style={{ width: '100%', maxHeight: '130px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '10px' }}
-                                    />
-                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '4px' }}>
-                                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>👑 HEADS (1.96x)</span>
-                                        <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '20px', padding: '4px 12px', fontSize: '0.8rem', fontWeight: '700' }}>⭐ TAILS (1.96x)</span>
+                                <div className="coin-preview-showcase">
+                                    <div className="coin-banner-frame">
+                                        <img
+                                            src={getGameCoverUrl('/images/coin-toss-showcase.jpg')}
+                                            alt="Coin Toss Heads or Tails"
+                                            className="coin-showcase-img"
+                                        />
+                                    </div>
+                                    <div className="coin-odds-pills">
+                                        <span className="coin-odd-pill heads">
+                                            <span>👑</span> <span>HEADS</span> <span className="coin-pill-mult">1.96x</span>
+                                        </span>
+                                        <span className="coin-odd-pill tails">
+                                            <span>⭐</span> <span>TAILS</span> <span className="coin-pill-mult">1.96x</span>
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="showcase-stats-row">
@@ -622,8 +636,8 @@ function HomePage() {
                                         </div>
                                     </div>
                                 </div>
-                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f5af19, #d97706)', color: '#0b0f19', fontWeight: '700' }}>
-                                    <span>🪙</span> <span>Flip Coin & Win Now</span>
+                                <Link to={currentSlide.showcase.to} className="showcase-cta-btn" style={{ background: 'linear-gradient(135deg, #f5af19, #d97706)', color: '#0b0f19', fontWeight: '800' }}>
+                                    <span>🪙</span> <span>Flip Coin & Win Now</span> <span className="cta-arrow">→</span>
                                 </Link>
                             </div>
                         )}

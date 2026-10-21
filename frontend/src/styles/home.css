@@ -701,23 +701,68 @@
     backdrop-filter: blur(4px);
 }
 
+/* Aviator Plane Element & Propeller Animation (matching crash game) */
+.aviator-plane-element {
+    position: relative;
+    width: 74px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aviator-plane-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+@keyframes propellerSpinAnim {
+    0% { transform: scaleY(1); opacity: 0.9; }
+    50% { transform: scaleY(0.2); opacity: 0.35; }
+    100% { transform: scaleY(1); opacity: 0.9; }
+}
+
+.aviator-propeller-animated {
+    transform-origin: 147px 40px;
+    animation: propellerSpinAnim 0.07s linear infinite;
+}
+
+/* Aviator Showcase Plane Anchor on Radar */
+.aviator-plane-showcase-anchor {
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    transform: rotate(-18deg);
+    animation: planeHoverFloat 2.4s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 3;
+    filter: drop-shadow(0 6px 14px rgba(220, 38, 38, 0.45));
+}
+
+@keyframes planeHoverFloat {
+    0% { transform: translateY(0) rotate(-18deg); }
+    100% { transform: translateY(-5px) rotate(-15deg); }
+}
+
 /* Stats Row */
 .showcase-stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 16px;
 }
 
 .showcase-stat {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.03);
+    gap: 8px;
+    padding: 9px 10px;
+    background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     transition: all 0.2s ease;
+    min-width: 0;
 }
 
 .showcase-stat:hover {
@@ -727,15 +772,15 @@
 }
 
 .stat-icon-wrap {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
     background: rgba(56, 189, 248, 0.12);
     border: 1px solid rgba(56, 189, 248, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 14px;
     flex-shrink: 0;
 }
 
@@ -747,12 +792,13 @@
 .stat-content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
+    flex: 1;
 }
 
 .stat-label {
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
     color: #94a3b8;
     text-transform: uppercase;
@@ -763,7 +809,7 @@
 }
 
 .stat-val {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 800;
     color: #f8fafc;
     letter-spacing: -0.01em;
@@ -774,29 +820,147 @@
 
 /* Fairness Showcase */
 .fairness-hash-preview {
-    padding: 12px;
-    background: rgba(7, 16, 30, 0.75);
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    border-radius: 10px;
+    padding: 12px 14px;
+    background: rgba(7, 16, 30, 0.85);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 12px;
     margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(34, 197, 94, 0.15);
+}
+
+.fair-guarantee-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
 }
 
 .hash-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 800;
     color: #4ade80;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 4px;
+}
+
+.fair-cert-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    color: #86efac;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.fair-hash-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 5px;
+}
+
+.hash-prefix {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
 }
 
 .hash-code {
+    font-size: 10.5px;
+    color: #38bdf8;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fair-sub-note {
     display: block;
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* Coin Toss Showcase Card */
+.coin-preview-showcase {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.coin-banner-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(245, 175, 25, 0.4);
+    box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 175, 25, 0.18);
+    background: #080d19;
+}
+
+.coin-showcase-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.coin-banner-frame:hover .coin-showcase-img {
+    transform: scale(1.03);
+}
+
+.coin-odds-pills {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.coin-odd-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
     font-size: 11px;
-    color: #cbd5e1;
-    font-family: monospace;
-    word-break: break-all;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(8px);
+}
+
+.coin-odd-pill.heads {
+    background: rgba(245, 158, 11, 0.16);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    color: #fbbf24;
+}
+
+.coin-odd-pill.tails {
+    background: rgba(59, 130, 246, 0.16);
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    color: #60a5fa;
+}
+
+.coin-odd-pill .coin-pill-mult {
+    background: rgba(0, 0, 0, 0.35);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 /* Category Filter Navigation */
