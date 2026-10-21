@@ -718,10 +718,10 @@ function ColorMatchGame() {
                                     loading={isDrawing}
                                 >
                                     {isDrawing
-                                        ? 'Drawing Result...'
+                                        ? 'Drawing...'
                                         : totalStaked > 0
-                                        ? `Draw Now • ${currencySymbol}${totalStaked.toLocaleString()} (${timeLeft}s)`
-                                        : `Auto Run • Drawing in ${timeLeft}s`}
+                                        ? `Draw · ${currencySymbol}${totalStaked.toLocaleString()} (${timeLeft}s)`
+                                        : `Auto Draw · ${timeLeft}s`}
                                 </Button>
                             </div>
                         </div>

@@ -53,14 +53,37 @@
 
     .cm-stage-grid {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr !important;
         gap: 8px;
         margin-bottom: 0 !important;
     }
 
     .cm-countdown-card, .cm-last-result-card {
-        padding: 6px 12px !important;
+        padding: 8px 12px !important;
         border-radius: 12px !important;
+        min-height: 74px !important;
+        box-sizing: border-box !important;
+    }
+
+    .cm-period-id {
+        font-size: 15px !important;
+        letter-spacing: 0.5px !important;
+        line-height: 1.2 !important;
+    }
+
+    .cm-countdown-status {
+        font-size: 9.5px !important;
+        white-space: nowrap !important;
+    }
+
+    .cm-showcase-header {
+        font-size: 9.5px !important;
+        white-space: nowrap !important;
+    }
+
+    .cm-showcase-body {
+        margin-top: 3px !important;
+        gap: 10px !important;
     }
 
     .cm-dial-wrapper {
@@ -191,10 +214,25 @@
         font-size: 11px !important;
     }
 
-    .cm-draw-action-btn {
+    .cm-dock-actions {
+        gap: 8px !important;
+    }
+
+    .cm-ctrl-btn {
+        flex: 0 0 74px !important;
+        min-width: 68px !important;
         height: 38px !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
+        padding: 0 8px !important;
+    }
+
+    .cm-draw-action-btn {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        height: 38px !important;
+        font-size: 12.5px !important;
         font-weight: 800 !important;
+        padding: 0 10px !important;
     }
 
     .cm-data-hub {
@@ -1217,23 +1255,26 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
 .cm-dock-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
+    align-items: center;
 }
 
 .cm-ctrl-btn {
-    flex: 1;
-    min-width: 0;
+    flex: 0 0 76px;
+    min-width: 68px;
     background: rgba(255, 255, 255, 0.06) !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
     color: #cbd5e1 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     font-weight: 800 !important;
-    height: 44px !important;
+    height: 40px !important;
+    padding: 0 8px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
 }
 
 .cm-ctrl-btn:hover:not(:disabled) {
@@ -1247,22 +1288,38 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 }
 
 .cm-draw-action-btn {
-    flex: 2;
+    flex: 1 1 auto;
     min-width: 0;
     background: linear-gradient(135deg, #00e676, #00b0ff) !important;
     border: none !important;
     color: #0b0f19 !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     font-weight: 900 !important;
-    font-size: 14px !important;
-    height: 44px !important;
-    padding: 0 18px !important;
+    font-size: 13px !important;
+    height: 40px !important;
+    padding: 0 12px !important;
     box-shadow: 0 4px 18px rgba(0, 230, 118, 0.4) !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+}
+
+.cm-draw-action-btn .ant-btn-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    margin-inline-end: 4px !important;
+    flex-shrink: 0 !important;
+}
+
+.cm-draw-action-btn > span:not(.ant-btn-icon) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     white-space: nowrap !important;
 }
 
