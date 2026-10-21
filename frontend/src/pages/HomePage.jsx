@@ -384,9 +384,12 @@ function HomePage() {
 
     return (
         <div className="home-page-container">
-            {/* Redesigned 3D Landing Home Page Hero Banner */}
+            {/* Redesigned 3D Landing Home Page Hero Banner with Authentic Aviator Background */}
             <section
                 className="home-page-hero"
+                style={{
+                    backgroundImage: `radial-gradient(ellipse 65% 80% at 75% 45%, rgba(245, 175, 25, 0.12) 0%, transparent 70%), radial-gradient(circle at 15% 25%, rgba(30, 64, 175, 0.16) 0%, transparent 50%), url('${getGameCoverUrl('/images/hero.jpg')}')`
+                }}
                 onMouseEnter={() => setIsHeroPaused(true)}
                 onMouseLeave={() => setIsHeroPaused(false)}
             >

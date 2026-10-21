@@ -20,7 +20,7 @@
     background-image: 
         radial-gradient(ellipse 65% 80% at 75% 45%, rgba(245, 175, 25, 0.1) 0%, transparent 70%),
         radial-gradient(circle at 15% 25%, rgba(30, 64, 175, 0.16) 0%, transparent 50%),
-        url('https://res.cloudinary.com/r1fegrxo/image/upload/f_auto,q_auto,w_1400/v1792395496/amratgames/images/hero.jpg');
+        url('/images/hero.jpg');
     background-position: center right;
     background-size: cover;
     background-repeat: no-repeat;
