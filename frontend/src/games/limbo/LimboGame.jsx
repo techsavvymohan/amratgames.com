@@ -328,9 +328,6 @@ function LimboGame() {
                 <div className="limbo-arena">
                     {/* Real-time Dynamic History Pills */}
                     <div className="limbo-history-bar">
-                        <div className="limbo-live-status">
-                            <span className="live-dot" /> Provably Fair 99% RTP
-                        </div>
                         {history.length === 0 ? (
                             <span className="limbo-history-empty">Place a bet to roll!</span>
                         ) : (
@@ -403,7 +400,7 @@ function LimboGame() {
                             onClick={() => setFairnessOpen(true)}
                             className="limbo-btn-secondary"
                         >
-                            Provably Fair 99% RTP
+                            Fairness &amp; Rules
                         </Button>
                     </div>
                 </div>
