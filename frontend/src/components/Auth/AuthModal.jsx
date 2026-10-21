@@ -363,7 +363,7 @@ export default function AuthModal() {
                                     transition: 'all 0.2s'
                                 }}
                             >
-                                🔑 Password Login
+                                🔑 Password
                             </button>
                             <button
                                 type="button"
@@ -381,7 +381,7 @@ export default function AuthModal() {
                                     transition: 'all 0.2s'
                                 }}
                             >
-                                ⚡ Fast Email OTP
+                                ⚡ Email OTP
                             </button>
                         </div>
 
@@ -554,7 +554,7 @@ export default function AuthModal() {
                             <input
                                 type="text"
                                 className="amrat-input"
-                                placeholder="Choose a username (e.g. LuckyPlayer99)"
+                                placeholder="Choose a username"
                                 value={regUsername}
                                 onChange={(e) => setRegUsername(e.target.value)}
                                 required
@@ -580,7 +580,7 @@ export default function AuthModal() {
 
                         <div className="amrat-form-group">
                             <label className="amrat-form-label">
-                                <span>Email Address (For Free OTP Verification)</span>
+                                <span>Email Address</span>
                             </label>
                             <input
                                 type="email"
@@ -600,7 +600,7 @@ export default function AuthModal() {
                                 <input
                                     type={showRegPassword ? 'text' : 'password'}
                                     className="amrat-input"
-                                    placeholder="Create password (6+ characters)"
+                                    placeholder="Create password (min 6 characters)"
                                     value={regPassword}
                                     onChange={(e) => setRegPassword(e.target.value)}
                                     required
