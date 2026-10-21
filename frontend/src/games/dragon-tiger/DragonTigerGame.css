@@ -117,74 +117,62 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     pointer-events: none;
 }
 
-/* Bead Plate / Trend Roadmap */
-.dt-roadmap {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(8px);
-    padding: 12px 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 215, 0, 0.25);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
-    z-index: 1;
-}
-
-.dt-roadmap-header-line {
+/* Compact Bead Plate / Trend Roadmap Bar */
+.dt-compact-roadmap {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.dt-roadmap-label {
-    font-size: 12px;
-    font-weight: 800;
-    color: #ffd700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    white-space: nowrap;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    z-index: 1;
+    min-height: 42px;
 }
 
 .dt-streak-stats {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .stat-pill {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-.stat-dragon { background: rgba(239, 68, 68, 0.2); color: #ff6b6b; border: 1px solid rgba(239, 68, 68, 0.4); }
-.stat-tiger { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
-.stat-tie { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.stat-dragon { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.stat-tiger { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+.stat-tie { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
 
 .dt-roadmap-beads {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
-    padding-bottom: 2px;
+    align-items: center;
 }
 
 .dt-bead {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 900;
     color: #ffffff;
     flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     transition: transform 0.2s ease;
 }
 
@@ -194,275 +182,130 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 
 .dt-bead.dragon {
     background: radial-gradient(circle at 35% 35%, #ef4444, #991b1b);
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
 }
 
 .dt-bead.tiger {
     background: radial-gradient(circle at 35% 35%, #3b82f6, #1e40af);
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 .dt-bead.tie {
     background: radial-gradient(circle at 35% 35%, #10b981, #065f46);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
 
-/* Duel Arena & Cards */
+/* Card-Centric Duel Arena */
 .dt-duel-arena {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 24px 10px;
+    padding: 16px 8px;
     gap: 16px;
     z-index: 1;
 }
 
-.dt-player-box {
+.dt-card-station {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.3s ease;
 }
 
-/* 3D Mascot Framed Portrait */
-.dt-mascot-frame {
+.dt-station-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+}
+
+.dt-card-station.dragon .dt-station-title {
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.dt-card-station.tiger .dt-station-title {
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+}
+
+.dt-card-slot {
     position: relative;
-    width: 90px;
-    height: 90px;
-    border-radius: 18px;
-    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(255, 215, 0, 0.35);
-    background: #000;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.35s ease;
 }
 
-.dt-mascot-frame.dragon {
-    border-color: rgba(239, 68, 68, 0.7);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.45), inset 0 0 10px rgba(239, 68, 68, 0.3);
-}
-
-.dt-mascot-frame.tiger {
-    border-color: rgba(59, 130, 246, 0.7);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.45), inset 0 0 10px rgba(59, 130, 246, 0.3);
-}
-
-.dt-player-box.dragon.winner .dt-mascot-frame {
-    transform: scale(1.1);
-    box-shadow: 0 0 35px rgba(239, 68, 68, 0.95), inset 0 0 20px rgba(239, 68, 68, 0.6);
-    border-color: #ff7875;
-}
-
-.dt-player-box.tiger.winner .dt-mascot-frame {
-    transform: scale(1.1);
-    box-shadow: 0 0 35px rgba(59, 130, 246, 0.95), inset 0 0 20px rgba(59, 130, 246, 0.6);
-    border-color: #69b1ff;
-}
-
-.dt-mascot-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    transition: transform 0.4s ease;
-}
-
-.dt-player-box:hover .dt-mascot-img {
-    transform: scale(1.08);
-}
-
-.dt-mascot-badge {
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    padding: 1px 8px;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-    white-space: nowrap;
+/* Center Stage: VS / Winner Tag */
+.dt-center-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
     z-index: 2;
 }
 
-.dt-mascot-frame.dragon .dt-mascot-badge {
-    color: #ff6b6b;
-    border: 1px solid rgba(239, 68, 68, 0.6);
-}
-
-.dt-mascot-frame.tiger .dt-mascot-badge {
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.6);
-}
-
-/* Card Slot & Winner Aura */
-.dt-card-slot {
-    width: 115px;
-    height: 165px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    perspective: 1000px;
-    transition: all 0.4s ease;
-}
-
-.dt-player-box.dragon.winner .dt-card-slot {
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.85), inset 0 0 15px rgba(239, 68, 68, 0.5);
-    transform: scale(1.05);
-}
-
-.dt-player-box.tiger.winner .dt-card-slot {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.85), inset 0 0 15px rgba(59, 130, 246, 0.5);
-    transform: scale(1.05);
-}
-
-.dt-empty-slot {
-    width: 100%;
-    height: 100%;
-    border: 2px dashed rgba(255, 215, 0, 0.25);
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
-    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
-}
-
-.dt-slot-placeholder {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    color: rgba(255, 215, 0, 0.4);
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    padding: 6px 14px;
-    border-radius: 8px;
-}
-
-.dt-vs-emblem {
-    width: 48px;
-    height: 48px;
+.dt-vs-circle {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 35%, #ffd700, #b45309);
-    color: #000;
+    color: #0b0f19;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 900;
-    font-size: 16px;
-    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.6);
-    border: 2px solid #fff;
-}
-
-/* 3D Realistic Poker Cards */
-.dt-card {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
-    border-radius: 12px;
-}
-
-.dt-card.flipped {
-    transform: rotateY(180deg);
-}
-
-.dt-card-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 12px;
-    font-weight: 800;
-}
-
-.dt-card-front {
-    background: radial-gradient(circle, #ffffff, #f1f5f9);
-    border: 2px solid #cbd5e1;
-    transform: rotateY(180deg);
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
-}
-
-.dt-card-back {
-    background: radial-gradient(circle, #991b1b, #450a0a);
-    border: 3px solid #ffd700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 44px;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7);
-}
-
-.dt-card-corner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1;
-    font-size: 18px;
-    font-weight: 900;
-}
-
-.dt-card-corner.bottom {
-    transform: rotate(180deg);
-}
-
-.dt-card-center {
-    align-self: center;
-    font-size: 44px;
-}
-
-/* Center VS Badge / Winner Result */
-.dt-vs-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 900;
-    color: #ffd700;
-}
-
-.dt-result-tag {
-    padding: 10px 22px;
-    border-radius: 25px;
     font-size: 15px;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    border: 2px solid #ffffff;
+}
+
+.dt-result-announcement {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: 1px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-    animation: popWinner 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    letter-spacing: 0.06em;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    animation: popWinner 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
-.dt-result-tag.dragon {
-    background: linear-gradient(135deg, #ef4444, #b91c1c);
+.dt-result-announcement.dragon {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
     color: #ffffff;
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
-    border: 1.5px solid #ff7875;
+    border: 1.5px solid #fca5a5;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
 }
 
-.dt-result-tag.tiger {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.dt-result-announcement.tiger {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     color: #ffffff;
-    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
-    border: 1.5px solid #69b1ff;
+    border: 1.5px solid #93c5fd;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
 }
 
-.dt-result-tag.tie {
-    background: linear-gradient(135deg, #10b981, #047857);
+.dt-result-announcement.tie {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
     color: #ffffff;
-    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.4);
-    border: 1.5px solid #5cdbd3;
+    border: 1.5px solid #6ee7b7;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
 }
 
 @keyframes popWinner {
@@ -570,16 +413,19 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 
 /* 3D Realistic Casino Chips (Inspired by Pinterest) */
 .dt-chips-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
     padding: 8px 4px 6px;
     overflow: visible;
 }
 
 .dt-chip-btn {
+    width: 52px;
     height: 52px;
-    border-radius: 50px;
+    min-width: 52px;
+    border-radius: 50%;
     cursor: pointer;
     font-weight: 900;
     font-size: 14px;
@@ -803,57 +649,35 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     }
 
     .dt-duel-arena {
-        padding: 2px 0 !important;
-        gap: 6px !important;
+        padding: 4px 0 !important;
+        gap: 8px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-around !important;
     }
 
-    .dt-player-box {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 3px !important;
+    .dt-card-station {
+        gap: 4px !important;
     }
 
-    .dt-mascot-frame {
-        width: 38px !important;
-        height: 38px !important;
-        border-radius: 8px !important;
-    }
-
-    .dt-mascot-badge {
-        font-size: 8px !important;
-        padding: 1px 5px !important;
-    }
-
-    .dt-card-slot {
-        width: 52px !important;
-        height: 74px !important;
-        border-radius: 6px !important;
-    }
-
-    .dt-slot-placeholder {
+    .dt-station-title {
         font-size: 11px !important;
-        letter-spacing: 1px !important;
+        padding: 2px 8px !important;
     }
 
-    .dt-card-center {
-        font-size: 18px !important;
+    .dt-center-stage {
+        min-width: 60px !important;
     }
 
-    .dt-card-corner {
-        font-size: 9px !important;
-        top: 2px !important;
-        left: 3px !important;
+    .dt-vs-circle {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 11px !important;
     }
 
-    .dt-vs-emblem {
-        width: 26px !important;
-        height: 26px !important;
-        font-size: 10px !important;
-        font-weight: 900 !important;
+    .dt-result-announcement {
+        padding: 5px 10px !important;
+        font-size: 11px !important;
     }
 
     .dt-bet-zones {
@@ -956,17 +780,6 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
             0 0 14px rgba(255, 215, 0, 0.65),
             inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
         z-index: 2 !important;
-    }
-
-    .dt-controls-card .ant-input-number {
-        height: 32px !important;
-    }
-
-    .dt-controls-card .ant-btn-group .ant-btn {
-        height: 32px !important;
-        padding: 0 8px !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
     }
 
     .dt-total-bet-display {

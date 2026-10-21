@@ -1,16 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Input, InputNumber, Typography, Modal, Statistic, Row, Col, Drawer } from 'antd'
+import { Typography, Modal, Statistic, Row, Col, Drawer, Button } from 'antd'
 import {
     SafetyCertificateOutlined,
-    ReloadOutlined,
-    UndoOutlined,
-    TrophyOutlined,
     HistoryOutlined
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import casinoAudio from '../../utils/casinoAudio'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
-import { getOptimizedImageUrl } from '../../utils/cloudinary'
+import CasinoCard from './CasinoCard'
 import './DragonTigerGame.css'
 
 const { Text, Title } = Typography
@@ -190,18 +187,21 @@ function DragonTigerGame() {
             <div className="dt-container">
                 {/* Table Felt Arena */}
                 <div className="dt-felt">
-                    {/* Road Map History Header */}
-                    <div className="dt-roadmap">
-                        <div className="dt-roadmap-header-line">
-                            <span className="dt-roadmap-label">Macau Trend Roadmap</span>
-                            <div className="dt-streak-stats">
-                                <span className="stat-pill stat-dragon">D: {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%</span>
-                                <span className="stat-pill stat-tiger">T: {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%</span>
-                                <span className="stat-pill stat-tie">Tie: {Math.round(((history.filter(h => h.winner === 'tie').length) / (history.length || 1)) * 100)}%</span>
-                            </div>
+                    {/* Compact Macau Trend Roadmap Bar */}
+                    <div className="dt-compact-roadmap">
+                        <div className="dt-streak-stats">
+                            <span className="stat-pill stat-dragon">
+                                DRAGON {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%
+                            </span>
+                            <span className="stat-pill stat-tie">
+                                TIE {Math.round(((history.filter(h => h.winner === 'tie').length) / (history.length || 1)) * 100)}%
+                            </span>
+                            <span className="stat-pill stat-tiger">
+                                TIGER {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%
+                            </span>
                         </div>
                         <div className="dt-roadmap-beads">
-                            {history.slice(0, 16).map((h, i) => (
+                            {history.slice(0, 14).map((h, i) => (
                                 <div key={i} className={`dt-bead ${h.winner}`}>
                                     {h.winner === 'dragon' ? 'D' : (h.winner === 'tiger' ? 'T' : 'Tie')}
                                 </div>
@@ -209,78 +209,51 @@ function DragonTigerGame() {
                         </div>
                     </div>
 
-                    {/* Table Arena & Mascot Duel */}
+                    {/* Table Arena & Realistic Playing Cards Deal */}
                     <div className="dt-duel-arena">
-                        {/* Dragon Spot */}
-                        <div className={`dt-player-box dragon ${roundResult === 'dragon' ? 'winner' : ''}`}>
-                            <div className="dt-mascot-frame dragon">
-                                <img
-                                    src={getOptimizedImageUrl('/images/dragon-mascot.jpg', { width: 350 })}
-                                    alt="3D Crimson Dragon"
-                                    className="dt-mascot-img"
-                                />
-                                <span className="dt-mascot-glow"></span>
-                                <span className="dt-mascot-badge">DRAGON</span>
+                        {/* Dragon Card Station */}
+                        <div className={`dt-card-station dragon ${roundResult === 'dragon' ? 'winner' : ''}`}>
+                            <div className="dt-station-title">
+                                <span className="station-icon">🐉</span>
+                                <span>DRAGON</span>
                             </div>
                             <div className="dt-card-slot">
-                                {dragonCard ? (
-                                    <div className={`dt-card ${revealed ? 'flipped' : ''}`}>
-                                        <div className="dt-card-face dt-card-front" style={{ color: dragonCard.color }}>
-                                            <div className="dt-card-corner top">{dragonCard.rank}<span>{dragonCard.suit}</span></div>
-                                            <div className="dt-card-center">{dragonCard.suit}</div>
-                                            <div className="dt-card-corner bottom">{dragonCard.rank}<span>{dragonCard.suit}</span></div>
-                                        </div>
-                                        <div className="dt-card-face dt-card-back">
-                                            <div className="dt-card-back-pattern">👑</div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="dt-empty-slot">
-                                        <div className="dt-slot-placeholder">DEAL</div>
-                                    </div>
-                                )}
+                                <CasinoCard
+                                    card={dragonCard}
+                                    flipped={revealed}
+                                    theme="dragon"
+                                    isWinner={roundResult === 'dragon'}
+                                />
                             </div>
                         </div>
 
-                        {/* VS Divider */}
-                        <div className="dt-vs-badge">
+                        {/* Center VS / Winner Announcement */}
+                        <div className="dt-center-stage">
                             {roundResult ? (
-                                <span className={`dt-result-tag ${roundResult}`}>
-                                    {roundResult.toUpperCase()} WINS!
-                                </span>
+                                <div className={`dt-result-announcement ${roundResult}`}>
+                                    <span className="announcement-crown">👑</span>
+                                    <span className="announcement-text">{roundResult.toUpperCase()} WINS!</span>
+                                </div>
                             ) : (
-                                <div className="dt-vs-emblem">VS</div>
+                                <div className="dt-vs-circle">
+                                    <span>VS</span>
+                                </div>
                             )}
                         </div>
 
-                        {/* Tiger Spot */}
-                        <div className={`dt-player-box tiger ${roundResult === 'tiger' ? 'winner' : ''}`}>
-                            <div className="dt-mascot-frame tiger">
-                                <img
-                                    src={getOptimizedImageUrl('/images/tiger-mascot.jpg', { width: 350 })}
-                                    alt="3D Sapphire Tiger"
-                                    className="dt-mascot-img"
-                                />
-                                <span className="dt-mascot-glow"></span>
-                                <span className="dt-mascot-badge">TIGER</span>
+                        {/* Tiger Card Station */}
+                        <div className={`dt-card-station tiger ${roundResult === 'tiger' ? 'winner' : ''}`}>
+                            <div className="dt-station-title">
+                                <span className="station-icon">🐅</span>
+                                <span>TIGER</span>
                             </div>
                             <div className="dt-card-slot">
-                                {tigerCard ? (
-                                    <div className={`dt-card ${revealed ? 'flipped' : ''}`}>
-                                        <div className="dt-card-face dt-card-front" style={{ color: tigerCard.color }}>
-                                            <div className="dt-card-corner top">{tigerCard.rank}<span>{tigerCard.suit}</span></div>
-                                            <div className="dt-card-center">{tigerCard.suit}</div>
-                                            <div className="dt-card-corner bottom">{tigerCard.rank}<span>{tigerCard.suit}</span></div>
-                                        </div>
-                                        <div className="dt-card-face dt-card-back">
-                                            <div className="dt-card-back-pattern">👑</div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="dt-empty-slot">
-                                        <div className="dt-slot-placeholder">DEAL</div>
-                                    </div>
-                                )}
+                                <CasinoCard
+                                    card={tigerCard}
+                                    flipped={revealed}
+                                    theme="tiger"
+                                    isWinner={roundResult === 'tiger'}
+                                />
                             </div>
                         </div>
                     </div>
@@ -322,7 +295,7 @@ function DragonTigerGame() {
                     </div>
                 </div>
 
-                {/* Chips & Controls Dashboard */}
+                {/* Streamlined Chips & Controls Dashboard */}
                 <div className="dt-controls-card">
                     <div className="dt-chip-selector">
                         <label className="dt-label">Select Chip Value ({currencySymbol})</label>
@@ -339,27 +312,6 @@ function DragonTigerGame() {
                                 </button>
                             ))}
                         </div>
-                        {/* Custom Bet Amount Input */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                            <div style={{ flex: 1 }}>
-                                <InputNumber
-                                    value={selectedChip}
-                                    onChange={(val) => setSelectedChip(Math.max(1, isNaN(Number(val)) ? 1 : Number(val)))}
-                                    min={1}
-                                    step={10}
-                                    disabled={isDealing}
-                                    style={{ width: '100%' }}
-                                    addonBefore={<span style={{ fontWeight: 700, color: '#fbbf24' }}>{currencySymbol}</span>}
-                                    placeholder="Custom Bet Amount"
-                                />
-                            </div>
-                            <Button.Group>
-                                <Button onClick={() => setSelectedChip(prev => Math.max(1, Math.floor(prev / 2)))} disabled={isDealing}>½</Button>
-                                <Button onClick={() => setSelectedChip(prev => prev * 2)} disabled={isDealing}>2×</Button>
-                                <Button onClick={() => setSelectedChip(10)} disabled={isDealing}>Min</Button>
-                                <Button onClick={() => setSelectedChip(Math.max(10, Math.floor(balance || 100)))} disabled={isDealing}>Max</Button>
-                            </Button.Group>
-                        </div>
                     </div>
 
                     <div className="dt-total-bet-display">
@@ -370,7 +322,6 @@ function DragonTigerGame() {
                     <div className="dt-actions-row">
                         <Button
                             id="dt-clear-btn"
-                            icon={<UndoOutlined />}
                             onClick={clearBets}
                             disabled={isDealing || totalBet === 0}
                             className="dt-clear-btn"
@@ -397,7 +348,7 @@ function DragonTigerGame() {
                         </Button>
                     </div>
 
-                    <div className="dt-footer-actions" style={{ display: 'flex', gap: '8px' }}>
+                    <div className="dt-footer-actions">
                         <Button
                             type="text"
                             icon={<HistoryOutlined />}
