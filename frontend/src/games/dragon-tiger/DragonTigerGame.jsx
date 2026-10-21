@@ -39,7 +39,7 @@ function getRandomCard() {
 }
 
 function DragonTigerGame() {
-    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
+    const { balance, currencySymbol, executeGameBet } = useWallet()
 
     // Chip & Bet state
     const [selectedChip, setSelectedChip] = useState(100)
@@ -174,37 +174,37 @@ function DragonTigerGame() {
                 } else {
                     playSound('win')
                 }
-                notifyWin(payout, (payout / totalBet).toFixed(2))
             } else {
                 playSound('loss')
-                notifyLoss(totalBet)
             }
         }, 900)
-    }, [isDealing, totalBet, balance, bets, executeGameBet, notifyWin, notifyLoss])
+    }, [isDealing, totalBet, balance, bets, executeGameBet])
 
     return (
         <div className="dt-page">
             <div className="dt-container">
                 {/* Table Felt Arena */}
                 <div className="dt-felt">
-                    {/* Compact Macau Trend Roadmap Bar */}
+                    {/* Minimal Light Trend Roadmap */}
                     <div className="dt-compact-roadmap">
                         <div className="dt-streak-stats">
-                            <span className="stat-pill stat-dragon">
-                                DRAGON {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%
+                            <span className="stat-item stat-dragon">
+                                Dragon {Math.round(((history.filter(h => h.winner === 'dragon').length) / (history.length || 1)) * 100)}%
                             </span>
-                            <span className="stat-pill stat-tie">
-                                TIE {Math.round(((history.filter(h => h.winner === 'tie').length) / (history.length || 1)) * 100)}%
+                            <span className="stat-dot">·</span>
+                            <span className="stat-item stat-tie">
+                                Tie {Math.round(((history.filter(h => h.winner === 'tie').length) / (history.length || 1)) * 100)}%
                             </span>
-                            <span className="stat-pill stat-tiger">
-                                TIGER {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%
+                            <span className="stat-dot">·</span>
+                            <span className="stat-item stat-tiger">
+                                Tiger {Math.round(((history.filter(h => h.winner === 'tiger').length) / (history.length || 1)) * 100)}%
                             </span>
                         </div>
                         <div className="dt-roadmap-beads">
-                            {history.slice(0, 14).map((h, i) => (
-                                <div key={i} className={`dt-bead ${h.winner}`}>
+                            {history.slice(0, 10).map((h, i) => (
+                                <span key={i} className={`dt-bead ${h.winner}`}>
                                     {h.winner === 'dragon' ? 'D' : (h.winner === 'tiger' ? 'T' : 'Tie')}
-                                </div>
+                                </span>
                             ))}
                         </div>
                     </div>
@@ -214,8 +214,7 @@ function DragonTigerGame() {
                         {/* Dragon Card Station */}
                         <div className={`dt-card-station dragon ${roundResult === 'dragon' ? 'winner' : ''}`}>
                             <div className="dt-station-title">
-                                <span className="station-icon">🐉</span>
-                                <span>DRAGON</span>
+                                <span>{roundResult === 'dragon' ? '👑 DRAGON' : 'DRAGON'}</span>
                             </div>
                             <div className="dt-card-slot">
                                 <CasinoCard
@@ -227,12 +226,11 @@ function DragonTigerGame() {
                             </div>
                         </div>
 
-                        {/* Center VS / Winner Announcement */}
+                        {/* Center Stage: Minimal VS / Winner Tag */}
                         <div className="dt-center-stage">
                             {roundResult ? (
                                 <div className={`dt-result-announcement ${roundResult}`}>
-                                    <span className="announcement-crown">👑</span>
-                                    <span className="announcement-text">{roundResult.toUpperCase()} WINS!</span>
+                                    <span>{roundResult.toUpperCase()} WINS</span>
                                 </div>
                             ) : (
                                 <div className="dt-vs-circle">
@@ -244,8 +242,7 @@ function DragonTigerGame() {
                         {/* Tiger Card Station */}
                         <div className={`dt-card-station tiger ${roundResult === 'tiger' ? 'winner' : ''}`}>
                             <div className="dt-station-title">
-                                <span className="station-icon">🐅</span>
-                                <span>TIGER</span>
+                                <span>{roundResult === 'tiger' ? '👑 TIGER' : 'TIGER'}</span>
                             </div>
                             <div className="dt-card-slot">
                                 <CasinoCard
@@ -258,38 +255,44 @@ function DragonTigerGame() {
                         </div>
                     </div>
 
-                    {/* Betting Zones */}
+                    {/* Clean Betting Zones */}
                     <div className="dt-bet-zones">
                         <button
                             type="button"
                             id="dt-bet-dragon"
-                            className={`dt-bet-zone dragon-zone ${bets.dragon > 0 ? 'active' : ''}`}
+                            className={`dt-bet-zone dragon-zone ${bets.dragon > 0 ? 'active' : ''} ${roundResult === 'dragon' ? 'win-zone' : ''}`}
                             onClick={() => handleAddBet('dragon')}
                         >
-                            <span className="dt-zone-name">DRAGON</span>
-                            <span className="dt-zone-payout">1 : 1</span>
+                            <div className="dt-zone-header">
+                                <span className="dt-zone-name">DRAGON</span>
+                                <span className="dt-zone-payout">1:1</span>
+                            </div>
                             {bets.dragon > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.dragon}</span>}
                         </button>
 
                         <button
                             type="button"
                             id="dt-bet-tie"
-                            className={`dt-bet-zone tie-zone ${bets.tie > 0 ? 'active' : ''}`}
+                            className={`dt-bet-zone tie-zone ${bets.tie > 0 ? 'active' : ''} ${roundResult === 'tie' ? 'win-zone' : ''}`}
                             onClick={() => handleAddBet('tie')}
                         >
-                            <span className="dt-zone-name">TIE</span>
-                            <span className="dt-zone-payout">8 : 1</span>
+                            <div className="dt-zone-header">
+                                <span className="dt-zone-name">TIE</span>
+                                <span className="dt-zone-payout">8:1</span>
+                            </div>
                             {bets.tie > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.tie}</span>}
                         </button>
 
                         <button
                             type="button"
                             id="dt-bet-tiger"
-                            className={`dt-bet-zone tiger-zone ${bets.tiger > 0 ? 'active' : ''}`}
+                            className={`dt-bet-zone tiger-zone ${bets.tiger > 0 ? 'active' : ''} ${roundResult === 'tiger' ? 'win-zone' : ''}`}
                             onClick={() => handleAddBet('tiger')}
                         >
-                            <span className="dt-zone-name">TIGER</span>
-                            <span className="dt-zone-payout">1 : 1</span>
+                            <div className="dt-zone-header">
+                                <span className="dt-zone-name">TIGER</span>
+                                <span className="dt-zone-payout">1:1</span>
+                            </div>
                             {bets.tiger > 0 && <span className="dt-zone-chips">{currencySymbol}{bets.tiger}</span>}
                         </button>
                     </div>

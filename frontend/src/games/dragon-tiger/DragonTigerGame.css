@@ -1,9 +1,14 @@
+/* ==========================================================================
+   DRAGON TIGER CASINO TABLE - CLEAN, MODERN, LIGHTWEIGHT UI
+   ========================================================================== */
+
 .dt-page {
     width: 100%;
-    max-width: 1240px;
+    max-width: 1380px;
     margin: 0 auto;
-    padding: 12px 16px 60px;
+    padding: 12px 16px 40px;
     user-select: none;
+    box-sizing: border-box;
 }
 
 .dt-container {
@@ -13,53 +18,7 @@
     align-items: stretch;
 }
 
-/* Laptop Viewport: 100% Zero-Scroll Perfect Fit */
-@media (min-width: 901px) {
-    .dt-page {
-        height: calc(100vh - 60px);
-        max-height: calc(100vh - 60px);
-        overflow: hidden;
-        padding: 12px 18px;
-        display: flex;
-        flex-direction: column;
-        box-sizing: border-box;
-    }
-    .dt-container {
-        flex: 1;
-        min-height: 0;
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        gap: 16px;
-        align-items: stretch;
-        overflow: hidden;
-    }
-    .dt-felt {
-        height: 100%;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 14px 18px !important;
-        overflow: hidden;
-    }
-    .dt-controls-card {
-        height: 100%;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 14px 16px !important;
-        overflow: hidden;
-    }
-}
-
-@media (max-width: 900px) {
-    .dt-container {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Touch responsiveness for mobile: zero delay, instant tactile press */
+/* Zero delay tactile press for all casino interactions */
 button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
@@ -69,138 +28,94 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
 .dt-bet-zone:active,
 .dt-deal-btn:active,
 .dt-clear-btn:active {
-    transform: scale(0.93) !important;
-    filter: brightness(1.22) !important;
-    transition: transform 0.05s ease !important;
+    transform: scale(0.96);
+    transition: transform 0.05s ease;
 }
 
-/* Luxury Emerald Velvet Table Felt */
+/* ==========================================================================
+   1. SPACIOUS TABLE FELT ARENA (DEEP SILKY EMERALD)
+   ========================================================================== */
 .dt-felt {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 540px;
-    padding: 24px;
-    border-radius: 24px;
-    background: radial-gradient(circle at 50% 45%, #0e3b22 0%, #082615 50%, #03130a 85%, #010804 100%);
-    border: 3px solid rgba(255, 215, 0, 0.4);
-    box-shadow: 
-        inset 0 0 100px rgba(0, 0, 0, 0.85),
-        0 20px 50px rgba(0, 0, 0, 0.6),
-        0 0 25px rgba(255, 215, 0, 0.15);
+    min-height: 520px;
+    padding: 16px 20px;
+    border-radius: 20px;
+    background: radial-gradient(ellipse at 50% 30%, #0c2b1c 0%, #071910 65%, #020b06 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 80px rgba(0, 0, 0, 0.55);
     position: relative;
     overflow: hidden;
+    gap: 12px;
 }
 
-/* Felt Inner Gold Accent Line */
-.dt-felt::before {
-    content: '';
-    position: absolute;
-    inset: 8px;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 215, 0, 0.15);
-    pointer-events: none;
-}
-
-/* Watermark in Table Center */
-.dt-felt::after {
-    content: 'AMRAT VIP CASINO';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 32px;
-    font-weight: 900;
-    letter-spacing: 12px;
-    color: rgba(255, 215, 0, 0.04);
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-/* Compact Bead Plate / Trend Roadmap Bar */
+/* ==========================================================================
+   2. MINIMAL LIGHT TREND ROADMAP BAR
+   ========================================================================== */
 .dt-compact-roadmap {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(10px);
-    padding: 8px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    background: rgba(0, 0, 0, 0.28);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    min-height: 32px;
     z-index: 1;
-    min-height: 42px;
 }
 
 .dt-streak-stats {
     display: flex;
-    gap: 6px;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
 }
 
-.stat-pill {
-    font-size: 10px;
-    font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.stat-dragon { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
-.stat-tiger { background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
-.stat-tie { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.stat-item.stat-dragon { color: #f87171; }
+.stat-item.stat-tie { color: #34d399; }
+.stat-item.stat-tiger { color: #60a5fa; }
+.stat-dot { color: rgba(255, 255, 255, 0.18); font-size: 12px; }
 
 .dt-roadmap-beads {
     display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    gap: 5px;
     align-items: center;
 }
 
 .dt-bead {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
-    font-weight: 900;
+    font-size: 9px;
+    font-weight: 700;
     color: #ffffff;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    transition: transform 0.2s ease;
+    transition: transform 0.15s ease;
 }
 
 .dt-bead:hover {
     transform: scale(1.15);
 }
 
-.dt-bead.dragon {
-    background: radial-gradient(circle at 35% 35%, #ef4444, #991b1b);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-}
+.dt-bead.dragon { background: #ef4444; }
+.dt-bead.tiger { background: #3b82f6; }
+.dt-bead.tie { background: #10b981; }
 
-.dt-bead.tiger {
-    background: radial-gradient(circle at 35% 35%, #3b82f6, #1e40af);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
-.dt-bead.tie {
-    background: radial-gradient(circle at 35% 35%, #10b981, #065f46);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
-}
-
-/* Card-Centric Duel Arena */
+/* ==========================================================================
+   3. DUEL ARENA & REALISTIC CARDS
+   ========================================================================== */
 .dt-duel-arena {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 16px 8px;
+    padding: 8px 4px;
     gap: 16px;
     z-index: 1;
 }
@@ -210,33 +125,30 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
 }
 
 .dt-station-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    height: 20px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(6px);
+    justify-content: center;
 }
 
-.dt-card-station.dragon .dt-station-title {
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+.dt-card-station.dragon.winner .dt-station-title {
+    color: #f87171;
+    text-shadow: 0 0 12px rgba(248, 113, 113, 0.45);
 }
 
-.dt-card-station.tiger .dt-station-title {
-    color: #93c5fd;
-    border: 1px solid rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+.dt-card-station.tiger.winner .dt-station-title {
+    color: #60a5fa;
+    text-shadow: 0 0 12px rgba(96, 165, 250, 0.45);
 }
 
 .dt-card-slot {
@@ -244,596 +156,440 @@ button, .dt-bet-zone, .dt-chip-btn, .dt-deal-btn, .dt-clear-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.35s ease;
 }
 
-/* Center Stage: VS / Winner Tag */
+/* Center Stage: Minimal VS or Result Announcement */
 .dt-center-stage {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 90px;
+    min-width: 76px;
     z-index: 2;
 }
 
 .dt-vs-circle {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #ffd700, #b45309);
-    color: #0b0f19;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 11px;
     letter-spacing: 0.05em;
-    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6);
-    border: 2px solid #ffffff;
 }
 
 .dt-result-announcement {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
+    justify-content: center;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.06em;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-    animation: popWinner 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    animation: popWinner 0.25s ease;
     white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 .dt-result-announcement.dragon {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-    color: #ffffff;
-    border: 1.5px solid #fca5a5;
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .dt-result-announcement.tiger {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: #ffffff;
-    border: 1.5px solid #93c5fd;
-    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .dt-result-announcement.tie {
-    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-    color: #ffffff;
-    border: 1.5px solid #6ee7b7;
-    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 @keyframes popWinner {
-    0% { transform: scale(0.6); opacity: 0; }
+    0% { transform: scale(0.85); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* Betting Zones (Dragon · Tie · Tiger) */
+/* ==========================================================================
+   4. CLEAN BETTING ZONES (DRAGON · TIE · TIGER)
+   ========================================================================== */
 .dt-bet-zones {
     display: grid;
     grid-template-columns: 2fr 1.3fr 2fr;
-    gap: 14px;
+    gap: 12px;
     z-index: 1;
 }
 
 .dt-bet-zone {
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    padding: 18px 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
     cursor: pointer;
-    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-    position: relative;
+    transition: all 0.2s ease;
+    min-height: 56px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .dt-bet-zone:hover {
-    transform: translateY(-3px);
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
 }
 
-.dt-bet-zone.dragon-zone:hover,
-.dt-bet-zone.dragon-zone.active {
-    border-color: #ef4444;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(0, 0, 0, 0.6));
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.45);
-}
-
-.dt-bet-zone.tie-zone:hover,
-.dt-bet-zone.tie-zone.active {
-    border-color: #10b981;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(0, 0, 0, 0.6));
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
-}
-
-.dt-bet-zone.tiger-zone:hover,
-.dt-bet-zone.tiger-zone.active {
-    border-color: #3b82f6;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(0, 0, 0, 0.6));
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.45);
+.dt-zone-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
 }
 
 .dt-zone-name {
-    font-size: 17px;
-    font-weight: 900;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     color: #ffffff;
-    letter-spacing: 1px;
 }
 
+.dragon-zone .dt-zone-name { color: #f87171; }
+.tiger-zone .dt-zone-name { color: #60a5fa; }
+.tie-zone .dt-zone-name { color: #34d399; }
+
 .dt-zone-payout {
-    font-size: 13px;
-    font-weight: 800;
-    color: #ffd700;
-    letter-spacing: 0.5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #94a3b8;
 }
 
 .dt-zone-chips {
-    margin-top: 4px;
-    padding: 3px 12px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #ffd700, #b45309);
-    color: #000000;
-    font-size: 13px;
-    font-weight: 900;
-    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4);
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    font-size: 11px;
+    font-weight: 700;
     animation: popWinner 0.2s ease;
 }
 
-/* Controls Dashboard */
+.dt-bet-zone.dragon-zone.active,
+.dt-bet-zone.dragon-zone.win-zone {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.dt-bet-zone.tiger-zone.active,
+.dt-bet-zone.tiger-zone.win-zone {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.dt-bet-zone.tie-zone.active,
+.dt-bet-zone.tie-zone.win-zone {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+}
+
+/* ==========================================================================
+   5. CONTROLS DASHBOARD (LIGHT & CRISP)
+   ========================================================================== */
 .dt-controls-card {
-    background: #0f131a;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 22px;
+    background: #0d121b;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    gap: 12px;
+    box-sizing: border-box;
 }
 
 .dt-label {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
     color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.06em;
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
-/* 3D Realistic Casino Chips (Inspired by Pinterest) */
 .dt-chips-row {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    padding: 8px 4px 6px;
-    overflow: visible;
+    gap: 8px;
 }
 
 .dt-chip-btn {
-    width: 52px;
-    height: 52px;
-    min-width: 52px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     border-radius: 50%;
     cursor: pointer;
-    font-weight: 900;
-    font-size: 14px;
+    font-weight: 800;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    border: 2px dashed rgba(255, 255, 255, 0.35);
-    outline: 2px solid rgba(0, 0, 0, 0.4);
-    outline-offset: -1px;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 6px 14px rgba(0, 0, 0, 0.5),
-        inset 0 2px 4px rgba(255, 255, 255, 0.35),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    transition: all 0.18s ease;
 }
 
 .dt-chip-btn:hover {
-    transform: translateY(-3px) scale(1.06);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .dt-chip-btn.selected {
-    transform: translateY(-4px) scale(1.1);
+    transform: translateY(-3px);
     border-color: #ffd700;
-    outline: 2px solid #ffd700;
-    box-shadow: 
-        0 8px 20px rgba(0, 0, 0, 0.7),
-        0 0 16px rgba(255, 215, 0, 0.6),
-        inset 0 2px 4px rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 0 2px #ffd700, 0 6px 14px rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
 
-/* Denomination Gradients */
-.dt-chip-btn.chip-10 {
-    background: radial-gradient(circle at 35% 35%, #475569, #1e293b 70%, #0f172a);
-    color: #f1f5f9;
-}
+.dt-chip-btn.chip-10 { background: #334155; color: #f8fafc; }
+.dt-chip-btn.chip-50 { background: #1d4ed8; color: #ffffff; }
+.dt-chip-btn.chip-100 { background: #047857; color: #ffffff; }
+.dt-chip-btn.chip-500 { background: #be185d; color: #ffffff; }
+.dt-chip-btn.chip-1000 { background: #b45309; color: #ffffff; }
+.dt-chip-btn.chip-5000 { background: #6d28d9; color: #ffffff; }
 
-.dt-chip-btn.chip-50 {
-    background: radial-gradient(circle at 35% 35%, #3b82f6, #1d4ed8 70%, #172554);
-    color: #ffffff;
-}
-
-.dt-chip-btn.chip-100 {
-    background: radial-gradient(circle at 35% 35%, #10b981, #047857 70%, #064e3b);
-    color: #ffffff;
-}
-
-.dt-chip-btn.chip-500 {
-    background: radial-gradient(circle at 35% 35%, #ec4899, #be185d 70%, #831843);
-    color: #ffffff;
-}
-
-.dt-chip-btn.chip-1000 {
-    background: radial-gradient(circle at 35% 35%, #f59e0b, #b45309 70%, #78350f);
-    color: #ffffff;
-    border-color: rgba(255, 215, 0, 0.6);
-}
-
-.dt-chip-btn.chip-5000 {
-    background: radial-gradient(circle at 35% 35%, #8b5cf6, #5b21b6 70%, #3b0764);
-    color: #ffffff;
-}
-
-/* Total Bet Display */
 .dt-total-bet-display {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
     font-size: 13px;
     color: #94a3b8;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .dt-total-val {
-    font-size: 20px;
-    font-weight: 900;
+    font-size: 18px;
+    font-weight: 700;
     color: #00e676;
-    font-family: monospace;
 }
 
-/* Actions */
-.dt-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.dt-deal-btn {
-    height: 52px !important;
-    font-size: 16px !important;
-    font-weight: 900 !important;
-    letter-spacing: 1px !important;
-    border-radius: 12px !important;
-    background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%) !important;
-    border: none !important;
-    color: #000000 !important;
-    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
-    transition: all 0.2s ease !important;
-}
-
-.dt-deal-btn:hover:not(:disabled) {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6) !important;
+.dt-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.6fr;
+    gap: 8px;
 }
 
 .dt-clear-btn {
-    height: 52px !important;
-    border-radius: 12px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     color: #cbd5e1 !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
 }
 
 .dt-clear-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
 }
 
-.dt-fairness-btn {
-    color: #94a3b8 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+.dt-deal-btn {
+    height: 44px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
     border-radius: 10px !important;
-    background: rgba(255, 255, 255, 0.02) !important;
-    height: 38px !important;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border: none !important;
+    color: #0b0f19 !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3) !important;
 }
 
-.dt-fairness-btn:hover {
+.dt-footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.dt-btn-secondary {
+    flex: 1;
+    color: #94a3b8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    height: 34px !important;
+    font-size: 12px !important;
+}
+
+.dt-btn-secondary:hover {
     color: #00e676 !important;
     border-color: #00e676 !important;
 }
 
-/* Hash Display */
-.dt-hash-box {
-    background: #090d14;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-family: monospace;
-    font-size: 12px;
-    color: #94a3b8;
-    word-break: break-all;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    margin-top: 4px;
+/* ==========================================================================
+   6. RESPONSIVE SIZING FOR MOBILE & TABLETS
+   ========================================================================== */
+@media (min-width: 901px) {
+    .dt-page {
+        padding: 12px 18px;
+    }
+    .dt-container {
+        grid-template-columns: 1fr 340px;
+    }
 }
 
-/* Mobile Responsiveness */
+@media (max-width: 900px) {
+    .dt-container {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     .dt-page,
     .dragon-tiger-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        min-height: 0 !important;
+        padding: 4px 8px 16px !important;
         overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding: 4px 8px 24px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        box-sizing: border-box !important;
         width: 100% !important;
-        max-width: 100vw !important;
+        box-sizing: border-box !important;
     }
 
     .dt-container {
-        height: auto !important;
-        min-height: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        gap: 6px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
+        gap: 8px !important;
     }
 
     .dt-felt {
-        flex: 1 1 auto !important;
+        padding: 10px 10px 12px !important;
         min-height: 0 !important;
-        padding: 6px 8px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
+        gap: 8px !important;
         border-radius: 14px !important;
-        margin-bottom: 0 !important;
-        gap: 4px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
     }
 
-    .dt-roadmap {
-        padding: 4px 8px !important;
-        border-radius: 10px !important;
-        gap: 4px !important;
+    .dt-compact-roadmap {
+        padding: 4px 10px !important;
+        min-height: 28px !important;
     }
 
-    .dt-roadmap-header-line {
-        gap: 4px !important;
-    }
-
-    .dt-roadmap-label {
+    .dt-streak-stats {
         font-size: 10px !important;
-        letter-spacing: 0.8px !important;
-    }
-
-    .stat-pill {
-        font-size: 9px !important;
-        padding: 1px 5px !important;
-    }
-
-    .dt-roadmap-beads {
-        gap: 4px !important;
+        gap: 6px !important;
     }
 
     .dt-bead {
-        width: 20px !important;
-        height: 20px !important;
-        font-size: 10px !important;
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 8px !important;
     }
 
     .dt-duel-arena {
         padding: 4px 0 !important;
-        gap: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-around !important;
-    }
-
-    .dt-card-station {
-        gap: 4px !important;
+        gap: 6px !important;
     }
 
     .dt-station-title {
         font-size: 11px !important;
-        padding: 2px 8px !important;
     }
 
     .dt-center-stage {
-        min-width: 60px !important;
+        min-width: 50px !important;
     }
 
     .dt-vs-circle {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 11px !important;
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 10px !important;
     }
 
     .dt-result-announcement {
-        padding: 5px 10px !important;
+        padding: 4px 10px !important;
         font-size: 11px !important;
     }
 
     .dt-bet-zones {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
         gap: 6px !important;
-        margin: 2px 0 0 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
     }
 
     .dt-bet-zone {
-        padding: 5px 2px !important;
-        min-height: 42px !important;
+        padding: 8px 6px !important;
+        min-height: 50px !important;
         border-radius: 10px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 1px !important;
-        overflow: visible !important;
     }
 
     .dt-zone-name {
-        font-size: 11px !important;
-        font-weight: 900 !important;
-        letter-spacing: 0.5px !important;
-        line-height: 1.2 !important;
+        font-size: 12px !important;
     }
 
     .dt-zone-payout {
         font-size: 10px !important;
-        font-weight: 800 !important;
-        line-height: 1.2 !important;
-        display: block !important;
     }
 
     .dt-zone-chips {
-        font-size: 9px !important;
+        font-size: 10px !important;
         padding: 1px 6px !important;
-        margin-top: 1px !important;
     }
 
-    .dt-controls-card,
-    .dt-controls-panel {
-        flex-shrink: 0 !important;
-        padding: 8px 10px !important;
-        background: #0f131a !important;
+    .dt-controls-card {
+        padding: 10px 12px !important;
+        gap: 8px !important;
         border-radius: 14px !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 6px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-    }
-
-    .dt-chip-selector {
-        width: 100% !important;
-        overflow: visible !important;
     }
 
     .dt-label {
         font-size: 10px !important;
         margin-bottom: 4px !important;
-        letter-spacing: 0.5px !important;
     }
 
     .dt-chips-row {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
         gap: 4px !important;
-        width: 100% !important;
-        overflow: visible !important;
-        scrollbar-width: none !important;
-        padding: 10px 4px 6px !important;
-        margin-top: -2px !important;
-        box-sizing: border-box !important;
     }
 
     .dt-chip-btn {
         width: 38px !important;
         height: 38px !important;
         min-width: 38px !important;
-        border-radius: 50% !important;
         font-size: 11px !important;
-        font-weight: 900 !important;
-        position: relative !important;
-    }
-
-    .dt-chip-btn.selected {
-        transform: translateY(-4px) scale(1.12) !important;
-        border-color: #ffd700 !important;
-        outline: 2px solid #ffd700 !important;
-        box-shadow: 
-            0 8px 18px rgba(0, 0, 0, 0.8),
-            0 0 14px rgba(255, 215, 0, 0.65),
-            inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
-        z-index: 2 !important;
     }
 
     .dt-total-bet-display {
-        padding: 4px 8px !important;
-        margin: 2px 0 !important;
-        border-radius: 8px !important;
-        font-size: 12px !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
+        padding: 6px 10px !important;
+        font-size: 11px !important;
     }
 
     .dt-total-bet-display strong {
-        font-size: 15px !important;
-    }
-
-    .dt-actions-row {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr 1.6fr !important;
-        gap: 6px !important;
-        margin-top: 2px !important;
-        width: 100% !important;
+        font-size: 14px !important;
     }
 
     .dt-clear-btn {
         height: 38px !important;
         font-size: 12px !important;
-        font-weight: 700 !important;
-        padding: 0 6px !important;
     }
 
     .dt-deal-btn {
         height: 38px !important;
-        min-height: 38px !important;
-        font-size: 14px !important;
-        font-weight: 900 !important;
-        margin-top: 0 !important;
-        padding: 0 10px !important;
+        font-size: 13px !important;
     }
 
     .dt-footer-actions {
-        display: flex !important;
         gap: 6px !important;
-        margin-top: 2px !important;
-        width: 100% !important;
     }
 
     .dt-btn-secondary {
         height: 28px !important;
         font-size: 11px !important;
-        padding: 0 8px !important;
-    }
-
-    .dt-fairness-strip {
-        display: none !important;
     }
 }

@@ -276,11 +276,9 @@ export default function CasinoCard({
                 </div>
             </div>
 
-            {/* Winner Trophy Glow Overlay */}
+            {/* Winner Aura Glow Highlight */}
             {isWinner && (
-                <div className={`card-winner-aura ${theme}`}>
-                    <span className="winner-aura-pill">WINNER</span>
-                </div>
+                <div className={`card-winner-aura ${theme}`} />
             )}
         </div>
     )

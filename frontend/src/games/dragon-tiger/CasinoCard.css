@@ -6,21 +6,21 @@
 
 .casino-card-wrapper {
     position: relative;
-    width: 120px;
-    height: 172px;
+    width: 110px;
+    height: 158px;
     perspective: 1200px;
     user-select: none;
     transition: transform 0.3s ease;
 }
 
 .casino-card-wrapper.large {
-    width: 135px;
-    height: 194px;
+    width: 125px;
+    height: 180px;
 }
 
 .casino-card-wrapper.small {
-    width: 95px;
-    height: 136px;
+    width: 88px;
+    height: 126px;
 }
 
 /* 3D Flip Container */
@@ -308,8 +308,8 @@
    ========================================================================== */
 .card-winner-aura {
     position: absolute;
-    inset: -6px;
-    border-radius: 15px;
+    inset: -3px;
+    border-radius: 12px;
     pointer-events: none;
     z-index: 5;
     animation: winnerGlowPulse 1.6s ease-in-out infinite alternate;
@@ -317,46 +317,29 @@
 
 .card-winner-aura.dragon {
     border: 2px solid #ef4444;
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.75), inset 0 0 10px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(239, 68, 68, 0.2);
 }
 
 .card-winner-aura.tiger {
     border: 2px solid #38bdf8;
-    box-shadow: 0 0 25px rgba(56, 189, 248, 0.75), inset 0 0 10px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.6), inset 0 0 8px rgba(56, 189, 248, 0.2);
 }
 
 @keyframes winnerGlowPulse {
     0% { transform: scale(1); opacity: 0.85; }
-    100% { transform: scale(1.03); opacity: 1; }
-}
-
-.winner-aura-pill {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #ffd700, #f59e0b);
-    color: #000;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 0.1em;
-    padding: 2px 10px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    border: 1px solid #ffffff;
+    100% { transform: scale(1.02); opacity: 1; }
 }
 
 /* Empty Dealing Slot on Felt */
 .casino-card-placeholder {
-    width: 120px;
-    height: 172px;
+    width: 110px;
+    height: 158px;
     border-radius: 10px;
-    border: 2px dashed rgba(255, 255, 255, 0.15);
-    background: rgba(0, 0, 0, 0.35);
+    border: 1.5px dashed rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.6);
 }
 
 .casino-card-placeholder.dragon {
@@ -376,7 +359,7 @@
 }
 
 .placeholder-icon {
-    font-size: 28px;
+    font-size: 24px;
 }
 
 .placeholder-label {
@@ -392,61 +375,8 @@
 @media (max-width: 600px) {
     .casino-card-wrapper,
     .casino-card-placeholder {
-        width: 102px;
-        height: 146px;
-    }
-
-    .corner-rank {
-        font-size: 17px;
-    }
-
-    .card-corner {
-        width: 18px;
-    }
-
-    .card-corner.top-left {
-        top: 4px;
-        left: 4px;
-    }
-
-    .card-corner.bottom-right {
-        bottom: 4px;
-        right: 4px;
-    }
-
-    .card-center-stage {
-        inset: 12px 14px;
-    }
-
-    .court-royal-crown {
-        font-size: 16px;
-    }
-
-    .court-royal-banner {
-        font-size: 8px;
-        padding: 1px 4px;
-    }
-
-    .court-ace-emblem .card-suit-svg {
-        width: 40px !important;
-        height: 40px !important;
-    }
-
-    .card-back-medallion {
-        width: 44px;
-        height: 44px;
-    }
-
-    .medallion-crown {
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 380px) {
-    .casino-card-wrapper,
-    .casino-card-placeholder {
-        width: 88px;
-        height: 126px;
+        width: 86px;
+        height: 124px;
     }
 
     .corner-rank {
@@ -469,5 +399,48 @@
 
     .card-center-stage {
         inset: 10px 10px;
+    }
+
+    .court-royal-crown {
+        font-size: 14px;
+    }
+
+    .court-royal-banner {
+        font-size: 7px;
+        padding: 0 3px;
+    }
+
+    .court-ace-emblem .card-suit-svg {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .card-back-medallion {
+        width: 36px;
+        height: 36px;
+    }
+
+    .medallion-crown {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 380px) {
+    .casino-card-wrapper,
+    .casino-card-placeholder {
+        width: 76px;
+        height: 110px;
+    }
+
+    .corner-rank {
+        font-size: 13px;
+    }
+
+    .card-corner {
+        width: 14px;
+    }
+
+    .card-center-stage {
+        inset: 8px 8px;
     }
 }
