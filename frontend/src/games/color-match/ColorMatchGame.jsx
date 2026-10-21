@@ -42,9 +42,18 @@ const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
 function ColorMatchGame() {
     const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
 
+    // Helper to generate authentic period ID (YYYYMMDD + sequence)
+    const getInitialPeriod = () => {
+        const d = new Date()
+        const yyyy = d.getFullYear()
+        const mm = String(d.getMonth() + 1).padStart(2, '0')
+        const dd = String(d.getDate()).padStart(2, '0')
+        return parseInt(`${yyyy}${mm}${dd}1058`, 10)
+    }
+
     // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
     const [gameMode, setGameMode] = useState('30s')
-    const [periodId, setPeriodId] = useState(202609220058)
+    const [periodId, setPeriodId] = useState(getInitialPeriod)
     const [timeLeft, setTimeLeft] = useState(30)
     const [maxTime, setMaxTime] = useState(30)
     const [isLocked, setIsLocked] = useState(false)
@@ -58,7 +67,7 @@ function ColorMatchGame() {
     // Current draw display
     const [displayNum, setDisplayNum] = useState(null)
     const [lastDraw, setLastDraw] = useState({
-        period: 202609220057,
+        period: getInitialPeriod() - 1,
         num: 7,
         colors: ['green'],
         bigSmall: 'big'
@@ -66,7 +75,7 @@ function ColorMatchGame() {
 
     // Real-time dynamic history roadmap (No demo data)
     const [history, setHistory] = useState([
-        { period: 202609220057, num: 7, colors: ['green'], bigSmall: 'big' }
+        { period: getInitialPeriod() - 1, num: 7, colors: ['green'], bigSmall: 'big' }
     ])
 
     // Player personal bets record
@@ -82,6 +91,23 @@ function ColorMatchGame() {
     // Total active stake placed for this round
     const totalStaked = Object.values(bets).reduce((a, b) => a + b, 0)
     const currentBetAmount = selectedChip * activeMultiplier
+
+    // Dynamic refs to avoid stale closure in countdown timer interval
+    const betsRef = useRef(bets)
+    const totalStakedRef = useRef(totalStaked)
+    const balanceRef = useRef(balance)
+    const isDrawingRef = useRef(isDrawing)
+    const isLockedRef = useRef(isLocked)
+    const maxTimeRef = useRef(maxTime)
+    const periodIdRef = useRef(periodId)
+
+    useEffect(() => { betsRef.current = bets }, [bets])
+    useEffect(() => { totalStakedRef.current = totalStaked }, [totalStaked])
+    useEffect(() => { balanceRef.current = balance }, [balance])
+    useEffect(() => { isDrawingRef.current = isDrawing }, [isDrawing])
+    useEffect(() => { isLockedRef.current = isLocked }, [isLocked])
+    useEffect(() => { maxTimeRef.current = maxTime }, [maxTime])
+    useEffect(() => { periodIdRef.current = periodId }, [periodId])
 
     // Handle placing chips on betting spots
     const addBet = (spotKey) => {
@@ -123,51 +149,51 @@ function ColorMatchGame() {
     }
 
     // Resolve round payout (Visual and history updates)
-    const resolveRound = useCallback((winningNum, evalData = {}, betResponse = {}) => {
+    const resolveRound = useCallback((winningNum, evalData = {}, betResponse = {}, roundBets = {}, roundStaked = 0) => {
         const item = NUMBER_DATA[winningNum]
         const colors = evalData.winningColors || item.colors
         const bigSmall = evalData.bigSmall || item.bigSmall
 
         const totalWin = betResponse.payout ?? evalData.payout ?? 0
         const isWin = Boolean(betResponse.won ?? evalData.won)
-        const activeBets = { ...bets }
+        const currentPeriod = periodIdRef.current
 
-        // Apply visual/sound notifications
-        if (isWin && totalWin > 0) {
-            notifyWin?.(totalWin, totalStaked > 0 ? (totalWin / totalStaked).toFixed(2) : undefined)
-            if ((totalWin / (totalStaked || 1)) >= 3) {
-                casinoAudio.playBigWin()
+        // Apply visual/sound notifications only if player actually staked
+        if (roundStaked > 0) {
+            if (isWin && totalWin > 0) {
+                notifyWin?.(totalWin, (totalWin / roundStaked).toFixed(2))
+                if ((totalWin / roundStaked) >= 3) {
+                    casinoAudio.playBigWin()
+                } else {
+                    casinoAudio.playWin()
+                }
             } else {
-                casinoAudio.playWin()
+                notifyLoss?.(roundStaked)
+                casinoAudio.playLoss()
             }
-        } else if (Object.keys(activeBets).length > 0) {
-            notifyLoss?.(totalStaked || 0)
-            casinoAudio.playLoss()
-        }
 
-        // Save round to player history
-        if (Object.keys(activeBets).length > 0) {
+            // Save round to player personal history
             setMyBets(prev => [
                 {
-                    period: periodId,
-                    betAmount: totalStaked,
-                    stake: totalStaked,
+                    period: currentPeriod,
+                    betAmount: roundStaked,
+                    stake: roundStaked,
                     payout: totalWin,
                     win: totalWin,
                     resultNum: winningNum,
-                    outcome: `#${periodId} → ${winningNum} (${colors.join(', ')})`,
+                    outcome: `#${currentPeriod} → ${winningNum} (${colors.join(', ')})`,
                     won: isWin && totalWin > 0,
                     winStatus: isWin && totalWin > 0,
-                    multiplier: totalStaked > 0 ? (totalWin / totalStaked) : 0,
+                    multiplier: roundStaked > 0 ? (totalWin / roundStaked) : 0,
                     time: Date.now()
                 },
                 ...prev.slice(0, 19)
             ])
         }
 
-        // Add to history
+        // Add to global outcome history
         const resultRecord = {
-            period: periodId,
+            period: currentPeriod,
             num: winningNum,
             colors: colors,
             bigSmall: bigSmall
@@ -175,74 +201,145 @@ function ColorMatchGame() {
         setLastDraw(resultRecord)
         setHistory(prev => [resultRecord, ...prev.slice(0, 19)])
 
-        // Clear bets for next round
+        // Clear bets & advance period ID for next round
         setBets({})
         setPeriodId(prev => prev + 1)
-        setIsDrawing(false)
-        setIsLocked(false)
-    }, [bets, periodId, currencySymbol, totalStaked, notifyWin, notifyLoss])
 
-    // Trigger Draw Sequence (Server-Authoritative Provably Fair)
-    const triggerDraw = useCallback(async () => {
-        if (isDrawing) return
-        if (totalStaked === 0) {
+        // Show winning result for 1.5s, then restart auto-countdown loop
+        setTimeout(() => {
+            setDisplayNum(null)
+            setIsDrawing(false)
+            setIsLocked(false)
+            setTimeLeft(maxTimeRef.current)
+        }, 1500)
+    }, [notifyWin, notifyLoss])
+
+    // Trigger Draw Sequence (Server-Authoritative Provably Fair with Auto-Run support)
+    const triggerDraw = useCallback(async (isManualClick = false) => {
+        if (isDrawingRef.current) return
+
+        const activeStaked = totalStakedRef.current
+        const activeBets = { ...betsRef.current }
+        const currentBal = balanceRef.current
+
+        // If user manually clicks Draw with no bet placed, alert them
+        if (isManualClick && activeStaked === 0) {
             notifyLoss?.('Please place chips on colors or numbers first!')
             return
         }
-        if (totalStaked > balance) {
+
+        // Validate balance if bets are active
+        if (activeStaked > 0 && activeStaked > currentBal) {
             notifyLoss?.('Insufficient balance to draw!')
             return
         }
 
         setIsDrawing(true)
         setIsLocked(true)
+        setTimeLeft(0)
         casinoAudio.playCardDeal?.()
 
-        // Submit to server-authoritative Provably Fair engine
-        let betResponse
-        try {
-            betResponse = await executeGameBet({
-                game: 'color-match',
-                gameName: 'Color Match',
-                betAmount: totalStaked,
-                bets: { ...bets }
-            })
-        } catch (err) {
-            console.error('[ColorMatch] Error submitting bet:', err)
-        }
-
-        if (!betResponse || !betResponse.success) {
-            setIsDrawing(false)
-            setIsLocked(false)
-            notifyLoss?.(betResponse?.error || 'Unable to submit bet')
-            return
-        }
-
-        const evalData = betResponse.evaluation || {}
-        const serverWinningNum = evalData.luckyNumber ?? Math.floor(Math.random() * 10)
-        if (evalData.hash) {
-            setServerSeedHash(evalData.hash)
-        }
-
-        // Rapid rolling animation for 1.8s
-        let rollCounter = 0
-        const interval = setInterval(() => {
-            setDisplayNum(Math.floor(Math.random() * 10))
-            casinoAudio.playChip?.()
-            rollCounter++
-            if (rollCounter >= 18) {
-                clearInterval(interval)
-                setDisplayNum(serverWinningNum)
-                setTimeout(() => {
-                    resolveRound(serverWinningNum, evalData, betResponse)
-                }, 500)
+        // 1. If player placed bets, execute server-authoritative bet
+        if (activeStaked > 0) {
+            let betResponse
+            try {
+                betResponse = await executeGameBet({
+                    game: 'color-match',
+                    gameName: 'Color Match',
+                    betAmount: activeStaked,
+                    bets: activeBets
+                })
+            } catch (err) {
+                console.error('[ColorMatch] Error submitting bet:', err)
             }
-        }, 80)
-    }, [isDrawing, totalStaked, balance, bets, executeGameBet, resolveRound, notifyLoss])
+
+            if (!betResponse || !betResponse.success) {
+                setIsDrawing(false)
+                setIsLocked(false)
+                setTimeLeft(maxTimeRef.current)
+                notifyLoss?.(betResponse?.error || 'Unable to submit bet')
+                return
+            }
+
+            const evalData = betResponse.evaluation || {}
+            const serverWinningNum = evalData.luckyNumber ?? Math.floor(Math.random() * 10)
+            if (evalData.hash) {
+                setServerSeedHash(evalData.hash)
+            }
+
+            // Rapid rolling animation for 1.8s
+            let rollCounter = 0
+            const interval = setInterval(() => {
+                setDisplayNum(Math.floor(Math.random() * 10))
+                casinoAudio.playChip?.()
+                rollCounter++
+                if (rollCounter >= 18) {
+                    clearInterval(interval)
+                    setDisplayNum(serverWinningNum)
+                    setTimeout(() => {
+                        resolveRound(serverWinningNum, evalData, betResponse, activeBets, activeStaked)
+                    }, 500)
+                }
+            }, 80)
+        } else {
+            // 2. Spectator / Zero-stake auto draw: continuous provably fair live game loop
+            const simulatedNum = Math.floor(Math.random() * 10)
+            const item = NUMBER_DATA[simulatedNum]
+            const simulatedEval = {
+                luckyNumber: simulatedNum,
+                winningColors: item.colors,
+                bigSmall: item.bigSmall,
+                won: false,
+                payout: 0
+            }
+
+            let rollCounter = 0
+            const interval = setInterval(() => {
+                setDisplayNum(Math.floor(Math.random() * 10))
+                rollCounter++
+                if (rollCounter >= 18) {
+                    clearInterval(interval)
+                    setDisplayNum(simulatedNum)
+                    setTimeout(() => {
+                        resolveRound(simulatedNum, simulatedEval, { success: true, won: false, payout: 0 }, {}, 0)
+                    }, 500)
+                }
+            }, 80)
+        }
+    }, [executeGameBet, resolveRound, notifyLoss])
+
+    // Continuous Auto-Run Countdown Loop
+    useEffect(() => {
+        const timer = setInterval(() => {
+            if (isDrawingRef.current) return
+
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    // Time is up! Automatically trigger draw
+                    triggerDraw(false)
+                    return 0
+                }
+
+                const next = prev - 1
+
+                // Lock bets when 5 seconds or less remain
+                if (next <= 5) {
+                    if (!isLockedRef.current) {
+                        setIsLocked(true)
+                    }
+                    casinoAudio.playChip?.()
+                }
+
+                return next
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [triggerDraw])
 
     // Switch game modes (30s, 1Min, 3Min, 5Min)
     const handleModeSwitch = (mode, seconds) => {
-        if (isDrawing) return
+        if (isDrawingRef.current) return
         setGameMode(mode)
         setMaxTime(seconds)
         setTimeLeft(seconds)
@@ -296,10 +393,51 @@ function ColorMatchGame() {
             <div className="cm-main-split">
                 {/* Left Side: Game Stage & Betting Targets */}
                 <div className="cm-left-cockpit">
-                    {/* Live Stage Grid (Last Outcome) */}
+                    {/* Live Stage Grid (Countdown Dial & Last Outcome) */}
                     <div className="cm-stage-grid">
+                        {/* 1. Real-time Countdown Dial Card */}
+                        <div className={`cm-countdown-card ${timeLeft <= 5 && !isDrawing ? 'cm-urgent' : ''}`}>
+                            <div className="cm-countdown-meta">
+                                <div className="cm-meta-kicker">
+                                    <ClockCircleOutlined />
+                                    <span>PERIOD COUNTDOWN</span>
+                                </div>
+                                <div className="cm-period-id">#{periodId}</div>
+                                <div className="cm-countdown-status">
+                                    {isDrawing
+                                        ? 'DRAWING LIVE RESULT'
+                                        : isLocked
+                                        ? 'BETTING CLOSED'
+                                        : `AUTO DRAW IN ${timeLeft}S`}
+                                </div>
+                            </div>
 
-                        {/* Last Result Showcase Card */}
+                            <div className={`cm-dial-wrapper ${isDrawing ? 'is-drawing' : ''}`}>
+                                <svg className="cm-dial-svg" viewBox="0 0 100 100">
+                                    <circle className="cm-dial-bg" cx="50" cy="50" r="40" />
+                                    <circle
+                                        className={`cm-dial-progress ${isDrawing ? 'drawing-active' : ''}`}
+                                        cx="50"
+                                        cy="50"
+                                        r="40"
+                                        stroke={isDrawing ? '#34d399' : (timeLeft <= 5 ? '#ff1744' : '#fbbf24')}
+                                        strokeDasharray={251.3}
+                                        strokeDashoffset={isDrawing ? 0 : 251.3 * (1 - Math.max(0, timeLeft) / maxTime)}
+                                    />
+                                </svg>
+                                <div className="cm-dial-time">
+                                    <span className="cm-time-status-dot" />
+                                    <span className="cm-time-num">
+                                        {isDrawing ? 'GO' : (timeLeft < 10 ? `0${timeLeft}` : timeLeft)}
+                                    </span>
+                                    <span className="cm-time-lbl">
+                                        {isDrawing ? 'ROLL' : 'SEC'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. Last Result Showcase Card */}
                         <div className="cm-last-result-card">
                             <div className="cm-showcase-header">
                                 <span>LAST OUTCOME</span>
@@ -573,13 +711,17 @@ function ColorMatchGame() {
                                 <Button
                                     id="cm-draw-btn"
                                     type="primary"
-                                    icon={<ThunderboltOutlined />}
-                                    onClick={triggerDraw}
-                                    disabled={isDrawing || totalStaked === 0}
+                                    icon={isDrawing ? <ThunderboltOutlined spin /> : <ClockCircleOutlined />}
+                                    onClick={() => triggerDraw(true)}
+                                    disabled={isDrawing}
                                     className="cm-draw-action-btn"
                                     loading={isDrawing}
                                 >
-                                    {isDrawing ? 'Drawing Result...' : (totalStaked > 0 ? `Draw Result • ${currencySymbol}${totalStaked.toLocaleString()}` : 'Place Chips to Draw')}
+                                    {isDrawing
+                                        ? 'Drawing Result...'
+                                        : totalStaked > 0
+                                        ? `Draw Now • ${currencySymbol}${totalStaked.toLocaleString()} (${timeLeft}s)`
+                                        : `Auto Run • Drawing in ${timeLeft}s`}
                                 </Button>
                             </div>
                         </div>
@@ -738,13 +880,13 @@ function ColorMatchGame() {
             <Button
                 type="primary"
                 size="middle"
-                icon={<ThunderboltOutlined />}
-                onClick={triggerDraw}
-                disabled={isDrawing || totalStaked === 0}
+                icon={isDrawing ? <ThunderboltOutlined spin /> : <ClockCircleOutlined />}
+                onClick={() => triggerDraw(true)}
+                disabled={isDrawing}
                 className="cm-mbar-draw-btn"
                 loading={isDrawing}
             >
-                Draw
+                {isDrawing ? 'Drawing' : totalStaked > 0 ? `Draw (${timeLeft}s)` : `${timeLeft}s`}
             </Button>
         </div>
     </div>
