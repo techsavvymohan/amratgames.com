@@ -250,17 +250,9 @@
         overflow-y: auto;
         max-height: unset !important;
     }
-}
 
-@media (max-width: 900px) {
-    .cm-top-left {
+    .cm-mobile-chips-dock {
         display: none !important;
-    }
-
-    .cm-main-split {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
     }
 }
 
@@ -1668,16 +1660,14 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
+/* Mobile Responsiveness (Zero-Scroll Pure Gameplay) */
+@media (max-width: 900px) {
     .color-match-page {
         height: 100% !important;
         max-height: 100% !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding: 12px 10px calc(var(--mobile-nav-space, 68px) + 64px) !important;
-        gap: 8px !important;
+        overflow: hidden !important;
+        padding: 4px 6px calc(var(--mobile-nav-space, 68px) + 48px) !important;
+        gap: 3px !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -1692,440 +1682,444 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-top-bar {
-        padding: 6px 10px !important;
-        min-height: 44px !important;
-        border-radius: 14px !important;
-        gap: 8px !important;
+        padding: 3px 8px !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        border-radius: 9px !important;
+        gap: 4px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        background: linear-gradient(135deg, rgba(20, 26, 40, 0.95), rgba(11, 15, 25, 0.98)) !important;
-        border: 1px solid rgba(255, 215, 0, 0.25) !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        scrollbar-width: none !important;
-    }
-
-    .cm-top-bar::-webkit-scrollbar {
-        display: none !important;
-    }
-
-    .cm-top-left {
-        display: none !important;
-    }
-
-    .cm-speed-tabs {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        flex: 1 !important;
-        justify-content: flex-start !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        scrollbar-width: none !important;
-        padding: 2px 0 !important;
-    }
-
-    .cm-speed-tabs::-webkit-scrollbar {
-        display: none !important;
-    }
-
-    .cm-speed-tab {
-        padding: 6px 10px !important;
-        height: 32px !important;
-        font-size: 11.5px !important;
-        font-weight: 800 !important;
-        border-radius: 9px !important;
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-        gap: 4px !important;
-        transform: none !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        color: #94a3b8 !important;
-        box-sizing: border-box !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
-    }
-
-    .cm-speed-tab.active {
-        transform: none !important;
-        background: linear-gradient(135deg, rgba(245, 175, 25, 0.2), rgba(241, 39, 17, 0.12)) !important;
-        border: 1.5px solid #f5af19 !important;
-        color: #f5af19 !important;
-        box-shadow: 0 0 10px rgba(245, 175, 25, 0.28) !important;
-    }
-
-    .cm-top-right {
-        display: flex !important;
-        gap: 6px !important;
-        flex-shrink: 0 !important;
-        align-items: center !important;
-    }
-
-    .cm-fair-btn {
-        padding: 0 9px !important;
-        height: 32px !important;
-        font-size: 11.5px !important;
-        font-weight: 700 !important;
-        border-radius: 9px !important;
-        white-space: nowrap !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        background: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        color: #cbd5e1 !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-stage-grid {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        gap: 6px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 0 !important;
     }
 
+    .cm-speed-tabs {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex: 1 !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+        padding: 0 !important;
+    }
+
+    .cm-speed-tab {
+        padding: 3px 7px !important;
+        height: 25px !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        border-radius: 7px !important;
+        gap: 3px !important;
+    }
+
+    .cm-tab-icon {
+        font-size: 10px !important;
+    }
+
+    .cm-top-right {
+        display: flex !important;
+        gap: 4px !important;
+        align-items: center !important;
+    }
+
+    .cm-fair-btn {
+        padding: 0 7px !important;
+        height: 25px !important;
+        font-size: 11px !important;
+        border-radius: 7px !important;
+        gap: 3px !important;
+    }
+
+    .cm-main-split {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .cm-left-cockpit {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+    }
+
+    /* 2-Column Ultra-Compact Stage Grid: Countdown (Left) | Last Outcome (Right) */
+    .cm-stage-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 5px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
     .cm-countdown-card,
     .cm-last-result-card {
-        padding: 8px 10px !important;
-        border-radius: 12px !important;
+        padding: 3px 7px !important;
+        border-radius: 9px !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        min-height: 40px !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    /* REMOVE GARBAGE HEADERS & LABELS ON MOBILE */
+    .cm-meta-kicker,
+    .cm-showcase-header,
+    .cm-payout-quote,
+    .cm-section-header,
+    .cm-section-hint,
+    .cm-pocket-sub {
+        display: none !important;
+    }
+
+    .cm-countdown-meta {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 1px !important;
         min-width: 0 !important;
     }
 
-    .cm-meta-kicker {
-        font-size: 10px !important;
-        margin-bottom: 2px !important;
+    .cm-period-id {
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        line-height: 1.1 !important;
+        color: #ffffff !important;
+        letter-spacing: 0.3px !important;
     }
 
-    .cm-period-id {
-        font-size: 12px !important;
+    .cm-countdown-status {
+        font-size: 8px !important;
+        font-weight: 700 !important;
+        color: #fbbf24 !important;
+        white-space: nowrap !important;
+        letter-spacing: 0.2px !important;
     }
 
     .cm-dial-wrapper {
-        width: 50px !important;
-        height: 50px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
         flex-shrink: 0 !important;
     }
 
-    .cm-dial-wrapper svg,
     .cm-dial-svg {
-        width: 50px !important;
-        height: 50px !important;
+        width: 32px !important;
+        height: 32px !important;
     }
 
     .cm-time-num {
-        font-size: 9.5px !important;
+        font-size: 8px !important;
+        font-weight: 900 !important;
     }
 
     .cm-time-lbl {
-        font-size: 6.5px !important;
-        letter-spacing: 0.04em !important;
-    }
-
-    .cm-showcase-header {
-        font-size: 10px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-    }
-
-    .cm-showcase-period {
-        font-size: 10px !important;
+        font-size: 5.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.02em !important;
     }
 
     .cm-showcase-body {
+        margin: 0 !important;
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
-        margin-top: 4px !important;
-        overflow: hidden !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 4px !important;
+    }
+
+    .cm-showcase-info {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+    }
+
+    .cm-color-badges {
+        gap: 2px !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .cm-badge-pill {
+        font-size: 7.5px !important;
+        font-weight: 900 !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
+        line-height: 1 !important;
     }
 
     .cm-sphere-ball {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
         flex-shrink: 0 !important;
     }
 
     .cm-ball-num {
-        font-size: 18px !important;
+        font-size: 13.5px !important;
+        font-weight: 900 !important;
     }
 
-    .cm-showcase-info {
-        min-width: 0 !important;
-        overflow: hidden !important;
+    .cm-ball-sheen {
+        width: 9px !important;
+        height: 5px !important;
     }
 
-    .cm-color-badges {
-        gap: 3px !important;
-        margin-bottom: 2px !important;
-        flex-wrap: wrap !important;
+    .cm-drawing-curtain {
+        border-radius: 9px !important;
     }
 
-    .cm-badge-pill {
+    .cm-drawing-label {
         font-size: 9px !important;
-        padding: 1px 6px !important;
+        letter-spacing: 1px !important;
+    }
+
+    .cm-drawing-spinner {
+        width: 26px !important;
+        height: 26px !important;
+    }
+
+    .cm-spinner-num {
+        font-size: 12px !important;
+    }
+
+    /* Lock Banner */
+    .cm-lock-banner {
+        padding: 2px 6px !important;
+        font-size: 8.5px !important;
+        min-height: 18px !important;
         border-radius: 6px !important;
+        margin: 0 !important;
     }
 
-    .cm-payout-quote {
-        font-size: 10px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-
+    /* Betting Board Console */
     .cm-bet-console {
-        padding: 10px 10px !important;
-        border-radius: 14px !important;
+        padding: 3px 5px !important;
+        border-radius: 9px !important;
+        gap: 3px !important;
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        overflow: visible !important;
     }
 
-    .cm-bet-console {
-        padding: 8px 10px !important;
-        border-radius: 14px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-    }
-
-    .cm-section-header {
-        margin: 4px 0 3px !important;
-        font-size: 10.5px !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    .cm-section-header:first-child {
-        margin-top: 0 !important;
-    }
-
-    .cm-section-hint {
-        display: none !important;
-    }
-
+    /* 1. Colors (Green, Violet, Red) */
     .cm-color-crystals {
         display: grid !important;
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 5px !important;
+        gap: 4px !important;
         width: 100% !important;
-        box-sizing: border-box !important;
+        margin: 0 !important;
     }
 
     .cm-crystal-btn {
-        padding: 4px 3px !important;
-        min-height: 46px !important;
-        max-height: 50px !important;
-        border-radius: 10px !important;
-        gap: 1.5px !important;
+        padding: 2px 2px !important;
+        min-height: 35px !important;
+        max-height: 37px !important;
+        height: 35px !important;
+        border-radius: 7px !important;
+        gap: 1px !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        min-width: 0 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
     }
 
     .cm-gem-frame {
-        width: 18px !important;
-        height: 18px !important;
-        min-width: 18px !important;
-        border-width: 1.5px !important;
+        width: 13px !important;
+        height: 13px !important;
+        min-width: 13px !important;
     }
 
     .cm-crystal-title {
-        font-size: 10.5px !important;
+        font-size: 9px !important;
         font-weight: 900 !important;
-        letter-spacing: 0.3px !important;
-        line-height: 1.1 !important;
+        line-height: 1 !important;
     }
 
     .cm-crystal-badge {
-        font-size: 8px !important;
-        padding: 1px 4px !important;
-        border-radius: 5px !important;
-        line-height: 1.1 !important;
+        font-size: 7px !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        line-height: 1 !important;
     }
 
     .cm-staked-badge {
-        font-size: 8.5px !important;
-        padding: 1px 5px !important;
-        top: -6px !important;
-        right: -4px !important;
+        font-size: 8px !important;
+        padding: 1px 4px !important;
+        top: -4px !important;
+        right: -3px !important;
     }
 
+    /* 2. Numbers Grid (0 to 9 in 2 tight rows of 5) */
     .cm-numbers-sphere-grid {
         display: grid !important;
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-        gap: 4px !important;
+        gap: 3px !important;
         width: 100% !important;
-        box-sizing: border-box !important;
+        margin: 0 !important;
     }
 
     .cm-num-sphere {
-        padding: 5px 0 !important;
-        border-radius: 9px !important;
+        padding: 2px 0 !important;
+        height: 27px !important;
+        min-height: 27px !important;
+        border-radius: 6px !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        min-width: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .cm-sphere-text {
-        font-size: 15px !important;
+        font-size: 13px !important;
         font-weight: 900 !important;
+        line-height: 1 !important;
     }
 
+    /* 3. Big / Small Duo */
     .cm-bigsmall-duo {
         display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-        gap: 5px !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 4px !important;
         width: 100% !important;
-        box-sizing: border-box !important;
+        margin: 0 !important;
     }
 
     .cm-pocket-btn {
-        padding: 5px 8px !important;
-        min-height: 42px !important;
-        border-radius: 10px !important;
+        padding: 2px 8px !important;
+        min-height: 29px !important;
+        height: 29px !important;
+        border-radius: 7px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        min-width: 0 !important;
-        gap: 1px !important;
     }
 
     .cm-pocket-title {
-        font-size: 12px !important;
+        font-size: 10.5px !important;
         font-weight: 900 !important;
-        line-height: 1.1 !important;
-    }
-
-    .cm-pocket-sub {
-        font-size: 9px !important;
-        font-weight: 700 !important;
-        line-height: 1.1 !important;
     }
 
     .cm-pocket-mult {
-        font-size: 9px !important;
+        font-size: 8px !important;
         font-weight: 900 !important;
-        padding: 1px 6px !important;
-        line-height: 1.1 !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
     }
 
-    .cm-chips-dock {
-        padding: 12px 10px !important;
-        border-radius: 14px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        gap: 8px !important;
-        overflow: visible !important;
-    }
-
-    .cm-dock-block {
-        margin-bottom: 6px !important;
-        gap: 6px !important;
-        overflow: visible !important;
-    }
-
-    .cm-dock-lbl {
-        font-size: 11px !important;
-    }
-
-    .cm-chips-carousel {
+    /* 4. Mobile Quick Chips Rack */
+    .cm-mobile-chips-dock {
         display: flex !important;
-        gap: 6px !important;
-        justify-content: space-between !important;
+        justify-content: center !important;
         align-items: center !important;
-        overflow: visible !important;
         width: 100% !important;
-        scrollbar-width: none !important;
-        padding: 10px 4px 6px !important;
-        margin-top: -2px !important;
-        box-sizing: border-box !important;
+        padding: 1px 0 !important;
+        margin-top: 1px !important;
     }
 
-    .casino-chip {
-        width: 38px !important;
-        height: 38px !important;
-        min-width: 38px !important;
-        font-size: 11px !important;
+    .cm-mobile-chips-dock .cm-chips-carousel {
+        display: flex !important;
+        gap: 5px !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+    }
+
+    .cm-mobile-chips-dock .casino-chip {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        font-size: 9.5px !important;
         font-weight: 900 !important;
         position: relative !important;
     }
 
-    .casino-chip.selected {
-        transform: translateY(-4px) scale(1.12) !important;
-        border-color: #ffd700 !important;
-        outline: 2px solid #ffd700 !important;
-        box-shadow: 
-            0 8px 18px rgba(0, 0, 0, 0.8),
-            0 0 14px rgba(255, 215, 0, 0.65),
-            inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
-        z-index: 2 !important;
+    .cm-mobile-chips-dock .casino-chip.selected {
+        transform: translateY(-2px) scale(1.08) !important;
     }
 
-    .cm-mult-pills {
-        display: flex !important;
-        gap: 4px !important;
-        flex-wrap: wrap !important;
-    }
-
-    .cm-mult-btn {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .cm-summary-bar {
+    /* HIDE DESKTOP SIDEBAR ON MOBILE (History available via top drawer) */
+    .cm-right-dashboard {
         display: none !important;
     }
 
-    .cm-data-hub {
-        border-radius: 12px !important;
-        overflow: hidden !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        padding: 8px 10px !important;
-    }
-
-    .cm-hub-tabs {
+    /* Sticky Bottom Bar */
+    .cm-mobile-bottom-bar {
         display: flex !important;
-        overflow-x: auto !important;
-        gap: 4px !important;
-        padding-bottom: 6px !important;
-        margin-bottom: 6px !important;
-    }
-
-    .cm-hub-tab {
+        align-items: center !important;
+        justify-content: space-between !important;
+        position: fixed !important;
+        bottom: var(--mobile-nav-space, 68px) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 42px !important;
         padding: 3px 8px !important;
-        font-size: 10.5px !important;
-        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        z-index: 90 !important;
+        background: rgba(15, 20, 31, 0.96) !important;
+        backdrop-filter: blur(12px) !important;
+        border-top: 1.5px solid rgba(255, 215, 0, 0.35) !important;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.75) !important;
     }
 
-    .cm-tab-panel {
-        max-height: 200px !important;
-        overflow-y: auto !important;
-        padding: 2px !important;
-        scrollbar-width: thin !important;
+    .cm-mbar-stake {
+        display: flex !important;
+        flex-direction: column !important;
     }
 
-    .cm-data-table {
-        font-size: 10.5px !important;
+    .cm-mbar-lbl {
+        font-size: 7.5px !important;
+        font-weight: 800 !important;
+        color: #94a3b8 !important;
+        line-height: 1 !important;
     }
 
-    .cm-data-table th,
-    .cm-data-table td {
-        padding: 4px 3px !important;
+    .cm-mbar-val {
+        font-size: 13.5px !important;
+        font-weight: 900 !important;
+        color: #00e676 !important;
+        font-family: monospace !important;
+        line-height: 1.1 !important;
+    }
+
+    .cm-mbar-actions {
+        display: flex !important;
+        gap: 5px !important;
+        align-items: center !important;
+    }
+
+    .cm-mbar-actions .cm-ctrl-btn {
+        height: 30px !important;
+        padding: 0 7px !important;
+        font-size: 11px !important;
+        border-radius: 6px !important;
+    }
+
+    .cm-mbar-draw-btn {
+        height: 32px !important;
+        padding: 0 10px !important;
+        font-size: 11.5px !important;
+        font-weight: 900 !important;
+        border-radius: 6px !important;
     }
 }

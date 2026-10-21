@@ -625,6 +625,22 @@ function ColorMatchGame() {
                                 )}
                             </button>
                         </div>
+
+                        {/* 4. Mobile Quick Chips Rack (Zero-scroll one-thumb play) */}
+                        <div className="cm-mobile-chips-dock">
+                            <div className="cm-chips-carousel">
+                                {CHIP_PRESETS.map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
+                                        onClick={() => setSelectedChip(val)}
+                                    >
+                                        {val >= 1000 ? `${val / 1000}k` : val}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
