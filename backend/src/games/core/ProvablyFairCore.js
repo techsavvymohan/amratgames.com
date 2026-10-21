@@ -59,7 +59,7 @@ class ProvablyFairCore {
         const intVal = parseInt(hash.slice(0, 8), 16)
         const floatVal = intVal / 0x100000000
 
-        return { hash, floatVal, serverSeed, serverSeedHash, clientSeed: cleanClientSeed, nonce: cleanNonce }
+        return { hash, floatVal, serverSeed, serverSeedHash, clientSeed: cleanClientSeed, nonce: cleanNonce, roundEntropy: hash }
     }
 }
 

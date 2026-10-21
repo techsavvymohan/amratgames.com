@@ -53,7 +53,7 @@ export class MinesEngine {
         const count = Math.max(1, Math.min(parseInt(minesCount, 10) || 3, 24))
         const cleanClientSeed = String(clientSeed || 'amrat-player').trim()
         const nonce = provablyFairCore.getNextNonce(userId)
-        const { hash, serverSeed } = provablyFairCore.generateHmacFloat(cleanClientSeed, nonce)
+        const { hash, serverSeed, roundEntropy = hash } = provablyFairCore.generateHmacFloat(cleanClientSeed, nonce)
         const serverSeedHash = crypto.createHash('sha256').update(serverSeed).digest('hex')
 
         // Generate 25 tiles shuffled with unbiased cryptographic SHA-512 Fisher-Yates expansion
