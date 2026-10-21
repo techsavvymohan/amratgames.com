@@ -1666,8 +1666,8 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         height: 100% !important;
         max-height: 100% !important;
         overflow: hidden !important;
-        padding: 4px 6px calc(var(--mobile-nav-space, 68px) + 48px) !important;
-        gap: 3px !important;
+        padding: 6px 8px calc(var(--mobile-nav-space, 68px) + 52px) !important;
+        gap: 7px !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -1683,10 +1683,10 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     .cm-top-bar {
         padding: 3px 8px !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        min-height: 34px !important;
+        height: 34px !important;
         border-radius: 9px !important;
-        gap: 4px !important;
+        gap: 5px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -1707,7 +1707,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     .cm-speed-tab {
         padding: 3px 7px !important;
-        height: 25px !important;
+        height: 26px !important;
         font-size: 11px !important;
         font-weight: 800 !important;
         border-radius: 7px !important;
@@ -1726,7 +1726,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     .cm-fair-btn {
         padding: 0 7px !important;
-        height: 25px !important;
+        height: 26px !important;
         font-size: 11px !important;
         border-radius: 7px !important;
         gap: 3px !important;
@@ -1745,7 +1745,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 3px !important;
+        gap: 7px !important;
         flex: 1 !important;
         min-height: 0 !important;
     }
@@ -1754,7 +1754,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     .cm-stage-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 5px !important;
+        gap: 7px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         margin: 0 !important;
@@ -1762,12 +1762,12 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     .cm-countdown-card,
     .cm-last-result-card {
-        padding: 3px 7px !important;
-        border-radius: 9px !important;
+        padding: 5px 9px !important;
+        border-radius: 10px !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
-        min-height: 40px !important;
-        height: 40px !important;
+        min-height: 46px !important;
+        height: 46px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -1787,12 +1787,12 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
-        gap: 1px !important;
+        gap: 2px !important;
         min-width: 0 !important;
     }
 
     .cm-period-id {
-        font-size: 11px !important;
+        font-size: 11.5px !important;
         font-weight: 800 !important;
         line-height: 1.1 !important;
         color: #ffffff !important;
@@ -1800,7 +1800,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-countdown-status {
-        font-size: 8px !important;
+        font-size: 8.5px !important;
         font-weight: 700 !important;
         color: #fbbf24 !important;
         white-space: nowrap !important;
@@ -1808,19 +1808,19 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-dial-wrapper {
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
+        width: 35px !important;
+        height: 35px !important;
+        min-width: 35px !important;
         flex-shrink: 0 !important;
     }
 
     .cm-dial-svg {
-        width: 32px !important;
-        height: 32px !important;
+        width: 35px !important;
+        height: 35px !important;
     }
 
     .cm-time-num {
-        font-size: 8px !important;
+        font-size: 8.5px !important;
         font-weight: 900 !important;
     }
 
@@ -1836,7 +1836,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         align-items: center !important;
         justify-content: space-between !important;
         width: 100% !important;
-        gap: 4px !important;
+        gap: 6px !important;
     }
 
     .cm-showcase-info {
@@ -1847,29 +1847,29 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-color-badges {
-        gap: 2px !important;
+        gap: 3px !important;
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
     }
 
     .cm-badge-pill {
-        font-size: 7.5px !important;
+        font-size: 8px !important;
         font-weight: 900 !important;
-        padding: 1px 4px !important;
+        padding: 1px 5px !important;
         border-radius: 4px !important;
         line-height: 1 !important;
     }
 
     .cm-sphere-ball {
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
         flex-shrink: 0 !important;
     }
 
     .cm-ball-num {
-        font-size: 13.5px !important;
+        font-size: 14px !important;
         font-weight: 900 !important;
     }
 
@@ -1879,7 +1879,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-drawing-curtain {
-        border-radius: 9px !important;
+        border-radius: 10px !important;
     }
 
     .cm-drawing-label {
@@ -1888,12 +1888,12 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-drawing-spinner {
-        width: 26px !important;
-        height: 26px !important;
+        width: 28px !important;
+        height: 28px !important;
     }
 
     .cm-spinner-num {
-        font-size: 12px !important;
+        font-size: 13px !important;
     }
 
     /* Lock Banner */
@@ -1907,9 +1907,9 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
 
     /* Betting Board Console */
     .cm-bet-console {
-        padding: 3px 5px !important;
-        border-radius: 9px !important;
-        gap: 3px !important;
+        padding: 7px 8px !important;
+        border-radius: 11px !important;
+        gap: 8px !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
@@ -1920,38 +1920,38 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     .cm-color-crystals {
         display: grid !important;
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 4px !important;
+        gap: 7px !important;
         width: 100% !important;
         margin: 0 !important;
     }
 
     .cm-crystal-btn {
-        padding: 2px 2px !important;
-        min-height: 35px !important;
-        max-height: 37px !important;
-        height: 35px !important;
-        border-radius: 7px !important;
-        gap: 1px !important;
+        padding: 3px 3px !important;
+        min-height: 40px !important;
+        max-height: 42px !important;
+        height: 40px !important;
+        border-radius: 8px !important;
+        gap: 2px !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
     .cm-gem-frame {
-        width: 13px !important;
-        height: 13px !important;
-        min-width: 13px !important;
+        width: 15px !important;
+        height: 15px !important;
+        min-width: 15px !important;
     }
 
     .cm-crystal-title {
-        font-size: 9px !important;
+        font-size: 10px !important;
         font-weight: 900 !important;
         line-height: 1 !important;
     }
 
     .cm-crystal-badge {
-        font-size: 7px !important;
-        padding: 1px 3px !important;
-        border-radius: 3px !important;
+        font-size: 7.5px !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
         line-height: 1 !important;
     }
 
@@ -1962,20 +1962,20 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         right: -3px !important;
     }
 
-    /* 2. Numbers Grid (0 to 9 in 2 tight rows of 5) */
+    /* 2. Numbers Grid (0 to 9 in 2 rows of 5 with clear vertical/horizontal gaps) */
     .cm-numbers-sphere-grid {
         display: grid !important;
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-        gap: 3px !important;
+        gap: 7px 5px !important;
         width: 100% !important;
         margin: 0 !important;
     }
 
     .cm-num-sphere {
-        padding: 2px 0 !important;
-        height: 27px !important;
-        min-height: 27px !important;
-        border-radius: 6px !important;
+        padding: 3px 0 !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        border-radius: 7px !important;
         width: 100% !important;
         box-sizing: border-box !important;
         display: flex !important;
@@ -1984,7 +1984,7 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-sphere-text {
-        font-size: 13px !important;
+        font-size: 14px !important;
         font-weight: 900 !important;
         line-height: 1 !important;
     }
@@ -1993,16 +1993,16 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     .cm-bigsmall-duo {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 4px !important;
+        gap: 7px !important;
         width: 100% !important;
         margin: 0 !important;
     }
 
     .cm-pocket-btn {
-        padding: 2px 8px !important;
-        min-height: 29px !important;
-        height: 29px !important;
-        border-radius: 7px !important;
+        padding: 3px 10px !important;
+        min-height: 33px !important;
+        height: 33px !important;
+        border-radius: 8px !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
@@ -2012,14 +2012,14 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-pocket-title {
-        font-size: 10.5px !important;
+        font-size: 11px !important;
         font-weight: 900 !important;
     }
 
     .cm-pocket-mult {
-        font-size: 8px !important;
+        font-size: 8.5px !important;
         font-weight: 900 !important;
-        padding: 1px 4px !important;
+        padding: 1px 5px !important;
         border-radius: 4px !important;
     }
 
@@ -2029,13 +2029,13 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
         justify-content: center !important;
         align-items: center !important;
         width: 100% !important;
-        padding: 1px 0 !important;
-        margin-top: 1px !important;
+        padding: 3px 0 !important;
+        margin-top: 5px !important;
     }
 
     .cm-mobile-chips-dock .cm-chips-carousel {
         display: flex !important;
-        gap: 5px !important;
+        gap: 7px !important;
         justify-content: center !important;
         align-items: center !important;
         width: 100% !important;
@@ -2045,16 +2045,16 @@ button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-
     }
 
     .cm-mobile-chips-dock .casino-chip {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        font-size: 9.5px !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        font-size: 10.5px !important;
         font-weight: 900 !important;
         position: relative !important;
     }
 
     .cm-mobile-chips-dock .casino-chip.selected {
-        transform: translateY(-2px) scale(1.08) !important;
+        transform: translateY(-2px) scale(1.06) !important;
     }
 
     /* HIDE DESKTOP SIDEBAR ON MOBILE (History available via top drawer) */
