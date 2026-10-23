@@ -33,7 +33,7 @@ const HEADS_ASSET = getOptimizedImageUrl('/images/coin-toss/heads.jpg', { width:
 const TAILS_ASSET = getOptimizedImageUrl('/images/coin-toss/tails.jpg', { width: 300 })
 
 export default function CoinTossGame() {
-    const { balance, currencySymbol, executeGameBet, showToast } = useWallet()
+    const { balance, currencySymbol, executeGameBet, creditGamePayout, showToast } = useWallet()
 
     // Game Mode Selection
     const [gameMode, setGameMode] = useState('solo') // 'solo' | 'pvp'
@@ -272,6 +272,11 @@ export default function CoinTossGame() {
             })
 
             if (won) {
+                if (res?.applyPayout) {
+                    res.applyPayout()
+                } else if (payout > 0) {
+                    creditGamePayout?.(payout, res?.balances)
+                }
                 setStreakCount((prev) => prev + 1)
                 setWinTrigger(Date.now())
                 casinoAudio.playWin()
@@ -306,7 +311,7 @@ export default function CoinTossGame() {
                 nonce: prev.nonce + 1
             }))
         }, spinDuration)
-    }, [isFlipping, betAmount, balance, executeGameBet, choice, provablyFairSeed, turboMode])
+    }, [isFlipping, betAmount, balance, executeGameBet, creditGamePayout, choice, provablyFairSeed, turboMode])
 
 
     // Keyboard Shortcuts

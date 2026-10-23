@@ -171,16 +171,6 @@ export class AutomatedSettlementService {
             reviewReason: `Verified AML qualifications. Queued for 1-click cashier dispatch via ${withdrawalParams.payoutMethod || 'UPI'}.`,
             eta: '10-30 minutes'
         }
-
-        // High Roller Tier: Legitimate but exceeds instant auto-payout threshold
-        return {
-            qualified: true,
-            instantPayout: false,
-            status: 'pending',
-            reason: 'HIGH_VALUE_THRESHOLD',
-            reviewReason: `Withdrawal of ${curr} ${parsedAmount.toLocaleString('en-IN')} exceeds instant ₹${maxThreshold.toLocaleString('en-IN')} threshold. Queued for priority cashier dispatch.`,
-            eta: '10-20 minutes'
-        }
     }
 
     /**
@@ -262,7 +252,8 @@ export class AutomatedSettlementService {
                 : parseFloat((baseAmount * cryptoIncentiveMultiplier).toFixed(2))
 
             // 1. Credit balance
-            database.updateUserBalance(
+            // 1. Credit balance & capture transaction
+            const balResult = database.updateUserBalance(
                 user.id,
                 targetCurrency,
                 creditAmount,
@@ -276,9 +267,10 @@ export class AutomatedSettlementService {
 
             user.totalDeposited = parseFloat(((user.totalDeposited || 0) + depositInrEquiv).toFixed(2))
 
-            // 3. Record completed deposit record in database
+            // 3. Record completed deposit record in database with linked transactionId
             const depositRecord = {
                 id: 'dep_crypto_' + Date.now().toString(36),
+                transactionId: balResult?.transaction?.id || null,
                 userId: user.id,
                 username: user.username,
                 currency: targetCurrency,
@@ -290,10 +282,20 @@ export class AutomatedSettlementService {
                 approvedAt: new Date().toISOString(),
                 approvedBy: 'SYSTEM_BLOCKCHAIN_INGRESS'
             }
+            if (balResult?.transaction) {
+                balResult.transaction.depositId = depositRecord.id
+            }
 
             if (!database.data.deposits) database.data.deposits = []
             database.data.deposits.unshift(depositRecord)
             database.persist()
+
+            // Durable outbox synchronization for Supabase cloud hydration
+            if (database.durableOutbox) {
+                database.durableOutbox.enqueue('syncUser', user)
+                if (balResult?.transaction) database.durableOutbox.enqueue('syncTransaction', balResult.transaction)
+                database.durableOutbox.enqueue('syncDeposit', depositRecord)
+            }
 
             // Mark event processed
             database.markWebhookProcessed(eventKey)

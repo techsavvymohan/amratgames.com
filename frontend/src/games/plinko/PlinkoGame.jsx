@@ -124,7 +124,7 @@ const BALL_TYPES = {
 function PlinkoGame() {
     const { user, openAuthModal } = useAuth();
     // Shared Wallet
-    const { balance, placeBet, addWinnings, executeGameBet, currencySymbol, currency, notifyWin, notifyLoss, showToast } = useWallet();
+    const { balance, placeBet, addWinnings, executeGameBet, creditGamePayout, currencySymbol, currency, notifyWin, notifyLoss, showToast } = useWallet();
     const minBet = currency === 'INR' ? 10 : 1;
     // State
     const [betAmount, setBetAmount] = useState(() => (currency === 'INR' ? 10 : 1));
@@ -288,6 +288,13 @@ function PlinkoGame() {
         // Real bet placed & settled: clear spectator missed win prompt
         setSpectatorMissedWin(null);
 
+        // Apply winning payout to balance right now as the ball enters the bin!
+        if (data.betResponse?.applyPayout) {
+            data.betResponse.applyPayout();
+        } else if (finalPayout > 0) {
+            creditGamePayout?.(finalPayout);
+        }
+
         // Compact micro toast notification (simplest, shortest, 1 second)
         if (profit > 0) {
             showToast?.('win', `+${currencySymbol}${profit.toFixed(2)}`, `${actualMultiplier.toFixed(2)}x`, 1000);
@@ -322,7 +329,7 @@ function PlinkoGame() {
         } else {
             setCurrentStreak(0);
         }
-    }, [selectedBallType, maxStreak, betAmount, minBet, currencySymbol, showToast]);
+    }, [selectedBallType, maxStreak, betAmount, minBet, currencySymbol, showToast, creditGamePayout]);
 
     // Drag handler for widget
     const handleDragStart = useCallback((e) => {

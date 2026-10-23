@@ -46,7 +46,7 @@ export async function dropPlinkoBall({
 
         casinoAudio.playBet();
         engine.updateBallStyle(currentBall.color, currentBall.image);
-        return engine.dropBall(binIndex, selectedBallType) ? 'dropped' : 'busy';
+        return engine.dropBall(binIndex, selectedBallType, false, betRes) ? 'dropped' : 'busy';
     } finally {
         pendingDrops.current--;
     }

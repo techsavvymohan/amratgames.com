@@ -57,9 +57,13 @@ export class YouPiGatewayAdapter extends IPaymentGateway {
 
     /**
      * Records a failure and trips the circuit if threshold exceeded.
+     * Ignores 4xx client validation errors so user errors don't trigger platform-wide circuit opening.
      * @private
      */
-    _recordFailure() {
+    _recordFailure(err) {
+        if (err && err.statusCode && err.statusCode >= 400 && err.statusCode < 500) {
+            return
+        }
         this.failureCount++
         if (this.failureCount >= this.failureThreshold) {
             this.circuitOpenUntil = Date.now() + this.cooldownDurationMs
@@ -213,15 +217,26 @@ export class YouPiGatewayAdapter extends IPaymentGateway {
                 amountPaise: result.amountPaise || amountPaise,
                 currency: result.currency || 'INR',
                 status: result.status || 'INITIATED',
-                checkoutUrl: (result.checkoutUrl && !result.checkoutUrl.includes('localhost')) 
-                    ? result.checkoutUrl 
-                    : `${this.checkoutUrl}/checkout/${result.paymentId}`,
+                checkoutUrl: (() => {
+                    let url = result.checkoutUrl || `${this.checkoutUrl}/checkout/${result.paymentId}`
+                    const isConfiguredPublic = this.checkoutUrl && !this.checkoutUrl.includes('localhost') && !this.checkoutUrl.includes('127.0.0.1')
+                    if (isConfiguredPublic && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+                        try {
+                            const parsed = new URL(url)
+                            const configured = new URL(this.checkoutUrl)
+                            parsed.protocol = configured.protocol
+                            parsed.host = configured.host
+                            url = parsed.toString()
+                        } catch {}
+                    }
+                    return url
+                })(),
                 qrPayload: result.qrPayload || null,
                 upiIntent: result.upiIntent || null,
                 raw: result
             }
         } catch (err) {
-            this._recordFailure()
+            this._recordFailure(err)
             throw new Error(`Failed to create YouPI payment order: ${err.message}`)
         }
     }

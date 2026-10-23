@@ -1,2167 +1,1585 @@
-/* ===== Color Match Pro 2026 Theme ===== */
-.color-match-page {
-    max-width: 1320px;
+/* ==========================================================================
+   WIN GO 30-SECOND COLOR PREDICTION LOTTERY PRO THEME
+   Pixel-perfect replica of Tiranga / Daman / 91Club / Win Go Lottery
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Courgette&family=Dancing+Script:wght@700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --wingo-coral: #f95959;
+    --wingo-coral-dark: #ea4848;
+    --wingo-green: #22c55e;
+    --wingo-violet: #a855f7;
+    --wingo-red: #ef4444;
+    --wingo-orange: #f59e0b;
+    --wingo-blue: #3b82f6;
+    --wingo-bg: #f4f6fa;
+    --wingo-card: #ffffff;
+    --wingo-text-dark: #1e293b;
+    --wingo-text-muted: #64748b;
+    --wingo-border: #e2e8f0;
+}
+
+.wingo-game-container {
+    max-width: 440px;
     margin: 0 auto;
-    padding: 10px 16px 80px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    padding: 10px 12px 80px;
+    background: var(--wingo-bg);
+    min-height: 100%;
+    height: auto;
+    overflow: visible !important;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     user-select: none;
-}
-
-/* Laptop & Desktop Viewport: 100% Zero-Scroll Perfect Fit on All Screens */
-@media (min-width: 901px) {
-    .color-match-page {
-        height: calc(100vh - 60px);
-        max-height: calc(100vh - 60px);
-        overflow: hidden;
-        padding: 6px 16px;
-        gap: 6px;
-        box-sizing: border-box;
-    }
-
-    .cm-top-bar {
-        padding: 6px 14px;
-        min-height: 38px;
-    }
-
-    .cm-main-split {
-        flex: 1;
-        display: grid;
-        grid-template-columns: 1.12fr 0.88fr;
-        gap: 10px;
-        min-height: 0;
-        overflow: hidden;
-        align-items: stretch;
-    }
-
-    .cm-left-cockpit {
-        height: 100%;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .cm-right-dashboard {
-        height: 100%;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .cm-stage-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px;
-        margin-bottom: 0 !important;
-    }
-
-    .cm-countdown-card, .cm-last-result-card {
-        padding: 8px 12px !important;
-        border-radius: 12px !important;
-        min-height: 74px !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-period-id {
-        font-size: 15px !important;
-        letter-spacing: 0.5px !important;
-        line-height: 1.2 !important;
-    }
-
-    .cm-countdown-status {
-        font-size: 9.5px !important;
-        white-space: nowrap !important;
-    }
-
-    .cm-showcase-header {
-        font-size: 9.5px !important;
-        white-space: nowrap !important;
-    }
-
-    .cm-showcase-body {
-        margin-top: 3px !important;
-        gap: 10px !important;
-    }
-
-    .cm-dial-wrapper {
-        width: 58px !important;
-        height: 58px !important;
-    }
-
-    .cm-dial-svg {
-        width: 58px !important;
-        height: 58px !important;
-    }
-
-    .cm-time-num {
-        font-size: 10.5px !important;
-    }
-
-    .cm-time-lbl {
-        font-size: 7px !important;
-    }
-
-    .cm-sphere-ball {
-        width: 38px !important;
-        height: 38px !important;
-    }
-
-    .cm-ball-num {
-        font-size: 18px !important;
-    }
-
-    .cm-bet-console {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 8px 12px !important;
-        border-radius: 14px !important;
-        gap: 4px !important;
-        overflow: hidden;
-    }
-
-    .cm-section-header {
-        margin: 2px 0 3px !important;
-        font-size: 11px !important;
-    }
-
-    .cm-color-crystals {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 6px !important;
-    }
-
-    .cm-crystal-btn {
-        padding: 6px 4px !important;
-        border-radius: 10px !important;
-        gap: 2px !important;
-    }
-
-    .cm-gem-frame {
-        width: 26px !important;
-        height: 26px !important;
-    }
-
-    .cm-crystal-title {
-        font-size: 12px !important;
-    }
-
-    .cm-crystal-badge {
-        font-size: 9px !important;
-        padding: 1px 6px !important;
-    }
-
-    .cm-numbers-sphere-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 5px !important;
-    }
-
-    .cm-num-sphere {
-        padding: 5px 0 !important;
-        border-radius: 10px !important;
-    }
-
-    .cm-sphere-text {
-        font-size: 16px !important;
-        font-weight: 900 !important;
-    }
-
-    .cm-bigsmall-duo {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px !important;
-    }
-
-    .cm-pocket-btn {
-        padding: 5px 10px !important;
-        border-radius: 10px !important;
-    }
-
-    .cm-pocket-title {
-        font-size: 12px !important;
-    }
-
-    .cm-pocket-sub {
-        font-size: 10px !important;
-    }
-
-    .cm-pocket-mult {
-        font-size: 11px !important;
-    }
-
-    .cm-chips-dock {
-        padding: 8px 12px !important;
-        border-radius: 14px !important;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .cm-chips-dock .casino-chip {
-        width: 36px !important;
-        height: 36px !important;
-        font-size: 11px !important;
-    }
-
-    .cm-mult-btn {
-        padding: 3px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .cm-dock-actions {
-        gap: 8px !important;
-    }
-
-    .cm-ctrl-btn {
-        flex: 0 0 74px !important;
-        min-width: 68px !important;
-        height: 38px !important;
-        font-size: 12px !important;
-        padding: 0 8px !important;
-    }
-
-    .cm-draw-action-btn {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        height: 38px !important;
-        font-size: 12.5px !important;
-        font-weight: 800 !important;
-        padding: 0 10px !important;
-    }
-
-    .cm-data-hub {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        border-radius: 14px;
-    }
-
-    .cm-tab-panel {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        max-height: unset !important;
-    }
-
-    .cm-mobile-chips-dock {
-        display: none !important;
-    }
-}
-
-/* Tactile Mobile Touch Feedback: Instant press animation & no tap lag */
-button, .cm-crystal-btn, .cm-num-sphere, .cm-pocket-btn, .casino-chip, .cm-mult-btn, .cm-speed-tab, .cm-ctrl-btn {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.cm-crystal-btn:active,
-.cm-num-sphere:active,
-.cm-pocket-btn:active,
-.casino-chip:active,
-.cm-mult-btn:active,
-.cm-speed-tab:active,
-.cm-ctrl-btn:active {
-    transform: scale(0.93) !important;
-    filter: brightness(1.22) !important;
-    transition: transform 0.05s ease !important;
-}
-
-/* Top Bar: Compact VIP Brand + Speed Modes */
-.cm-top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, rgba(20, 26, 40, 0.95), rgba(11, 15, 25, 0.98));
-    border: 1px solid rgba(255, 215, 0, 0.25);
-    border-radius: 16px;
-    padding: 8px 18px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.cm-top-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.cm-top-right {
-    display: flex;
-    align-items: center;
-}
-
-.cm-vip-crown {
-    font-size: 26px;
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7));
-}
-
-.cm-brand-title {
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 1.2px;
-    color: #ffffff;
-    font-family: 'SF Pro Display', -apple-system, sans-serif;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-}
-
-.cm-brand-subtitle {
-    font-size: 11px;
-    color: #ffd700;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.cm-fair-btn {
-    color: #94a3b8 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 10px !important;
-    background: rgba(255, 255, 255, 0.03) !important;
-    height: 34px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-}
-
-.cm-fair-btn:hover {
-    color: #00e676 !important;
-    border-color: #00e676 !important;
-    box-shadow: 0 0 12px rgba(0, 230, 118, 0.3) !important;
-}
-
-/* Speed Mode Tabs */
-.cm-speed-tabs {
-    display: flex;
-    gap: 8px;
-}
-
-.cm-speed-tab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: rgba(18, 24, 38, 0.85);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 6px 12px;
-    color: #94a3b8;
-    font-weight: 800;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.cm-speed-tab:hover {
-    color: #f1f5f9;
-    border-color: rgba(255, 215, 0, 0.3);
-    transform: translateY(-2px);
-}
-
-.cm-speed-tab.active {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(245, 158, 11, 0.1));
-    border-color: #ffd700;
-    color: #ffd700;
-    box-shadow: 0 0 14px rgba(255, 215, 0, 0.35);
-    transform: translateY(-2px);
-}
-
-.cm-tab-icon {
-    font-size: 13px;
-}
-
-/* Main Stage Grid (Countdown Dial & Last Result) */
-.cm-stage-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-}
-
-/* Countdown Dial Card */
-.cm-countdown-card {
-    background: linear-gradient(135deg, #121824, #0a0f18);
-    border: 1.5px solid rgba(255, 215, 0, 0.25);
-    border-radius: 20px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.08);
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    min-height: 120px;
     box-sizing: border-box;
-}
-
-.cm-countdown-meta {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-}
-
-.cm-meta-kicker {
-    font-size: 11px;
-    font-weight: 800;
-    color: #ffd700;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 2px;
-}
-
-.cm-period-id {
-    font-size: 20px;
-    font-weight: 900;
-    color: #ffffff;
-    font-family: monospace;
-    letter-spacing: 1px;
-}
-
-.cm-countdown-status {
-    font-size: 11.5px;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.cm-countdown-card.cm-urgent .cm-countdown-status {
-    color: #ff5252;
-}
-
-/* Circular SVG Dial */
-.cm-dial-wrapper {
-    position: relative;
-    width: 76px;
-    height: 76px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.9) 75%);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7), 0 0 14px rgba(245, 158, 11, 0.2);
-    flex-shrink: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cm-dial-wrapper.is-drawing {
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(15, 23, 42, 0.9) 75%);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7), 0 0 16px rgba(16, 185, 129, 0.25);
-}
-
-.cm-dial-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-    pointer-events: none;
-}
-
-.cm-dial-bg {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.08);
-    stroke-width: 4;
-}
-
-.cm-dial-progress {
-    fill: none;
-    stroke-width: 4.5;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
-    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
-}
-
-.cm-dial-progress.drawing-active {
-    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.8));
-    animation: cmDialSpin 1.4s linear infinite;
-    transform-origin: 50px 50px;
-}
-
-@keyframes cmDialSpin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.cm-dial-time {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    pointer-events: none;
-    gap: 1px;
-}
-
-.cm-time-status-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #fbbf24;
-    box-shadow: 0 0 6px #fbbf24;
-    margin-bottom: 2px;
-    animation: cmDotPulse 1.2s infinite alternate ease-in-out;
-}
-
-.cm-dial-wrapper.is-drawing .cm-time-status-dot {
-    background: #34d399;
-    box-shadow: 0 0 6px #34d399;
-}
-
-@keyframes cmDotPulse {
-    from {
-        transform: scale(0.8);
-        opacity: 0.6;
-    }
-    to {
-        transform: scale(1.3);
-        opacity: 1;
-    }
-}
-
-.cm-time-num {
-    font-size: 12px;
-    font-weight: 900;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    letter-spacing: 0.06em;
-    line-height: 1;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.cm-time-lbl {
-    font-size: 8px;
-    font-weight: 800;
-    color: #fbbf24;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    line-height: 1;
-    margin-top: 2px;
-}
-
-.cm-dial-wrapper.is-drawing .cm-time-lbl {
-    color: #34d399;
-}
-
-.cm-countdown-card.cm-urgent {
-    border-color: #ff1744;
-    background: radial-gradient(circle at 75% 50%, rgba(255, 23, 68, 0.2), #0a0f18 70%);
-    animation: urgentBlink 0.8s infinite alternate;
-}
-
-.cm-countdown-card.cm-urgent .cm-time-num,
-.cm-countdown-card.cm-urgent .cm-time-lbl {
-    color: #ff1744;
-}
-
-@keyframes urgentBlink {
-    0% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); }
-    100% { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 23, 68, 0.6); }
-}
-
-/* Last Result Showcase Card */
-.cm-last-result-card {
-    background: linear-gradient(135deg, #121824, #0a0f18);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.cm-showcase-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 1px;
-}
-
-.cm-showcase-period {
-    color: #ffd700;
-    font-family: monospace;
-}
-
-.cm-showcase-body {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-top: 8px;
-}
-
-/* 3D Sphere Ball */
-.cm-sphere-ball {
-    position: relative;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 
-        0 10px 24px rgba(0, 0, 0, 0.7),
-        inset 0 4px 8px rgba(255, 255, 255, 0.5),
-        inset 0 -6px 12px rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    flex-shrink: 0;
-}
-
-.cm-ball-num {
-    font-size: 32px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-    z-index: 2;
-}
-
-.cm-ball-sheen {
-    position: absolute;
-    top: 6px;
-    left: 10px;
-    width: 22px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    filter: blur(1px);
-    transform: rotate(-25deg);
-    pointer-events: none;
-}
-
-.ball-green {
-    background: radial-gradient(circle at 35% 30%, #00e676, #008f4c 70%, #004d26);
-    box-shadow: 0 0 24px rgba(0, 230, 118, 0.6);
-}
-
-.ball-red {
-    background: radial-gradient(circle at 35% 30%, #ff1744, #b71c1c 70%, #5b0000);
-    box-shadow: 0 0 24px rgba(255, 23, 68, 0.6);
-}
-
-.ball-violet {
-    background: radial-gradient(circle at 35% 30%, #b388ff, #7c4dff 70%, #4a148c);
-    box-shadow: 0 0 24px rgba(124, 77, 255, 0.6);
-}
-
-.ball-split-red {
-    background: linear-gradient(135deg, #7c4dff 50%, #ff1744 50%);
-}
-
-.ball-split-green {
-    background: linear-gradient(135deg, #7c4dff 50%, #00e676 50%);
-}
-
-.cm-color-badges {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.cm-badge-pill {
-    font-size: 11px;
-    font-weight: 900;
-    padding: 3px 12px;
-    border-radius: 10px;
-    letter-spacing: 0.5px;
-}
-
-.pill-green {
-    background: rgba(0, 230, 118, 0.2);
-    color: #00e676;
-    border: 1px solid rgba(0, 230, 118, 0.5);
-    box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
-}
-
-.pill-red {
-    background: rgba(255, 23, 68, 0.2);
-    color: #ff5252;
-    border: 1px solid rgba(255, 23, 68, 0.5);
-    box-shadow: 0 0 10px rgba(255, 23, 68, 0.3);
-}
-
-.pill-violet {
-    background: rgba(156, 39, 176, 0.2);
-    color: #ba68c8;
-    border: 1px solid rgba(156, 39, 176, 0.5);
-    box-shadow: 0 0 10px rgba(156, 39, 176, 0.3);
-}
-
-.pill-big {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.5);
-}
-
-.pill-small {
-    background: rgba(2, 132, 199, 0.2);
-    color: #38bdf8;
-    border: 1px solid rgba(2, 132, 199, 0.5);
-}
-
-.cm-payout-quote {
-    font-size: 13px;
-    color: #cbd5e1;
-}
-
-/* Animated Drawing Overlay */
-.cm-drawing-curtain {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(23, 37, 84, 0.98));
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    z-index: 5;
-    backdrop-filter: blur(8px);
-}
-
-.cm-drawing-label {
-    font-size: 12px;
-    font-weight: 900;
-    color: #a5b4fc;
-    letter-spacing: 2px;
-}
-
-.cm-drawing-spinner {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #0f172a;
-    border: 3px solid #ffd700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    font-weight: 900;
-    color: #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
-    animation: drawBounce 0.16s infinite alternate;
-}
-
-@keyframes drawBounce {
-    0% { transform: scale(0.92); }
-    100% { transform: scale(1.1); }
-}
-
-/* Lock Notice Banner */
-.cm-lock-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: linear-gradient(90deg, rgba(255, 23, 68, 0.25), rgba(255, 23, 68, 0.55), rgba(255, 23, 68, 0.25));
-    border: 1.5px solid rgba(255, 23, 68, 0.6);
-    padding: 12px;
-    border-radius: 14px;
-    font-weight: 900;
-    font-size: 13px;
-    color: #ff5252;
-    letter-spacing: 1.5px;
-    box-shadow: 0 0 25px rgba(255, 23, 68, 0.35);
-}
-
-.cm-lock-pulse {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #ff1744;
-    box-shadow: 0 0 14px #ff1744;
-    animation: urgentBlink 0.5s infinite alternate;
-}
-
-/* Bet Console Card */
-.cm-bet-console {
-    background: #0f141f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 22px;
-    padding: 24px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-}
-
-.cm-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: 13px;
-    font-weight: 900;
-    color: #ffffff;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
-}
-
-.cm-section-hint {
-    font-size: 11px;
-    font-weight: 700;
-    color: #ffd700;
-}
-
-/* 1. 3D Crystal Color Buttons */
-.cm-color-crystals {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-}
-
-.cm-crystal-btn {
-    position: relative;
-    border: none;
-    outline: none;
-    border-radius: 14px;
-    padding: 12px 8px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 8px 24px rgba(0, 0, 0, 0.5),
-        inset 0 2px 4px rgba(255, 255, 255, 0.4),
-        inset 0 -3px 6px rgba(0, 0, 0, 0.4);
-}
-
-.cm-crystal-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.cm-crystal-btn:not(:disabled):hover {
-    transform: translateY(-4px) scale(1.03);
-}
-
-.btn-green {
-    background: linear-gradient(135deg, #00e676 0%, #00b050 60%, #007a40 100%);
-    color: #042410;
-    box-shadow: 0 8px 24px rgba(0, 230, 118, 0.45);
-}
-
-.btn-violet {
-    background: linear-gradient(135deg, #b388ff 0%, #7c4dff 60%, #4a148c 100%);
-    color: #1a0433;
-    box-shadow: 0 8px 24px rgba(124, 77, 255, 0.45);
-}
-
-.btn-red {
-    background: linear-gradient(135deg, #ff1744 0%, #d50000 60%, #8a0000 100%);
-    color: #ffffff;
-    box-shadow: 0 8px 24px rgba(255, 23, 68, 0.45);
-}
-
-.cm-gem-frame {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    overflow: hidden;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-}
-
-.cm-gem-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scale(1.1);
-    transition: transform 0.3s ease;
-}
-
-.cm-crystal-btn:hover .cm-gem-img {
-    transform: scale(1.25);
-}
-
-.cm-crystal-icon {
-    font-size: 26px;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-.cm-crystal-title {
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 0.6px;
-}
-
-.cm-crystal-badge {
-    font-size: 10px;
-    font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.35);
-    color: #ffffff;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-/* 2. 3D Lottery Numbers Grid (0 to 9) */
-.cm-numbers-sphere-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-}
-
-.cm-num-sphere {
-    position: relative;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 18px;
-    padding: 18px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 6px 16px rgba(0, 0, 0, 0.5),
-        inset 0 3px 6px rgba(255, 255, 255, 0.35),
-        inset 0 -3px 6px rgba(0, 0, 0, 0.5);
-}
-
-.cm-num-sphere:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.cm-num-sphere:not(:disabled):hover {
-    transform: translateY(-4px) scale(1.06);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
-}
-
-.cm-sphere-text {
-    font-size: 28px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-    z-index: 2;
-}
-
-.sphere-solid-green {
-    background: radial-gradient(circle at 35% 35%, #00e676, #008f4c 75%, #004d26);
-    border-color: rgba(0, 230, 118, 0.6);
-}
-
-.sphere-solid-red {
-    background: radial-gradient(circle at 35% 35%, #ff1744, #c62828 75%, #680000);
-    border-color: rgba(255, 23, 68, 0.6);
-}
-
-.sphere-split-violet-red {
-    background: linear-gradient(135deg, #7c4dff 50%, #c62828 50%);
-    border-color: rgba(186, 104, 200, 0.7);
-}
-
-.sphere-split-violet-green {
-    background: linear-gradient(135deg, #7c4dff 50%, #008f4c 50%);
-    border-color: rgba(186, 104, 200, 0.7);
-}
-
-/* 3. Big / Small Dual Pockets */
-.cm-bigsmall-duo {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.cm-pocket-btn {
-    position: relative;
-    border: none;
-    border-radius: 18px;
-    padding: 18px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 6px 20px rgba(0, 0, 0, 0.45),
-        inset 0 2px 4px rgba(255, 255, 255, 0.35);
-}
-
-.cm-pocket-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.cm-pocket-btn:not(:disabled):hover {
-    transform: translateY(-3px);
-}
-
-.btn-big {
-    background: linear-gradient(135deg, #f59e0b 0%, #b45309 60%, #78350f 100%);
-    color: #170d00;
-}
-
-.btn-small {
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #082f49 100%);
-    color: #011624;
-}
-
-.cm-pocket-title {
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 1px;
-}
-
-.cm-pocket-sub {
-    font-size: 11px;
-    font-weight: 700;
-    opacity: 0.85;
-}
-
-.cm-pocket-mult {
-    font-size: 12px;
-    font-weight: 900;
-    padding: 2px 10px;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.3);
-    color: #ffffff;
-}
-
-/* Staked Badge Overlay */
-.cm-staked-badge {
-    position: absolute;
-    top: -10px;
-    right: -8px;
-    background: linear-gradient(135deg, #ffd700, #f59e0b);
-    color: #000000;
-    font-size: 11px;
-    font-weight: 900;
-    padding: 3px 9px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
-    border: 1.5px solid #ffffff;
-    animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 3;
-}
-
-@keyframes popIn {
-    0% { transform: scale(0.4); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.active-bet {
-    outline: 3px solid #ffd700 !important;
-    outline-offset: 3px;
-}
-
-/* 3D Casino Chips Dock */
-.cm-chips-dock {
-    background: #0f141f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 22px;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
-}
-
-.cm-dock-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.cm-chips-belt,
-.cm-mult-modifiers {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.cm-dock-lbl {
-    font-size: 12px;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 0.5px;
-}
-
-.cm-chips-carousel {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 8px 4px 6px;
-    overflow: visible;
-}
-
-/* Authentic 3D Casino Chips */
-.casino-chip {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-weight: 900;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    border: 2px dashed rgba(255, 255, 255, 0.35);
-    outline: 2px solid rgba(0, 0, 0, 0.4);
-    outline-offset: -1px;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 6px 14px rgba(0, 0, 0, 0.6),
-        inset 0 2px 4px rgba(255, 255, 255, 0.4),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.casino-chip:hover {
-    transform: translateY(-3px) scale(1.08);
-}
-
-.casino-chip.selected {
-    transform: translateY(-4px) scale(1.12);
-    border-color: #ffd700;
-    outline: 2px solid #ffd700;
-    box-shadow: 
-        0 8px 20px rgba(0, 0, 0, 0.8),
-        0 0 16px rgba(255, 215, 0, 0.65),
-        inset 0 2px 4px rgba(255, 255, 255, 0.6);
-    z-index: 2;
-}
-
-.chip-10 {
-    background: radial-gradient(circle at 35% 35%, #475569, #1e293b 70%, #0f172a);
-    color: #f1f5f9;
-}
-
-.chip-50 {
-    background: radial-gradient(circle at 35% 35%, #3b82f6, #1d4ed8 70%, #172554);
-    color: #ffffff;
-}
-
-.chip-100 {
-    background: radial-gradient(circle at 35% 35%, #10b981, #047857 70%, #064e3b);
-    color: #ffffff;
-}
-
-.chip-500 {
-    background: radial-gradient(circle at 35% 35%, #ec4899, #be185d 70%, #831843);
-    color: #ffffff;
-}
-
-.chip-1000 {
-    background: radial-gradient(circle at 35% 35%, #f59e0b, #b45309 70%, #78350f);
-    color: #ffffff;
-    border-color: rgba(255, 215, 0, 0.6);
-}
-
-.chip-5000 {
-    background: radial-gradient(circle at 35% 35%, #8b5cf6, #5b21b6 70%, #3b0764);
-    color: #ffffff;
-}
-
-/* Multiplier Buttons (X1, X5, X10, X20, X50, X100) */
-.cm-mult-pills {
-    display: flex;
-    gap: 6px;
-}
-
-.cm-mult-btn {
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
-    font-size: 12px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.cm-mult-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-}
-
-.cm-mult-btn.active {
-    background: #ffd700;
-    color: #000000;
-    border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-}
-
-/* Summary Bar */
-.cm-summary-bar {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
 }
 
-.cm-stake-readout {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 10px 16px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.cm-readout-lbl {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.75px;
-    color: #94a3b8;
-    white-space: nowrap;
-}
-
-.cm-readout-val {
-    font-size: 24px;
-    font-weight: 900;
-    color: #00e676;
-    font-family: 'Inter', -apple-system, sans-serif;
-    letter-spacing: -0.5px;
-    text-shadow: 0 0 14px rgba(0, 230, 118, 0.45);
-}
-
-.cm-dock-actions {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    align-items: center;
-}
-
-.cm-ctrl-btn {
-    flex: 0 0 76px;
-    min-width: 68px;
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-    color: #cbd5e1 !important;
-    border-radius: 10px !important;
-    font-weight: 800 !important;
-    height: 40px !important;
-    padding: 0 8px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    white-space: nowrap !important;
-}
-
-.cm-ctrl-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
-}
-
-.cm-btn-double {
-    border-color: rgba(255, 215, 0, 0.3) !important;
-    color: #ffd700 !important;
-}
-
-.cm-draw-action-btn {
-    flex: 1 1 auto;
-    min-width: 0;
-    background: linear-gradient(135deg, #00e676, #00b0ff) !important;
-    border: none !important;
-    color: #0b0f19 !important;
-    border-radius: 10px !important;
-    font-weight: 900 !important;
-    font-size: 13px !important;
-    height: 40px !important;
-    padding: 0 12px !important;
-    box-shadow: 0 4px 18px rgba(0, 230, 118, 0.4) !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-}
-
-.cm-draw-action-btn .ant-btn-icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 14px !important;
-    margin-inline-end: 4px !important;
+/* Ensure no child card is squished by flexbox */
+.wingo-ticket-banner,
+.wingo-color-pills-row,
+.wingo-balls-card,
+.wingo-multiplier-bar,
+.wingo-big-small-row,
+.wingo-active-stake-banner,
+.wingo-tabs-bar,
+.wingo-history-card,
+.wingo-mybets-card,
+.wingo-chart-card {
     flex-shrink: 0 !important;
 }
 
-.cm-draw-action-btn > span:not(.ant-btn-icon) {
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-
-.cm-draw-action-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(0, 230, 118, 0.6) !important;
-    color: #000000 !important;
-}
-
-.cm-mbar-draw-btn {
-    background: linear-gradient(135deg, #00e676, #00b0ff) !important;
-    border: none !important;
-    color: #0b0f19 !important;
-    border-radius: 10px !important;
-    font-weight: 900 !important;
-    height: 38px !important;
-    padding: 0 16px !important;
-    box-shadow: 0 2px 12px rgba(0, 230, 118, 0.4) !important;
-}
-
-/* Interactive Data Hub (Tabs: Game History · Trend Chart · My Bets) */
-.cm-data-hub {
-    background: #0f141f;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 10px 14px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.cm-hub-tabs {
+/* ==========================================================================
+   PERFORATED CORAL RED TICKET BANNER (MATCHES REFERENCE EXACTLY)
+   ========================================================================== */
+.wingo-ticket-banner {
+    position: relative;
+    background: linear-gradient(135deg, #f95959 0%, #ff6262 100%);
+    border-radius: 16px;
+    padding: 14px 16px;
     display: flex;
-    gap: 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(249, 89, 89, 0.25);
+    min-height: 110px;
+    box-sizing: border-box;
 }
 
-.cm-hub-tab {
+/* Semicircular Perforation Cutout Notches */
+.ticket-notch {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--wingo-bg);
+    border-radius: 50%;
+    left: 49%;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.ticket-notch.notch-top {
+    top: -10px;
+}
+
+.ticket-notch.notch-bottom {
+    bottom: -10px;
+}
+
+/* Left Half of Ticket */
+.ticket-left-half {
+    flex: 1.05;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 12px;
+}
+
+.ticket-rule-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 20px;
+    padding: 3px 12px;
+    color: #ffffff;
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 12.5px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s ease;
+}
+
+.ticket-rule-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.ticket-mode-label {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 14.5px;
+    letter-spacing: 0.3px;
+    margin: 4px 0;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-recent-balls {
     display: flex;
     align-items: center;
     gap: 5px;
-    background: none;
-    border: 1px solid transparent;
-    color: #94a3b8;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 4px 10px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    letter-spacing: 0.2px;
 }
 
-.cm-hub-tab svg {
-    font-size: 11.5px;
+.ticket-mini-ball-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.cm-hub-tab:hover {
+/* Vertical Perforated Dashed Line */
+.ticket-dashed-divider {
+    width: 2px;
+    border-right: 2px dashed rgba(255, 255, 255, 0.4);
+    margin: 4px 0;
+}
+
+/* Right Half of Ticket */
+.ticket-right-half {
+    flex: 0.95;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-left: 12px;
+}
+
+.ticket-time-label {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Digital Flip-Clock Display */
+.ticket-flip-clock {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 2px 0;
+}
+
+.flip-digit-card {
+    width: 24px;
+    height: 32px;
+    background: #ffffff;
+    color: var(--wingo-coral);
+    font-family: 'Outfit', monospace, sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    position: relative;
+}
+
+/* Subtle Flip Center Crease */
+.flip-digit-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.flip-colon {
+    font-size: 18px;
+    font-weight: 900;
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.04);
+    line-height: 1;
+    margin: 0 1px;
 }
 
-.cm-hub-tab.active {
-    color: #ffd700;
-    background: rgba(255, 215, 0, 0.12);
-    border-color: rgba(255, 215, 0, 0.25);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+.ticket-period-id {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   3 COLOR PILL BUTTONS (GREEN, VIOLET, RED)
+   ========================================================================== */
+.wingo-color-pills-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.wingo-pill-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 11px 6px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+}
+
+.wingo-pill-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.wingo-pill-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.wingo-pill-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.wingo-pill-btn.btn-green {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+
+.wingo-pill-btn.btn-violet {
+    background: linear-gradient(180deg, #a855f7 0%, #9333ea 100%);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+
+.wingo-pill-btn.btn-red {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.pill-text {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.pill-staked-badge {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    background: #ffd700;
+    color: #0f172a;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    border: 1.5px solid #ffffff;
+    z-index: 3;
+}
+
+/* ==========================================================================
+   10 NUMBER LOTTERY BALLS (0 to 9 in 2 rows of 5)
+   ========================================================================== */
+.wingo-balls-card {
+    background: var(--wingo-card);
+    border-radius: 16px;
+    padding: 16px 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: visible;
+    min-height: 145px;
+    height: auto;
+}
+
+.wingo-balls-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    row-gap: 14px;
+    column-gap: 8px;
+    justify-items: center;
+}
+
+.wingo-ball-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Authentic Scallop Lottery Ball (Matches reference image accurately) */
+.wingo-lottery-ball {
+    position: relative;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.wingo-lottery-ball.clickable {
+    cursor: pointer;
+}
+
+.wingo-lottery-ball.clickable:hover {
+    transform: scale(1.08) translateY(-2px);
+}
+
+.wingo-lottery-ball.clickable:active {
+    transform: scale(0.96);
+}
+
+/* Ball Sizes */
+.wingo-lottery-ball.size-mini {
+    width: 22px;
+    height: 22px;
+}
+
+.wingo-lottery-ball.size-mini .ball-number {
+    font-size: 11px;
     font-weight: 800;
 }
 
-.cm-tab-panel {
-    max-height: 220px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+.wingo-lottery-ball.size-board {
+    width: 52px;
+    height: 52px;
 }
 
-.cm-tab-panel::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+.wingo-lottery-ball.size-board .ball-number {
+    font-size: 24px;
+    font-weight: 800;
 }
 
-.cm-tab-panel::-webkit-scrollbar-track {
-    background: transparent;
+.wingo-lottery-ball.size-large {
+    width: 72px;
+    height: 72px;
 }
 
-.cm-tab-panel::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+.wingo-lottery-ball.size-large .ball-number {
+    font-size: 34px;
+    font-weight: 900;
 }
 
-.cm-tab-panel::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 215, 0, 0.35);
+/* Ball Outer Shell Colors */
+.wingo-lottery-ball.ball-solid-green {
+    background: linear-gradient(180deg, #34d399 0%, #16a34a 50%, #15803d 100%);
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.35);
 }
 
-.cm-data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
+.wingo-lottery-ball.ball-solid-red {
+    background: linear-gradient(180deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
 }
 
-.cm-data-table th {
+.wingo-lottery-ball.ball-solid-violet {
+    background: linear-gradient(180deg, #c084fc 0%, #a855f7 50%, #9333ea 100%);
+    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.35);
+}
+
+/* Split Balls: 0 is Violet top + Red bottom (180deg), 5 is Green left + Violet right (90deg) */
+.wingo-lottery-ball.ball-split-violet-red {
+    background: linear-gradient(180deg, #a855f7 0%, #a855f7 50%, #ef4444 50%, #ef4444 100%);
+    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3);
+}
+
+.wingo-lottery-ball.ball-split-green-violet,
+.wingo-lottery-ball.ball-split-violet-green {
+    background: linear-gradient(90deg, #22c55e 0%, #22c55e 50%, #a855f7 50%, #a855f7 100%);
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+}
+
+/* 4 White Scallop Notches creating the authentic lottery ball border pattern */
+.ball-scallop {
+    position: absolute;
+    background: #ffffff;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.size-board .ball-scallop {
+    width: 15px;
+    height: 15px;
+}
+
+.size-mini .ball-scallop {
+    width: 6px;
+    height: 6px;
+}
+
+.size-large .ball-scallop {
+    width: 20px;
+    height: 20px;
+}
+
+.size-board .ball-scallop.scallop-t {
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.size-board .ball-scallop.scallop-b {
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.size-board .ball-scallop.scallop-l {
+    left: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.size-board .ball-scallop.scallop-r {
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.size-mini .ball-scallop.scallop-t {
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.size-mini .ball-scallop.scallop-b {
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.size-mini .ball-scallop.scallop-l {
+    left: -3px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.size-mini .ball-scallop.scallop-r {
+    right: -3px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Inner White Disc where numeral sits */
+.ball-inner-disc {
+    width: 68%;
+    height: 68%;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+    position: relative;
+    z-index: 2;
+}
+
+.ball-number {
+    font-family: 'Outfit', sans-serif;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.ball-number.text-green {
+    color: #16a34a;
+}
+
+.ball-number.text-red {
+    color: #dc2626;
+}
+
+.ball-number.text-violet {
+    color: #9333ea;
+}
+
+/* Top Gloss / Sheen overlay */
+.ball-gloss {
+    position: absolute;
+    top: 4%;
+    left: 15%;
+    width: 70%;
+    height: 35%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+}
+
+/* Badge for Staked Chip on ball */
+.ball-staked-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ffd700;
+    color: #0f172a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    border: 1px solid #ffffff;
+    z-index: 3;
+}
+
+/* ==========================================================================
+   RANDOM BUTTON & MULTIPLIERS BAR
+   ========================================================================== */
+.wingo-multiplier-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wingo-random-btn {
+    border: 1.5px solid var(--wingo-coral);
+    background: #ffffff;
+    color: var(--wingo-coral);
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 16px;
+    padding: 6px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(249, 89, 89, 0.12);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.wingo-random-btn:hover:not(:disabled) {
+    background: #fff5f5;
+    transform: translateY(-1px);
+}
+
+.wingo-random-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.wingo-mult-pills {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.wingo-mult-pills::-webkit-scrollbar {
+    display: none;
+}
+
+.wingo-mult-pill {
+    flex: 1;
+    min-width: 40px;
+    padding: 8px 4px;
+    border: none;
+    background: #eef1f6;
     color: #64748b;
     font-weight: 700;
-    font-size: 10.5px;
-    text-transform: uppercase;
+    font-size: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.wingo-mult-pill:hover {
+    background: #e2e8f0;
+}
+
+.wingo-mult-pill.active {
+    background: var(--wingo-green);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+}
+
+/* ==========================================================================
+   BIG / SMALL DUAL BUTTONS (UNIFIED SEGMENTED PILL BAR MATCHING SCREENSHOT)
+   ========================================================================== */
+.wingo-big-small-row {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.wingo-bs-btn {
+    flex: 1;
+    border: none;
+    padding: 12px 10px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+}
+
+.wingo-bs-btn:hover:not(:disabled) {
+    filter: brightness(1.05);
+}
+
+.wingo-bs-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.wingo-bs-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.wingo-bs-btn.btn-big {
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 24px 0 0 24px;
+}
+
+.wingo-bs-btn.btn-small {
+    background: linear-gradient(180deg, #5b9cf6 0%, #3b82f6 100%);
+    border-radius: 0 24px 24px 0;
+}
+
+.bs-text {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 20px;
     letter-spacing: 0.5px;
-    text-align: center;
-    padding: 5px 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.cm-data-table td {
-    padding: 5px 6px;
+/* Active Staked Banner */
+.wingo-active-stake-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 8px 14px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.stake-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.stake-lbl {
+    color: var(--wingo-text-muted);
+}
+
+.stake-amt {
+    color: var(--wingo-coral);
+    font-size: 15px;
+}
+
+.stake-clear-btn {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stake-clear-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #ef4444;
+}
+
+/* ==========================================================================
+   HISTORY TABS (GAME HISTORY, CHART, MY HISTORY)
+   ========================================================================== */
+.wingo-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.wingo-tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: none;
+    border-radius: 10px;
+    background: #eef1f6;
+    color: #475569;
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.wingo-tab-btn:hover {
+    background: #e2e8f0;
+}
+
+.wingo-tab-btn.active {
+    background: var(--wingo-coral);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(249, 89, 89, 0.35);
+}
+
+/* ==========================================================================
+   GAME HISTORY TABLE (MATCHING SCREENSHOT)
+   ========================================================================== */
+.wingo-history-card,
+.wingo-mybets-card,
+.wingo-chart-card {
+    background: var(--wingo-card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.wingo-table {
+    width: 100%;
+    border-collapse: collapse;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.table-header-coral th {
+    background: var(--wingo-coral);
+    color: #ffffff;
+    padding: 10px 8px;
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 15.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.table-header-coral th:first-child {
+    text-align: left;
+    padding-left: 14px;
+}
+
+.table-header-coral th:last-child {
+    text-align: center;
+    padding-right: 14px;
+}
+
+.table-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-row:nth-child(even) {
+    background: #fafbfe;
+}
+
+.table-row td {
+    padding: 11px 8px;
+    font-size: 13.5px;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
-.col-period {
-    color: #94a3b8;
-    font-family: monospace;
-    font-size: 10.5px;
-    letter-spacing: -0.2px;
+.cell-period {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: left;
+    padding-left: 14px !important;
 }
 
-.cm-mini-ball {
+.cell-number .num-val {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.cell-number .text-green {
+    color: #16a34a;
+}
+
+.cell-number .text-red {
+    color: #dc2626;
+}
+
+.cell-number .text-violet {
+    color: #9333ea;
+}
+
+.cell-bs .bs-script-val {
+    font-family: 'Courgette', cursive, sans-serif;
+    font-style: italic;
+    font-size: 15px;
+    color: #334155;
+}
+
+/* Colored Dots Indicators */
+.cell-color-dots {
+    text-align: center;
+    padding-right: 14px !important;
+}
+
+.dots-container {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    color: #ffffff;
-    font-weight: 900;
-    font-size: 10.5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    vertical-align: middle;
+    gap: 6px;
 }
 
-.cm-pill-tag {
-    font-size: 9.5px;
-    font-weight: 800;
-    padding: 1.5px 6px;
-    border-radius: 4px;
-    letter-spacing: 0.3px;
+.color-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
     display: inline-block;
-    line-height: 1.3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.tag-big {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.4);
+.color-dot.dot-green {
+    background: #22c55e;
 }
 
-.tag-small {
-    background: rgba(2, 132, 199, 0.2);
-    color: #38bdf8;
-    border: 1px solid rgba(2, 132, 199, 0.4);
+.color-dot.dot-red {
+    background: #ef4444;
 }
 
-.cm-dots-cluster {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
+.color-dot.dot-violet {
+    background: #a855f7;
 }
 
-.cm-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+/* ==========================================================================
+   CHART ROADMAP & STATISTIC MATRIX
+   ========================================================================== */
+.wingo-chart-card {
+    padding: 14px;
 }
 
-.dot-green { background: #00e676; box-shadow: 0 0 6px rgba(0, 230, 118, 0.6); }
-.dot-red { background: #ff1744; box-shadow: 0 0 6px rgba(255, 23, 68, 0.6); }
-.dot-violet { background: #9c27b0; box-shadow: 0 0 6px rgba(156, 39, 176, 0.6); }
-
-/* Occurrence Statistics Matrix */
-.cm-trend-chart-panel {
-    padding: 6px 0;
-}
-
-.cm-chart-header {
-    font-size: 10.5px;
+.chart-title {
     font-weight: 700;
-    color: #94a3b8;
-    margin-bottom: 8px;
+    color: #334155;
+    font-size: 13.5px;
+    margin-bottom: 12px;
 }
 
-.cm-matrix-grid {
+.chart-stat-grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 4px;
-    height: 80px;
-    align-items: flex-end;
+    margin-bottom: 16px;
+    background: #f8fafc;
+    padding: 10px 6px;
+    border-radius: 12px;
 }
 
-.cm-matrix-col {
+.stat-col {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    height: 100%;
-    justify-content: flex-end;
 }
 
-.cm-matrix-bar-wrap {
-    width: 100%;
-    height: 52px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 4px;
+.stat-bar-track {
+    width: 12px;
+    height: 55px;
+    background: #e2e8f0;
+    border-radius: 6px;
     display: flex;
     align-items: flex-end;
     overflow: hidden;
 }
 
-.cm-matrix-bar {
+.stat-bar-fill {
     width: 100%;
-    background: linear-gradient(180deg, #ffd700, #d97706);
-    border-radius: 3px;
-    transition: height 0.4s ease;
+    border-radius: 6px;
+    transition: height 0.3s ease;
 }
 
-.cm-matrix-num {
-    font-size: 10.5px;
+.stat-bar-fill.bar-green {
+    background: #22c55e;
+}
+
+.stat-bar-fill.bar-red {
+    background: #ef4444;
+}
+
+.stat-bar-fill.bar-violet {
+    background: #a855f7;
+}
+
+.stat-num {
+    font-weight: 700;
+    font-size: 11.5px;
+    color: #1e293b;
+}
+
+.stat-count {
+    font-size: 10px;
+    color: #64748b;
+}
+
+.roadmap-container {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+}
+
+.roadmap-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    padding-bottom: 6px;
+}
+
+.roadmap-digits {
+    display: grid;
+    grid-template-columns: repeat(10, 18px);
+    gap: 4px;
+    text-align: center;
+}
+
+.roadmap-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roadmap-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.roadmap-period {
+    font-size: 11px;
+    color: #64748b;
+    font-family: monospace;
+}
+
+.roadmap-cells {
+    display: grid;
+    grid-template-columns: repeat(10, 18px);
+    gap: 4px;
+    text-align: center;
+}
+
+.roadmap-cell {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border-radius: 50%;
+}
+
+.hit-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 10px;
     font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hit-dot.dot-green {
+    background: #22c55e;
+}
+
+.hit-dot.dot-red {
+    background: #ef4444;
+}
+
+.hit-dot.dot-violet {
+    background: #a855f7;
+}
+
+.mybets-empty {
+    padding: 30px 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   SIMPLEST MINI POPUP (SLIM, NON-INTRUSIVE FLOATING TOAST)
+   ========================================================================== */
+.wingo-mini-popup {
+    position: fixed;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 30px;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    animation: miniPopupSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+@keyframes miniPopupSlideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -15px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.mini-popup-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+}
+
+.mini-popup-badge {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.mini-popup-amt {
+    font-weight: 800;
+    font-size: 15px;
     color: #ffffff;
 }
 
-.cm-matrix-count {
-    font-size: 9px;
-    color: #ffd700;
-    font-weight: 700;
-}
-
-.cm-empty-history {
-    padding: 16px;
-    text-align: center;
-    color: #64748b;
-    font-size: 11px;
-}
-
-/* Provably Fair Modal Styles */
-.cm-hash-code {
-    background: #090d14;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-family: monospace;
+.mini-popup-sub {
     font-size: 12px;
-    color: #94a3b8;
-    word-break: break-all;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    margin-top: 4px;
+    opacity: 0.88;
 }
 
-.cm-dock-block {
+.mini-popup-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mini-popup-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* ==========================================================================
+   WIN GO MINI CONTRACT BET MODAL (SIMPLEST COMPACT MINI POPUP)
+   ========================================================================== */
+.wingo-contract-modal.mini-contract-modal {
+    max-width: 350px !important;
+    width: 92% !important;
+    margin: 0 auto !important;
+}
+
+.wingo-contract-modal.mini-contract-modal .ant-modal-content {
+    background: #151d2a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 18px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+.wingo-contract-modal.mini-contract-modal .ant-modal-close {
+    top: 10px !important;
+    right: 12px !important;
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-radius: 50% !important;
+    width: 26px !important;
+    height: 26px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+}
+
+.wingo-contract-modal.mini-contract-modal .ant-modal-close:hover {
+    background: rgba(0, 0, 0, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.wingo-modal-close-x {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffffff;
+}
+
+.mini-contract-modal .contract-sheet-body {
+    background: #151d2a !important;
+    color: #f8fafc !important;
     display: flex;
     flex-direction: column;
+}
+
+.contract-sheet-header {
+    padding: 14px 16px 12px;
+    color: #ffffff;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.contract-sheet-header.header-green {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.contract-sheet-header.header-violet {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+}
+
+.contract-sheet-header.header-red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.contract-sheet-header.header-big {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.contract-sheet-header.header-small {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.contract-sheet-header.header-split-violet-red {
+    background: linear-gradient(135deg, #a855f7 50%, #ef4444 50%);
+}
+
+.contract-sheet-header.header-split-violet-green {
+    background: linear-gradient(135deg, #a855f7 50%, #22c55e 50%);
+}
+
+.contract-title {
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.contract-subtitle {
+    font-size: 12.5px;
+    margin-top: 3px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.contract-section {
+    padding: 10px 14px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #151d2a !important;
+}
+
+.contract-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.contract-section-label {
+    font-weight: 700;
+    font-size: 11.5px;
+    color: #94a3b8 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.contract-chips-grid {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.contract-chips-grid.balance-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.contract-chips-grid.multiplier-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+}
+
+.contract-chip-btn {
+    padding: 7px 0;
+    border: 1px solid #2a374d !important;
+    background: #1e293b !important;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #e2e8f0 !important;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.contract-chip-btn:hover {
+    background: #27354d !important;
+    border-color: #3b4d6b !important;
+    color: #ffffff !important;
+}
+
+/* Active chips with targeted glow */
+.contract-chip-btn.active {
+    color: #ffffff !important;
+    font-weight: 800;
+}
+
+.contract-chip-btn.active.active-red,
+.contract-chip-btn.active:not([class*="active-"]) {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-green {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    border-color: #22c55e !important;
+    box-shadow: 0 2px 10px rgba(34, 197, 94, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-violet {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important;
+    border-color: #a855f7 !important;
+    box-shadow: 0 2px 10px rgba(168, 85, 247, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-big {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 2px 10px rgba(245, 158, 11, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-small {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-split-violet-red {
+    background: linear-gradient(135deg, #a855f7 50%, #ef4444 50%) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.45) !important;
+}
+
+.contract-chip-btn.active.active-split-violet-green {
+    background: linear-gradient(135deg, #a855f7 50%, #22c55e 50%) !important;
+    border-color: #22c55e !important;
+    box-shadow: 0 2px 10px rgba(34, 197, 94, 0.45) !important;
+}
+
+.contract-section.contract-quantity-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 6px;
+}
+
+.contract-stepper-wrap {
+    display: flex;
+    align-items: center;
+    background: #0d131f;
+    border: 1px solid #2a374d;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.stepper-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none !important;
+    background: #1e293b !important;
+    font-weight: 800;
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff !important;
+    transition: all 0.15s ease;
+}
+
+.stepper-btn:hover {
+    background: #2b3952 !important;
+    color: #ffffff !important;
+}
+
+.stepper-btn:active {
+    transform: scale(0.95);
+}
+
+.stepper-value {
+    min-width: 44px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 15.5px;
+    color: #ffffff !important;
+    user-select: none;
+}
+
+.contract-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
     gap: 8px;
-    margin-bottom: 12px;
+    padding: 12px 14px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.2);
 }
 
-/* Mobile Sticky Bottom Bar */
-.cm-mobile-bottom-bar {
-    display: none;
+.contract-cancel-btn {
+    padding: 11px 0;
+    border: 1px solid #2a374d !important;
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    font-weight: 700;
+    font-size: 13.5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
 }
 
-@media (max-width: 900px) {
-    .cm-main-split {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-left-cockpit,
-    .cm-right-dashboard {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-mobile-bottom-bar {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        position: fixed !important;
-        bottom: var(--mobile-nav-space, 68px) !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        background: rgba(15, 20, 31, 0.96) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
-        border-top: 1.5px solid rgba(255, 215, 0, 0.35) !important;
-        padding: 8px 12px !important;
-        z-index: 90 !important;
-        box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.75) !important;
-    }
-
-    .cm-mbar-stake {
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    .cm-mbar-lbl {
-        font-size: 9px !important;
-        font-weight: 800 !important;
-        color: #94a3b8 !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    .cm-mbar-val {
-        font-size: 16px !important;
-        font-weight: 900 !important;
-        color: #00e676 !important;
-        font-family: monospace !important;
-    }
-
-    .cm-mbar-actions {
-        display: flex !important;
-        gap: 6px !important;
-        align-items: center !important;
-    }
-
-    .cm-mbar-actions .cm-ctrl-btn {
-        height: 36px !important;
-        padding: 0 10px !important;
-        font-size: 12px !important;
-        font-weight: 800 !important;
-    }
-
-    .cm-mbar-draw-btn {
-        height: 38px !important;
-        padding: 0 16px !important;
-        font-size: 13px !important;
-        font-weight: 900 !important;
-        background: linear-gradient(135deg, #00e676, #00b050) !important;
-        border: none !important;
-        color: #042410 !important;
-        box-shadow: 0 4px 14px rgba(0, 230, 118, 0.45) !important;
-    }
+.contract-cancel-btn:hover {
+    background: #27354d !important;
+    color: #ffffff !important;
+    border-color: #3b4d6b !important;
 }
 
-/* Mobile Responsiveness (Zero-Scroll Pure Gameplay) */
-@media (max-width: 900px) {
-    .color-match-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
-        padding: 6px 8px calc(var(--mobile-nav-space, 68px) + 52px) !important;
-        gap: 7px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        box-sizing: border-box !important;
-        width: 100% !important;
-        max-width: 100vw !important;
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
-    }
+.contract-confirm-btn {
+    padding: 11px 0;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 13.5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
 
-    .color-match-page::-webkit-scrollbar {
-        display: none !important;
-    }
+.contract-confirm-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
 
-    .cm-top-bar {
-        padding: 3px 6px !important;
-        min-height: 36px !important;
-        height: auto !important;
-        border-radius: 10px !important;
-        gap: 6px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        margin-bottom: 0 !important;
-    }
+.contract-confirm-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
 
-    .cm-speed-tabs {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        align-items: center !important;
-        gap: 4px !important;
-        flex: 1 !important;
-        min-width: 0 !important;
-        padding: 0 !important;
-    }
+.contract-confirm-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
 
-    .cm-speed-tab {
-        width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        padding: 0 2px !important;
-        height: 28px !important;
-        font-size: 10.5px !important;
-        font-weight: 800 !important;
-        border-radius: 8px !important;
-        gap: 2.5px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-        transform: none !important;
-    }
+.confirm-bg-green {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4) !important;
+}
 
-    .cm-speed-tab.active {
-        transform: none !important;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4) !important;
-    }
+.confirm-bg-violet {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%) !important;
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4) !important;
+}
 
-    .cm-speed-tab:hover {
-        transform: none !important;
-    }
+.confirm-bg-red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+}
 
-    .cm-tab-icon {
-        font-size: 10.5px !important;
-        flex-shrink: 0 !important;
-        line-height: 1 !important;
-    }
+.confirm-bg-big {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4) !important;
+}
 
-    .cm-tab-text {
-        font-size: 10.5px !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.2px !important;
-        line-height: 1 !important;
-    }
+.confirm-bg-small {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+}
 
-    .cm-top-right {
-        display: flex !important;
-        gap: 4px !important;
-        align-items: center !important;
-        flex-shrink: 0 !important;
-    }
+.confirm-bg-split-violet-red {
+    background: linear-gradient(135deg, #a855f7 50%, #ef4444 50%) !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+}
 
-    .cm-fair-btn {
-        width: 28px !important;
-        min-width: 28px !important;
-        max-width: 28px !important;
-        height: 28px !important;
-        padding: 0 !important;
-        font-size: 13px !important;
-        border-radius: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
+.confirm-bg-split-violet-green {
+    background: linear-gradient(135deg, #a855f7 50%, #22c55e 50%) !important;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4) !important;
+}
 
-    .cm-fair-btn .anticon {
-        font-size: 14px !important;
-        margin: 0 !important;
-        line-height: 1 !important;
-    }
+/* ==========================================================================
+   HOW TO PLAY RULES & PROVABLY FAIR MODAL
+   ========================================================================== */
+.wingo-rules-modal .ant-modal-content {
+    border-radius: 20px !important;
+}
 
-    .cm-fair-btn-text {
-        display: none !important;
-    }
+.rules-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    .cm-main-split {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 0 !important;
-        flex: 1 !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-    }
+.rules-intro {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+}
 
-    .cm-left-cockpit {
-        width: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 7px !important;
-        flex: 1 !important;
-        min-height: 0 !important;
-    }
+.rules-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
 
-    /* 2-Column Ultra-Compact Stage Grid: Countdown (Left) | Last Outcome (Right) */
-    .cm-stage-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 7px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        margin: 0 !important;
-    }
+.rules-card {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+}
 
-    .cm-countdown-card,
-    .cm-last-result-card {
-        padding: 5px 9px !important;
-        border-radius: 10px !important;
-        box-sizing: border-box !important;
-        overflow: hidden !important;
-        min-height: 46px !important;
-        height: 46px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-    }
+.rules-card strong {
+    display: block;
+    margin-bottom: 2px;
+}
 
-    /* REMOVE GARBAGE HEADERS & LABELS ON MOBILE */
-    .cm-meta-kicker,
-    .cm-showcase-header,
-    .cm-payout-quote,
-    .cm-section-header,
-    .cm-section-hint,
-    .cm-pocket-sub {
-        display: none !important;
-    }
+.rules-card p {
+    margin: 0;
+    color: #475569;
+}
 
-    .cm-countdown-meta {
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        gap: 2px !important;
-        min-width: 0 !important;
-    }
+.rules-card.card-green {
+    background: #ecfdf5;
+    border-left: 4px solid #22c55e;
+}
 
-    .cm-period-id {
-        font-size: 11.5px !important;
-        font-weight: 800 !important;
-        line-height: 1.1 !important;
-        color: #ffffff !important;
-        letter-spacing: 0.3px !important;
-    }
+.rules-card.card-red {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+}
 
-    .cm-countdown-status {
-        font-size: 8.5px !important;
-        font-weight: 700 !important;
-        color: #fbbf24 !important;
-        white-space: nowrap !important;
-        letter-spacing: 0.2px !important;
-    }
+.rules-card.card-violet {
+    background: #faf5ff;
+    border-left: 4px solid #a855f7;
+}
 
-    .cm-dial-wrapper {
-        width: 35px !important;
-        height: 35px !important;
-        min-width: 35px !important;
-        flex-shrink: 0 !important;
-    }
+.rules-card.card-num {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+}
 
-    .cm-dial-svg {
-        width: 35px !important;
-        height: 35px !important;
-    }
+.rules-card.card-bs {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+}
 
-    .cm-time-num {
-        font-size: 8.5px !important;
-        font-weight: 900 !important;
-    }
+.rules-note {
+    background: #f1f5f9;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #64748b;
+}
 
-    .cm-time-lbl {
-        font-size: 5.5px !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.02em !important;
-    }
+.rules-modal-close {
+    padding: 8px 18px;
+    background: var(--wingo-coral);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
 
-    .cm-showcase-body {
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        gap: 6px !important;
-    }
+.hash-code-box {
+    font-family: monospace;
+    font-size: 11px;
+    background: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 6px;
+    word-break: break-all;
+    color: #334155;
+    margin-top: 3px;
+}
 
-    .cm-showcase-info {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 2px !important;
-        min-width: 0 !important;
-    }
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
-    .cm-color-badges {
-        gap: 3px !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-    }
+@keyframes zoomIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
 
-    .cm-badge-pill {
-        font-size: 8px !important;
-        font-weight: 900 !important;
-        padding: 1px 5px !important;
-        border-radius: 4px !important;
-        line-height: 1 !important;
-    }
+@keyframes pulseLock {
+    from { transform: scale(0.96); }
+    to { transform: scale(1.04); }
+}
 
-    .cm-sphere-ball {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        flex-shrink: 0 !important;
-    }
+@keyframes rollBounce {
+    from { transform: translateY(-4px) scale(0.98); }
+    to { transform: translateY(4px) scale(1.02); }
+}
 
-    .cm-ball-num {
-        font-size: 14px !important;
-        font-weight: 900 !important;
-    }
-
-    .cm-ball-sheen {
-        width: 9px !important;
-        height: 5px !important;
-    }
-
-    .cm-drawing-curtain {
-        border-radius: 10px !important;
-    }
-
-    .cm-drawing-label {
-        font-size: 9px !important;
-        letter-spacing: 1px !important;
-    }
-
-    .cm-drawing-spinner {
-        width: 28px !important;
-        height: 28px !important;
-    }
-
-    .cm-spinner-num {
-        font-size: 13px !important;
-    }
-
-    /* Lock Banner */
-    .cm-lock-banner {
-        padding: 2px 6px !important;
-        font-size: 8.5px !important;
-        min-height: 18px !important;
-        border-radius: 6px !important;
-        margin: 0 !important;
-    }
-
-    /* Betting Board Console */
-    .cm-bet-console {
-        padding: 7px 8px !important;
-        border-radius: 11px !important;
-        gap: 8px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* 1. Colors (Green, Violet, Red) */
-    .cm-color-crystals {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 7px !important;
-        width: 100% !important;
-        margin: 0 !important;
-    }
-
-    .cm-crystal-btn {
-        padding: 3px 3px !important;
-        min-height: 40px !important;
-        max-height: 42px !important;
-        height: 40px !important;
-        border-radius: 8px !important;
-        gap: 2px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-gem-frame {
-        width: 15px !important;
-        height: 15px !important;
-        min-width: 15px !important;
-    }
-
-    .cm-crystal-title {
-        font-size: 10px !important;
-        font-weight: 900 !important;
-        line-height: 1 !important;
-    }
-
-    .cm-crystal-badge {
-        font-size: 7.5px !important;
-        padding: 1px 4px !important;
-        border-radius: 4px !important;
-        line-height: 1 !important;
-    }
-
-    .cm-staked-badge {
-        font-size: 8px !important;
-        padding: 1px 4px !important;
-        top: -4px !important;
-        right: -3px !important;
-    }
-
-    /* 2. Numbers Grid (0 to 9 in 2 rows of 5 with clear vertical/horizontal gaps) */
-    .cm-numbers-sphere-grid {
-        display: grid !important;
-        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-        gap: 7px 5px !important;
-        width: 100% !important;
-        margin: 0 !important;
-    }
-
-    .cm-num-sphere {
-        padding: 3px 0 !important;
-        height: 30px !important;
-        min-height: 30px !important;
-        border-radius: 7px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .cm-sphere-text {
-        font-size: 14px !important;
-        font-weight: 900 !important;
-        line-height: 1 !important;
-    }
-
-    /* 3. Big / Small Duo */
-    .cm-bigsmall-duo {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 7px !important;
-        width: 100% !important;
-        margin: 0 !important;
-    }
-
-    .cm-pocket-btn {
-        padding: 3px 10px !important;
-        min-height: 33px !important;
-        height: 33px !important;
-        border-radius: 8px !important;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .cm-pocket-title {
-        font-size: 11px !important;
-        font-weight: 900 !important;
-    }
-
-    .cm-pocket-mult {
-        font-size: 8.5px !important;
-        font-weight: 900 !important;
-        padding: 1px 5px !important;
-        border-radius: 4px !important;
-    }
-
-    /* 4. Mobile Quick Chips Rack */
-    .cm-mobile-chips-dock {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-        padding: 3px 0 !important;
-        margin-top: 5px !important;
-    }
-
-    .cm-mobile-chips-dock .cm-chips-carousel {
-        display: flex !important;
-        gap: 7px !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: visible !important;
-    }
-
-    .cm-mobile-chips-dock .casino-chip {
-        width: 34px !important;
-        height: 34px !important;
-        min-width: 34px !important;
-        font-size: 10.5px !important;
-        font-weight: 900 !important;
-        position: relative !important;
-    }
-
-    .cm-mobile-chips-dock .casino-chip.selected {
-        transform: translateY(-2px) scale(1.06) !important;
-    }
-
-    /* HIDE DESKTOP SIDEBAR ON MOBILE (History available via top drawer) */
-    .cm-right-dashboard {
-        display: none !important;
-    }
-
-    /* Sticky Bottom Bar */
-    .cm-mobile-bottom-bar {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        position: fixed !important;
-        bottom: var(--mobile-nav-space, 68px) !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        height: 42px !important;
-        padding: 3px 8px !important;
-        box-sizing: border-box !important;
-        z-index: 90 !important;
-        background: rgba(15, 20, 31, 0.96) !important;
-        backdrop-filter: blur(12px) !important;
-        border-top: 1.5px solid rgba(255, 215, 0, 0.35) !important;
-        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.75) !important;
-    }
-
-    .cm-mbar-stake {
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    .cm-mbar-lbl {
-        font-size: 7.5px !important;
-        font-weight: 800 !important;
-        color: #94a3b8 !important;
-        line-height: 1 !important;
-    }
-
-    .cm-mbar-val {
-        font-size: 13.5px !important;
-        font-weight: 900 !important;
-        color: #00e676 !important;
-        font-family: monospace !important;
-        line-height: 1.1 !important;
-    }
-
-    .cm-mbar-actions {
-        display: flex !important;
-        gap: 5px !important;
-        align-items: center !important;
-    }
-
-    .cm-mbar-actions .cm-ctrl-btn {
-        height: 30px !important;
-        padding: 0 7px !important;
-        font-size: 11px !important;
-        border-radius: 6px !important;
-    }
-
-    .cm-mbar-draw-btn {
-        height: 32px !important;
-        padding: 0 10px !important;
-        font-size: 11.5px !important;
-        font-weight: 900 !important;
-        border-radius: 6px !important;
-    }
+@keyframes textFlash {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
 }

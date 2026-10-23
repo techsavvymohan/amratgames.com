@@ -33,7 +33,8 @@ export class UserLockManager {
 
         // Always absorb rejections so previous task failure never poisons next task
         const waitPromise = currentQueue.catch(() => {})
-        this.queues.set(userId, waitPromise.then(() => nextInQueue))
+        const queueTail = waitPromise.then(() => nextInQueue)
+        this.queues.set(userId, queueTail)
 
         try {
             // Await previous lock holder before running task
@@ -42,7 +43,7 @@ export class UserLockManager {
         } finally {
             release()
             // Clean up map entry when the queue drains to avoid memory leaks
-            if (this.queues.get(userId) === nextInQueue) {
+            if (this.queues.get(userId) === queueTail) {
                 this.queues.delete(userId)
             }
         }

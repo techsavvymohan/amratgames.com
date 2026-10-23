@@ -29,7 +29,7 @@ const QUICK_PRESETS = [1.50, 2.00, 5.00, 10.00, 50.00, 100.00]
 
 function LimboGame() {
     const { user, openAuthModal } = useAuth()
-    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss, showToast } = useWallet()
+    const { balance, currencySymbol, executeGameBet, creditGamePayout, notifyWin, notifyLoss, showToast } = useWallet()
 
     // Provably fair engine instance
     const fairnessRef = useRef(null)
@@ -219,6 +219,11 @@ function LimboGame() {
                 setLastOutcome({ roll: outcome, target, win: isWin })
 
                 if (isWin) {
+                    if (betResponse?.applyPayout) {
+                        betResponse.applyPayout()
+                    } else if (winAmount > 0) {
+                        creditGamePayout?.(winAmount, betResponse?.balances)
+                    }
                     notifyWin(winAmount, target)
                     if (target >= 5) {
                         casinoAudio.playBigWin()
@@ -271,7 +276,7 @@ function LimboGame() {
                 }
             }
         }, 28)
-    }, [isRolling, user, openAuthModal, balance, showToast, currencySymbol, targetMultiplier, executeGameBet, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
+    }, [isRolling, user, openAuthModal, balance, showToast, currencySymbol, targetMultiplier, executeGameBet, creditGamePayout, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
 
     // Keep activeBetRef in sync with betAmount
     useEffect(() => {

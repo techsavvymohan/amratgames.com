@@ -85,7 +85,7 @@ export class AdminController {
     async adjustBalance(req, res) {
         try {
             const { currency, amount, note } = req.body
-            const result = this.userManager.adjustBalance(
+            const result = await this.userManager.adjustBalance(
                 req.params.id,
                 currency,
                 amount,
@@ -168,10 +168,16 @@ export class AdminController {
         try {
             const { rejectionReason, adminNote } = req.body
             const adminUsername = req.user?.username || 'admin'
-            const result = this.withdrawalManager.rejectWithdrawal(req.params.id, {
-                adminUsername,
-                rejectionReason,
-                adminNote
+            const withdrawal = db.findWithdrawalById(req.params.id)
+            if (!withdrawal) {
+                return res.status(404).json({ success: false, error: 'Withdrawal not found' })
+            }
+            const result = await db.withUserLock(withdrawal.userId, async () => {
+                return this.withdrawalManager.rejectWithdrawal(req.params.id, {
+                    adminUsername,
+                    rejectionReason,
+                    adminNote
+                })
             })
             res.json({
                 success: true,
@@ -369,7 +375,13 @@ export class AdminController {
             const { id } = req.params
             const { adminNote } = req.body
             const adminUsername = req.user?.username || 'admin'
-            const result = db.approveDeposit(id, { adminUsername, adminNote })
+            const deposit = db.findDepositById(id)
+            if (!deposit) {
+                return res.status(404).json({ success: false, error: 'Deposit request not found' })
+            }
+            const result = await db.withUserLock(deposit.userId, async () => {
+                return db.approveDeposit(id, { adminUsername, adminNote })
+            })
             res.json({ success: true, message: 'Deposit verified and player balance credited!', ...result })
         } catch (err) {
             res.status(400).json({ success: false, error: err.message })

@@ -316,11 +316,11 @@ export class FloorActivityEngine {
             timestamp: new Date().toISOString()
         }
 
-        // Record in db history roll so /api/games/recent reflects it
-        if (!db.data.bets) db.data.bets = []
-        db.data.bets.unshift(betRecord)
-        if (db.data.bets.length > 500) {
-            db.data.bets = db.data.bets.slice(0, 500)
+        // Record in simulated bets roll so live ticker reflects it WITHOUT evicting real bets
+        if (!db.data.simulatedBets) db.data.simulatedBets = []
+        db.data.simulatedBets.unshift(betRecord)
+        if (db.data.simulatedBets.length > 50) {
+            db.data.simulatedBets = db.data.simulatedBets.slice(0, 50)
         }
 
         // Broadcast to all active browser connections

@@ -52,17 +52,19 @@ export class UserRepository extends BaseRepository {
 
     generateOtp(identifier) {
         const key = String(identifier).trim().toLowerCase()
-        const otp = Math.floor(100000 + Math.random() * 900000).toString()
+        const otp = crypto.randomInt(100000, 1000000).toString()
         const expiresAt = Date.now() + 5 * 60 * 1000 // 5 minutes valid
 
         this.db.otps.set(key, { otp, expiresAt, attempts: 0 })
 
-        console.log(`\n======================================================`)
-        console.log(`📲 [SMS / EMAIL OTP DISPATCH]`)
-        console.log(`🎯 Recipient: ${key}`)
-        console.log(`🔑 Verification Code: ${otp} (Valid for 5 mins)`)
-        console.log(`💡 Demo Universal QA OTP: 777777 or 123456`)
-        console.log(`======================================================\n`)
+        if (!CONFIG.isProduction) {
+            console.log(`\n======================================================`)
+            console.log(`📲 [SMS / EMAIL OTP DISPATCH]`)
+            console.log(`🎯 Recipient: ${key}`)
+            console.log(`🔑 Verification Code: ${otp} (Valid for 5 mins)`)
+            console.log(`💡 Demo Universal QA OTP: 777777 or 123456`)
+            console.log(`======================================================\n`)
+        }
 
         this.enqueueOutbox('syncOtp', { identifier: key, otp, expiresAt })
 
@@ -459,6 +461,8 @@ export class UserRepository extends BaseRepository {
             }
             this.data.transactions.unshift(tx)
             this.persist()
+            this.enqueueOutbox('syncUser', user)
+            this.enqueueOutbox('syncTransaction', tx)
 
             return { user, claimedAmount: amount, newBalance: newBal, transaction: tx }
         })
@@ -493,6 +497,8 @@ export class UserRepository extends BaseRepository {
             }
             this.data.transactions.unshift(tx)
             this.persist()
+            this.enqueueOutbox('syncUser', user)
+            this.enqueueOutbox('syncTransaction', tx)
 
             return { user, claimedAmount: amount, newBalance: newBal, transaction: tx }
         })

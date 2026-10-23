@@ -128,10 +128,17 @@ export class WebhookSignatureVerifier {
      */
     isTimestampFresh(timestamp) {
         if (!timestamp) return true // Skew check skipped if no timestamp sent
-        const parsedTime = typeof timestamp === 'number' ? timestamp : Date.parse(timestamp)
+        let parsedTime = typeof timestamp === 'number' ? timestamp : Number(timestamp)
+        if (isNaN(parsedTime)) {
+            parsedTime = Date.parse(timestamp)
+        }
         if (isNaN(parsedTime)) return true
 
         const now = Date.now()
+        // If timestamp is in epoch seconds (e.g. 10 digits), convert to milliseconds
+        if (parsedTime < 1e11) {
+            parsedTime *= 1000
+        }
         const diffSeconds = Math.abs(now - parsedTime) / 1000
         return diffSeconds <= this.maxTimestampSkewSeconds
     }

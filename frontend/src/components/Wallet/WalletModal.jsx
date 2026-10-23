@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
+import { useWebSocket } from '../../context/WebSocketContext'
 import { paymentBridge } from '../../services/PaymentBridge'
 import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './WalletModal.css'
@@ -83,10 +84,13 @@ export default function WalletModal() {
         transactions,
         withdrawals = [],
         refreshWithdrawals,
+        refreshBalance,
+        refreshTransactions,
         showToast,
     } = useWallet()
 
     const { user, token: authToken, openAuthModal } = useAuth() || {}
+    const { subscribe } = useWebSocket() || {}
     const effectiveToken = authToken || (typeof window !== 'undefined' ? localStorage.getItem('amrat_auth_token') : '') || ''
 
     const [activeTab, setActiveTab] = useState('deposit')
@@ -123,6 +127,39 @@ export default function WalletModal() {
         return (transactions || []).filter((tx) => tx.type !== 'bet' && tx.type !== 'win')
     }, [transactions])
 
+    // Real-time listener on shared WebSocket for deposit auto-crediting and withdrawals
+    useEffect(() => {
+        if (!subscribe) return
+
+        const unsubDeposit = subscribe('DEPOSIT_STATUS_UPDATED', (payload) => {
+            if (payload && (!payload.userId || payload.userId === user?.id)) {
+                refreshBalance?.()
+                refreshTransactions?.()
+                if (payload.status === 'completed') {
+                    showToast?.('success', 'Deposit Confirmed!', `₹${parseFloat(payload.amount || 0).toLocaleString('en-IN')} has been credited to your balance!`)
+                    setDepositSuccess({
+                        amount: payload.amount,
+                        utr: payload.utrNumber || 'Auto-Verified',
+                        isPending: false
+                    })
+                }
+            }
+        })
+
+        const unsubWithdrawal = subscribe('WITHDRAWAL_STATUS_UPDATED', (payload) => {
+            if (payload && (!payload.userId || payload.userId === user?.id)) {
+                refreshBalance?.()
+                refreshWithdrawals?.()
+                refreshTransactions?.()
+            }
+        })
+
+        return () => {
+            unsubDeposit?.()
+            unsubWithdrawal?.()
+        }
+    }, [subscribe, user?.id, refreshBalance, refreshWithdrawals, refreshTransactions, showToast])
+
     // Sync tab and refresh withdrawals when opened
     useEffect(() => {
         if (walletModalTab) {
@@ -130,8 +167,9 @@ export default function WalletModal() {
         }
         if (isWalletModalOpen) {
             refreshWithdrawals?.()
+            refreshBalance?.()
         }
-    }, [walletModalTab, isWalletModalOpen, refreshWithdrawals])
+    }, [walletModalTab, isWalletModalOpen, refreshWithdrawals, refreshBalance])
 
     // Fetch deterministic crypto deposit coordinates
     useEffect(() => {
@@ -224,6 +262,21 @@ export default function WalletModal() {
             const isMobile = isAndroid || isIOS
 
             if (isMobile) {
+                // If automated gateway returned a direct mobile UPI intent (targeting dynamic receiver)
+                if (session?.upiIntent) {
+                    showToast?.('info', `Opening ${app.name}`, `Launching UPI payment...`)
+                    window.location.href = session.upiIntent
+                    return
+                }
+
+                // If automated gateway returned a checkout URL (portal with 1-tap app launchers)
+                if (session?.checkoutUrl) {
+                    showToast?.('info', 'Opening Gateway', 'Redirecting to payment checkout portal...')
+                    window.location.href = session.checkoutUrl
+                    return
+                }
+
+                // Manual fallback: NPCI intent to official merchant VPA
                 let redirectUri = ''
                 if (isAndroid && app.packageName) {
                     const upiQuery = `pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent(orderRef)}`
@@ -234,24 +287,15 @@ export default function WalletModal() {
 
                 showToast?.('info', `Opening ${app.name}`, `Redirecting to ${app.name} to complete payment...`)
                 window.location.href = redirectUri
-
-                if (session?.checkoutUrl) {
-                    setTimeout(() => {
-                        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-                            window.location.href = session.checkoutUrl
-                        }
-                    }, 2500)
-                }
             } else {
                 // Desktop browser
-                try {
-                    await navigator.clipboard.writeText(OFFICIAL_UPI_ID)
-                } catch {}
-
                 if (session?.checkoutUrl) {
                     paymentBridge.launchSession(session)
-                    showToast?.('success', `Opening ${app.name} Checkout`, `${OFFICIAL_UPI_ID} copied! Complete payment in the checkout window.`)
+                    showToast?.('success', `Opening ${app.name} Checkout`, 'Complete payment in the checkout window.')
                 } else {
+                    try {
+                        await navigator.clipboard.writeText(OFFICIAL_UPI_ID)
+                    } catch {}
                     showToast?.('success', 'UPI ID Copied', `${OFFICIAL_UPI_ID} copied to clipboard! Open ${app.name} on your mobile to complete payment.`)
                 }
             }

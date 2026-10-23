@@ -405,6 +405,9 @@ router.post('/bet', authenticate, async (req, res) => {
             won: betResult.won,
             payout: betResult.payout,
             multiplier: betResult.multiplier,
+            balanceAfterDeduct: betResult.balanceAfterDeduct,
+            balancesAfterDeduct: betResult.balancesAfterDeduct,
+            finalBal: betResult.finalBal,
             balances: betResult.balances
         })
     } catch (err) {

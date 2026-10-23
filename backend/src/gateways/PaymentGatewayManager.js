@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { YouPiGatewayAdapter } from './adapters/YouPiGatewayAdapter.js'
 import { FallbackManualAdapter } from './adapters/FallbackManualAdapter.js'
 import { webhookSignatureVerifier } from './security/WebhookSignatureVerifier.js'
@@ -100,8 +101,14 @@ export class PaymentGatewayManager {
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             throw new Error('Valid positive deposit amount required.')
         }
+        if (parsedAmount < 100) {
+            throw new Error('Minimum deposit amount is ₹100')
+        }
+        if (parsedAmount > 500000) {
+            throw new Error('Maximum deposit limit per transaction is ₹5,00,000')
+        }
 
-        const orderId = `DEP_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+        const orderId = `DEP_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`
 
         let adapter = await this.resolveActiveGateway(options.preferredGateway)
 
@@ -170,17 +177,30 @@ export class PaymentGatewayManager {
             throw err
         }
 
-        const payload = verification.payload || {}
-        const eventId = payload.paymentId || payload.id || payload.orderId || `wh_${Date.now()}`
+        // 2. Timestamp freshness validation (protection against delayed replay attacks)
+        const timestampHeader = headers['x-gateway-timestamp'] || headers['x-webhook-timestamp'] || headers['x-timestamp']
+        if (timestampHeader && !webhookSignatureVerifier.isTimestampFresh(timestampHeader)) {
+            const errorMsg = 'Webhook rejected: Timestamp expired or skewed beyond tolerance'
+            console.warn(`[PaymentGatewayManager] ${gatewayName} Webhook Rejected: ${errorMsg}`)
+            const err = new Error(errorMsg)
+            err.statusCode = 401
+            throw err
+        }
 
-        // 2. Strict Idempotency Check (Defense against replay attacks)
+        const payload = verification.payload || {}
+        // Derive stable deterministic eventId if payload lacks explicit id
+        const rawBodyStr = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody || '')
+        const payloadHash = crypto.createHash('sha256').update(rawBodyStr).digest('hex').slice(0, 16)
+        const eventId = payload.paymentId || payload.id || payload.orderId || `wh_${payloadHash}`
+
+        // 3. Strict Idempotency Check (Defense against replay attacks)
         const isFresh = webhookSignatureVerifier.isIdempotent(eventId, id => db.isWebhookProcessed(id))
         if (!isFresh) {
             console.log(`[PaymentGatewayManager] Webhook ${eventId} already processed. Returning duplicate confirmation.`)
             return { success: true, duplicate: true, message: 'Webhook event already processed' }
         }
 
-        // 3. Process payment event
+        // 4. Process payment event
         const isSuccess = payload.event === 'SUCCESS' 
             || payload.status === 'SUCCESS' 
             || payload.type === 'payment.succeeded' 
@@ -201,15 +221,22 @@ export class PaymentGatewayManager {
                 const user = db.findUserById(userId)
                 if (!user) throw new Error(`Target player account "${userId}" not found`)
 
-                // Credit balance
-                db.updateUserBalance(userId, currency, amount, `Instant Gateway Deposit [${adapter.name.toUpperCase()}] (Ref: ${utrNumber})`)
+                // Credit balance & retrieve ledger transaction
+                const balResult = db.updateUserBalance(userId, currency, amount, `Instant Gateway Deposit [${adapter.name.toUpperCase()}] (Ref: ${utrNumber})`)
 
-                // Accumulate turnover requirements
-                user.totalDeposited = parseFloat(((user.totalDeposited || 0) + amount).toFixed(2))
+                // Standardized currency conversion for lifetime turnover qualification
+                const curr = String(currency || 'INR').toUpperCase()
+                let depositInr = amount
+                if (curr === 'USDT') depositInr = amount * 90.0
+                else if (curr === 'BTC') depositInr = amount * 8500000.0
+                else if (curr === 'AMRAT') depositInr = 0
 
-                // Record completed deposit in database
+                user.totalDeposited = parseFloat(((user.totalDeposited || 0) + depositInr).toFixed(2))
+
+                // Record completed deposit in database with linked transactionId
                 const depositRecord = {
                     id: 'dep_' + adapter.name + '_' + Date.now().toString(36),
+                    transactionId: balResult?.transaction?.id || null,
                     userId,
                     username: user.username,
                     currency,
@@ -221,10 +248,20 @@ export class PaymentGatewayManager {
                     approvedAt: new Date().toISOString(),
                     approvedBy: `SYSTEM_${adapter.name.toUpperCase()}_WEBHOOK`
                 }
+                if (balResult?.transaction) {
+                    balResult.transaction.depositId = depositRecord.id
+                }
 
                 if (!db.data.deposits) db.data.deposits = []
                 db.data.deposits.unshift(depositRecord)
                 db.persist()
+
+                // Durable outbox synchronization for Supabase cloud hydration
+                if (db.durableOutbox) {
+                    db.durableOutbox.enqueue('syncUser', user)
+                    if (balResult?.transaction) db.durableOutbox.enqueue('syncTransaction', balResult.transaction)
+                    db.durableOutbox.enqueue('syncDeposit', depositRecord)
+                }
 
                 // Real-time broadcast
                 broadcastEvent('DEPOSIT_STATUS_UPDATED', depositRecord)

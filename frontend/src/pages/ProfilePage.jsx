@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useWallet } from '../context/WalletContext'
@@ -11,6 +11,7 @@ export default function ProfilePage() {
     const { getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission, currencySymbol } = useWallet()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
+    const subnavRef = useRef(null)
 
     const [activeTab, setActiveTab] = useState(() => {
         const t = searchParams.get('tab')
@@ -19,6 +20,16 @@ export default function ProfilePage() {
         }
         return 'profile'
     })
+
+    // Auto-scroll active subnav chip into view on mobile
+    useEffect(() => {
+        if (subnavRef.current) {
+            const activeBtn = subnavRef.current.querySelector(`.profile-subnav-btn[data-tab="${activeTab}"]`)
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+            }
+        }
+    }, [activeTab])
 
     // VIP Loyalty Engine State
     const [vipData, setVipData] = useState(null)
@@ -269,34 +280,36 @@ export default function ProfilePage() {
         <div className="profile-page-container">
             {/* VIP Profile Hero Banner */}
             <div className="profile-hero-banner">
-                <div className="profile-hero-avatar-wrap">
-                    <div className="profile-hero-avatar">
-                        {user.username ? user.username.charAt(0).toUpperCase() : '👤'}
+                <div className="profile-hero-top-group">
+                    <div className="profile-hero-avatar-wrap">
+                        <div className="profile-hero-avatar">
+                            {user.username ? user.username.charAt(0).toUpperCase() : '👤'}
+                        </div>
+                        <div className="profile-hero-badge" title="Verified Account">✓</div>
                     </div>
-                    <div className="profile-hero-badge" title="Verified Account">✓</div>
-                </div>
-                <div className="profile-hero-info">
-                    <div className="profile-hero-name-row">
-                        <h2 className="profile-hero-name">{user.username || 'Amrat VIP Player'}</h2>
-                        <span className="profile-hero-vip-tag">
-                            👑 {vipData?.name || 'Bronze VIP'}
-                        </span>
-                        {user.kycStatus === 'verified' ? (
-                            <span className="profile-hero-verified-tag">🛡️ Verified Level 2</span>
-                        ) : (
-                            <button
-                                type="button"
-                                className="profile-hero-unverified-tag"
-                                onClick={() => setShowKycModal(true)}
-                            >
-                                ⚡ Verify KYC
-                            </button>
-                        )}
-                    </div>
-                    <div className="profile-hero-meta">
-                        {user.phone && <span className="profile-meta-item">📱 +91 {user.phone}</span>}
-                        {user.email && <span className="profile-meta-item">✉️ {user.email}</span>}
-                        {user.id && <span className="profile-meta-item">🆔 ID: {String(user.id).slice(0, 8)}...</span>}
+                    <div className="profile-hero-info">
+                        <div className="profile-hero-name-row">
+                            <h2 className="profile-hero-name">{user.username || 'Amrat VIP Player'}</h2>
+                            <span className="profile-hero-vip-tag">
+                                👑 {vipData?.name || 'Bronze VIP'}
+                            </span>
+                            {user.kycStatus === 'verified' ? (
+                                <span className="profile-hero-verified-tag">🛡️ Verified Level 2</span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="profile-hero-unverified-tag"
+                                    onClick={() => setShowKycModal(true)}
+                                >
+                                    ⚡ Verify KYC
+                                </button>
+                            )}
+                        </div>
+                        <div className="profile-hero-meta">
+                            {user.phone && <span className="profile-meta-item">📱 +91 {user.phone}</span>}
+                            {user.email && <span className="profile-meta-item">✉️ {user.email}</span>}
+                            {user.id && <span className="profile-meta-item">🆔 ID: {String(user.id).slice(0, 8)}...</span>}
+                        </div>
                     </div>
                 </div>
                 <div className="profile-hero-balance-box">
@@ -313,9 +326,10 @@ export default function ProfilePage() {
             <div className="profile-main-layout">
                 {/* Navigation Sidebar Rail */}
                 <aside className="profile-sidebar-rail">
-                    <div className="profile-subnav" role="tablist">
+                    <div className="profile-subnav" role="tablist" ref={subnavRef}>
                         <button
                             type="button"
+                            data-tab="profile"
                             className={`profile-subnav-btn ${activeTab === 'profile' ? 'active' : ''}`}
                             onClick={() => setActiveTab('profile')}
                         >
@@ -324,6 +338,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="vip"
                             className={`profile-subnav-btn ${activeTab === 'vip' ? 'active' : ''}`}
                             onClick={() => setActiveTab('vip')}
                         >
@@ -332,6 +347,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="affiliate"
                             className={`profile-subnav-btn ${activeTab === 'affiliate' ? 'active' : ''}`}
                             onClick={() => setActiveTab('affiliate')}
                         >
@@ -340,6 +356,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="vault"
                             className={`profile-subnav-btn ${activeTab === 'vault' ? 'active' : ''}`}
                             onClick={() => setActiveTab('vault')}
                         >
@@ -348,6 +365,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="payments"
                             className={`profile-subnav-btn ${activeTab === 'payments' ? 'active' : ''}`}
                             onClick={() => setActiveTab('payments')}
                         >
@@ -356,6 +374,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="bets"
                             className={`profile-subnav-btn ${activeTab === 'bets' ? 'active' : ''}`}
                             onClick={() => setActiveTab('bets')}
                         >
@@ -364,6 +383,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                             type="button"
+                            data-tab="support"
                             className={`profile-subnav-btn ${activeTab === 'support' ? 'active' : ''}`}
                             onClick={() => setActiveTab('support')}
                         >
@@ -443,7 +463,7 @@ export default function ProfilePage() {
                                                 className="profile-text-input"
                                                 value={user.id}
                                                 readOnly
-                                                style={{ fontFamily: 'monospace', fontSize: '0.86rem', color: '#94a3b8' }}
+                                                style={{ fontFamily: 'monospace', color: '#94a3b8' }}
                                             />
                                             <button
                                                 type="button"
@@ -804,14 +824,14 @@ export default function ProfilePage() {
                                         ?.filter(w => paymentsFilter === 'all' || paymentsFilter === 'withdrawals')
                                         .map(w => (
                                             <div key={w.id} className="profile-item-row">
-                                                <div>
-                                                    <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Payout Request ({w.payoutMethod})</div>
-                                                    <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                                                <div className="profile-item-details">
+                                                    <div className="profile-item-title">Payout Request ({w.payoutMethod})</div>
+                                                    <div className="profile-item-meta">
                                                         {new Date(w.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>To: {w.payoutDestination}</div>
+                                                    <div className="profile-item-submeta">To: {w.payoutDestination}</div>
                                                 </div>
-                                                <div style={{ textAlign: 'right' }}>
+                                                <div className="profile-item-action">
                                                     <div style={{ fontWeight: 800, color: '#f87171', fontSize: '0.95rem' }}>-₹{w.amount}</div>
                                                     <span className={`profile-status-badge ${w.status}`}>
                                                         {w.status === 'pending' ? 'Pending Cashier' : w.status}
@@ -824,13 +844,13 @@ export default function ProfilePage() {
                                         ?.filter(t => paymentsFilter === 'all' || (paymentsFilter === 'deposits' && t.type === 'credit'))
                                         .map(t => (
                                             <div key={t.id} className="profile-item-row">
-                                                <div>
-                                                    <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{t.note || (t.type === 'credit' ? 'Deposit / Bonus' : 'Debit')}</div>
-                                                    <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                                                <div className="profile-item-details">
+                                                    <div className="profile-item-title">{t.note || (t.type === 'credit' ? 'Deposit / Bonus' : 'Debit')}</div>
+                                                    <div className="profile-item-meta">
                                                         {new Date(t.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                                     </div>
                                                 </div>
-                                                <div style={{ textAlign: 'right' }}>
+                                                <div className="profile-item-action">
                                                     <div style={{
                                                         fontWeight: 800,
                                                         color: t.amount > 0 ? '#10b981' : '#f87171',
@@ -888,18 +908,18 @@ export default function ProfilePage() {
                                 .filter(b => betsFilter === 'all' || (betsFilter === 'wins' && b.won) || (betsFilter === 'losses' && !b.won))
                                 .map(b => (
                                     <div key={b.id} className="profile-item-row">
-                                        <div>
-                                            <div style={{ fontWeight: 700, fontSize: '0.92rem', textTransform: 'capitalize' }}>
+                                        <div className="profile-item-details">
+                                            <div className="profile-item-title" style={{ textTransform: 'capitalize' }}>
                                                 {b.gameName || b.game}
                                             </div>
-                                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                                            <div className="profile-item-meta">
                                                 {new Date(b.timestamp).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                                             </div>
                                             {b.multiplier > 0 && (
-                                                <div style={{ fontSize: '0.75rem', color: '#fbbf24' }}>Multiplier: {b.multiplier}x</div>
+                                                <div className="profile-item-submeta" style={{ color: '#fbbf24' }}>Multiplier: {b.multiplier}x</div>
                                             )}
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
+                                        <div className="profile-item-action">
                                             <div style={{
                                                 fontWeight: 800,
                                                 color: b.won ? '#10b981' : '#f87171',
@@ -926,48 +946,26 @@ export default function ProfilePage() {
                         Need help with verification, account limits, or deposit/withdrawal? Our VIP support team is available around the clock.
                     </p>
 
-                    <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
-                        <div style={{
-                            padding: '14px',
-                            background: '#1e293b',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                        }}>
-                            <div>
+                    <div className="profile-support-list">
+                        <div className="profile-support-row">
+                            <div className="profile-support-row-info">
                                 <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Official Support Email</div>
-                                <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>support@amratgames.com</div>
+                                <div style={{ fontSize: '0.8rem', color: '#3b82f6', wordBreak: 'break-all' }}>support@amratgames.com</div>
                             </div>
                             <a
                                 href="mailto:support@amratgames.com"
-                                style={{
-                                    padding: '8px 14px',
-                                    background: '#2563eb',
-                                    color: '#fff',
-                                    borderRadius: '6px',
-                                    textDecoration: 'none',
-                                    fontWeight: 700,
-                                    fontSize: '0.82rem'
-                                }}
+                                className="profile-support-action-btn"
                             >
                                 Email Us
                             </a>
                         </div>
 
-                        <div style={{
-                            padding: '14px',
-                            background: '#1e293b',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                        }}>
-                            <div>
+                        <div className="profile-support-row">
+                            <div className="profile-support-row-info">
                                 <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Official Telegram Channel</div>
                                 <div style={{ fontSize: '0.8rem', color: '#38bdf8' }}>@AmratGamesSupport</div>
                             </div>
-                            <span style={{ fontSize: '18px' }}>✈️</span>
+                            <span style={{ fontSize: '20px' }}>✈️</span>
                         </div>
                     </div>
                 </div>
@@ -977,46 +975,25 @@ export default function ProfilePage() {
             {activeTab === 'vip' && (
                 <div className="profile-vip-section">
                     {/* VIP Luxury Status Card */}
-                    <div className="profile-card" style={{
-                        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-                        border: '1px solid rgba(245, 175, 25, 0.3)',
-                        boxShadow: '0 8px 32px rgba(245, 175, 25, 0.15)',
-                        position: 'relative',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            top: '-30px',
-                            right: '-30px',
-                            width: '140px',
-                            height: '140px',
-                            background: 'radial-gradient(circle, rgba(245, 175, 25, 0.2) 0%, transparent 70%)',
-                            pointerEvents: 'none'
-                        }} />
+                    <div className="profile-vip-card">
+                        <div className="profile-vip-card-glow" />
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                            <div>
-                                <div style={{ fontSize: '0.8rem', color: '#f5af19', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                        <div className="profile-vip-header">
+                            <div className="profile-vip-title-col">
+                                <div className="profile-vip-eyebrow">
                                     LOYALTY PROGRESSION
                                 </div>
-                                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                <div className="profile-vip-tier-headline">
                                     <span>👑</span>
                                     <span>{vipData?.name || 'Bronze VIP'}</span>
-                                    <span style={{
-                                        fontSize: '0.75rem',
-                                        background: 'rgba(245, 175, 25, 0.2)',
-                                        color: '#fbbf24',
-                                        padding: '2px 8px',
-                                        borderRadius: '20px',
-                                        border: '1px solid rgba(245, 175, 25, 0.4)'
-                                    }}>
+                                    <span className="profile-vip-badge-pill">
                                         {((vipData?.rakebackRate || 0.03) * 100).toFixed(0)}% RAKEBACK
                                     </span>
                                 </div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Lifetime Wagered</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc' }}>
+                            <div className="profile-vip-wager-col">
+                                <div className="profile-vip-wager-lbl">Lifetime Wagered</div>
+                                <div className="profile-vip-wager-val">
                                     {currencySymbol}{parseFloat(vipData?.totalWagered || user?.totalWagered || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                 </div>
                             </div>
@@ -1024,52 +1001,38 @@ export default function ProfilePage() {
 
                         {/* Progress to Next Tier */}
                         {vipData?.nextTier && (
-                            <div style={{ marginTop: '14px', marginBottom: '18px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
+                            <div className="profile-vip-progress-wrap">
+                                <div className="profile-vip-progress-header">
                                     <span style={{ color: '#94a3b8' }}>Next Tier: <strong style={{ color: '#f8fafc' }}>{vipData.nextTier}</strong></span>
                                     <span style={{ color: '#f5af19', fontWeight: 700 }}>
                                         {currencySymbol}{parseFloat(vipData.totalWagered || 0).toLocaleString()} / {currencySymbol}{parseFloat(vipData.nextTierThreshold || 0).toLocaleString()} ({vipData.progressPct || 0}%)
                                     </span>
                                 </div>
-                                <div style={{ height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                                    <div style={{
-                                        width: `${Math.min(100, Math.max(0, vipData.progressPct || 0))}%`,
-                                        height: '100%',
-                                        background: 'linear-gradient(90deg, #f5af19 0%, #ffd700 100%)',
-                                        borderRadius: '4px',
-                                        transition: 'width 0.4s ease'
-                                    }} />
+                                <div className="profile-vip-progress-bar">
+                                    <div
+                                        className="profile-vip-progress-fill"
+                                        style={{ width: `${Math.min(100, Math.max(0, vipData.progressPct || 0))}%` }}
+                                    />
                                 </div>
                             </div>
                         )}
 
                         {/* Unclaimed Rakeback Box */}
-                        <div style={{
-                            background: 'rgba(15, 23, 42, 0.7)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '12px'
-                        }}>
-                            <div>
-                                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Unclaimed VIP Rakeback</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#4ade80' }}>
+                        <div className="profile-vip-claim-box">
+                            <div className="profile-vip-claim-info">
+                                <div className="profile-vip-claim-lbl">Unclaimed VIP Rakeback</div>
+                                <div className="profile-vip-claim-val">
                                     {currencySymbol}{parseFloat(vipData?.unclaimedRakeback || 0).toFixed(2)}
                                 </div>
-                                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                                <div className="profile-vip-claim-subtext">
                                     Calculated on every single bet based on game house edge
                                 </div>
                             </div>
 
                             <button
                                 type="button"
-                                className="profile-btn-primary"
+                                className="profile-btn-primary profile-vip-claim-btn"
                                 style={{
-                                    maxWidth: '180px',
                                     background: (vipData?.unclaimedRakeback || 0) > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
                                     cursor: (vipData?.unclaimedRakeback || 0) > 0 ? 'pointer' : 'not-allowed',
                                     boxShadow: (vipData?.unclaimedRakeback || 0) > 0 ? '0 4px 16px rgba(16, 185, 129, 0.3)' : 'none'
@@ -1099,7 +1062,7 @@ export default function ProfilePage() {
                     {/* VIP Tier Matrix Card */}
                     <div className="profile-card">
                         <div className="profile-card-title">VIP Loyalty Progression Tiers</div>
-                        <div style={{ display: 'grid', gap: '10px' }}>
+                        <div className="profile-vip-tiers-list">
                             {[
                                 { tier: 'Bronze', rate: '3%', threshold: '₹0+', perk: 'Instant 3% Rakeback on House Edge' },
                                 { tier: 'Silver', rate: '5%', threshold: '₹50,000+', perk: '5% Rakeback + Faster Withdrawals' },
@@ -1109,27 +1072,19 @@ export default function ProfilePage() {
                             ].map((lvl) => {
                                 const isCurrent = vipData?.name?.toLowerCase().includes(lvl.tier.toLowerCase())
                                 return (
-                                    <div key={lvl.tier} style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '12px 14px',
-                                        background: isCurrent ? 'rgba(245, 175, 25, 0.12)' : '#1e293b',
-                                        border: isCurrent ? '1px solid rgba(245, 175, 25, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
-                                        borderRadius: '10px'
-                                    }}>
-                                        <div>
-                                            <div style={{ fontWeight: 800, fontSize: '0.92rem', color: isCurrent ? '#fbbf24' : '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <div key={lvl.tier} className={`profile-vip-tier-row ${isCurrent ? 'active' : ''}`}>
+                                        <div className="profile-vip-tier-info">
+                                            <div className="profile-vip-tier-name-row">
                                                 <span>{lvl.tier}</span>
-                                                {isCurrent && <span style={{ fontSize: '0.7rem', background: '#f5af19', color: '#000', padding: '1px 6px', borderRadius: '4px', fontWeight: 800 }}>ACTIVE</span>}
+                                                {isCurrent && <span className="profile-vip-tier-badge">ACTIVE</span>}
                                             </div>
-                                            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
+                                            <div className="profile-vip-tier-perk">
                                                 {lvl.perk}
                                             </div>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#4ade80' }}>{lvl.rate}</div>
-                                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{lvl.threshold}</div>
+                                        <div className="profile-vip-tier-stats">
+                                            <div className="profile-vip-tier-rate">{lvl.rate}</div>
+                                            <div className="profile-vip-tier-threshold">{lvl.threshold}</div>
                                         </div>
                                     </div>
                                 )

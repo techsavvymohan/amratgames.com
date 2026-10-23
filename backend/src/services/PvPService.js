@@ -14,6 +14,7 @@ import { bankrollRisk } from './BankrollRiskService.js'
 export class PvPService {
     constructor() {
         this.activeDuels = new Map() // duelId -> duel object
+        this.duelLocks = new Map()   // duelId -> Promise chain (Atomic Mutex)
         this.houseRakeRate = CONFIG.PVP_HOUSE_RAKE_RATE || 0.04    // 4.0% platform house rake (zero bankroll risk)
         this.minStake = 10.00        // ₹10 INR minimum duel stake
         this.maxStake = 50000.00     // ₹50,000 INR maximum duel stake
@@ -24,6 +25,28 @@ export class PvPService {
         if (this.janitorTimer.unref) this.janitorTimer.unref()
 
         this.initStorage()
+    }
+
+    /**
+     * Serialized execution per duelId to eliminate concurrent join/cancel races
+     */
+    async withDuelLock(duelId, task) {
+        if (!duelId) return task()
+        const currentQueue = this.duelLocks.get(duelId) || Promise.resolve()
+        let release
+        const nextInQueue = new Promise((resolve) => { release = resolve })
+        const waitPromise = currentQueue.catch(() => {})
+        const queueTail = waitPromise.then(() => nextInQueue)
+        this.duelLocks.set(duelId, queueTail)
+        try {
+            await waitPromise
+            return await task()
+        } finally {
+            release()
+            if (this.duelLocks.get(duelId) === queueTail) {
+                this.duelLocks.delete(duelId)
+            }
+        }
     }
 
     initStorage() {
@@ -151,6 +174,7 @@ export class PvPService {
      * Accept and resolve an open PvP Duel
      */
     async joinDuel({ duelId, userId, clientSeed = '' }) {
+        return this.withDuelLock(duelId, async () => {
         const opponent = db.findUserById(userId)
         if (!opponent) {
             const err = new Error('Player account not found')
@@ -312,49 +336,52 @@ export class PvPService {
             winnerPayout,
             houseRakeAmount
         }
+        })
     }
 
     /**
      * Cancel an open duel and refund the creator's stake
      */
     async cancelDuel({ duelId, userId }) {
-        const duel = this.activeDuels.get(duelId) || (db.data.pvpDuels || []).find(d => d.id === duelId)
-        if (!duel) {
-            const err = new Error('Duel not found')
-            err.status = 404
-            throw err
-        }
+        return this.withDuelLock(duelId, async () => {
+            const duel = this.activeDuels.get(duelId) || (db.data.pvpDuels || []).find(d => d.id === duelId)
+            if (!duel) {
+                const err = new Error('Duel not found')
+                err.status = 404
+                throw err
+            }
 
-        if (duel.status !== 'open') {
-            const err = new Error(`Cannot cancel duel with status: ${duel.status}`)
-            err.status = 400
-            throw err
-        }
+            if (duel.status !== 'open') {
+                const err = new Error(`Cannot cancel duel with status: ${duel.status}`)
+                err.status = 400
+                throw err
+            }
 
-        if (duel.creatorId !== userId) {
-            const err = new Error('Only the duel creator can cancel this challenge')
-            err.status = 403
-            throw err
-        }
+            if (duel.creatorId !== userId) {
+                const err = new Error('Only the duel creator can cancel this challenge')
+                err.status = 403
+                throw err
+            }
 
-        // Refund stake to creator
-        const balanceResult = await db.withUserLock(userId, async () => {
-            db.updateUserBalance(userId, duel.currency, duel.stake, `PvP Duel Cancelled (Stake Refund: ${duel.stake} ${duel.currency})`)
-            const u = db.findUserById(userId)
-            return u?.balances
+            // Refund stake to creator
+            const balanceResult = await db.withUserLock(userId, async () => {
+                db.updateUserBalance(userId, duel.currency, duel.stake, `PvP Duel Cancelled (Stake Refund: ${duel.stake} ${duel.currency})`)
+                const u = db.findUserById(userId)
+                return u?.balances
+            })
+
+            duel.status = 'cancelled'
+            this.activeDuels.delete(duel.id)
+            db.persist()
+
+            broadcastEvent('PVP_DUEL_CANCELLED', { duelId: duel.id })
+
+            return {
+                success: true,
+                message: 'Duel successfully cancelled and stake refunded',
+                balances: balanceResult
+            }
         })
-
-        duel.status = 'cancelled'
-        this.activeDuels.delete(duel.id)
-        db.persist()
-
-        broadcastEvent('PVP_DUEL_CANCELLED', { duelId: duel.id })
-
-        return {
-            success: true,
-            message: 'Duel successfully cancelled and stake refunded',
-            balances: balanceResult
-        }
     }
 
     /**

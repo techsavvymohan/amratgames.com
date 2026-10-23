@@ -49,7 +49,7 @@ router.get('/crypto-deposit-info', requireAuth, (req, res) => {
 })
 
 // POST /api/wallet/deposit
-router.post('/deposit', requireAuth, (req, res) => {
+router.post('/deposit', requireAuth, async (req, res) => {
     try {
         const { currency = 'INR', amount, paymentMethod = 'UPI', utrNumber = '' } = req.body
         const parsedAmount = parseFloat(amount)
@@ -61,22 +61,24 @@ router.post('/deposit', requireAuth, (req, res) => {
         const user = db.findUserById(req.user.id)
         if (!user) return res.status(404).json({ success: false, error: 'User not found' })
 
-        // Create pending deposit verification request — NO instant balance credit
-        const { deposit, transaction } = db.requestDeposit({
-            userId: req.user.id,
-            currency,
-            amount: parsedAmount,
-            paymentMethod,
-            utrNumber
+        // Create pending deposit verification request inside mutex lock to prevent concurrent UTR race
+        const result = await db.withUserLock(req.user.id, async () => {
+            return db.requestDeposit({
+                userId: req.user.id,
+                currency,
+                amount: parsedAmount,
+                paymentMethod,
+                utrNumber
+            })
         })
 
         res.json({
             success: true,
             status: 'pending',
             message: `Deposit request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted! Funds will be credited once verified.`,
-            depositId: deposit.id,
-            deposit,
-            transaction
+            depositId: result.deposit.id,
+            deposit: result.deposit,
+            transaction: result.transaction
         })
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
@@ -253,19 +255,34 @@ router.get('/transactions', requireAuth, (req, res) => {
 router.post('/webhook', async (req, res) => {
     try {
         const rawSignature = req.headers['x-webhook-signature'] || req.headers['webhook-signature'] || req.headers['x-signature']
-        const secret = CONFIG.DODO_PAYMENTS_WEBHOOK_SECRET || CONFIG.JWT_SECRET
+        const secret = CONFIG.DODO_PAYMENTS_WEBHOOK_SECRET
+        const authHeader = req.headers['x-api-key'] || req.headers['authorization']
+        const adminKey = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : authHeader?.trim()
 
-        // Cryptographic constant-time HMAC-SHA256 signature verification if secret is configured in production
-        if (secret && CONFIG.isProduction) {
-            const payload = req.rawBody || JSON.stringify(req.body)
+        // Cryptographic constant-time HMAC-SHA256 signature verification or Admin API key authorization
+        if (secret) {
+            const payload = req.rawBody ? req.rawBody.toString() : JSON.stringify(req.body)
             const verification = webhookSignatureVerifier.verifyHmacSha256(payload, rawSignature, secret)
             if (!verification.valid) {
                 return res.status(401).json({ success: false, error: `Invalid or missing cryptographic webhook signature: ${verification.error || 'unauthorized'}` })
             }
+        } else if (!adminKey || adminKey !== CONFIG.ADMIN_API_KEY) {
+            return res.status(401).json({
+                success: false,
+                error: 'Unauthorized: Webhook secret not configured and missing valid authorization key'
+            })
+        }
+
+        // Validate timestamp freshness if timestamp header provided (defense against delayed replays)
+        const timestampHeader = req.headers['x-webhook-timestamp'] || req.headers['x-timestamp']
+        if (timestampHeader && !webhookSignatureVerifier.isTimestampFresh(timestampHeader)) {
+            return res.status(401).json({ success: false, error: 'Webhook rejected: Timestamp expired or skewed beyond tolerance' })
         }
 
         const event = req.body || {}
-        const eventId = event.id || event.eventId || event.payment_id || event.payload?.payment?.id || `evt_${Date.now()}`
+        // Derive stable eventId from payload content if gateway lacks explicit id to strictly prevent replay attacks
+        const payloadHash = crypto.createHash('sha256').update(req.rawBody ? req.rawBody.toString() : JSON.stringify(event)).digest('hex').slice(0, 16)
+        const eventId = event.id || event.eventId || event.payment_id || event.payload?.payment?.id || `evt_${payloadHash}`
 
         // Idempotency check: strictly eliminate replay attacks and double crediting
         if (db.isWebhookProcessed(eventId)) {
@@ -289,8 +306,8 @@ router.post('/webhook', async (req, res) => {
                 const user = db.findUserById(userId)
                 if (!user) throw new Error('Target player account not found')
 
-                // 1. Credit balance legitimately
-                db.updateUserBalance(userId, currency, amount, `Automated Gateway Deposit (Ref: ${utrNumber})`)
+                // 1. Credit balance legitimately & capture linked ledger transaction
+                const balResult = db.updateUserBalance(userId, currency, amount, `Automated Gateway Deposit (Ref: ${utrNumber})`)
 
                 // 2. Accumulate totalDeposited in INR equivalent (unlocking withdrawal qualification)
                 const curr = String(currency || 'INR').toUpperCase()
@@ -301,9 +318,10 @@ router.post('/webhook', async (req, res) => {
 
                 user.totalDeposited = parseFloat(((user.totalDeposited || 0) + depositInr).toFixed(2))
 
-                // 3. Record completed deposit record in db
+                // 3. Record completed deposit record in db with linked transactionId
                 const depositRecord = {
                     id: 'dep_gw_' + Date.now().toString(36),
+                    transactionId: balResult?.transaction?.id || null,
                     userId,
                     username: user.username,
                     currency,
@@ -315,9 +333,20 @@ router.post('/webhook', async (req, res) => {
                     approvedAt: new Date().toISOString(),
                     approvedBy: 'SYSTEM_WEBHOOK'
                 }
+                if (balResult?.transaction) {
+                    balResult.transaction.depositId = depositRecord.id
+                }
+
                 if (!db.data.deposits) db.data.deposits = []
                 db.data.deposits.unshift(depositRecord)
                 db.persist()
+
+                // Durable outbox synchronization for Supabase cloud hydration
+                if (db.durableOutbox) {
+                    db.durableOutbox.enqueue('syncUser', user)
+                    if (balResult?.transaction) db.durableOutbox.enqueue('syncTransaction', balResult.transaction)
+                    db.durableOutbox.enqueue('syncDeposit', depositRecord)
+                }
 
                 broadcastEvent('DEPOSIT_STATUS_UPDATED', depositRecord)
                 return { user, deposit: depositRecord }
@@ -343,9 +372,41 @@ router.post('/webhook', async (req, res) => {
 })
 
 // POST /api/wallet/crypto-webhook
-// Autonomous Blockchain Ingress & Instant Settlement Webhook
+// Autonomous Blockchain Ingress & Instant Settlement Webhook (Protected via HMAC signature or shared secret)
 router.post('/crypto-webhook', async (req, res) => {
     try {
+        const rawSignature = req.headers['x-webhook-signature'] || req.headers['x-crypto-signature'] || req.headers['x-signature']
+        const authHeader = req.headers['x-api-key'] || req.headers['authorization']
+        const secret = CONFIG.CRYPTO_WEBHOOK_SECRET
+
+        let isAuthorized = false
+
+        // 1. Check API Key / Bearer Token authorization
+        if (authHeader) {
+            const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : authHeader.trim()
+            if (token && secret && token.length === secret.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(secret))) {
+                isAuthorized = true
+            } else if (token === CONFIG.ADMIN_API_KEY) {
+                isAuthorized = true
+            }
+        }
+
+        // 2. Check HMAC-SHA256 signature if provided
+        if (!isAuthorized && rawSignature && secret) {
+            const payload = req.rawBody ? req.rawBody.toString() : JSON.stringify(req.body)
+            const verification = webhookSignatureVerifier.verifyHmacSha256(payload, rawSignature, secret)
+            if (verification.valid) {
+                isAuthorized = true
+            }
+        }
+
+        if (!isAuthorized) {
+            return res.status(401).json({
+                success: false,
+                error: 'Unauthorized: Invalid or missing crypto webhook signature or authorization token'
+            })
+        }
+
         const result = await automatedSettlement.processCryptoDepositWebhook(req.body, db)
         res.json({ success: true, ...result })
     } catch (err) {

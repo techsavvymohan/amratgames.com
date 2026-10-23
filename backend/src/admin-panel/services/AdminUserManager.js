@@ -43,14 +43,16 @@ export class AdminUserManager {
     /**
      * Adjust user balance with audit logging
      */
-    adjustBalance(userId, currency, amount, adminUsername, note) {
+    async adjustBalance(userId, currency, amount, adminUsername, note) {
         const parsedAmount = parseFloat(amount)
         if (isNaN(parsedAmount) || !currency) {
             throw new Error('Valid currency and numeric amount are required')
         }
 
         const reason = note || `Manual adjustment by admin (${adminUsername})`
-        const result = this.db.updateUserBalance(userId, currency, parsedAmount, reason)
+        const result = await this.db.withUserLock(userId, async () => {
+            return this.db.updateUserBalance(userId, currency, parsedAmount, reason)
+        })
         if (!result) {
             throw new Error('User not found')
         }

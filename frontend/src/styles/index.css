@@ -1110,6 +1110,14 @@ a {
     overflow: hidden;
 }
 
+.main-content.main-content-game:has(.wingo-game-container),
+.main-content:has(.wingo-game-container) {
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
 .main-content.main-content-scrollable {
     height: 100%;
     overflow-y: auto;

@@ -60,6 +60,9 @@ router.post('/flip', authenticate, async (req, res) => {
             payout: betResult.payout,
             bet: betResult.bet,
             evaluation: betResult.evaluation,
+            balanceAfterDeduct: betResult.balanceAfterDeduct,
+            balancesAfterDeduct: betResult.balancesAfterDeduct,
+            finalBal: betResult.finalBal,
             balances: betResult.balances
         })
     } catch (err) {

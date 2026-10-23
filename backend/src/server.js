@@ -158,9 +158,25 @@ server.listen(PORT, CONFIG.HOST, () => {
     }
 })
 
-process.on('SIGINT', () => {
-    console.log('\n[SERVER] Gracefully shutting down...')
-    floorActivityEngine.stop()
-    db.persist()
-    process.exit(0)
+function gracefulShutdown(signal) {
+    console.log(`\n[SERVER] Received ${signal}. Gracefully shutting down...`)
+    try { floorActivityEngine.stop() } catch {}
+    try { db.persist() } catch {}
+    server.close(() => {
+        process.exit(0)
+    })
+    setTimeout(() => process.exit(0), 5000).unref?.()
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+
+process.on('unhandledRejection', (reason) => {
+    console.error('[UNHANDLED REJECTION]', reason)
+})
+
+process.on('uncaughtException', (err) => {
+    console.error('[UNCAUGHT EXCEPTION]', err)
+    try { db.persist() } catch {}
+    process.exit(1)
 })

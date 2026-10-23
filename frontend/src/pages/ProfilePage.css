@@ -45,6 +45,14 @@
     pointer-events: none;
 }
 
+.profile-hero-top-group {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: 1;
+    min-width: 0;
+}
+
 .profile-hero-avatar-wrap {
     position: relative;
     flex-shrink: 0;
@@ -698,12 +706,47 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     padding: 14px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .profile-item-row:last-child {
     border-bottom: none;
+}
+
+.profile-item-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.profile-item-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f8fafc;
+}
+
+.profile-item-meta {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.profile-item-submeta {
+    font-size: 0.75rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.profile-item-action {
+    text-align: right;
+    flex-shrink: 0;
 }
 
 .profile-status-badge {
@@ -735,6 +778,270 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+/* ── VIP Section Dedicated Classes ─────────────────────────────────── */
+.profile-vip-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border: 1px solid rgba(245, 175, 25, 0.3);
+    box-shadow: 0 8px 32px rgba(245, 175, 25, 0.15);
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+}
+
+.profile-vip-card-glow {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(245, 175, 25, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.profile-vip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.profile-vip-title-col {
+    min-width: 0;
+}
+
+.profile-vip-eyebrow {
+    font-size: 0.8rem;
+    color: #f5af19;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.profile-vip-tier-headline {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.profile-vip-badge-pill {
+    font-size: 0.75rem;
+    background: rgba(245, 175, 25, 0.2);
+    color: #fbbf24;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid rgba(245, 175, 25, 0.4);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.profile-vip-wager-col {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.profile-vip-wager-lbl {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.profile-vip-wager-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+}
+
+.profile-vip-progress-wrap {
+    margin-top: 14px;
+    margin-bottom: 18px;
+}
+
+.profile-vip-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-vip-progress-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.profile-vip-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f5af19 0%, #ffd700 100%);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.profile-vip-claim-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.profile-vip-claim-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.profile-vip-claim-lbl {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.profile-vip-claim-val {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #4ade80;
+}
+
+.profile-vip-claim-subtext {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.profile-vip-claim-btn {
+    min-width: 160px;
+    min-height: 44px;
+}
+
+.profile-vip-tiers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-vip-tier-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    gap: 12px;
+}
+
+.profile-vip-tier-row.active {
+    background: rgba(245, 175, 25, 0.12);
+    border-color: rgba(245, 175, 25, 0.4);
+}
+
+.profile-vip-tier-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.profile-vip-tier-name-row {
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-vip-tier-row.active .profile-vip-tier-name-row {
+    color: #fbbf24;
+}
+
+.profile-vip-tier-badge {
+    font-size: 0.7rem;
+    background: #f5af19;
+    color: #000;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+}
+
+.profile-vip-tier-perk {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-top: 2px;
+    line-height: 1.35;
+}
+
+.profile-vip-tier-stats {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.profile-vip-tier-rate {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #4ade80;
+}
+
+.profile-vip-tier-threshold {
+    font-size: 0.72rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* ── Support Section Classes ───────────────────────────────────────── */
+.profile-support-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.profile-support-row {
+    padding: 14px;
+    background: #1e293b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profile-support-row-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.profile-support-action-btn {
+    padding: 9px 16px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+}
+
+.profile-support-action-btn:hover {
+    background: #1d4ed8;
+}
+
 /* ── KYC Modal ─────────────────────────────────────────────────────── */
 .profile-kyc-modal-overlay {
     position: fixed;
@@ -759,7 +1066,9 @@
     width: 100%;
     max-width: 480px;
     max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 24px;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
     box-sizing: border-box;
@@ -770,34 +1079,57 @@
    ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 991px) {
     .profile-page-container {
-        padding: 12px 12px calc(var(--mobile-nav-space, 64px) + 24px);
+        padding: 12px 12px calc(var(--mobile-nav-space, 68px) + env(safe-area-inset-bottom, 16px) + 24px);
     }
 
     .profile-hero-banner {
         flex-direction: column;
         align-items: stretch;
         padding: 16px;
-        gap: 16px;
+        gap: 14px;
         border-radius: 14px;
         margin-bottom: 16px;
     }
 
+    .profile-hero-top-group {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+    }
+
     .profile-hero-avatar-wrap {
-        align-self: flex-start;
+        align-self: center;
+        flex-shrink: 0;
     }
 
     .profile-hero-avatar {
-        width: 58px;
-        height: 58px;
-        font-size: 1.5rem;
+        width: 54px;
+        height: 54px;
+        font-size: 1.4rem;
     }
 
     .profile-hero-info {
         width: 100%;
+        min-width: 0;
+    }
+
+    .profile-hero-name-row {
+        gap: 8px;
+        margin-bottom: 4px;
     }
 
     .profile-hero-name {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
+    }
+
+    .profile-hero-meta {
+        gap: 10px;
+        font-size: 0.78rem;
+    }
+
+    .profile-meta-item {
+        word-break: break-all;
     }
 
     .profile-hero-balance-box {
@@ -819,15 +1151,27 @@
         gap: 16px;
     }
 
-    /* Transform Sidebar Rail into Horizontal Chip Slider */
+    /* Transform Sidebar Rail into Horizontal Chip Slider with scroll cues */
     .profile-sidebar-rail {
         background: transparent;
         border: none;
         padding: 0;
-        position: static;
+        position: relative;
         box-shadow: none;
         width: 100%;
-        overflow: hidden;
+    }
+
+    /* Edge-fade scroll indicator showing more tabs exist on the right */
+    .profile-sidebar-rail::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 16px;
+        width: 28px;
+        background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.95));
+        pointer-events: none;
+        border-radius: 0 12px 12px 0;
     }
 
     .profile-subnav {
@@ -836,9 +1180,10 @@
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
         gap: 8px;
-        padding: 4px 2px 12px;
+        padding: 4px 6px 12px;
         margin-bottom: 4px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        scroll-snap-type: x proximity;
     }
 
     .profile-subnav::-webkit-scrollbar {
@@ -851,8 +1196,9 @@
         padding: 9px 14px;
         font-size: 0.86rem;
         border-radius: 24px;
-        background: rgba(30, 41, 59, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        scroll-snap-align: start;
     }
 
     .profile-subnav-btn.active {
@@ -886,7 +1232,60 @@
     .profile-text-input,
     .profile-verified-input,
     .profile-select {
-        font-size: 16px;
+        font-size: 16px !important;
+    }
+
+    /* VIP Mobile layout */
+    .profile-vip-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .profile-vip-wager-col {
+        text-align: left;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .profile-vip-claim-box {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-vip-claim-btn {
+        width: 100%;
+        max-width: none !important;
+    }
+
+    .profile-vip-tier-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .profile-vip-tier-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-kyc-modal-overlay {
+        padding: 10px;
+        align-items: flex-end;
+    }
+
+    .profile-kyc-modal {
+        max-height: calc(100dvh - 24px);
+        border-radius: 16px 16px 10px 10px;
+        padding: 18px 14px calc(18px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -894,6 +1293,7 @@
     .profile-page-container {
         padding-left: 8px;
         padding-right: 8px;
+        padding-bottom: calc(var(--mobile-nav-space, 68px) + env(safe-area-inset-bottom, 16px) + 28px);
     }
 
     .profile-hero-balance-box {
@@ -907,11 +1307,25 @@
     }
 
     .profile-dob-row {
+        grid-template-columns: 1fr 1.3fr 1.1fr;
         gap: 6px;
     }
 
     .profile-select {
-        padding: 10px 8px;
-        font-size: 15px;
+        padding: 10px 18px 10px 8px;
+        font-size: 16px !important;
+        background-position: right 6px center;
+        background-size: 11px;
+    }
+
+    .profile-support-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .profile-support-action-btn {
+        width: 100%;
+        min-height: 42px;
     }
 }

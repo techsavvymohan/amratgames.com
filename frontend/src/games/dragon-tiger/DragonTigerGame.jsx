@@ -39,7 +39,7 @@ function getRandomCard() {
 }
 
 function DragonTigerGame() {
-    const { balance, currencySymbol, executeGameBet } = useWallet()
+    const { balance, currencySymbol, executeGameBet, creditGamePayout, notifyWin, notifyLoss } = useWallet()
 
     // Chip & Bet state
     const [selectedChip, setSelectedChip] = useState(100)
@@ -169,16 +169,23 @@ function DragonTigerGame() {
             const won = Boolean(betResponse.won ?? evalData.won)
 
             if (won && payout > 0) {
+                if (betResponse?.applyPayout) {
+                    betResponse.applyPayout()
+                } else {
+                    creditGamePayout?.(payout, betResponse?.balances)
+                }
                 if (winner === 'tie' || (payout / totalBet) >= 3) {
                     playSound('bigWin')
                 } else {
                     playSound('win')
                 }
+                notifyWin?.(payout, (payout / totalBet).toFixed(2))
             } else {
                 playSound('loss')
+                notifyLoss?.(totalBet)
             }
         }, 900)
-    }, [isDealing, totalBet, balance, bets, executeGameBet])
+    }, [isDealing, totalBet, balance, bets, executeGameBet, creditGamePayout, notifyWin, notifyLoss])
 
     return (
         <div className="dt-page">

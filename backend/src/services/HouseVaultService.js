@@ -11,6 +11,28 @@ export class HouseVaultService {
         this.minStakeINR = 100.00   // ₹100 minimum vault stake
         this.minClaimINR = 1.00     // ₹1 minimum dividend claim
         this.baseApy = 18.5         // 18.5% baseline annualized platform APY
+        this.vaultLockQueue = null
+    }
+
+    /**
+     * Serialized execution for global vault updates to prevent lost updates on concurrent stakes
+     */
+    async withVaultLock(task) {
+        const currentQueue = this.vaultLockQueue || Promise.resolve()
+        let release
+        const nextInQueue = new Promise((resolve) => { release = resolve })
+        const waitPromise = currentQueue.catch(() => {})
+        const queueTail = waitPromise.then(() => nextInQueue)
+        this.vaultLockQueue = queueTail
+        try {
+            await waitPromise
+            return await task()
+        } finally {
+            release()
+            if (this.vaultLockQueue === queueTail) {
+                this.vaultLockQueue = null
+            }
+        }
     }
 
     ensureVaultStorage() {
@@ -119,65 +141,67 @@ export class HouseVaultService {
             throw err
         }
 
-        return db.withUserLock(userId, async () => {
-            const user = db.findUserById(userId)
-            if (!user) {
-                const err = new Error('User not found')
-                err.status = 404
-                throw err
-            }
-
-            const currentBal = user.balances?.INR || 0
-            if (currentBal < parsedAmount) {
-                const err = new Error(
-                    `Insufficient INR balance to stake (Available: ₹${currentBal.toLocaleString('en-IN')})`
-                )
-                err.status = 400
-                throw err
-            }
-
-            // Deduct from wallet balance
-            db.updateUserBalance(userId, 'INR', -parsedAmount, `🏛️ Amrat House Vault Staking (₹${parsedAmount})`)
-
-            this.ensureVaultStorage()
-            const vault = db.data.vault
-            if (!vault.stakers[userId]) {
-                vault.stakers[userId] = {
-                    stakedINR: 0,
-                    unclaimedDividendsINR: 0,
-                    totalClaimedINR: 0,
-                    stakedAt: new Date().toISOString()
+        return this.withVaultLock(async () => {
+            return db.withUserLock(userId, async () => {
+                const user = db.findUserById(userId)
+                if (!user) {
+                    const err = new Error('User not found')
+                    err.status = 404
+                    throw err
                 }
-            }
 
-            const staker = vault.stakers[userId]
-            staker.stakedINR = parseFloat(((staker.stakedINR || 0) + parsedAmount).toFixed(2))
-            staker.stakedAt = staker.stakedAt || new Date().toISOString()
-            vault.totalStakedINR = parseFloat(((vault.totalStakedINR || 0) + parsedAmount).toFixed(2))
+                const currentBal = user.balances?.INR || 0
+                if (currentBal < parsedAmount) {
+                    const err = new Error(
+                        `Insufficient INR balance to stake (Available: ₹${currentBal.toLocaleString('en-IN')})`
+                    )
+                    err.status = 400
+                    throw err
+                }
 
-            // Record vault history
-            vault.history.unshift({
-                id: 'vh_' + Date.now().toString(36) + crypto.randomBytes(2).toString('hex'),
-                userId,
-                username: user.username,
-                type: 'stake',
-                amount: parsedAmount,
-                timestamp: new Date().toISOString()
+                // Deduct from wallet balance
+                db.updateUserBalance(userId, 'INR', -parsedAmount, `🏛️ Amrat House Vault Staking (₹${parsedAmount})`)
+
+                this.ensureVaultStorage()
+                const vault = db.data.vault
+                if (!vault.stakers[userId]) {
+                    vault.stakers[userId] = {
+                        stakedINR: 0,
+                        unclaimedDividendsINR: 0,
+                        totalClaimedINR: 0,
+                        stakedAt: new Date().toISOString()
+                    }
+                }
+
+                const staker = vault.stakers[userId]
+                staker.stakedINR = parseFloat(((staker.stakedINR || 0) + parsedAmount).toFixed(2))
+                staker.stakedAt = staker.stakedAt || new Date().toISOString()
+                vault.totalStakedINR = parseFloat(((vault.totalStakedINR || 0) + parsedAmount).toFixed(2))
+
+                // Record vault history
+                vault.history.unshift({
+                    id: 'vh_' + Date.now().toString(36) + crypto.randomBytes(2).toString('hex'),
+                    userId,
+                    username: user.username,
+                    type: 'stake',
+                    amount: parsedAmount,
+                    timestamp: new Date().toISOString()
+                })
+                if (vault.history.length > 200) {
+                    vault.history = vault.history.slice(0, 200)
+                }
+
+                db.persist()
+
+                return {
+                    success: true,
+                    message: `Successfully staked ₹${parsedAmount.toLocaleString('en-IN')} into the Amrat House Vault!`,
+                    stakedAmount: parsedAmount,
+                    totalUserStaked: staker.stakedINR,
+                    totalVaultStaked: vault.totalStakedINR,
+                    balances: user.balances
+                }
             })
-            if (vault.history.length > 200) {
-                vault.history = vault.history.slice(0, 200)
-            }
-
-            db.persist()
-
-            return {
-                success: true,
-                message: `Successfully staked ₹${parsedAmount.toLocaleString('en-IN')} into the Amrat House Vault!`,
-                stakedAmount: parsedAmount,
-                totalUserStaked: staker.stakedINR,
-                totalVaultStaked: vault.totalStakedINR,
-                balances: user.balances
-            }
         })
     }
 
@@ -192,54 +216,56 @@ export class HouseVaultService {
             throw err
         }
 
-        return db.withUserLock(userId, async () => {
-            const user = db.findUserById(userId)
-            if (!user) {
-                const err = new Error('User not found')
-                err.status = 404
-                throw err
-            }
+        return this.withVaultLock(async () => {
+            return db.withUserLock(userId, async () => {
+                const user = db.findUserById(userId)
+                if (!user) {
+                    const err = new Error('User not found')
+                    err.status = 404
+                    throw err
+                }
 
-            this.ensureVaultStorage()
-            const vault = db.data.vault
-            const staker = vault.stakers?.[userId]
-            const currentStaked = staker?.stakedINR || 0
+                this.ensureVaultStorage()
+                const vault = db.data.vault
+                const staker = vault.stakers?.[userId]
+                const currentStaked = staker?.stakedINR || 0
 
-            if (parsedAmount > currentStaked) {
-                const err = new Error(
-                    `Cannot unstake more than your active deposit (Staked: ₹${currentStaked.toLocaleString('en-IN')})`
-                )
-                err.status = 400
-                throw err
-            }
+                if (parsedAmount > currentStaked) {
+                    const err = new Error(
+                        `Cannot unstake more than your active deposit (Staked: ₹${currentStaked.toLocaleString('en-IN')})`
+                    )
+                    err.status = 400
+                    throw err
+                }
 
-            staker.stakedINR = parseFloat((currentStaked - parsedAmount).toFixed(2))
-            vault.totalStakedINR = Math.max(0, parseFloat((vault.totalStakedINR - parsedAmount).toFixed(2)))
+                staker.stakedINR = parseFloat((currentStaked - parsedAmount).toFixed(2))
+                vault.totalStakedINR = Math.max(0, parseFloat((vault.totalStakedINR - parsedAmount).toFixed(2)))
 
-            // Credit principal back to user wallet
-            db.updateUserBalance(userId, 'INR', parsedAmount, `🏛️ Amrat House Vault Principal Return (₹${parsedAmount})`)
+                // Credit principal back to user wallet
+                db.updateUserBalance(userId, 'INR', parsedAmount, `🏛️ Amrat House Vault Principal Return (₹${parsedAmount})`)
 
-            vault.history.unshift({
-                id: 'vh_' + Date.now().toString(36) + crypto.randomBytes(2).toString('hex'),
-                userId,
-                username: user.username,
-                type: 'unstake',
-                amount: parsedAmount,
-                timestamp: new Date().toISOString()
+                vault.history.unshift({
+                    id: 'vh_' + Date.now().toString(36) + crypto.randomBytes(2).toString('hex'),
+                    userId,
+                    username: user.username,
+                    type: 'unstake',
+                    amount: parsedAmount,
+                    timestamp: new Date().toISOString()
+                })
+                if (vault.history.length > 200) {
+                    vault.history = vault.history.slice(0, 200)
+                }
+
+                db.persist()
+
+                return {
+                    success: true,
+                    message: `Successfully unstaked ₹${parsedAmount.toLocaleString('en-IN')} to your wallet.`,
+                    unstakedAmount: parsedAmount,
+                    remainingStaked: staker.stakedINR,
+                    balances: user.balances
+                }
             })
-            if (vault.history.length > 200) {
-                vault.history = vault.history.slice(0, 200)
-            }
-
-            db.persist()
-
-            return {
-                success: true,
-                message: `Successfully unstaked ₹${parsedAmount.toLocaleString('en-IN')} to your wallet.`,
-                unstakedAmount: parsedAmount,
-                remainingStaked: staker.stakedINR,
-                balances: user.balances
-            }
         })
     }
 

@@ -4,6 +4,7 @@ import crypto from 'node:crypto'
 import { db } from '../src/db/db.js'
 import { gameEngine } from '../src/services/GameEngine.js'
 import { pvpService } from '../src/services/PvPService.js'
+import { userLockManager } from '../src/db/UserLockManager.js'
 
 describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
     it('verifies AMRAT wagers are strictly excluded from real INR rakeback, turnover, and affiliate commissions', async () => {
@@ -257,6 +258,72 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
         assert.equal(joinRes.duel.status, 'resolved')
         assert.equal(joinRes.duel.winnerPayout, 0.00192, 'Winner payout must preserve 8-decimal Satoshi precision')
         assert.ok((creator.totalWagered || 0) > 0 || (opponent.totalWagered || 0) > 0, 'Turnover in INR equivalent must be recorded')
+    })
+
+    it('verifies UserLockManager properly drains and deletes lock queues with zero memory leaks', async () => {
+        const testUserId = 'lock_test_' + Date.now()
+        
+        await userLockManager.withLock(testUserId, async () => {
+            return 'done1'
+        })
+        
+        assert.equal(userLockManager.getActiveLockCount(), 0, 'Active lock count must be 0 after task drains')
+    })
+
+    it('verifies withDuelLock serializes concurrent duel joins and prevents race conditions', async () => {
+        const creator = db.createUser({
+            username: 'duel_race_c_' + Date.now(),
+            email: `duel_race_c_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const joiner1 = db.createUser({
+            username: 'duel_race_j1_' + Date.now(),
+            email: `duel_race_j1_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        const joiner2 = db.createUser({
+            username: 'duel_race_j2_' + Date.now(),
+            email: `duel_race_j2_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+
+        creator.balances.INR = 500
+        joiner1.balances.INR = 500
+        joiner2.balances.INR = 500
+
+        const createRes = await pvpService.createDuel({
+            userId: creator.id,
+            stake: 100,
+            choice: 'heads',
+            currency: 'INR'
+        })
+
+        // Concurrently join the duel
+        const [res1, res2] = await Promise.allSettled([
+            pvpService.joinDuel({ duelId: createRes.duel.id, userId: joiner1.id }),
+            pvpService.joinDuel({ duelId: createRes.duel.id, userId: joiner2.id })
+        ])
+
+        const succeeded = [res1, res2].filter(r => r.status === 'fulfilled')
+        const rejected = [res1, res2].filter(r => r.status === 'rejected')
+
+        assert.equal(succeeded.length, 1, 'Exactly one joiner must succeed')
+        assert.equal(rejected.length, 1, 'The other concurrent joiner must be rejected')
+        
+        // Ensure rejected user did not lose their 100 INR stake
+        const rejectedUserId = res1.status === 'rejected' ? joiner1.id : joiner2.id
+        const rejectedUser = db.findUserById(rejectedUserId)
+        assert.equal(rejectedUser.balances.INR, 500, 'Rejected joiner must have 0 stake deducted')
+    })
+
+    it('verifies generateOtp uses cryptographically secure 6-digit numeric codes', () => {
+        const { otp } = db.generateOtp('test_otp_' + Date.now() + '@example.com')
+        assert.equal(typeof otp, 'string')
+        assert.equal(otp.length, 6)
+        assert.match(otp, /^[0-9]{6}$/)
     })
 
     // Clean exit for node test runner when Redis is not running locally

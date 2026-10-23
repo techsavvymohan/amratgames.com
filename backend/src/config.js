@@ -95,6 +95,7 @@ export const CONFIG = {
     // 7. Crypto Cold Storage Vaults
     CRYPTO_RECEIVER_BTC: process.env.CRYPTO_RECEIVER_BTC || 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     CRYPTO_RECEIVER_USDT: process.env.CRYPTO_RECEIVER_USDT || '0x71C8360f3E10D5371b3722133D141C0E500C7D52',
+    CRYPTO_WEBHOOK_SECRET: process.env.CRYPTO_WEBHOOK_SECRET || process.env.ADMIN_API_KEY || 'amrat_internal_secret_admin_key_2025',
     DODO_PAYMENTS_API_KEY: process.env.DODO_PAYMENTS_API_KEY || '',
     DODO_PAYMENTS_WEBHOOK_SECRET: process.env.DODO_PAYMENTS_WEBHOOK_SECRET || '',
 

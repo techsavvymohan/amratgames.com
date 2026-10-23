@@ -81,8 +81,7 @@ function getStoredBalance(currencyId) {
         const stored = localStorage.getItem(`${STORAGE_KEY_BALANCE}_${currencyId}`)
         if (stored !== null) {
             const parsed = parseFloat(stored)
-            if (isNaN(parsed) || parsed >= 50000) {
-                // Wipe legacy demo balances
+            if (isNaN(parsed)) {
                 const clean = CURRENCIES[currencyId]?.initial ?? 100.00
                 localStorage.setItem(`${STORAGE_KEY_BALANCE}_${currencyId}`, clean.toString())
                 return clean
@@ -186,8 +185,7 @@ export function WalletProvider({ children }) {
             const userBal = user.balances[currencyRef.current]
             if (userBal !== undefined && typeof userBal === 'number') {
                 const precision = getCurrencyDecimals(currencyRef.current)
-                let rounded = parseFloat(userBal.toFixed(precision))
-                if (currencyRef.current === 'INR' && rounded >= 50000) rounded = 100.00
+                const rounded = parseFloat(userBal.toFixed(precision))
                 balanceRef.current = rounded
                 setBalance(rounded)
                 try {
@@ -232,8 +230,7 @@ export function WalletProvider({ children }) {
         let curBal = getStoredBalance(newCurr)
         if (user && user.balances && user.balances[newCurr] !== undefined) {
             const precision = getCurrencyDecimals(newCurr)
-            let uBal = parseFloat(user.balances[newCurr].toFixed(precision))
-            if (newCurr === 'INR' && uBal >= 50000) uBal = 100.00
+            const uBal = parseFloat(user.balances[newCurr].toFixed(precision))
             curBal = uBal
         }
         balanceRef.current = curBal
@@ -350,12 +347,49 @@ export function WalletProvider({ children }) {
         }
     }, [user, authContext, token, setStoredBalance])
 
+    // Helper to credit game payout at visual settlement (when game animation reveals outcome)
+    const creditGamePayout = useCallback((payout = 0, serverBalances = null) => {
+        const curr = currencyRef.current
+        if (serverBalances && typeof serverBalances[curr] === 'number') {
+            setStoredBalance(serverBalances[curr])
+        } else {
+            const amt = parseFloat(payout) || 0
+            if (amt > 0) {
+                setStoredBalance(balanceRef.current + amt)
+            }
+        }
+    }, [setStoredBalance])
+
+    // Helper to hold/deduct chips as they are placed on the betting table (Color Match, etc.)
+    const holdChips = useCallback((amount) => {
+        const amt = parseFloat(amount) || 0
+        if (amt > 0) {
+            setStoredBalance(Math.max(0, balanceRef.current - amt))
+        }
+    }, [setStoredBalance])
+
+    // Helper to release/refund chips when cleared or cancelled
+    const releaseChips = useCallback((amount) => {
+        const amt = parseFloat(amount) || 0
+        if (amt > 0) {
+            setStoredBalance(balanceRef.current + amt)
+        }
+    }, [setStoredBalance])
+
     // Execute server-authoritative bet (single-round games: Limbo, Plinko, Dragon Tiger, Color Match, Coin Toss)
     const executeGameBet = useCallback(async (betPayload) => {
         if (!user) {
             authContext?.openAuthModal?.('register')
             return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
         }
+        const parsedBet = parseFloat(betPayload.betAmount) || 0
+        const alreadyHeld = Boolean(betPayload.alreadyHeld)
+
+        // 1. Immediately deduct the bet from displayed balance so coins subtract upon placing/committing bet
+        if (!alreadyHeld && parsedBet > 0) {
+            setStoredBalance(Math.max(0, balanceRef.current - parsedBet))
+        }
+
         try {
             const headers = { 'Content-Type': 'application/json' }
             if (token) {
@@ -370,20 +404,42 @@ export function WalletProvider({ children }) {
                 })
             })
             const data = await res.json()
-            if (data.success) {
-                if (data.balances) {
-                    const updatedBal = data.balances[currencyRef.current]
-                    if (typeof updatedBal === 'number') {
-                        setStoredBalance(updatedBal)
-                    }
-                } else {
-                    const parsedBet = parseFloat(betPayload.betAmount) || 0
-                    const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
-                    setStoredBalance(Math.max(0, balanceRef.current - parsedBet + payout))
+            if (!data.success) {
+                // If server rejected the bet, restore the deducted funds
+                if (!alreadyHeld && parsedBet > 0) {
+                    setStoredBalance(balanceRef.current + parsedBet)
+                }
+                return data
+            }
+
+            const curr = currencyRef.current
+            const payout = parseFloat(data.payout ?? data.evaluation?.payout) || 0
+            const finalBal = (data.balances && typeof data.balances[curr] === 'number')
+                ? data.balances[curr]
+                : (typeof data.finalBal === 'number' ? data.finalBal : null)
+
+            // Balance after deduction, but strictly BEFORE crediting any win payout
+            const balAfterDeduct = (typeof data.balanceAfterDeduct === 'number')
+                ? data.balanceAfterDeduct
+                : (finalBal !== null ? Math.max(0, finalBal - payout) : Math.max(0, balanceRef.current))
+
+            // Ensure the active balance displays the post-wager balance (no premature win spoil!)
+            setStoredBalance(balAfterDeduct)
+
+            // Function to reveal and apply payout to balance when visual animation/window reveal finishes
+            data.applyPayout = () => {
+                if (finalBal !== null) {
+                    setStoredBalance(finalBal)
+                } else if (payout > 0) {
+                    setStoredBalance(balanceRef.current + payout)
                 }
             }
+
             return data
         } catch (err) {
+            if (!alreadyHeld && parsedBet > 0) {
+                setStoredBalance(balanceRef.current + parsedBet)
+            }
             return { success: false, error: err.message }
         }
     }, [user, authContext, token, setStoredBalance])
@@ -943,6 +999,9 @@ export function WalletProvider({ children }) {
         updateBalance,
         recordGameRound,
         executeGameBet,
+        creditGamePayout,
+        holdChips,
+        releaseChips,
         startMinesRound,
         revealMinesTile,
         cashoutMinesRound,

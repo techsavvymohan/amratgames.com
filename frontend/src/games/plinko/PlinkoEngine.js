@@ -216,7 +216,8 @@ class PlinkoEngine {
                 profit,
                 ballType: ball.type, // Pass the preserved ball type back!
                 isDemo: Boolean(ball.isDemo),
-                ballId: ball.id
+                ballId: ball.id,
+                betResponse: ball.betResponse
             });
 
             if (!ball.isDemo) {
@@ -233,8 +234,10 @@ class PlinkoEngine {
      * Drop a ball to a specific bin
      * @param {number} binIndex - The target bin index (0 = leftmost, rowCount = rightmost)
      * @param {string} ballType - The identifier for the ball type being dropped
+     * @param {boolean} isDemo - Whether this is a demo drop
+     * @param {object} betResponse - The bet response from executeGameBet
      */
-    dropBall(binIndex, ballType, isDemo = false) {
+    dropBall(binIndex, ballType, isDemo = false, betResponse = null) {
         if (this.getActiveBallCount() >= MAX_ACTIVE_BALLS) return null;
 
         // Get pre-calculated X for this bin
@@ -265,6 +268,7 @@ class PlinkoEngine {
         ball.id = Math.random().toString(36).substr(2, 9);
         ball.type = ballType; // Attach ballType to preserve it
         ball.isDemo = Boolean(isDemo);
+        ball.betResponse = betResponse;
         this.balls.push(ball);
         this.betAmountOfExistingBalls[ball.id] = this.betAmount;
 

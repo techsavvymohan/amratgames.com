@@ -529,7 +529,20 @@ export class Database {
 
                 const userMap = new Map()
                 for (const lu of this.data.users) userMap.set(lu.id, lu)
-                for (const cu of mappedUsers) userMap.set(cu.id, cu)
+                for (const cu of mappedUsers) {
+                    const existing = userMap.get(cu.id)
+                    if (existing) {
+                        // Preserve existing affiliate stats and any newer local updates
+                        cu.affiliateStats = existing.affiliateStats || cu.affiliateStats
+                        if (existing.unclaimedRakeback && (!cu.unclaimedRakeback || cu.unclaimedRakeback < existing.unclaimedRakeback)) {
+                            cu.unclaimedRakeback = existing.unclaimedRakeback
+                        }
+                        if (existing.totalRakebackEarned && (!cu.totalRakebackEarned || cu.totalRakebackEarned < existing.totalRakebackEarned)) {
+                            cu.totalRakebackEarned = existing.totalRakebackEarned
+                        }
+                    }
+                    userMap.set(cu.id, cu)
+                }
                 this.data.users = Array.from(userMap.values())
                 this._rebuildUserIndexes()
                 console.log(`[DB] Successfully synced ${mappedUsers.length} user accounts from Supabase!`)

@@ -167,6 +167,62 @@ describe('OOP Payment Gateway Bridge Suite', () => {
             assert.equal(session.requiresUtr, true)
             assert.ok(session.upiIntent)
         })
+
+        test('enforces deposit bounds (minimum ₹100, maximum ₹5,00,000)', async () => {
+            const manager = new PaymentGatewayManager()
+            const dummyUser = { id: 'usr_bounds_test', username: 'BoundsTester' }
+
+            await assert.rejects(
+                async () => await manager.createDepositSession(dummyUser, 50),
+                /Minimum deposit amount is ₹100/
+            )
+            await assert.rejects(
+                async () => await manager.createDepositSession(dummyUser, 600000),
+                /Maximum deposit limit per transaction is ₹5,00,000/
+            )
+        })
+
+        test('circuit breaker ignores 4xx client errors and only trips on network/server errors', () => {
+            const youpi = new YouPiGatewayAdapter({ timeoutMs: 100 })
+            assert.equal(youpi._isCircuitTripped(), false)
+
+            // Record 5 client 400 validation errors - circuit must NOT trip
+            const clientErr = new Error('Bad Request: Invalid order params')
+            clientErr.statusCode = 400
+            for (let i = 0; i < 5; i++) {
+                youpi._recordFailure(clientErr)
+            }
+            assert.equal(youpi._isCircuitTripped(), false)
+
+            // Record 3 server 500 errors - circuit MUST trip
+            const serverErr = new Error('Gateway Connection Refused')
+            serverErr.statusCode = 502
+            youpi._recordFailure(serverErr)
+            youpi._recordFailure(serverErr)
+            youpi._recordFailure(serverErr)
+            assert.equal(youpi._isCircuitTripped(), true)
+        })
+
+        test('rejects webhook with expired or skewed timestamp header', async () => {
+            const manager = new PaymentGatewayManager()
+            const secret = 'amrat_youpi_webhook_sec_489201948201'
+            const payload = JSON.stringify({
+                event: 'SUCCESS',
+                paymentId: 'pay_skew_test',
+                orderId: 'DEP_SKEW_01',
+                amount: '500.00'
+            })
+            const sig = crypto.createHmac('sha256', secret).update(payload).digest('hex')
+            const expiredTimestamp = Date.now() - (600 * 1000) // 10 minutes ago (beyond 300s tolerance)
+
+            await assert.rejects(
+                async () => await manager.handleIncomingWebhook('youpi', {
+                    'x-gateway-signature': sig,
+                    'x-gateway-timestamp': expiredTimestamp.toString()
+                }, payload),
+                /Timestamp expired or skewed beyond tolerance/
+            )
+        })
     })
 
     after(() => {

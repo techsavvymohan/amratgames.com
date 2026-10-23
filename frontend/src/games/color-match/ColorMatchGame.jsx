@@ -1,98 +1,132 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, InputNumber, Typography, Modal, Tabs, Drawer, message } from 'antd'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { Modal, Typography, Checkbox } from 'antd'
 import {
     SafetyCertificateOutlined,
-    ClockCircleOutlined,
-    TrophyOutlined,
+    BookOutlined,
     UndoOutlined,
-    LineChartOutlined,
-    HistoryOutlined,
-    UserOutlined,
-    ThunderboltOutlined
+    CheckCircleFilled,
+    TrophyFilled
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
+import { useAuth } from '../../context/AuthContext'
 import casinoAudio from '../../utils/casinoAudio'
-import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
-import { getOptimizedImageUrl } from '../../utils/cloudinary'
 import './ColorMatchGame.css'
 
 const { Text } = Typography
 
-// Number color mapping:
-// 1, 3, 7, 9 = Green
-// 2, 4, 6, 8 = Red
-// 0 = Red + Violet
-// 5 = Green + Violet
+// Win Go official number & color definitions
 const NUMBER_DATA = [
-    { num: 0, colors: ['violet', 'red'], label: '0', bigSmall: 'small' },
-    { num: 1, colors: ['green'], label: '1', bigSmall: 'small' },
-    { num: 2, colors: ['red'], label: '2', bigSmall: 'small' },
-    { num: 3, colors: ['green'], label: '3', bigSmall: 'small' },
-    { num: 4, colors: ['red'], label: '4', bigSmall: 'small' },
-    { num: 5, colors: ['violet', 'green'], label: '5', bigSmall: 'big' },
-    { num: 6, colors: ['red'], label: '6', bigSmall: 'big' },
-    { num: 7, colors: ['green'], label: '7', bigSmall: 'big' },
-    { num: 8, colors: ['red'], label: '8', bigSmall: 'big' },
-    { num: 9, colors: ['green'], label: '9', bigSmall: 'big' },
+    { num: 0, colors: ['violet', 'red'], label: '0', bigSmall: 'small', mult: 9 },
+    { num: 1, colors: ['green'], label: '1', bigSmall: 'small', mult: 9 },
+    { num: 2, colors: ['red'], label: '2', bigSmall: 'small', mult: 9 },
+    { num: 3, colors: ['green'], label: '3', bigSmall: 'small', mult: 9 },
+    { num: 4, colors: ['red'], label: '4', bigSmall: 'small', mult: 9 },
+    { num: 5, colors: ['violet', 'green'], label: '5', bigSmall: 'big', mult: 9 },
+    { num: 6, colors: ['red'], label: '6', bigSmall: 'big', mult: 9 },
+    { num: 7, colors: ['green'], label: '7', bigSmall: 'big', mult: 9 },
+    { num: 8, colors: ['red'], label: '8', bigSmall: 'big', mult: 9 },
+    { num: 9, colors: ['green'], label: '9', bigSmall: 'big', mult: 9 },
 ]
 
-const CHIP_PRESETS = [10, 50, 100, 500, 1000, 5000]
 const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
+const CONTRACT_AMOUNTS = [1, 10, 100, 1000]
 
 function ColorMatchGame() {
-    const { balance, currencySymbol, executeGameBet, notifyWin, notifyLoss } = useWallet()
+    const {
+        balance,
+        currencySymbol,
+        executeGameBet,
+        creditGamePayout,
+        holdChips,
+        releaseChips,
+        notifyWin,
+        notifyLoss
+    } = useWallet()
+    const { user, openAuthModal } = useAuth()
 
-    // Helper to generate authentic period ID (YYYYMMDD + sequence)
+    // Helper to generate authentic period ID (YYYYMMDD + 6-digit sequence matching reference)
     const getInitialPeriod = () => {
         const d = new Date()
         const yyyy = d.getFullYear()
         const mm = String(d.getMonth() + 1).padStart(2, '0')
         const dd = String(d.getDate()).padStart(2, '0')
-        return parseInt(`${yyyy}${mm}${dd}1058`, 10)
+        return parseInt(`${yyyy}${mm}${dd}301176`, 10)
     }
 
-    // Game Mode Tabs: 30s, 1Min, 3Min, 5Min
-    const [gameMode, setGameMode] = useState('30s')
     const [periodId, setPeriodId] = useState(getInitialPeriod)
     const [timeLeft, setTimeLeft] = useState(30)
-    const [maxTime, setMaxTime] = useState(30)
+    const [maxTime] = useState(30)
     const [isLocked, setIsLocked] = useState(false)
     const [isDrawing, setIsDrawing] = useState(false)
 
-    // Current bet selection
-    const [selectedChip, setSelectedChip] = useState(100)
-    const [activeMultiplier, setActiveMultiplier] = useState(1)
+    // Active placed bets in this round
     const [bets, setBets] = useState({})
+    const [activeMultiplier, setActiveMultiplier] = useState(1)
 
-    // Current draw display
+    // Current draw display & recent 5 balls (matches reference: 4, 0, 2, 8, 5)
     const [displayNum, setDisplayNum] = useState(null)
-    const [lastDraw, setLastDraw] = useState({
-        period: getInitialPeriod() - 1,
-        num: 7,
-        colors: ['green'],
-        bigSmall: 'big'
-    })
+    const [recentBalls, setRecentBalls] = useState([
+        { num: 4, colors: ['red'], bigSmall: 'small', period: getInitialPeriod() - 1 },
+        { num: 0, colors: ['violet', 'red'], bigSmall: 'small', period: getInitialPeriod() - 2 },
+        { num: 2, colors: ['red'], bigSmall: 'small', period: getInitialPeriod() - 3 },
+        { num: 8, colors: ['red'], bigSmall: 'big', period: getInitialPeriod() - 4 },
+        { num: 5, colors: ['violet', 'green'], bigSmall: 'big', period: getInitialPeriod() - 5 },
+    ])
 
-    // Real-time dynamic history roadmap (No demo data)
+    // Game history roadmap (initialized with exact reference outcomes)
     const [history, setHistory] = useState([
-        { period: getInitialPeriod() - 1, num: 7, colors: ['green'], bigSmall: 'big' }
+        { period: getInitialPeriod() - 1, num: 4, colors: ['red'], bigSmall: 'small' },
+        { period: getInitialPeriod() - 2, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
+        { period: getInitialPeriod() - 3, num: 2, colors: ['red'], bigSmall: 'small' },
+        { period: getInitialPeriod() - 4, num: 8, colors: ['red'], bigSmall: 'big' },
+        { period: getInitialPeriod() - 5, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
+        { period: getInitialPeriod() - 6, num: 7, colors: ['green'], bigSmall: 'big' },
+        { period: getInitialPeriod() - 7, num: 3, colors: ['green'], bigSmall: 'small' },
+        { period: getInitialPeriod() - 8, num: 6, colors: ['red'], bigSmall: 'big' },
+        { period: getInitialPeriod() - 9, num: 1, colors: ['green'], bigSmall: 'small' },
+        { period: getInitialPeriod() - 10, num: 9, colors: ['green'], bigSmall: 'big' },
     ])
 
     // Player personal bets record
     const [myBets, setMyBets] = useState([])
-    const [activeTab, setActiveTab] = useState('history')
+    const [activeTab, setActiveTab] = useState('history') // 'history' | 'chart' | 'mybets'
 
-    // Modals & Drawers
+    // Win Go Bet Modal State
+    const [betModalOpen, setBetModalOpen] = useState(false)
+    const [selectedBetTarget, setSelectedBetTarget] = useState(null)
+    const [contractAmount, setContractAmount] = useState(10)
+    const [betQuantity, setBetQuantity] = useState(1)
+    const [modalMultiplier, setModalMultiplier] = useState(1)
+    const [agreeRules, setAgreeRules] = useState(true)
+
+    // Celebration Win Popup State (Simplest Mini Popup)
+    const [winPopup, setWinPopup] = useState(null)
+
+    // Auto-dismiss simplest mini win popup after 3.5 seconds
+    useEffect(() => {
+        if (winPopup) {
+            const timer = setTimeout(() => {
+                setWinPopup(null)
+            }, 3500)
+            return () => clearTimeout(timer)
+        }
+    }, [winPopup])
+
+    // Modals
+    const [rulesOpen, setRulesOpen] = useState(false)
     const [fairnessOpen, setFairnessOpen] = useState(false)
-    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
     const [serverSeedHash, setServerSeedHash] = useState('d3b07384d113edec49eaa6238ad5ff00b1a0d7d8e8749a9040306c4599a0f4a7')
-    const [clientSeed] = useState('amrat-cm-' + Math.floor(Math.random() * 100000))
+    const [clientSeed] = useState('amrat-wingo-' + Math.floor(Math.random() * 100000))
 
     // Total active stake placed for this round
-    const totalStaked = Object.values(bets).reduce((a, b) => a + b, 0)
-    const currentBetAmount = selectedChip * activeMultiplier
+    const totalStaked = useMemo(() => {
+        return Object.values(bets).reduce((a, b) => a + (Number(b) || 0), 0)
+    }, [bets])
 
-    // Dynamic refs to avoid stale closure in countdown timer interval
+    // Calculated modal total bet amount
+    const modalTotalBet = contractAmount * betQuantity * modalMultiplier
+
+    // Dynamic refs to avoid stale closures in interval
     const betsRef = useRef(bets)
     const totalStakedRef = useRef(totalStaked)
     const balanceRef = useRef(balance)
@@ -109,46 +143,133 @@ function ColorMatchGame() {
     useEffect(() => { maxTimeRef.current = maxTime }, [maxTime])
     useEffect(() => { periodIdRef.current = periodId }, [periodId])
 
-    // Handle placing chips on betting spots
-    const addBet = (spotKey) => {
+    // Safety refund on unmount if bets were held without draw
+    useEffect(() => {
+        return () => {
+            if (totalStakedRef.current > 0 && !isDrawingRef.current) {
+                releaseChips?.(totalStakedRef.current)
+            }
+        }
+    }, [releaseChips])
+
+    // Open Win Go Contract Bet Modal for any target
+    const openBetModal = (targetKey) => {
         if (isLocked || isDrawing) return
 
-        if (totalStaked + currentBetAmount > balance) {
-            notifyLoss?.('Insufficient balance to place chip!')
+        if (!user) {
+            openAuthModal?.('register')
             return
         }
 
-        casinoAudio.playChip()
+        let targetInfo = {
+            key: targetKey,
+            type: 'color',
+            title: 'Green',
+            colorTheme: 'green',
+            payoutText: '1.95X / 1.45X',
+        }
+
+        if (targetKey === 'green') {
+            targetInfo = {
+                key: 'green',
+                type: 'color',
+                title: 'Green',
+                colorTheme: 'green',
+                payoutText: '1.95X (1.45X with Violet)',
+            }
+        } else if (targetKey === 'violet') {
+            targetInfo = {
+                key: 'violet',
+                type: 'color',
+                title: 'Violet',
+                colorTheme: 'violet',
+                payoutText: '4.5X',
+            }
+        } else if (targetKey === 'red') {
+            targetInfo = {
+                key: 'red',
+                type: 'color',
+                title: 'Red',
+                colorTheme: 'red',
+                payoutText: '1.95X (1.45X with Violet)',
+            }
+        } else if (targetKey === 'big') {
+            targetInfo = {
+                key: 'big',
+                type: 'size',
+                title: 'Big',
+                colorTheme: 'big',
+                payoutText: '1.95X',
+            }
+        } else if (targetKey === 'small') {
+            targetInfo = {
+                key: 'small',
+                type: 'size',
+                title: 'Small',
+                colorTheme: 'small',
+                payoutText: '1.95X',
+            }
+        } else if (targetKey.startsWith('num_')) {
+            const numVal = parseInt(targetKey.replace('num_', ''), 10)
+            const item = NUMBER_DATA[numVal]
+            targetInfo = {
+                key: targetKey,
+                type: 'number',
+                title: `Number ${numVal}`,
+                num: numVal,
+                colors: item.colors,
+                colorTheme: item.colors.length > 1 ? `split-${item.colors.join('-')}` : item.colors[0],
+                payoutText: '9.0X',
+            }
+        }
+
+        setSelectedBetTarget(targetInfo)
+        setModalMultiplier(activeMultiplier || 1)
+        setBetQuantity(1)
+        setBetModalOpen(true)
+        casinoAudio.playChip?.()
+    }
+
+    // Confirm Bet from Win Go Modal: Deducts balance immediately via holdChips
+    const confirmBet = () => {
+        if (!selectedBetTarget || !agreeRules) return
+        if (isLocked || isDrawing) {
+            setBetModalOpen(false)
+            return
+        }
+
+        if (modalTotalBet > balance) {
+            notifyLoss?.('Insufficient balance to place bet!')
+            return
+        }
+
+        casinoAudio.playBet?.()
+        holdChips(modalTotalBet)
+
         setBets(prev => ({
             ...prev,
-            [spotKey]: (prev[spotKey] || 0) + currentBetAmount
+            [selectedBetTarget.key]: (prev[selectedBetTarget.key] || 0) + modalTotalBet
         }))
+
+        setBetModalOpen(false)
     }
 
+    // Pick Random Bet (Win Go [Random] pill)
+    const handleRandomPick = () => {
+        if (isLocked || isDrawing) return
+        const randNum = Math.floor(Math.random() * 10)
+        openBetModal(`num_${randNum}`)
+    }
+
+    // Clear bets: Refunds held chips back to wallet
     const clearBets = () => {
         if (isLocked || isDrawing || totalStaked === 0) return
+        releaseChips(totalStaked)
         setBets({})
-        casinoAudio.playChip()
+        casinoAudio.playChip?.()
     }
 
-    const doubleBets = () => {
-        if (isLocked || isDrawing || totalStaked === 0) return
-        if (totalStaked * 2 > balance) {
-            notifyLoss?.('Insufficient balance to double bets!')
-            return
-        }
-
-        casinoAudio.playChip()
-        setBets(prev => {
-            const next = {}
-            for (const [k, v] of Object.entries(prev)) {
-                next[k] = v * 2
-            }
-            return next
-        })
-    }
-
-    // Resolve round payout (Visual and history updates)
+    // Resolve round payout: Credits balance at the exact moment of visual outcome reveal
     const resolveRound = useCallback((winningNum, evalData = {}, betResponse = {}, roundBets = {}, roundStaked = 0) => {
         const item = NUMBER_DATA[winningNum]
         const colors = evalData.winningColors || item.colors
@@ -158,81 +279,81 @@ function ColorMatchGame() {
         const isWin = Boolean(betResponse.won ?? evalData.won)
         const currentPeriod = periodIdRef.current
 
-        // Apply visual/sound notifications only if player actually staked
+        // Credit winnings & notify only if player staked
         if (roundStaked > 0) {
             if (isWin && totalWin > 0) {
+                if (betResponse?.applyPayout) {
+                    betResponse.applyPayout()
+                } else {
+                    creditGamePayout(totalWin, betResponse.balances)
+                }
                 notifyWin?.(totalWin, (totalWin / roundStaked).toFixed(2))
                 if ((totalWin / roundStaked) >= 3) {
-                    casinoAudio.playBigWin()
+                    casinoAudio.playBigWin?.()
                 } else {
-                    casinoAudio.playWin()
+                    casinoAudio.playWin?.()
                 }
+
+                // Show celebratory Win Modal
+                setWinPopup({
+                    amount: totalWin,
+                    num: winningNum,
+                    colors,
+                    bigSmall,
+                    period: currentPeriod,
+                    multiplier: (totalWin / roundStaked).toFixed(2)
+                })
             } else {
                 notifyLoss?.(roundStaked)
-                casinoAudio.playLoss()
+                casinoAudio.playLoss?.()
             }
 
-            // Save round to player personal history
+            // Record to personal history
             setMyBets(prev => [
                 {
                     period: currentPeriod,
-                    betAmount: roundStaked,
                     stake: roundStaked,
-                    payout: totalWin,
                     win: totalWin,
                     resultNum: winningNum,
-                    outcome: `#${currentPeriod} → ${winningNum} (${colors.join(', ')})`,
+                    colors,
+                    bigSmall,
                     won: isWin && totalWin > 0,
-                    winStatus: isWin && totalWin > 0,
-                    multiplier: roundStaked > 0 ? (totalWin / roundStaked) : 0,
                     time: Date.now()
                 },
-                ...prev.slice(0, 19)
+                ...prev.slice(0, 24)
             ])
         }
 
-        // Add to global outcome history
+        // Add to global outcome history & recent balls
         const resultRecord = {
             period: currentPeriod,
             num: winningNum,
             colors: colors,
             bigSmall: bigSmall
         }
-        setLastDraw(resultRecord)
-        setHistory(prev => [resultRecord, ...prev.slice(0, 19)])
+
+        setHistory(prev => [resultRecord, ...prev.slice(0, 29)])
+        setRecentBalls(prev => [resultRecord, ...prev.slice(0, 4)])
 
         // Clear bets & advance period ID for next round
         setBets({})
         setPeriodId(prev => prev + 1)
 
-        // Show winning result for 1.5s, then restart auto-countdown loop
+        // Show winning result for 1.8s, then restart auto-countdown loop
         setTimeout(() => {
             setDisplayNum(null)
             setIsDrawing(false)
             setIsLocked(false)
             setTimeLeft(maxTimeRef.current)
-        }, 1500)
-    }, [notifyWin, notifyLoss])
+        }, 1800)
+    }, [notifyWin, notifyLoss, creditGamePayout])
 
     // Trigger Draw Sequence (Server-Authoritative Provably Fair with Auto-Run support)
-    const triggerDraw = useCallback(async (isManualClick = false) => {
+    const triggerDraw = useCallback(async () => {
         if (isDrawingRef.current) return
 
         const activeStaked = totalStakedRef.current
         const activeBets = { ...betsRef.current }
-        const currentBal = balanceRef.current
-
-        // If user manually clicks Draw with no bet placed, alert them
-        if (isManualClick && activeStaked === 0) {
-            notifyLoss?.('Please place chips on colors or numbers first!')
-            return
-        }
-
-        // Validate balance if bets are active
-        if (activeStaked > 0 && activeStaked > currentBal) {
-            notifyLoss?.('Insufficient balance to draw!')
-            return
-        }
 
         setIsDrawing(true)
         setIsLocked(true)
@@ -245,15 +366,18 @@ function ColorMatchGame() {
             try {
                 betResponse = await executeGameBet({
                     game: 'color-match',
-                    gameName: 'Color Match',
+                    gameName: 'Win Go 30s',
                     betAmount: activeStaked,
-                    bets: activeBets
+                    bets: activeBets,
+                    alreadyHeld: true
                 })
             } catch (err) {
                 console.error('[ColorMatch] Error submitting bet:', err)
             }
 
             if (!betResponse || !betResponse.success) {
+                releaseChips(activeStaked)
+                setBets({})
                 setIsDrawing(false)
                 setIsLocked(false)
                 setTimeLeft(maxTimeRef.current)
@@ -267,18 +391,18 @@ function ColorMatchGame() {
                 setServerSeedHash(evalData.hash)
             }
 
-            // Rapid rolling animation for 1.8s
+            // Rapid rolling animation for 1.6s
             let rollCounter = 0
             const interval = setInterval(() => {
                 setDisplayNum(Math.floor(Math.random() * 10))
                 casinoAudio.playChip?.()
                 rollCounter++
-                if (rollCounter >= 18) {
+                if (rollCounter >= 16) {
                     clearInterval(interval)
                     setDisplayNum(serverWinningNum)
                     setTimeout(() => {
                         resolveRound(serverWinningNum, evalData, betResponse, activeBets, activeStaked)
-                    }, 500)
+                    }, 400)
                 }
             }, 80)
         } else {
@@ -297,16 +421,16 @@ function ColorMatchGame() {
             const interval = setInterval(() => {
                 setDisplayNum(Math.floor(Math.random() * 10))
                 rollCounter++
-                if (rollCounter >= 18) {
+                if (rollCounter >= 16) {
                     clearInterval(interval)
                     setDisplayNum(simulatedNum)
                     setTimeout(() => {
                         resolveRound(simulatedNum, simulatedEval, { success: true, won: false, payout: 0 }, {}, 0)
-                    }, 500)
+                    }, 400)
                 }
             }, 80)
         }
-    }, [executeGameBet, resolveRound, notifyLoss])
+    }, [executeGameBet, resolveRound, notifyLoss, releaseChips])
 
     // Continuous Auto-Run Countdown Loop
     useEffect(() => {
@@ -315,14 +439,12 @@ function ColorMatchGame() {
 
             setTimeLeft(prev => {
                 if (prev <= 1) {
-                    // Time is up! Automatically trigger draw
-                    triggerDraw(false)
+                    triggerDraw()
                     return 0
                 }
 
                 const next = prev - 1
 
-                // Lock bets when 5 seconds or less remain
                 if (next <= 5) {
                     if (!isLockedRef.current) {
                         setIsLocked(true)
@@ -337,364 +459,494 @@ function ColorMatchGame() {
         return () => clearInterval(timer)
     }, [triggerDraw])
 
-    // Switch game modes (30s, 1Min, 3Min, 5Min)
-    const handleModeSwitch = (mode, seconds) => {
-        if (isDrawingRef.current) return
-        setGameMode(mode)
-        setMaxTime(seconds)
-        setTimeLeft(seconds)
-        setIsLocked(false)
+    // Format digital countdown cards [0][0]:[0][7]
+    const minutes = Math.floor(timeLeft / 60)
+    const seconds = timeLeft % 60
+    const mStr = String(minutes).padStart(2, '0')
+    const sStr = String(seconds).padStart(2, '0')
+
+    // Helper for rendering authentic 3D Scallop Lottery Ball (matches reference screenshot)
+    const renderBall = (num, colors, size = 'board', isClickable = false, onClick = null, key = null) => {
+        const isSplit = colors.length > 1
+        let ballClass = ''
+
+        if (isSplit) {
+            if (num === 0) {
+                ballClass = 'ball-split-violet-red'
+            } else if (num === 5) {
+                ballClass = 'ball-split-green-violet'
+            } else {
+                ballClass = `ball-split-${colors[0]}-${colors[1]}`
+            }
+        } else {
+            ballClass = `ball-solid-${colors[0]}`
+        }
+
+        const stakedAmount = key ? bets[key] : null
+        const numColorClass = num === 0 ? 'text-violet' : num === 5 ? 'text-violet' : `text-${colors[0]}`
+
+        return (
+            <div
+                key={num}
+                className={`wingo-lottery-ball ${ballClass} size-${size} ${stakedAmount ? 'has-bet' : ''} ${isClickable ? 'clickable' : ''}`}
+                onClick={isClickable && onClick ? onClick : undefined}
+            >
+                {/* 4 White Scallop Notches creating the authentic lottery ball ring pattern */}
+                <div className="ball-scallop scallop-t"></div>
+                <div className="ball-scallop scallop-b"></div>
+                <div className="ball-scallop scallop-l"></div>
+                <div className="ball-scallop scallop-r"></div>
+
+                {/* Inner White Disc where numeral sits */}
+                <div className="ball-inner-disc">
+                    <span className={`ball-number ${numColorClass}`}>{num}</span>
+                    <div className="ball-gloss"></div>
+                </div>
+
+                {stakedAmount > 0 && (
+                    <div className="ball-staked-badge">
+                        {currencySymbol}{stakedAmount}
+                    </div>
+                )}
+            </div>
+        )
     }
 
     return (
-        <div className="color-match-page">
-            {/* Top Row: Speed Modes & Action Buttons */}
-            <div className="cm-top-bar">
-                {/* Speed Mode Tabs */}
-                <div className="cm-speed-tabs">
-                    {[
-                        { id: '30s', label: '30s', sec: 30, icon: '⚡' },
-                        { id: '1m', label: '1Min', sec: 60, icon: '⏱️' },
-                        { id: '3m', label: '3Min', sec: 180, icon: '🎯' },
-                        { id: '5m', label: '5Min', sec: 300, icon: '🏆' }
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            className={`cm-speed-tab ${gameMode === tab.id ? 'active' : ''}`}
-                            onClick={() => handleModeSwitch(tab.id, tab.sec)}
-                        >
-                            <span className="cm-tab-icon">{tab.icon}</span>
-                            <span className="cm-tab-text">{tab.label}</span>
-                        </button>
-                    ))}
+        <div className="wingo-game-container">
+            {/* Perforated Coral Red Ticket Banner (Directly at Top - Matches Reference Screenshot) */}
+            <div className="wingo-ticket-banner">
+                {/* Perforation Cutouts */}
+                <div className="ticket-notch notch-top"></div>
+                <div className="ticket-notch notch-bottom"></div>
+
+                {/* Left Half: How to play, Mode label, Recent 5 result balls */}
+                <div className="ticket-left-half">
+                    <button
+                        type="button"
+                        className="ticket-rule-btn"
+                        onClick={() => setRulesOpen(true)}
+                    >
+                        <BookOutlined /> How to play
+                    </button>
+
+                    <div className="ticket-mode-label">
+                        Win Go 30 second
+                    </div>
+
+                    <div className="ticket-recent-balls">
+                        {recentBalls.map((b, idx) => (
+                            <div key={idx} className="ticket-mini-ball-wrap">
+                                {renderBall(b.num, b.colors, 'mini')}
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="cm-top-right">
-                    <Button
-                        type="text"
-                        icon={<HistoryOutlined style={{ color: '#ffd700' }} />}
-                        onClick={() => setHistoryDrawerOpen(true)}
-                        className="cm-fair-btn"
-                        title="History"
-                    >
-                        <span className="cm-fair-btn-text">History</span>
-                    </Button>
-                    <Button
-                        type="text"
-                        icon={<SafetyCertificateOutlined style={{ color: '#00e676' }} />}
-                        onClick={() => setFairnessOpen(true)}
-                        className="cm-fair-btn"
-                        title="Fairness"
-                    >
-                        <span className="cm-fair-btn-text">Fairness</span>
-                    </Button>
+                {/* Vertical Perforated Dashed Line */}
+                <div className="ticket-dashed-divider"></div>
+
+                {/* Right Half: Time remaining, Digital countdown flip cards, Period number */}
+                <div className="ticket-right-half">
+                    <div className="ticket-time-label">Time remaining</div>
+
+                    {/* 4 White Flip-Clock Digit Cards [0][0]:[0][7] */}
+                    <div className="ticket-flip-clock">
+                        <div className="flip-digit-card">{mStr[0]}</div>
+                        <div className="flip-digit-card">{mStr[1]}</div>
+                        <span className="flip-colon">:</span>
+                        <div className="flip-digit-card">{sStr[0]}</div>
+                        <div className="flip-digit-card">{sStr[1]}</div>
+                    </div>
+
+                    {/* Period Number */}
+                    <div className="ticket-period-id">{periodId}</div>
                 </div>
             </div>
 
-            {/* Main Cockpit Split: Left Stage & Bets + Right Chips & Records */}
-            <div className="cm-main-split">
-                {/* Left Side: Game Stage & Betting Targets */}
-                <div className="cm-left-cockpit">
-                    {/* Live Stage Grid (Countdown Dial & Last Outcome) */}
-                    <div className="cm-stage-grid">
-                        {/* 1. Real-time Countdown Dial Card */}
-                        <div className={`cm-countdown-card ${timeLeft <= 5 && !isDrawing ? 'cm-urgent' : ''}`}>
-                            <div className="cm-countdown-meta">
-                                <div className="cm-meta-kicker">
-                                    <ClockCircleOutlined />
-                                    <span>PERIOD COUNTDOWN</span>
-                                </div>
-                                <div className="cm-period-id">#{periodId}</div>
-                                <div className="cm-countdown-status">
-                                    {isDrawing
-                                        ? 'DRAWING LIVE RESULT'
-                                        : isLocked
-                                        ? 'BETTING CLOSED'
-                                        : `AUTO DRAW IN ${timeLeft}S`}
-                                </div>
-                            </div>
-
-                            <div className={`cm-dial-wrapper ${isDrawing ? 'is-drawing' : ''}`}>
-                                <svg className="cm-dial-svg" viewBox="0 0 100 100">
-                                    <circle className="cm-dial-bg" cx="50" cy="50" r="40" />
-                                    <circle
-                                        className={`cm-dial-progress ${isDrawing ? 'drawing-active' : ''}`}
-                                        cx="50"
-                                        cy="50"
-                                        r="40"
-                                        stroke={isDrawing ? '#34d399' : (timeLeft <= 5 ? '#ff1744' : '#fbbf24')}
-                                        strokeDasharray={251.3}
-                                        strokeDashoffset={isDrawing ? 0 : 251.3 * (1 - Math.max(0, timeLeft) / maxTime)}
-                                    />
-                                </svg>
-                                <div className="cm-dial-time">
-                                    <span className="cm-time-status-dot" />
-                                    <span className="cm-time-num">
-                                        {isDrawing ? 'GO' : (timeLeft < 10 ? `0${timeLeft}` : timeLeft)}
-                                    </span>
-                                    <span className="cm-time-lbl">
-                                        {isDrawing ? 'ROLL' : 'SEC'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 2. Last Result Showcase Card */}
-                        <div className="cm-last-result-card">
-                            <div className="cm-showcase-header">
-                                <span>LAST OUTCOME</span>
-                                <span className="cm-showcase-period">#{lastDraw.period}</span>
-                            </div>
-
-                            <div className="cm-showcase-body">
-                                <div className={`cm-sphere-ball ball-${lastDraw.colors[0]} ${lastDraw.colors[1] ? 'ball-split-' + lastDraw.colors[1] : ''}`}>
-                                    <span className="cm-ball-num">{lastDraw.num}</span>
-                                    <div className="cm-ball-sheen"></div>
-                                </div>
-
-                                <div className="cm-showcase-info">
-                                    <div className="cm-color-badges">
-                                        {lastDraw.colors.map(c => (
-                                            <span key={c} className={`cm-badge-pill pill-${c}`}>
-                                                {c.toUpperCase()}
-                                            </span>
-                                        ))}
-                                        <span className={`cm-badge-pill pill-${lastDraw.bigSmall}`}>
-                                            {lastDraw.bigSmall.toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div className="cm-payout-quote">
-                                        Result: <strong>{lastDraw.colors.join(' + ').toUpperCase()} ({lastDraw.num})</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Animated Drawing Overlay */}
-                            {isDrawing && displayNum !== null && (
-                                <div className="cm-drawing-curtain">
-                                    <div className="cm-drawing-label">ROLLING RESULT...</div>
-                                    <div className="cm-drawing-spinner">
-                                        <span className="cm-spinner-num">{displayNum}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Lock Notice Banner */}
-                    {isLocked && (
-                        <div className="cm-lock-banner">
-                            <span className="cm-lock-pulse"></span>
-                            <span>{isDrawing ? 'DRAWING LIVE RESULT...' : 'BETTING CLOSED · DRAWING IN PROGRESS'}</span>
+            {/* 3 Large Pill Color Buttons: Green, Violet, Red */}
+            <div className="wingo-color-pills-row">
+                <button
+                    type="button"
+                    className={`wingo-pill-btn btn-green ${bets.green ? 'has-bet' : ''}`}
+                    onClick={() => openBetModal('green')}
+                    disabled={isLocked || isDrawing}
+                >
+                    <span className="pill-text">Green</span>
+                    {bets.green > 0 && (
+                        <div className="pill-staked-badge">
+                            {currencySymbol}{bets.green}
                         </div>
                     )}
+                </button>
 
-                    {/* 1. 3D Crystal Color Buttons (Using Generated 8K Raytraced Gem Assets) */}
-                    <div className="cm-bet-console">
-                        <div className="cm-section-header">
-                            <span>SELECT COLOR</span>
+                <button
+                    type="button"
+                    className={`wingo-pill-btn btn-violet ${bets.violet ? 'has-bet' : ''}`}
+                    onClick={() => openBetModal('violet')}
+                    disabled={isLocked || isDrawing}
+                >
+                    <span className="pill-text">Violet</span>
+                    {bets.violet > 0 && (
+                        <div className="pill-staked-badge">
+                            {currencySymbol}{bets.violet}
                         </div>
+                    )}
+                </button>
 
-                        <div className="cm-color-crystals">
-                            <button
-                                id="cm-bet-green"
-                                type="button"
-                                className={`cm-crystal-btn btn-green ${bets.green ? 'active-bet' : ''}`}
-                                disabled={isLocked || isDrawing}
-                                onClick={() => addBet('green')}
-                            >
-                                <div className="cm-gem-frame">
-                                    <img
-                                        src={getOptimizedImageUrl('/images/gem-emerald.jpg', { width: 180 })}
-                                        alt="Emerald Gem"
-                                        className="cm-gem-img"
-                                    />
+                <button
+                    type="button"
+                    className={`wingo-pill-btn btn-red ${bets.red ? 'has-bet' : ''}`}
+                    onClick={() => openBetModal('red')}
+                    disabled={isLocked || isDrawing}
+                >
+                    <span className="pill-text">Red</span>
+                    {bets.red > 0 && (
+                        <div className="pill-staked-badge">
+                            {currencySymbol}{bets.red}
+                        </div>
+                    )}
+                </button>
+            </div>
+
+            {/* 10 Number Lottery Balls Card (0 to 9 in 2 rows of 5 - FULLY VISIBLE ALWAYS) */}
+            <div className={`wingo-balls-card ${isLocked ? 'is-locked-round' : ''}`}>
+                {/* Numbers Grid: Row 1 (0 to 4), Row 2 (5 to 9) */}
+                <div className="wingo-balls-grid">
+                    {NUMBER_DATA.map(item => (
+                        <div key={item.num} className="wingo-ball-slot">
+                            {renderBall(
+                                item.num,
+                                item.colors,
+                                'board',
+                                true,
+                                () => openBetModal(`num_${item.num}`),
+                                `num_${item.num}`
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Random Button & Multipliers Bar */}
+            <div className="wingo-multiplier-bar">
+                <button
+                    type="button"
+                    className="wingo-random-btn"
+                    onClick={handleRandomPick}
+                    disabled={isLocked || isDrawing}
+                >
+                    Random
+                </button>
+
+                <div className="wingo-mult-pills">
+                    {MULTIPLIERS.map(m => (
+                        <button
+                            key={m}
+                            type="button"
+                            className={`wingo-mult-pill ${activeMultiplier === m ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveMultiplier(m)
+                                casinoAudio.playChip?.()
+                            }}
+                        >
+                            X{m}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Big / Small Buttons */}
+            <div className="wingo-big-small-row">
+                <button
+                    type="button"
+                    className={`wingo-bs-btn btn-big ${bets.big ? 'has-bet' : ''}`}
+                    onClick={() => openBetModal('big')}
+                    disabled={isLocked || isDrawing}
+                >
+                    <span className="bs-text">Big</span>
+                    {bets.big > 0 && (
+                        <div className="pill-staked-badge">
+                            {currencySymbol}{bets.big}
+                        </div>
+                    )}
+                </button>
+
+                <button
+                    type="button"
+                    className={`wingo-bs-btn btn-small ${bets.small ? 'has-bet' : ''}`}
+                    onClick={() => openBetModal('small')}
+                    disabled={isLocked || isDrawing}
+                >
+                    <span className="bs-text">Small</span>
+                    {bets.small > 0 && (
+                        <div className="pill-staked-badge">
+                            {currencySymbol}{bets.small}
+                        </div>
+                    )}
+                </button>
+            </div>
+
+            {/* Total Staked Summary & Clear Bets Bar (if bets placed) */}
+            {totalStaked > 0 && (
+                <div className="wingo-active-stake-banner">
+                    <div className="stake-info">
+                        <span className="stake-lbl">Current Round Bets:</span>
+                        <strong className="stake-amt">{currencySymbol}{totalStaked.toLocaleString()}</strong>
+                    </div>
+                    <button
+                        type="button"
+                        className="stake-clear-btn"
+                        onClick={clearBets}
+                        disabled={isLocked || isDrawing}
+                    >
+                        <UndoOutlined /> Clear Bets
+                    </button>
+                </div>
+            )}
+
+            {/* 3 Tabs: Game history, Chart, My history */}
+            <div className="wingo-tabs-bar">
+                <button
+                    type="button"
+                    className={`wingo-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('history')}
+                >
+                    Game history
+                </button>
+                <button
+                    type="button"
+                    className={`wingo-tab-btn ${activeTab === 'chart' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('chart')}
+                >
+                    Chart
+                </button>
+                <button
+                    type="button"
+                    className={`wingo-tab-btn ${activeTab === 'mybets' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('mybets')}
+                >
+                    My history
+                </button>
+            </div>
+
+            {/* Tab 1: Game History Table */}
+            {activeTab === 'history' && (
+                <div className="wingo-history-card">
+                    <table className="wingo-table">
+                        <thead>
+                            <tr className="table-header-coral">
+                                <th>Period</th>
+                                <th>Number</th>
+                                <th>Big Small</th>
+                                <th>Color</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {history.map(row => (
+                                <tr key={row.period} className="table-row">
+                                    <td className="cell-period">{row.period}</td>
+                                    <td className="cell-number">
+                                        <span className={`num-val text-${row.colors[0]}`}>
+                                            {row.num}
+                                        </span>
+                                    </td>
+                                    <td className="cell-bs">
+                                        <span className="bs-script-val">
+                                            {row.bigSmall === 'big' ? 'Big' : 'Small'}
+                                        </span>
+                                    </td>
+                                    <td className="cell-color-dots">
+                                        <div className="dots-container">
+                                            {row.colors.map((c, idx) => (
+                                                <span key={idx} className={`color-dot dot-${c}`}></span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Tab 2: Chart Trend Matrix & Statistics */}
+            {activeTab === 'chart' && (
+                <div className="wingo-chart-card">
+                    <div className="chart-title">Statistic (last 30 periods)</div>
+
+                    {/* Occurrence bar chart for numbers 0-9 */}
+                    <div className="chart-stat-grid">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
+                            const count = history.filter(h => h.num === num).length
+                            const item = NUMBER_DATA[num]
+                            return (
+                                <div key={num} className="stat-col">
+                                    <div className="stat-bar-track">
+                                        <div
+                                            className={`stat-bar-fill bar-${item.colors[0]}`}
+                                            style={{ height: `${Math.max(count * 20, 8)}%` }}
+                                        ></div>
+                                    </div>
+                                    <span className="stat-num">{num}</span>
+                                    <span className="stat-count">{count}</span>
                                 </div>
-                                <div className="cm-crystal-title">GREEN</div>
-                                <div className="cm-crystal-badge">1.96X / 1.47X</div>
-                                {bets.green > 0 && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets.green}</div>
-                                )}
-                            </button>
+                            )
+                        })}
+                    </div>
 
-                            <button
-                                id="cm-bet-violet"
-                                type="button"
-                                className={`cm-crystal-btn btn-violet ${bets.violet ? 'active-bet' : ''}`}
-                                disabled={isLocked || isDrawing}
-                                onClick={() => addBet('violet')}
-                            >
-                                <div className="cm-gem-frame">
-                                    <img
-                                        src={getOptimizedImageUrl('/images/gem-violet.jpg', { width: 180 })}
-                                        alt="Violet Amethyst Gem"
-                                        className="cm-gem-img"
-                                    />
-                                </div>
-                                <div className="cm-crystal-title">VIOLET</div>
-                                <div className="cm-crystal-badge">4.5X</div>
-                                {bets.violet > 0 && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets.violet}</div>
-                                )}
-                            </button>
-
-                            <button
-                                id="cm-bet-red"
-                                type="button"
-                                className={`cm-crystal-btn btn-red ${bets.red ? 'active-bet' : ''}`}
-                                disabled={isLocked || isDrawing}
-                                onClick={() => addBet('red')}
-                            >
-                                <div className="cm-gem-frame">
-                                    <img
-                                        src={getOptimizedImageUrl('/images/gem-ruby.jpg', { width: 180 })}
-                                        alt="Ruby Gem"
-                                        className="cm-gem-img"
-                                    />
-                                </div>
-                                <div className="cm-crystal-title">RED</div>
-                                <div className="cm-crystal-badge">1.96X / 1.47X</div>
-                                {bets.red > 0 && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets.red}</div>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* 2. 3D Lottery Number Balls Grid (0 to 9) */}
-                        <div className="cm-section-header" style={{ marginTop: 8 }}>
-                            <span>SELECT NUMBER (9X PAYOUT)</span>
-                        </div>
-
-                        <div className="cm-numbers-sphere-grid">
-                            {NUMBER_DATA.map(item => {
-                                const key = `num_${item.num}`
-                                const isPlaced = bets[key] > 0
-                                const bgClass = item.colors.length > 1
-                                    ? `sphere-split-${item.colors[0]}-${item.colors[1]}`
-                                    : `sphere-solid-${item.colors[0]}`
-
-                                return (
-                                    <button
-                                        key={item.num}
-                                        type="button"
-                                        className={`cm-num-sphere ${bgClass} ${isPlaced ? 'active-bet' : ''}`}
-                                        disabled={isLocked || isDrawing}
-                                        onClick={() => addBet(key)}
-                                    >
-                                        <span className="cm-sphere-text">{item.num}</span>
-                                        <div className="cm-sphere-glare"></div>
-                                        {isPlaced && (
-                                            <div className="cm-staked-badge">{currencySymbol}{bets[key]}</div>
-                                        )}
-                                    </button>
-                                )
-                            })}
-                        </div>
-
-                        {/* 3. Big / Small Dual Bet Pockets */}
-                        <div className="cm-section-header" style={{ marginTop: 8 }}>
-                            <span>BIG / SMALL (1.96X PAYOUT)</span>
-                        </div>
-
-                        <div className="cm-bigsmall-duo">
-                            <button
-                                id="cm-bet-big"
-                                type="button"
-                                className={`cm-pocket-btn btn-big ${bets.big ? 'active-bet' : ''}`}
-                                disabled={isLocked || isDrawing}
-                                onClick={() => addBet('big')}
-                            >
-                                <div className="cm-pocket-title">BIG</div>
-                                <div className="cm-pocket-sub">5, 6, 7, 8, 9</div>
-                                <div className="cm-pocket-mult">1.96X</div>
-                                {bets.big > 0 && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets.big}</div>
-                                )}
-                            </button>
-
-                            <button
-                                id="cm-bet-small"
-                                type="button"
-                                className={`cm-pocket-btn btn-small ${bets.small ? 'active-bet' : ''}`}
-                                disabled={isLocked || isDrawing}
-                                onClick={() => addBet('small')}
-                            >
-                                <div className="cm-pocket-title">SMALL</div>
-                                <div className="cm-pocket-sub">0, 1, 2, 3, 4</div>
-                                <div className="cm-pocket-mult">1.96X</div>
-                                {bets.small > 0 && (
-                                    <div className="cm-staked-badge">{currencySymbol}{bets.small}</div>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* 4. Mobile Quick Chips Rack (Zero-scroll one-thumb play) */}
-                        <div className="cm-mobile-chips-dock">
-                            <div className="cm-chips-carousel">
-                                {CHIP_PRESETS.map(val => (
-                                    <button
-                                        key={val}
-                                        type="button"
-                                        className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
-                                        onClick={() => setSelectedChip(val)}
-                                    >
-                                        {val >= 1000 ? `${val / 1000}k` : val}
-                                    </button>
+                    {/* Period Roadmap Grid */}
+                    <div className="roadmap-container">
+                        <div className="roadmap-header">
+                            <span>Period</span>
+                            <div className="roadmap-digits">
+                                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                                    <span key={n}>{n}</span>
                                 ))}
                             </div>
+                        </div>
+                        <div className="roadmap-list">
+                            {history.slice(0, 12).map(row => (
+                                <div key={row.period} className="roadmap-row">
+                                    <span className="roadmap-period">#{String(row.period).slice(-4)}</span>
+                                    <div className="roadmap-cells">
+                                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => {
+                                            const isHit = row.num === n
+                                            return (
+                                                <div key={n} className={`roadmap-cell ${isHit ? 'hit' : ''}`}>
+                                                    {isHit && (
+                                                        <span className={`hit-dot dot-${row.colors[0]}`}>
+                                                            {n}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
+            )}
 
-                {/* Right Side: VIP Chip Rack, Multipliers & Live Trend Records */}
-                <div className="cm-right-dashboard">
-                    {/* Chips & Multiplier Dock */}
-                    <div className="cm-chips-dock">
-                        <div className="cm-dock-block">
-                            <span className="cm-dock-lbl">CHIP PRESET ({currencySymbol})</span>
-                            <div className="cm-chips-carousel">
-                                {CHIP_PRESETS.map(val => (
-                                    <button
-                                        key={val}
-                                        type="button"
-                                        className={`casino-chip chip-${val} ${selectedChip === val ? 'selected' : ''}`}
-                                        onClick={() => setSelectedChip(val)}
-                                    >
-                                        {val >= 1000 ? `${val / 1000}k` : val}
-                                    </button>
+            {/* Tab 3: My History */}
+            {activeTab === 'mybets' && (
+                <div className="wingo-mybets-card">
+                    {myBets.length === 0 ? (
+                        <div className="mybets-empty">
+                            No bets placed in this session yet. Tap any color or number above to place a bet!
+                        </div>
+                    ) : (
+                        <table className="wingo-table">
+                            <thead>
+                                <tr className="table-header-coral">
+                                    <th>Period</th>
+                                    <th>Stake</th>
+                                    <th>Result</th>
+                                    <th>Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {myBets.map((b, idx) => (
+                                    <tr key={idx} className="table-row">
+                                        <td className="cell-period">{b.period}</td>
+                                        <td>{currencySymbol}{b.stake}</td>
+                                        <td>
+                                            <span className={`num-val text-${b.colors[0]}`}>
+                                                {b.resultNum} ({b.bigSmall})
+                                            </span>
+                                        </td>
+                                        <td style={{ color: b.won ? '#22c55e' : '#94a3b8', fontWeight: 700 }}>
+                                            {b.won ? `+${currencySymbol}${b.win.toLocaleString()}` : `${currencySymbol}0`}
+                                        </td>
+                                    </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
+
+            {/* Simplest Mini Win Popup (Subtle floating notification at top) */}
+            {winPopup && (
+                <div className="wingo-mini-popup" onClick={() => setWinPopup(null)}>
+                    <div className="mini-popup-left">
+                        <span className="mini-popup-badge">🎉 WON</span>
+                        <span className="mini-popup-amt">+{currencySymbol}{winPopup.amount.toLocaleString()}</span>
+                        <span className="mini-popup-sub">
+                            #{String(winPopup.period).slice(-4)} · Num {winPopup.num}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        className="mini-popup-close-btn"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setWinPopup(null)
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+
+            {/* Simplest Mini Contract Bet Modal */}
+            {/* Simplest Mini Contract Bet Modal */}
+            <Modal
+                open={betModalOpen}
+                onCancel={() => setBetModalOpen(false)}
+                footer={null}
+                centered
+                closeIcon={<span className="wingo-modal-close-x">✕</span>}
+                className="wingo-contract-modal mini-contract-modal"
+                styles={{
+                    content: { padding: 0, borderRadius: 18, overflow: 'hidden', background: '#151d2a' }
+                }}
+            >
+                {selectedBetTarget && (
+                    <div className="contract-sheet-body">
+                        {/* Header styled with target color */}
+                        <div className={`contract-sheet-header header-${selectedBetTarget.colorTheme}`}>
+                            <div className="contract-title">
+                                Win Go 30s · {selectedBetTarget.title}
                             </div>
-                            {/* Custom Chip Input */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <InputNumber
-                                        value={selectedChip}
-                                        onChange={(val) => setSelectedChip(Math.max(1, isNaN(Number(val)) ? 1 : Number(val)))}
-                                        min={1}
-                                        step={10}
-                                        style={{ width: '100%' }}
-                                        addonBefore={<span style={{ fontWeight: 700, color: '#fbbf24' }}>{currencySymbol}</span>}
-                                        placeholder="Custom Amount"
-                                    />
-                                </div>
-                                <Button.Group>
-                                    <Button onClick={() => setSelectedChip(prev => Math.max(1, Math.floor(prev / 2)))}>½</Button>
-                                    <Button onClick={() => setSelectedChip(prev => prev * 2)}>2×</Button>
-                                    <Button onClick={() => setSelectedChip(10)}>Min</Button>
-                                    <Button onClick={() => setSelectedChip(Math.max(10, Math.floor(balance || 100)))}>Max</Button>
-                                </Button.Group>
+                            <div className="contract-subtitle">
+                                Payout {selectedBetTarget.payoutText}
                             </div>
                         </div>
 
-                        <div className="cm-dock-block">
-                            <span className="cm-dock-lbl">MULTIPLIER MODIFIER</span>
-                            <div className="cm-mult-pills">
+                        {/* Balance Chips Preset Row */}
+                        <div className="contract-section">
+                            <div className="contract-section-header">
+                                <span className="contract-section-label">Balance</span>
+                            </div>
+                            <div className="contract-chips-grid balance-grid">
+                                {CONTRACT_AMOUNTS.map(val => (
+                                    <button
+                                        key={val}
+                                        type="button"
+                                        className={`contract-chip-btn ${contractAmount === val ? `active active-${selectedBetTarget.colorTheme}` : ''}`}
+                                        onClick={() => setContractAmount(val)}
+                                    >
+                                        {currencySymbol}{val}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Multiplier Row */}
+                        <div className="contract-section">
+                            <div className="contract-section-header">
+                                <span className="contract-section-label">Multiplier</span>
+                            </div>
+                            <div className="contract-chips-grid multiplier-grid">
                                 {MULTIPLIERS.map(m => (
                                     <button
                                         key={m}
                                         type="button"
-                                        className={`cm-mult-btn ${activeMultiplier === m ? 'active' : ''}`}
-                                        onClick={() => setActiveMultiplier(m)}
+                                        className={`contract-chip-btn ${modalMultiplier === m ? `active active-${selectedBetTarget.colorTheme}` : ''}`}
+                                        onClick={() => setModalMultiplier(m)}
                                     >
                                         X{m}
                                     </button>
@@ -702,265 +954,135 @@ function ColorMatchGame() {
                             </div>
                         </div>
 
-                        <div className="cm-summary-bar">
-                            <div className="cm-stake-readout">
-                                <span className="cm-readout-lbl">TOTAL ROUND STAKE</span>
-                                <span className="cm-readout-val">{currencySymbol}{totalStaked.toLocaleString()}</span>
-                            </div>
-
-                            <div className="cm-dock-actions">
-                                <Button
-                                    id="cm-clear-btn"
-                                    icon={<UndoOutlined />}
-                                    onClick={clearBets}
-                                    disabled={isLocked || isDrawing || totalStaked === 0}
-                                    className="cm-ctrl-btn"
+                        {/* Quantity Stepper */}
+                        <div className="contract-section contract-quantity-section">
+                            <span className="contract-section-label">Quantity</span>
+                            <div className="contract-stepper-wrap">
+                                <button
+                                    type="button"
+                                    className="stepper-btn"
+                                    onClick={() => setBetQuantity(prev => Math.max(1, prev - 1))}
+                                    aria-label="Decrease quantity"
                                 >
-                                    Clear
-                                </Button>
-                                <Button
-                                    id="cm-double-btn"
-                                    onClick={doubleBets}
-                                    disabled={isLocked || isDrawing || totalStaked === 0}
-                                    className="cm-ctrl-btn cm-btn-double"
+                                    −
+                                </button>
+                                <span className="stepper-value">{betQuantity}</span>
+                                <button
+                                    type="button"
+                                    className="stepper-btn"
+                                    onClick={() => setBetQuantity(prev => prev + 1)}
+                                    aria-label="Increase quantity"
                                 >
-                                    2X Double
-                                </Button>
-                                <Button
-                                    id="cm-draw-btn"
-                                    type="primary"
-                                    icon={isDrawing ? <ThunderboltOutlined spin /> : <ClockCircleOutlined />}
-                                    onClick={() => triggerDraw(true)}
-                                    disabled={isDrawing}
-                                    className="cm-draw-action-btn"
-                                    loading={isDrawing}
-                                >
-                                    {isDrawing
-                                        ? 'Drawing...'
-                                        : totalStaked > 0
-                                        ? `Draw · ${currencySymbol}${totalStaked.toLocaleString()} (${timeLeft}s)`
-                                        : `Auto Draw · ${timeLeft}s`}
-                                </Button>
+                                    +
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-            {/* Interactive Data Hub: Game History, Trend Chart, My Bets */}
-            <div className="cm-data-hub">
-                <div className="cm-hub-tabs">
-                    <button
-                        className={`cm-hub-tab ${activeTab === 'history' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('history')}
-                    >
-                        <HistoryOutlined /> Game History
-                    </button>
-                    <button
-                        className={`cm-hub-tab ${activeTab === 'chart' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('chart')}
-                    >
-                        <LineChartOutlined /> Chart Trend
-                    </button>
-                    <button
-                        className={`cm-hub-tab ${activeTab === 'mybets' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('mybets')}
-                    >
-                        <UserOutlined /> My Bets {myBets.length > 0 && `(${myBets.length})`}
-                    </button>
-                </div>
-
-                {/* Tab 1: Game History */}
-                {activeTab === 'history' && (
-                    <div className="cm-tab-panel">
-                        <table className="cm-data-table">
-                            <thead>
-                                <tr>
-                                    <th>Period</th>
-                                    <th>Number</th>
-                                    <th>Big / Small</th>
-                                    <th>Color</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {history.map(item => (
-                                    <tr key={item.period}>
-                                        <td className="col-period">#{item.period}</td>
-                                        <td className="col-num">
-                                            <span className={`cm-mini-ball ball-${item.colors[0]}`}>
-                                                {item.num}
-                                            </span>
-                                        </td>
-                                        <td className="col-bs">
-                                            <span className={`cm-pill-tag tag-${item.bigSmall}`}>
-                                                {item.bigSmall.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td className="col-dots">
-                                            <div className="cm-dots-cluster">
-                                                {item.colors.map(c => (
-                                                    <span key={c} className={`cm-dot dot-${c}`}></span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Tab 2: Chart Trend Matrix (0-9 Occurrence) */}
-                {activeTab === 'chart' && (
-                    <div className="cm-tab-panel cm-trend-chart-panel">
-                        <div className="cm-chart-header">
-                            <span>Occurrence Statistics (Last 10 Rounds)</span>
-                        </div>
-                        <div className="cm-matrix-grid">
-                            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => {
-                                const count = history.filter(h => h.num === num).length
-                                return (
-                                    <div key={num} className="cm-matrix-col">
-                                        <div className="cm-matrix-bar-wrap">
-                                            <div
-                                                className="cm-matrix-bar"
-                                                style={{ height: `${Math.max(count * 25, 10)}%` }}
-                                            ></div>
-                                        </div>
-                                        <span className="cm-matrix-num">{num}</span>
-                                        <span className="cm-matrix-count">{count}x</span>
-                                    </div>
-                                )
-                            })}
+                        {/* Actions: Cancel & Confirm */}
+                        <div className="contract-actions-row">
+                            <button
+                                type="button"
+                                className="contract-cancel-btn"
+                                onClick={() => setBetModalOpen(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className={`contract-confirm-btn confirm-bg-${selectedBetTarget.colorTheme}`}
+                                onClick={confirmBet}
+                                disabled={modalTotalBet <= 0}
+                            >
+                                Total {currencySymbol}{modalTotalBet.toLocaleString()} · Confirm
+                            </button>
                         </div>
                     </div>
                 )}
+            </Modal>
 
-                {/* Tab 3: My Bets */}
-                {activeTab === 'mybets' && (
-                    <div className="cm-tab-panel">
-                        {myBets.length === 0 ? (
-                            <div className="cm-empty-history">
-                                No bets placed in this session yet. Place a chip above to start playing!
-                            </div>
-                        ) : (
-                            <table className="cm-data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Period</th>
-                                        <th>Stake</th>
-                                        <th>Result</th>
-                                        <th>Payout</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {myBets.map((b, idx) => (
-                                        <tr key={idx}>
-                                            <td className="col-period">#{b.period}</td>
-                                            <td>{currencySymbol}{b.stake}</td>
-                                            <td>{b.resultNum}</td>
-                                            <td style={{ color: b.winStatus ? '#00e676' : '#94a3b8', fontWeight: 800 }}>
-                                                {b.winStatus ? `+${currencySymbol}${b.win.toLocaleString()}` : `${currencySymbol}0`}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    </div>
-
-    {/* Mobile Sticky Bottom Wager Bar */}
-    <div className="cm-mobile-bottom-bar">
-        <div className="cm-mbar-stake">
-            <span className="cm-mbar-lbl">TOTAL WAGER</span>
-            <strong className="cm-mbar-val">{currencySymbol}{totalStaked.toLocaleString()}</strong>
-        </div>
-        <div className="cm-mbar-actions">
-            <Button
-                size="middle"
-                icon={<UndoOutlined />}
-                onClick={clearBets}
-                disabled={isLocked || isDrawing || totalStaked === 0}
-                className="cm-ctrl-btn"
-            >
-                Clear
-            </Button>
-            <Button
-                size="middle"
-                onClick={doubleBets}
-                disabled={isLocked || isDrawing || totalStaked === 0}
-                className="cm-ctrl-btn cm-btn-double"
-            >
-                2X
-            </Button>
-            <Button
-                type="primary"
-                size="middle"
-                icon={isDrawing ? <ThunderboltOutlined spin /> : <ClockCircleOutlined />}
-                onClick={() => triggerDraw(true)}
-                disabled={isDrawing}
-                className="cm-mbar-draw-btn"
-                loading={isDrawing}
-            >
-                {isDrawing ? 'Drawing' : totalStaked > 0 ? `Draw (${timeLeft}s)` : `${timeLeft}s`}
-            </Button>
-        </div>
-    </div>
+            {/* How to Play Rules Modal */}
             <Modal
-                title={<div style={{ color: '#ffd700' }}><SafetyCertificateOutlined /> Provably Fair Verification</div>}
-                open={fairnessOpen}
-                onCancel={() => setFairnessOpen(false)}
+                title={<div style={{ color: '#ef4444', fontWeight: 800 }}>📖 Win Go - Game Rules</div>}
+                open={rulesOpen}
+                onCancel={() => setRulesOpen(false)}
                 footer={[
-                    <Button key="close" type="primary" onClick={() => setFairnessOpen(false)}>
-                        Close
-                    </Button>
+                    <button key="close" type="button" className="rules-modal-close" onClick={() => setRulesOpen(false)}>
+                        I Understand
+                    </button>
                 ]}
-                className="cm-fairness-modal"
+                className="wingo-rules-modal"
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <Text style={{ color: '#94a3b8' }}>
-                        Color Match outcomes are generated using cryptographic HMAC-SHA256 hashing. The outcome is deterministic and cannot be modified by the server or player.
-                    </Text>
-                    <div>
-                        <Text strong style={{ color: '#e2e8f0' }}>Server Seed (SHA256 Hash):</Text>
-                        <div className="cm-hash-code">{serverSeedHash}</div>
+                <div className="rules-modal-body">
+                    <p className="rules-intro">
+                        Win Go is a 30-second fast-paced color and number prediction lottery.
+                        Pick colors, lottery numbers, or sizes (Big/Small) before the countdown reaches 5 seconds!
+                    </p>
+
+                    <div className="rules-grid">
+                        <div className="rules-card card-green">
+                            <strong>Green (1, 3, 7, 9)</strong>
+                            <p>Payout: <strong>1.95X</strong>. If outcome is 5, payout is <strong>1.45X</strong>.</p>
+                        </div>
+                        <div className="rules-card card-red">
+                            <strong>Red (2, 4, 6, 8)</strong>
+                            <p>Payout: <strong>1.95X</strong>. If outcome is 0, payout is <strong>1.45X</strong>.</p>
+                        </div>
+                        <div className="rules-card card-violet">
+                            <strong>Violet (0 or 5)</strong>
+                            <p>Payout: <strong>4.5X</strong> when either 0 or 5 appears.</p>
+                        </div>
+                        <div className="rules-card card-num">
+                            <strong>Numbers 0 to 9</strong>
+                            <p>Payout: <strong>9.0X</strong> for exact number prediction.</p>
+                        </div>
+                        <div className="rules-card card-bs">
+                            <strong>Big / Small</strong>
+                            <p>Big (5, 6, 7, 8, 9) or Small (0, 1, 2, 3, 4): <strong>1.95X</strong> payout.</p>
+                        </div>
                     </div>
-                    <div>
-                        <Text strong style={{ color: '#e2e8f0' }}>Client Seed:</Text>
-                        <div className="cm-hash-code">{clientSeed}</div>
-                    </div>
-                    <div>
-                        <Text strong style={{ color: '#e2e8f0' }}>Period Nonce:</Text>
-                        <div className="cm-hash-code">{periodId}</div>
-                    </div>
-                    <div style={{ background: 'rgba(0, 230, 118, 0.1)', padding: 12, borderRadius: 10, border: '1px solid rgba(0, 230, 118, 0.25)' }}>
-                        <Text style={{ color: '#00e676', fontWeight: 700 }}>
-                            RTP: 99.0% Provably Fair Standard. Independent verification available for every period.
-                        </Text>
+
+                    <div className="rules-note">
+                        🔒 Betting closes automatically in the last 5 seconds of every round. All outcomes are cryptographically verified.
                     </div>
                 </div>
             </Modal>
 
-            {/* Slide-out Game Specific Round History Drawer */}
-            <Drawer
-                title="Color Match · Live Round History"
-                placement="right"
-                width={520}
-                open={historyDrawerOpen}
-                onClose={() => setHistoryDrawerOpen(false)}
-                styles={{
-                    body: { padding: 12, background: '#0b101b' },
-                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
-                }}
+            {/* Provably Fair Modal */}
+            <Modal
+                title={<div style={{ color: '#22c55e', fontWeight: 800 }}><SafetyCertificateOutlined /> Provably Fair Verification</div>}
+                open={fairnessOpen}
+                onCancel={() => setFairnessOpen(false)}
+                footer={[
+                    <button key="close" type="button" className="rules-modal-close" onClick={() => setFairnessOpen(false)}>
+                        Close
+                    </button>
+                ]}
+                className="wingo-rules-modal"
             >
-                <GameBottomHistory
-                    gameKey="color-match"
-                    gameTitle="Color Match"
-                    localRounds={myBets}
-                />
-            </Drawer>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <Text style={{ color: '#64748b' }}>
+                        Win Go outcomes are strictly calculated using cryptographic HMAC-SHA256 hashing.
+                        The winning number is mathematically determined and cannot be influenced by players or the house.
+                    </Text>
+                    <div>
+                        <Text strong style={{ color: '#0f172a' }}>Server Seed (SHA-256 Hash):</Text>
+                        <div className="hash-code-box">{serverSeedHash}</div>
+                    </div>
+                    <div>
+                        <Text strong style={{ color: '#0f172a' }}>Client Seed:</Text>
+                        <div className="hash-code-box">{clientSeed}</div>
+                    </div>
+                    <div>
+                        <Text strong style={{ color: '#0f172a' }}>Current Period Nonce:</Text>
+                        <div className="hash-code-box">{periodId}</div>
+                    </div>
+                    <div style={{ background: '#ecfdf5', padding: 12, borderRadius: 10, border: '1px solid #a7f3d0' }}>
+                        <Text style={{ color: '#059669', fontWeight: 700 }}>
+                            Provably Fair Verified: 99.0% RTP Return to Player Standard.
+                        </Text>
+                    </div>
+                </div>
+            </Modal>
         </div>
     )
 }

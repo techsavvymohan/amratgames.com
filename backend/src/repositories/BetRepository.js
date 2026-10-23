@@ -119,6 +119,9 @@ export class BetRepository extends BaseRepository {
                 won,
                 multiplier,
                 payout,
+                balanceAfterDeduct,
+                balancesAfterDeduct: { ...user.balances, [currency]: balanceAfterDeduct },
+                finalBal,
                 balances: user.balances
             }
         })
@@ -142,7 +145,11 @@ export class BetRepository extends BaseRepository {
     }
 
     getRecentBets(limit = 25) {
-        return this.data.bets.slice(0, limit)
+        const real = this.data.bets || []
+        const simulated = this.data.simulatedBets || []
+        return [...real, ...simulated]
+            .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+            .slice(0, limit)
     }
 
     getUserBets(userId, limit = 50) {
@@ -165,9 +172,9 @@ export class BetRepository extends BaseRepository {
 
         for (const b of this.data.bets) {
             let multiplier = 1
-            if (b.currency === 'USDT') multiplier = 86
-            if (b.currency === 'BTC') multiplier = 8500000
-            if (b.currency === 'AMRAT') multiplier = 10
+            if (b.currency === 'USDT') multiplier = 90.0
+            if (b.currency === 'BTC') multiplier = 8500000.0
+            if (b.currency === 'AMRAT') multiplier = 0 // Virtual token excluded from fiat/crypto accounting
 
             totalWageredINR += (b.betAmount || 0) * multiplier
             totalPayoutINR += (b.payout || 0) * multiplier

@@ -5,6 +5,7 @@ import { db } from './db/db.js'
 import { crashRoomService } from './services/CrashRoomService.js'
 import { chatService } from './services/ChatService.js'
 import { redisPubSub } from './services/RedisPubSubService.js'
+import { isTokenRevoked } from './middleware/auth.js'
 
 let wss = null
 
@@ -108,10 +109,14 @@ export function initWebSocketServer(server) {
                     if (!token) {
                         return ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: 'Authentication required' }))
                     }
+                    if (isTokenRevoked(token)) {
+                        return ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: 'Session expired or logged out' }))
+                    }
                     try {
                         const decoded = jwt.verify(token, CONFIG.JWT_SECRET)
                         const user = db.findUserById(decoded.id)
                         if (!user) throw new Error('User not found')
+                        if (user.isBanned) throw new Error('Account suspended')
                         await chatService.postMessage({ user, text })
                     } catch (authErr) {
                         ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: authErr.message }))
@@ -121,10 +126,14 @@ export function initWebSocketServer(server) {
                     if (!token) {
                         return ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: 'Authentication required' }))
                     }
+                    if (isTokenRevoked(token)) {
+                        return ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: 'Session expired or logged out' }))
+                    }
                     try {
                         const decoded = jwt.verify(token, CONFIG.JWT_SECRET)
                         const user = db.findUserById(decoded.id)
                         if (!user) throw new Error('User not found')
+                        if (user.isBanned) throw new Error('Account suspended')
                         await chatService.shareBet({ user, betId })
                     } catch (authErr) {
                         ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: authErr.message }))
