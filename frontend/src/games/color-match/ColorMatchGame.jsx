@@ -44,47 +44,61 @@ function ColorMatchGame() {
     } = useWallet()
     const { user, openAuthModal } = useAuth()
 
-    // Helper to generate authentic period ID (YYYYMMDD + 6-digit sequence matching reference)
-    const getInitialPeriod = () => {
+    // Calculate live seconds remaining in 30s cycle directly from system clock (Always in sync)
+    const getSecondsRemaining = () => {
+        const nowSec = Math.floor(Date.now() / 1000)
+        const secInCycle = nowSec % 30
+        return 30 - secInCycle // Returns 1 to 30
+    }
+
+    // Generate authentic period ID derived from clock
+    const getClockPeriod = () => {
         const d = new Date()
         const yyyy = d.getFullYear()
         const mm = String(d.getMonth() + 1).padStart(2, '0')
         const dd = String(d.getDate()).padStart(2, '0')
-        return parseInt(`${yyyy}${mm}${dd}301176`, 10)
+        const secToday = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()
+        const roundNum = Math.floor(secToday / 30) + 1
+        return parseInt(`${yyyy}${mm}${dd}30${String(roundNum).padStart(4, '0')}`, 10)
     }
 
-    const [periodId, setPeriodId] = useState(getInitialPeriod)
-    const [timeLeft, setTimeLeft] = useState(30)
+    const [periodId, setPeriodId] = useState(getClockPeriod)
+    const [timeLeft, setTimeLeft] = useState(getSecondsRemaining)
     const [maxTime] = useState(30)
-    const [isLocked, setIsLocked] = useState(false)
+    const [isLocked, setIsLocked] = useState(() => getSecondsRemaining() <= 5)
     const [isDrawing, setIsDrawing] = useState(false)
 
     // Active placed bets in this round
     const [bets, setBets] = useState({})
     const [activeMultiplier, setActiveMultiplier] = useState(1)
 
-    // Current draw display & recent 5 balls (matches reference: 4, 0, 2, 8, 5)
+    // Auto-Run Player Betting System (Auto Re-Stake each round)
+    const [isAutoRunning, setIsAutoRunning] = useState(false)
+    const [autoBetTemplate, setAutoBetTemplate] = useState(null)
+    const [autoRoundCount, setAutoRoundCount] = useState(0)
+
+    // Current draw display & recent 5 balls
     const [displayNum, setDisplayNum] = useState(null)
     const [recentBalls, setRecentBalls] = useState([
-        { num: 4, colors: ['red'], bigSmall: 'small', period: getInitialPeriod() - 1 },
-        { num: 0, colors: ['violet', 'red'], bigSmall: 'small', period: getInitialPeriod() - 2 },
-        { num: 2, colors: ['red'], bigSmall: 'small', period: getInitialPeriod() - 3 },
-        { num: 8, colors: ['red'], bigSmall: 'big', period: getInitialPeriod() - 4 },
-        { num: 5, colors: ['violet', 'green'], bigSmall: 'big', period: getInitialPeriod() - 5 },
+        { num: 4, colors: ['red'], bigSmall: 'small', period: getClockPeriod() - 1 },
+        { num: 0, colors: ['violet', 'red'], bigSmall: 'small', period: getClockPeriod() - 2 },
+        { num: 2, colors: ['red'], bigSmall: 'small', period: getClockPeriod() - 3 },
+        { num: 8, colors: ['red'], bigSmall: 'big', period: getClockPeriod() - 4 },
+        { num: 5, colors: ['violet', 'green'], bigSmall: 'big', period: getClockPeriod() - 5 },
     ])
 
-    // Game history roadmap (initialized with exact reference outcomes)
+    // Game history roadmap
     const [history, setHistory] = useState([
-        { period: getInitialPeriod() - 1, num: 4, colors: ['red'], bigSmall: 'small' },
-        { period: getInitialPeriod() - 2, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
-        { period: getInitialPeriod() - 3, num: 2, colors: ['red'], bigSmall: 'small' },
-        { period: getInitialPeriod() - 4, num: 8, colors: ['red'], bigSmall: 'big' },
-        { period: getInitialPeriod() - 5, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
-        { period: getInitialPeriod() - 6, num: 7, colors: ['green'], bigSmall: 'big' },
-        { period: getInitialPeriod() - 7, num: 3, colors: ['green'], bigSmall: 'small' },
-        { period: getInitialPeriod() - 8, num: 6, colors: ['red'], bigSmall: 'big' },
-        { period: getInitialPeriod() - 9, num: 1, colors: ['green'], bigSmall: 'small' },
-        { period: getInitialPeriod() - 10, num: 9, colors: ['green'], bigSmall: 'big' },
+        { period: getClockPeriod() - 1, num: 4, colors: ['red'], bigSmall: 'small' },
+        { period: getClockPeriod() - 2, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
+        { period: getClockPeriod() - 3, num: 2, colors: ['red'], bigSmall: 'small' },
+        { period: getClockPeriod() - 4, num: 8, colors: ['red'], bigSmall: 'big' },
+        { period: getClockPeriod() - 5, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
+        { period: getClockPeriod() - 6, num: 7, colors: ['green'], bigSmall: 'big' },
+        { period: getClockPeriod() - 7, num: 3, colors: ['green'], bigSmall: 'small' },
+        { period: getClockPeriod() - 8, num: 6, colors: ['red'], bigSmall: 'big' },
+        { period: getClockPeriod() - 9, num: 1, colors: ['green'], bigSmall: 'small' },
+        { period: getClockPeriod() - 10, num: 9, colors: ['green'], bigSmall: 'big' },
     ])
 
     // Player personal bets record
@@ -130,6 +144,9 @@ function ColorMatchGame() {
     const isLockedRef = useRef(isLocked)
     const maxTimeRef = useRef(maxTime)
     const periodIdRef = useRef(periodId)
+    const isAutoRunningRef = useRef(isAutoRunning)
+    const autoBetTemplateRef = useRef(autoBetTemplate)
+    const lastDrawnPeriodRef = useRef(0)
 
     useEffect(() => { betsRef.current = bets }, [bets])
     useEffect(() => { totalStakedRef.current = totalStaked }, [totalStaked])
@@ -138,6 +155,8 @@ function ColorMatchGame() {
     useEffect(() => { isLockedRef.current = isLocked }, [isLocked])
     useEffect(() => { maxTimeRef.current = maxTime }, [maxTime])
     useEffect(() => { periodIdRef.current = periodId }, [periodId])
+    useEffect(() => { isAutoRunningRef.current = isAutoRunning }, [isAutoRunning])
+    useEffect(() => { autoBetTemplateRef.current = autoBetTemplate }, [autoBetTemplate])
 
     // Safety refund on unmount if bets were held without draw
     useEffect(() => {
@@ -184,9 +203,38 @@ function ColorMatchGame() {
     // Clear bets: Refunds held chips back to wallet
     const clearBets = () => {
         if (isLocked || isDrawing || totalStaked === 0) return
+        if (isAutoRunning) {
+            setIsAutoRunning(false)
+            setAutoBetTemplate(null)
+        }
         releaseChips(totalStaked)
         setBets({})
         casinoAudio.playChip?.()
+    }
+
+    // Toggle Auto Run mode (repeats player's active bets every round automatically)
+    const toggleAutoRun = () => {
+        if (!user) {
+            openAuthModal?.('register')
+            return
+        }
+
+        if (isAutoRunning) {
+            setIsAutoRunning(false)
+            setAutoBetTemplate(null)
+            casinoAudio.playChip?.()
+            return
+        }
+
+        if (totalStaked <= 0) {
+            notifyLoss?.('Please place at least one bet to start Auto Run!')
+            return
+        }
+
+        setIsAutoRunning(true)
+        setAutoBetTemplate({ ...bets })
+        setAutoRoundCount(1)
+        casinoAudio.playBet?.()
     }
 
     // Resolve round payout: Credits balance at the exact moment of visual outcome reveal
@@ -255,16 +303,34 @@ function ColorMatchGame() {
         setHistory(prev => [resultRecord, ...prev.slice(0, 29)])
         setRecentBalls(prev => [resultRecord, ...prev.slice(0, 4)])
 
-        // Clear bets & advance period ID for next round
+        // Clear active round bets
         setBets({})
-        setPeriodId(prev => prev + 1)
 
-        // Show winning result for 1.8s, then restart auto-countdown loop
+        // Auto-Run Bet Re-Staking for the next round
+        if (isAutoRunningRef.current && autoBetTemplateRef.current) {
+            const template = autoBetTemplateRef.current
+            const templateTotal = Object.values(template).reduce((a, b) => a + (Number(b) || 0), 0)
+
+            if (balanceRef.current >= templateTotal) {
+                setTimeout(() => {
+                    holdChips(templateTotal)
+                    setBets({ ...template })
+                    setAutoRoundCount(prev => prev + 1)
+                    casinoAudio.playChip?.()
+                }, 1000)
+            } else {
+                setIsAutoRunning(false)
+                setAutoBetTemplate(null)
+                notifyLoss?.('Auto Run stopped: Insufficient balance')
+            }
+        }
+
+        // Show winning result for 1.8s, then finish draw state
         setTimeout(() => {
             setDisplayNum(null)
             setIsDrawing(false)
-            setIsLocked(false)
-            setTimeLeft(maxTimeRef.current)
+            setIsLocked(getSecondsRemaining() <= 5)
+            setTimeLeft(getSecondsRemaining())
         }, 1800)
     }, [notifyWin, notifyLoss, creditGamePayout])
 
@@ -299,8 +365,8 @@ function ColorMatchGame() {
                 releaseChips(activeStaked)
                 setBets({})
                 setIsDrawing(false)
-                setIsLocked(false)
-                setTimeLeft(maxTimeRef.current)
+                setIsLocked(getSecondsRemaining() <= 5)
+                setTimeLeft(getSecondsRemaining())
                 notifyLoss?.(betResponse?.error || 'Unable to submit bet')
                 return
             }
@@ -352,32 +418,42 @@ function ColorMatchGame() {
         }
     }, [executeGameBet, resolveRound, notifyLoss, releaseChips])
 
-    // Continuous Auto-Run Countdown Loop
+    const triggerDrawRef = useRef(null)
+    triggerDrawRef.current = triggerDraw
+
+    // 24/7 Continuous Auto-Running Live Game Loop (Clock-Synchronized & Resilient)
     useEffect(() => {
         const timer = setInterval(() => {
-            if (isDrawingRef.current) return
+            const secRem = getSecondsRemaining()
+            const clockPeriod = getClockPeriod()
 
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    triggerDraw()
-                    return 0
+            // When not actively drawing, keep countdown and period locked to system clock
+            if (!isDrawingRef.current) {
+                setTimeLeft(secRem)
+
+                if (periodIdRef.current !== clockPeriod) {
+                    setPeriodId(clockPeriod)
                 }
 
-                const next = prev - 1
-
-                if (next <= 5) {
+                if (secRem <= 5) {
                     if (!isLockedRef.current) {
                         setIsLocked(true)
+                        casinoAudio.playChip?.()
                     }
-                    casinoAudio.playChip?.()
+                } else if (secRem > 5 && isLockedRef.current) {
+                    setIsLocked(false)
                 }
+            }
 
-                return next
-            })
-        }, 1000)
+            // Auto-trigger draw when round window ends (secRem <= 1) exactly once per period
+            if (secRem <= 1 && !isDrawingRef.current && lastDrawnPeriodRef.current !== clockPeriod) {
+                lastDrawnPeriodRef.current = clockPeriod
+                triggerDrawRef.current?.()
+            }
+        }, 250)
 
         return () => clearInterval(timer)
-    }, [triggerDraw])
+    }, [])
 
     // Format digital countdown cards [0][0]:[0][7]
     const minutes = Math.floor(timeLeft / 60)
@@ -464,13 +540,22 @@ function ColorMatchGame() {
                 <div className="ticket-right-half">
                     <div className="ticket-time-label">Time remaining</div>
 
-                    {/* 4 White Flip-Clock Digit Cards [0][0]:[0][7] */}
+                    {/* 4 White Flip-Clock Digit Cards [0][0]:[0][7] or Live Drawing Animation */}
                     <div className="ticket-flip-clock">
-                        <div className="flip-digit-card">{mStr[0]}</div>
-                        <div className="flip-digit-card">{mStr[1]}</div>
-                        <span className="flip-colon">:</span>
-                        <div className="flip-digit-card">{sStr[0]}</div>
-                        <div className="flip-digit-card">{sStr[1]}</div>
+                        {isDrawing ? (
+                            <div className="ticket-drawing-badge">
+                                <span className="drawing-spinner">🎲</span>
+                                <span className="drawing-text">DRAWING...</span>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flip-digit-card">{mStr[0]}</div>
+                                <div className="flip-digit-card">{mStr[1]}</div>
+                                <span className="flip-colon">:</span>
+                                <div className="flip-digit-card">{sStr[0]}</div>
+                                <div className="flip-digit-card">{sStr[1]}</div>
+                            </>
+                        )}
                     </div>
 
                     {/* Period Number */}
@@ -528,7 +613,7 @@ function ColorMatchGame() {
                 {/* Numbers Grid: Row 1 (0 to 4), Row 2 (5 to 9) */}
                 <div className="wingo-balls-grid">
                     {NUMBER_DATA.map(item => (
-                        <div key={item.num} className="wingo-ball-slot">
+                        <div key={item.num} className={`wingo-ball-slot ${displayNum === item.num ? 'is-rolling-highlight' : ''}`}>
                             {renderBall(
                                 item.num,
                                 item.colors,
@@ -688,29 +773,48 @@ function ColorMatchGame() {
                     </div>
                 </div>
 
-                {/* Row 4: Live Stake Status & Clear Actions */}
+                {/* Row 4: Live Stake Status & Auto-Run / Clear Actions */}
                 <div className="console-status-strip">
                     <div className="console-stake-indicator">
                         <span className="stake-label">Bet Per Tap:</span>
                         <strong className="stake-val">{currencySymbol}{activeStakePerTap.toLocaleString()}</strong>
                     </div>
 
-                    {totalStaked > 0 && (
-                        <div className="console-round-summary">
-                            <span className="round-staked-text">
-                                Total: <strong>{currencySymbol}{totalStaked.toLocaleString()}</strong>
-                            </span>
-                            <button
-                                type="button"
-                                className="console-clear-btn"
-                                onClick={clearBets}
-                                disabled={isLocked || isDrawing}
-                                title="Clear all round bets"
-                            >
-                                <UndoOutlined /> Clear
-                            </button>
-                        </div>
-                    )}
+                    <div className="console-actions-group">
+                        <button
+                            type="button"
+                            className={`console-autorun-btn ${isAutoRunning ? 'is-active' : ''}`}
+                            onClick={toggleAutoRun}
+                            disabled={isDrawing}
+                            title={isAutoRunning ? 'Stop Auto Run' : 'Auto repeat bets each round'}
+                        >
+                            {isAutoRunning ? (
+                                <>
+                                    <span className="autorun-pulse"></span>
+                                    <span>⏹️ Stop Auto ({autoRoundCount})</span>
+                                </>
+                            ) : (
+                                <>⚡ Auto Run</>
+                            )}
+                        </button>
+
+                        {totalStaked > 0 && !isAutoRunning && (
+                            <div className="console-round-summary">
+                                <span className="round-staked-text">
+                                    Total: <strong>{currencySymbol}{totalStaked.toLocaleString()}</strong>
+                                </span>
+                                <button
+                                    type="button"
+                                    className="console-clear-btn"
+                                    onClick={clearBets}
+                                    disabled={isLocked || isDrawing}
+                                    title="Clear all round bets"
+                                >
+                                    <UndoOutlined /> Clear
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
                 </div>
