@@ -330,7 +330,11 @@ export class CrashRoomService {
         // Deduct balance securely under exclusive lock
         const result = await db.withUserLock(userId, async () => {
             const user = db.findUserById(userId)
-            if (!user) throw new Error('User not found')
+            if (!user) {
+                const err = new Error('User not found')
+                err.status = 404
+                throw err
+            }
 
             const bal = user.balances?.[currency] || 0
             if (parsedAmount > bal + 0.0001) {
@@ -356,7 +360,8 @@ export class CrashRoomService {
             }
 
             this.activeBets.set(betKey, bet)
-            return { user: db.findUserById(userId), bet }
+            const latestUser = db.findUserById(userId) || user
+            return { user: latestUser, bet }
         })
 
         broadcastEvent('CRASH_ROOM_BET', {
@@ -374,7 +379,7 @@ export class CrashRoomService {
         return {
             success: true,
             bet: result.bet,
-            balances: result.user.balances
+            balances: result.user?.balances || {}
         }
     }
 
@@ -460,7 +465,7 @@ export class CrashRoomService {
             multiplier,
             payout,
             panelId: numericPanelId,
-            balances: updatedUser.balances
+            balances: updatedUser?.balances || {}
         }
     }
 
@@ -504,7 +509,7 @@ export class CrashRoomService {
             roundId: this.roundId,
             panelId: numericPanelId,
             refundedAmount: bet.betAmount,
-            balances: updatedUser.balances
+            balances: updatedUser?.balances || {}
         }
     }
 

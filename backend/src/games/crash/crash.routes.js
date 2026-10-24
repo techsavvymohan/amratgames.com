@@ -63,10 +63,11 @@ router.post('/start', authenticate, async (req, res) => {
 
         const updatedUser = db.findUserById(req.user.id)
         const { crashPoint, hash, ...publicSession } = session
+        const balances = updatedUser?.balances || req.user?.balances || {}
         return res.json({
             success: true,
             ...publicSession,
-            balances: updatedUser.balances
+            balances
         })
     } catch (err) {
         res.status(err.status || 400).json({ success: false, error: err.message })
@@ -125,10 +126,11 @@ router.post('/cashout', authenticate, async (req, res) => {
         })
 
         const user = db.findUserById(req.user.id)
+        const balances = user?.balances || req.user?.balances || {}
         return res.json({
             success: true,
             ...result,
-            balances: user.balances
+            balances
         })
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
@@ -177,10 +179,11 @@ router.post('/bust', authenticate, async (req, res) => {
         })
 
         const user = db.findUserById(req.user.id)
+        const balances = user?.balances || req.user?.balances || {}
         return res.json({
             success: true,
             ...result,
-            balances: user.balances
+            balances
         })
     } catch (err) {
         res.status(400).json({ success: false, error: err.message })
@@ -218,7 +221,7 @@ const handleRoomBet = async (req, res) => {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Authentication required to join multiplayer room bets' })
         }
-        const { betAmount, currency = 'INR', autoCashout, panelId = 1 } = req.body
+        const { betAmount, currency = 'INR', autoCashout, panelId = 1 } = req.body || {}
         const result = await crashRoomService.placeBet({
             userId: req.user.id,
             username: req.user.username,
@@ -228,9 +231,20 @@ const handleRoomBet = async (req, res) => {
             panelId
         })
         const user = db.findUserById(req.user.id)
-        res.json({ success: true, ...result, bet: result, balances: user.balances })
+        const balances = user?.balances || result?.balances || req.user?.balances || {}
+        res.json({
+            success: true,
+            ...result,
+            bet: result?.bet || result,
+            balances
+        })
     } catch (err) {
-        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
+        console.error('[CRASH ROOM BET ERROR]', err.message)
+        res.status(err.status || 400).json({
+            success: false,
+            error: err.message || 'Unable to place room bet',
+            code: err.code || 'BET_FAILED'
+        })
     }
 }
 router.post('/room/bet', authenticate, handleRoomBet)
@@ -245,9 +259,20 @@ const handleRoomCashout = async (req, res) => {
         const { panelId = 1 } = req.body || {}
         const result = await crashRoomService.cashoutPlayer({ userId: req.user.id, panelId })
         const user = db.findUserById(req.user.id)
-        res.json({ success: true, ...result, cashout: result, balances: user.balances })
+        const balances = user?.balances || result?.balances || req.user?.balances || {}
+        res.json({
+            success: true,
+            ...result,
+            cashout: result,
+            balances
+        })
     } catch (err) {
-        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
+        console.error('[CRASH ROOM CASHOUT ERROR]', err.message)
+        res.status(err.status || 400).json({
+            success: false,
+            error: err.message || 'Unable to cashout',
+            code: err.code || 'CASHOUT_FAILED'
+        })
     }
 }
 router.post('/room/cashout', authenticate, handleRoomCashout)
@@ -262,9 +287,19 @@ const handleRoomCancel = async (req, res) => {
         const { panelId = 1 } = req.body || {}
         const result = await crashRoomService.cancelBet({ userId: req.user.id, panelId })
         const user = db.findUserById(req.user.id)
-        res.json({ success: true, ...result, balances: user.balances })
+        const balances = user?.balances || result?.balances || req.user?.balances || {}
+        res.json({
+            success: true,
+            ...result,
+            balances
+        })
     } catch (err) {
-        res.status(err.status || 400).json({ success: false, error: err.message, code: err.code })
+        console.error('[CRASH ROOM CANCEL ERROR]', err.message)
+        res.status(err.status || 400).json({
+            success: false,
+            error: err.message || 'Unable to cancel bet',
+            code: err.code || 'CANCEL_FAILED'
+        })
     }
 }
 router.post('/room/cancel', authenticate, handleRoomCancel)

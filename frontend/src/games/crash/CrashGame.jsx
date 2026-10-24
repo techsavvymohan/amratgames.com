@@ -473,7 +473,10 @@ function CrashGame() {
                 panelId
             })
             if (!res || !res.success) {
-                showToast('error', 'Bet Failed', res?.error || 'Unable to place room bet')
+                const errMsg = (res?.error && res.error !== 'Internal Server Error')
+                    ? res.error
+                    : 'Betting is closed or countdown in progress. Please try on the next flight.'
+                showToast('error', 'Bet Failed', errMsg)
                 return
             }
 

@@ -45,24 +45,65 @@ app.use(compression({
 }))
 const defaultAllowedOrigins = [
     'https://amratgames.com',
+    'http://amratgames.com',
     'https://www.amratgames.com',
-    'https://admin.amratgames.com'
+    'http://www.amratgames.com',
+    'https://admin.amratgames.com',
+    'http://admin.amratgames.com',
+    'http://103.216.168.84',
+    'https://103.216.168.84',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'http://localhost:3001'
 ]
+
+function isOriginAllowed(origin) {
+    if (!origin) return true
+    if (!CONFIG.isProduction) return true
+
+    const configuredOrigins = Array.isArray(CONFIG.CORS_ORIGIN)
+        ? CONFIG.CORS_ORIGIN
+        : (CONFIG.CORS_ORIGIN && CONFIG.CORS_ORIGIN !== '*'
+            ? (CONFIG.CORS_ORIGIN.includes(',') ? CONFIG.CORS_ORIGIN.split(',').map(s => s.trim()) : [CONFIG.CORS_ORIGIN])
+            : [])
+
+    if (configuredOrigins.includes('*') || configuredOrigins.includes(origin)) {
+        return true
+    }
+
+    if (defaultAllowedOrigins.includes(origin)) {
+        return true
+    }
+
+    try {
+        const parsed = new URL(origin)
+        const hostname = parsed.hostname.toLowerCase()
+        if (
+            hostname === 'amratgames.com' ||
+            hostname.endsWith('.amratgames.com') ||
+            hostname === '103.216.168.84' ||
+            hostname === 'localhost' ||
+            hostname === '127.0.0.1'
+        ) {
+            return true
+        }
+    } catch {
+        return false
+    }
+
+    return false
+}
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow mobile apps, curl, Postman, or local headless requests with no origin
-        if (!origin) return callback(null, true)
-        if (!CONFIG.isProduction) return callback(null, true)
-
-        const allowed = Array.isArray(CONFIG.CORS_ORIGIN)
-            ? CONFIG.CORS_ORIGIN
-            : (CONFIG.CORS_ORIGIN && CONFIG.CORS_ORIGIN !== '*' ? [CONFIG.CORS_ORIGIN] : defaultAllowedOrigins)
-
-        if (allowed.includes(origin) || allowed.includes('*')) {
+        if (isOriginAllowed(origin)) {
             return callback(null, true)
         }
-        return callback(new Error(`Origin ${origin} blocked by CORS security policy`))
+        const corsErr = new Error(`Origin ${origin} blocked by CORS security policy`)
+        corsErr.status = 403
+        corsErr.code = 'CORS_FORBIDDEN'
+        return callback(corsErr)
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -140,10 +181,15 @@ app.use('/api/*', (req, res) => {
 // Central error handler
 app.use((err, req, res, next) => {
     console.error('[API ERROR]', err)
-    const statusCode = err.status || err.statusCode || 500
-    const message = (statusCode === 500 && CONFIG.isProduction)
-        ? 'Internal Server Error'
-        : (err.message || 'Internal Server Error')
+    const statusCode = err.status || err.statusCode || (err.name === 'UnauthorizedError' ? 401 : 500)
+    let message = err.message || 'Internal Server Error'
+
+    // Only scrub sensitive internal errors (DB passwords, service keys) in production
+    if (statusCode === 500 && CONFIG.isProduction) {
+        if (/(password|secret|key|supabase_key|token|credential)/i.test(message)) {
+            message = 'A temporary server error occurred. Please try again.'
+        }
+    }
 
     res.status(statusCode).json({
         success: false,
