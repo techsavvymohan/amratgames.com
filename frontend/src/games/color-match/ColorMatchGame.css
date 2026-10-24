@@ -238,6 +238,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 7px;
+    overflow: visible !important;
+    position: relative;
+    margin-top: 6px;
 }
 
 .wingo-pill-btn {
@@ -253,6 +256,7 @@
     align-items: center;
     justify-content: center;
     min-height: 36px;
+    overflow: visible !important;
 }
 
 .wingo-pill-btn:hover:not(:disabled) {
@@ -293,17 +297,19 @@
 
 .pill-staked-badge {
     position: absolute;
-    top: -8px;
-    right: -4px;
+    top: -9px;
+    right: 8px;
     background: #ffd700;
     color: #0f172a;
     font-size: 11px;
     font-weight: 800;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     border: 1.5px solid #ffffff;
-    z-index: 3;
+    z-index: 10;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 /* ==========================================================================
@@ -534,20 +540,30 @@
     pointer-events: none;
 }
 
+.ball-interactive-wrapper {
+    position: relative;
+    overflow: visible !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Badge for Staked Chip on ball */
 .ball-staked-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: -7px;
+    right: -7px;
     background: #ffd700;
     color: #0f172a;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-    border: 1px solid #ffffff;
-    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    border: 1.5px solid #ffffff;
+    z-index: 10;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 /* ==========================================================================
@@ -630,8 +646,11 @@
     gap: 0;
     width: 100%;
     border-radius: 20px;
-    overflow: hidden;
+    overflow: visible !important;
+    position: relative;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
+    margin-bottom: 8px;
 }
 
 .wingo-bs-btn {
@@ -646,6 +665,7 @@
     align-items: center;
     justify-content: center;
     min-height: 38px;
+    overflow: visible !important;
 }
 
 .wingo-bs-btn:hover:not(:disabled) {
@@ -677,6 +697,308 @@
     font-size: 17px;
     letter-spacing: 0.5px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Staked Chip Badge for Big & Small - Centered & Never Clipped */
+.bs-staked-badge {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffd700;
+    color: #0f172a;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    border: 1.5px solid #ffffff;
+    z-index: 10;
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: 0.2px;
+}
+
+/* ==========================================================================
+   DIRECT IN-GAME BETTING CONSOLE (INTEGRATED BUTTONS - NO POPUPS)
+   ========================================================================== */
+.wingo-console-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f6;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.console-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.console-row-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 44px;
+    flex-shrink: 0;
+}
+
+/* Chip Buttons Grid */
+.console-chips-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+}
+
+.console-chip-btn {
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    padding: 6px 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.console-chip-btn:hover:not(:disabled) {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
+
+.console-chip-btn.active {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-color: #b45309;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+    transform: translateY(-1px);
+}
+
+.chip-symbol {
+    font-size: 10.5px;
+    opacity: 0.9;
+}
+
+/* Multipliers Grid */
+.console-mult-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+}
+
+.console-mult-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 5px 2px;
+    border-radius: 7px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s ease;
+}
+
+.console-mult-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.console-mult-btn.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #047857;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+    font-weight: 800;
+}
+
+/* Quantity Row & Controls */
+.console-qty-controls {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.console-stepper {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.console-stepper-btn {
+    border: none;
+    background: transparent;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 800;
+    width: 32px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.console-stepper-btn:hover:not(:disabled) {
+    background: #e2e8f0;
+}
+
+.console-stepper-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.console-stepper-value {
+    min-width: 32px;
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+.console-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.console-quick-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.console-quick-btn:hover:not(:disabled) {
+    background: #e2e8f0;
+}
+
+.console-quick-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.console-random-btn {
+    border: 1px solid #fbcfe8;
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+    color: #db2777;
+    font-weight: 800;
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.18s ease;
+}
+
+.console-random-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+    transform: translateY(-1px);
+}
+
+.console-random-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Status Strip */
+.console-status-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+    margin-top: 2px;
+}
+
+.console-stake-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.stake-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.stake-val {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #f59e0b;
+}
+
+.console-round-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.round-staked-text {
+    font-size: 12px;
+    color: #475569;
+}
+
+.round-staked-text strong {
+    color: #0f172a;
+}
+
+.console-clear-btn {
+    border: 1px solid #fed7aa;
+    background: #fff7ed;
+    color: #ea580c;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+
+.console-clear-btn:hover:not(:disabled) {
+    background: #ffedd5;
+}
+
+.console-clear-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Active Staked Banner */
@@ -1698,8 +2020,8 @@
     }
 
     .pill-staked-badge {
-        top: -9px;
-        right: -5px;
+        top: -10px;
+        right: 8px;
         font-size: 12px;
         padding: 2px 8px;
     }
@@ -1741,36 +2063,76 @@
         padding: 2px 6px;
     }
 
-    /* Multiplier Pills Enhancement */
-    .wingo-multiplier-bar {
-        gap: 8px;
-    }
-
-    .wingo-random-btn {
-        font-size: 15px;
-        padding: 6px 14px;
-        border-radius: 10px;
-    }
-
-    .wingo-mult-pill {
-        min-width: 44px;
-        padding: 7px 4px;
-        font-size: 12.5px;
-        border-radius: 8px;
-    }
-
     /* Big / Small Row Enhancement */
     .wingo-big-small-row {
         border-radius: 24px;
+        overflow: visible !important;
+        margin-top: 12px;
+        margin-bottom: 10px;
     }
 
     .wingo-bs-btn {
         min-height: 46px;
         padding: 10px 8px;
+        overflow: visible !important;
     }
 
     .bs-text {
         font-size: 19px;
+    }
+
+    .bs-staked-badge {
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        padding: 2px 10px;
+    }
+
+    /* In-Game Direct Betting Console Enhancement */
+    .wingo-console-card {
+        padding: 14px 18px;
+        border-radius: 18px;
+        gap: 12px;
+    }
+
+    .console-chip-btn {
+        padding: 8px 4px;
+        font-size: 13px;
+        border-radius: 9px;
+    }
+
+    .console-mult-btn {
+        padding: 7px 4px;
+        font-size: 12.5px;
+        border-radius: 8px;
+    }
+
+    .console-stepper-btn {
+        width: 36px;
+        height: 34px;
+        font-size: 16px;
+    }
+
+    .console-stepper-value {
+        min-width: 38px;
+        font-size: 14px;
+    }
+
+    .console-quick-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 7px;
+    }
+
+    .console-random-btn {
+        font-size: 12.5px;
+        padding: 6px 14px;
+        border-radius: 8px;
+    }
+
+    .stake-val {
+        font-size: 16px;
     }
 
     /* Active Staked Banner */

@@ -29,7 +29,7 @@ const NUMBER_DATA = [
 ]
 
 const MULTIPLIERS = [1, 5, 10, 20, 50, 100]
-const CONTRACT_AMOUNTS = [1, 10, 100, 1000]
+const CONTRACT_AMOUNTS = [1, 10, 50, 100, 500, 1000]
 
 function ColorMatchGame() {
     const {
@@ -91,13 +91,9 @@ function ColorMatchGame() {
     const [myBets, setMyBets] = useState([])
     const [activeTab, setActiveTab] = useState('history') // 'history' | 'chart' | 'mybets'
 
-    // Win Go Bet Modal State
-    const [betModalOpen, setBetModalOpen] = useState(false)
-    const [selectedBetTarget, setSelectedBetTarget] = useState(null)
+    // In-Game Direct Betting Controls State (Preset Chips & Quantity)
     const [contractAmount, setContractAmount] = useState(10)
     const [betQuantity, setBetQuantity] = useState(1)
-    const [modalMultiplier, setModalMultiplier] = useState(1)
-    const [agreeRules, setAgreeRules] = useState(true)
 
     // Celebration Win Popup State (Simplest Mini Popup)
     const [winPopup, setWinPopup] = useState(null)
@@ -123,8 +119,8 @@ function ColorMatchGame() {
         return Object.values(bets).reduce((a, b) => a + (Number(b) || 0), 0)
     }, [bets])
 
-    // Calculated modal total bet amount
-    const modalTotalBet = contractAmount * betQuantity * modalMultiplier
+    // Active stake per direct bet click/tap (calculated from active in-window controls)
+    const activeStakePerTap = contractAmount * activeMultiplier * betQuantity
 
     // Dynamic refs to avoid stale closures in interval
     const betsRef = useRef(bets)
@@ -152,8 +148,8 @@ function ColorMatchGame() {
         }
     }, [releaseChips])
 
-    // Open Win Go Contract Bet Modal for any target
-    const openBetModal = (targetKey) => {
+    // Direct in-game bet placement on any target (No popup modals - instant staking)
+    const placeDirectBet = (targetKey) => {
         if (isLocked || isDrawing) return
 
         if (!user) {
@@ -161,104 +157,28 @@ function ColorMatchGame() {
             return
         }
 
-        let targetInfo = {
-            key: targetKey,
-            type: 'color',
-            title: 'Green',
-            colorTheme: 'green',
-            payoutText: '1.95X / 1.45X',
-        }
+        const betAmt = contractAmount * activeMultiplier * betQuantity
+        if (betAmt <= 0) return
 
-        if (targetKey === 'green') {
-            targetInfo = {
-                key: 'green',
-                type: 'color',
-                title: 'Green',
-                colorTheme: 'green',
-                payoutText: '1.95X (1.45X with Violet)',
-            }
-        } else if (targetKey === 'violet') {
-            targetInfo = {
-                key: 'violet',
-                type: 'color',
-                title: 'Violet',
-                colorTheme: 'violet',
-                payoutText: '4.5X',
-            }
-        } else if (targetKey === 'red') {
-            targetInfo = {
-                key: 'red',
-                type: 'color',
-                title: 'Red',
-                colorTheme: 'red',
-                payoutText: '1.95X (1.45X with Violet)',
-            }
-        } else if (targetKey === 'big') {
-            targetInfo = {
-                key: 'big',
-                type: 'size',
-                title: 'Big',
-                colorTheme: 'big',
-                payoutText: '1.95X',
-            }
-        } else if (targetKey === 'small') {
-            targetInfo = {
-                key: 'small',
-                type: 'size',
-                title: 'Small',
-                colorTheme: 'small',
-                payoutText: '1.95X',
-            }
-        } else if (targetKey.startsWith('num_')) {
-            const numVal = parseInt(targetKey.replace('num_', ''), 10)
-            const item = NUMBER_DATA[numVal]
-            targetInfo = {
-                key: targetKey,
-                type: 'number',
-                title: `Number ${numVal}`,
-                num: numVal,
-                colors: item.colors,
-                colorTheme: item.colors.length > 1 ? `split-${item.colors.join('-')}` : item.colors[0],
-                payoutText: '9.0X',
-            }
-        }
-
-        setSelectedBetTarget(targetInfo)
-        setModalMultiplier(activeMultiplier || 1)
-        setBetQuantity(1)
-        setBetModalOpen(true)
-        casinoAudio.playChip?.()
-    }
-
-    // Confirm Bet from Win Go Modal: Deducts balance immediately via holdChips
-    const confirmBet = () => {
-        if (!selectedBetTarget || !agreeRules) return
-        if (isLocked || isDrawing) {
-            setBetModalOpen(false)
-            return
-        }
-
-        if (modalTotalBet > balance) {
+        if (betAmt > balance) {
             notifyLoss?.('Insufficient balance to place bet!')
             return
         }
 
-        casinoAudio.playBet?.()
-        holdChips(modalTotalBet)
+        casinoAudio.playChip?.()
+        holdChips(betAmt)
 
         setBets(prev => ({
             ...prev,
-            [selectedBetTarget.key]: (prev[selectedBetTarget.key] || 0) + modalTotalBet
+            [targetKey]: (prev[targetKey] || 0) + betAmt
         }))
-
-        setBetModalOpen(false)
     }
 
-    // Pick Random Bet (Win Go [Random] pill)
+    // Pick Random Bet (Win Go [Random] pill - immediately bets on random number 0-9)
     const handleRandomPick = () => {
         if (isLocked || isDrawing) return
         const randNum = Math.floor(Math.random() * 10)
-        openBetModal(`num_${randNum}`)
+        placeDirectBet(`num_${randNum}`)
     }
 
     // Clear bets: Refunds held chips back to wallet
@@ -486,21 +406,22 @@ function ColorMatchGame() {
         const numColorClass = num === 0 ? 'text-violet' : num === 5 ? 'text-violet' : `text-${colors[0]}`
 
         return (
-            <div
-                key={num}
-                className={`wingo-lottery-ball ${ballClass} size-${size} ${stakedAmount ? 'has-bet' : ''} ${isClickable ? 'clickable' : ''}`}
-                onClick={isClickable && onClick ? onClick : undefined}
-            >
-                {/* 4 White Scallop Notches creating the authentic lottery ball ring pattern */}
-                <div className="ball-scallop scallop-t"></div>
-                <div className="ball-scallop scallop-b"></div>
-                <div className="ball-scallop scallop-l"></div>
-                <div className="ball-scallop scallop-r"></div>
+            <div key={num} className="ball-interactive-wrapper">
+                <div
+                    className={`wingo-lottery-ball ${ballClass} size-${size} ${stakedAmount ? 'has-bet' : ''} ${isClickable ? 'clickable' : ''}`}
+                    onClick={isClickable && onClick ? onClick : undefined}
+                >
+                    {/* 4 White Scallop Notches creating the authentic lottery ball ring pattern */}
+                    <div className="ball-scallop scallop-t"></div>
+                    <div className="ball-scallop scallop-b"></div>
+                    <div className="ball-scallop scallop-l"></div>
+                    <div className="ball-scallop scallop-r"></div>
 
-                {/* Inner White Disc where numeral sits */}
-                <div className="ball-inner-disc">
-                    <span className={`ball-number ${numColorClass}`}>{num}</span>
-                    <div className="ball-gloss"></div>
+                    {/* Inner White Disc where numeral sits */}
+                    <div className="ball-inner-disc">
+                        <span className={`ball-number ${numColorClass}`}>{num}</span>
+                        <div className="ball-gloss"></div>
+                    </div>
                 </div>
 
                 {stakedAmount > 0 && (
@@ -572,7 +493,7 @@ function ColorMatchGame() {
                 <button
                     type="button"
                     className={`wingo-pill-btn btn-green ${bets.green ? 'has-bet' : ''}`}
-                    onClick={() => openBetModal('green')}
+                    onClick={() => placeDirectBet('green')}
                     disabled={isLocked || isDrawing}
                 >
                     <span className="pill-text">Green</span>
@@ -586,7 +507,7 @@ function ColorMatchGame() {
                 <button
                     type="button"
                     className={`wingo-pill-btn btn-violet ${bets.violet ? 'has-bet' : ''}`}
-                    onClick={() => openBetModal('violet')}
+                    onClick={() => placeDirectBet('violet')}
                     disabled={isLocked || isDrawing}
                 >
                     <span className="pill-text">Violet</span>
@@ -600,7 +521,7 @@ function ColorMatchGame() {
                 <button
                     type="button"
                     className={`wingo-pill-btn btn-red ${bets.red ? 'has-bet' : ''}`}
-                    onClick={() => openBetModal('red')}
+                    onClick={() => placeDirectBet('red')}
                     disabled={isLocked || isDrawing}
                 >
                     <span className="pill-text">Red</span>
@@ -623,38 +544,10 @@ function ColorMatchGame() {
                                 item.colors,
                                 'board',
                                 true,
-                                () => openBetModal(`num_${item.num}`),
+                                () => placeDirectBet(`num_${item.num}`),
                                 `num_${item.num}`
                             )}
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Random Button & Multipliers Bar */}
-            <div className="wingo-multiplier-bar">
-                <button
-                    type="button"
-                    className="wingo-random-btn"
-                    onClick={handleRandomPick}
-                    disabled={isLocked || isDrawing}
-                >
-                    Random
-                </button>
-
-                <div className="wingo-mult-pills">
-                    {MULTIPLIERS.map(m => (
-                        <button
-                            key={m}
-                            type="button"
-                            className={`wingo-mult-pill ${activeMultiplier === m ? 'active' : ''}`}
-                            onClick={() => {
-                                setActiveMultiplier(m)
-                                casinoAudio.playChip?.()
-                            }}
-                        >
-                            X{m}
-                        </button>
                     ))}
                 </div>
             </div>
@@ -664,12 +557,12 @@ function ColorMatchGame() {
                 <button
                     type="button"
                     className={`wingo-bs-btn btn-big ${bets.big ? 'has-bet' : ''}`}
-                    onClick={() => openBetModal('big')}
+                    onClick={() => placeDirectBet('big')}
                     disabled={isLocked || isDrawing}
                 >
                     <span className="bs-text">Big</span>
                     {bets.big > 0 && (
-                        <div className="pill-staked-badge">
+                        <div className="bs-staked-badge">
                             {currencySymbol}{bets.big}
                         </div>
                     )}
@@ -678,35 +571,158 @@ function ColorMatchGame() {
                 <button
                     type="button"
                     className={`wingo-bs-btn btn-small ${bets.small ? 'has-bet' : ''}`}
-                    onClick={() => openBetModal('small')}
+                    onClick={() => placeDirectBet('small')}
                     disabled={isLocked || isDrawing}
                 >
                     <span className="bs-text">Small</span>
                     {bets.small > 0 && (
-                        <div className="pill-staked-badge">
+                        <div className="bs-staked-badge">
                             {currencySymbol}{bets.small}
                         </div>
                     )}
                 </button>
             </div>
 
-            {/* Total Staked Summary & Clear Bets Bar (if bets placed) */}
-            {totalStaked > 0 && (
-                <div className="wingo-active-stake-banner">
-                    <div className="stake-info">
-                        <span className="stake-lbl">Current Round Bets:</span>
-                        <strong className="stake-amt">{currencySymbol}{totalStaked.toLocaleString()}</strong>
+            {/* Direct In-Game Betting Console (Buttons in game window - Zero Popups) */}
+            <div className="wingo-console-card">
+                {/* Row 1: Chip Value Presets */}
+                <div className="console-row">
+                    <span className="console-row-label">Chip</span>
+                    <div className="console-chips-grid">
+                        {CONTRACT_AMOUNTS.map(val => (
+                            <button
+                                key={val}
+                                type="button"
+                                className={`console-chip-btn ${contractAmount === val ? 'active' : ''}`}
+                                onClick={() => {
+                                    setContractAmount(val)
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing}
+                            >
+                                <span className="chip-symbol">{currencySymbol}</span>
+                                <span className="chip-val">{val >= 1000 ? `${val / 1000}k` : val}</span>
+                            </button>
+                        ))}
                     </div>
-                    <button
-                        type="button"
-                        className="stake-clear-btn"
-                        onClick={clearBets}
-                        disabled={isLocked || isDrawing}
-                    >
-                        <UndoOutlined /> Clear Bets
-                    </button>
                 </div>
-            )}
+
+                {/* Row 2: Multipliers */}
+                <div className="console-row">
+                    <span className="console-row-label">Mult</span>
+                    <div className="console-mult-grid">
+                        {MULTIPLIERS.map(m => (
+                            <button
+                                key={m}
+                                type="button"
+                                className={`console-mult-btn ${activeMultiplier === m ? 'active' : ''}`}
+                                onClick={() => {
+                                    setActiveMultiplier(m)
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing}
+                            >
+                                X{m}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Row 3: Quantity Stepper & Quick Tools */}
+                <div className="console-row console-qty-row">
+                    <span className="console-row-label">Qty</span>
+                    <div className="console-qty-controls">
+                        <div className="console-stepper">
+                            <button
+                                type="button"
+                                className="console-stepper-btn"
+                                onClick={() => {
+                                    setBetQuantity(prev => Math.max(1, prev - 1))
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing || betQuantity <= 1}
+                                aria-label="Decrease quantity"
+                            >
+                                −
+                            </button>
+                            <span className="console-stepper-value">{betQuantity}</span>
+                            <button
+                                type="button"
+                                className="console-stepper-btn"
+                                onClick={() => {
+                                    setBetQuantity(prev => prev + 1)
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing}
+                                aria-label="Increase quantity"
+                            >
+                                +
+                            </button>
+                        </div>
+
+                        <div className="console-quick-actions">
+                            <button
+                                type="button"
+                                className="console-quick-btn"
+                                onClick={() => {
+                                    setBetQuantity(prev => Math.max(1, Math.floor(prev / 2)))
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing || betQuantity <= 1}
+                                title="Half quantity"
+                            >
+                                ½
+                            </button>
+                            <button
+                                type="button"
+                                className="console-quick-btn"
+                                onClick={() => {
+                                    setBetQuantity(prev => prev * 2)
+                                    casinoAudio.playChip?.()
+                                }}
+                                disabled={isLocked || isDrawing}
+                                title="Double quantity"
+                            >
+                                2X
+                            </button>
+                            <button
+                                type="button"
+                                className="console-random-btn"
+                                onClick={handleRandomPick}
+                                disabled={isLocked || isDrawing}
+                                title="Place random bet on a lottery number"
+                            >
+                                🎲 Random
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Row 4: Live Stake Status & Clear Actions */}
+                <div className="console-status-strip">
+                    <div className="console-stake-indicator">
+                        <span className="stake-label">Bet Per Tap:</span>
+                        <strong className="stake-val">{currencySymbol}{activeStakePerTap.toLocaleString()}</strong>
+                    </div>
+
+                    {totalStaked > 0 && (
+                        <div className="console-round-summary">
+                            <span className="round-staked-text">
+                                Total: <strong>{currencySymbol}{totalStaked.toLocaleString()}</strong>
+                            </span>
+                            <button
+                                type="button"
+                                className="console-clear-btn"
+                                onClick={clearBets}
+                                disabled={isLocked || isDrawing}
+                                title="Clear all round bets"
+                            >
+                                <UndoOutlined /> Clear
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
                 </div>
 
                 {/* ── RIGHT COLUMN: Live Roadmap, History & Analytics Console ── */}
@@ -899,114 +915,6 @@ function ColorMatchGame() {
                 </div>
             )}
 
-            {/* Simplest Mini Contract Bet Modal */}
-            {/* Simplest Mini Contract Bet Modal */}
-            <Modal
-                open={betModalOpen}
-                onCancel={() => setBetModalOpen(false)}
-                footer={null}
-                centered
-                closeIcon={<span className="wingo-modal-close-x">✕</span>}
-                className="wingo-contract-modal mini-contract-modal"
-                styles={{
-                    content: { padding: 0, borderRadius: 18, overflow: 'hidden', background: '#151d2a' }
-                }}
-            >
-                {selectedBetTarget && (
-                    <div className="contract-sheet-body">
-                        {/* Header styled with target color */}
-                        <div className={`contract-sheet-header header-${selectedBetTarget.colorTheme}`}>
-                            <div className="contract-title">
-                                Win Go 30s · {selectedBetTarget.title}
-                            </div>
-                            <div className="contract-subtitle">
-                                Payout {selectedBetTarget.payoutText}
-                            </div>
-                        </div>
-
-                        {/* Balance Chips Preset Row */}
-                        <div className="contract-section">
-                            <div className="contract-section-header">
-                                <span className="contract-section-label">Balance</span>
-                            </div>
-                            <div className="contract-chips-grid balance-grid">
-                                {CONTRACT_AMOUNTS.map(val => (
-                                    <button
-                                        key={val}
-                                        type="button"
-                                        className={`contract-chip-btn ${contractAmount === val ? `active active-${selectedBetTarget.colorTheme}` : ''}`}
-                                        onClick={() => setContractAmount(val)}
-                                    >
-                                        {currencySymbol}{val}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Multiplier Row */}
-                        <div className="contract-section">
-                            <div className="contract-section-header">
-                                <span className="contract-section-label">Multiplier</span>
-                            </div>
-                            <div className="contract-chips-grid multiplier-grid">
-                                {MULTIPLIERS.map(m => (
-                                    <button
-                                        key={m}
-                                        type="button"
-                                        className={`contract-chip-btn ${modalMultiplier === m ? `active active-${selectedBetTarget.colorTheme}` : ''}`}
-                                        onClick={() => setModalMultiplier(m)}
-                                    >
-                                        X{m}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Quantity Stepper */}
-                        <div className="contract-section contract-quantity-section">
-                            <span className="contract-section-label">Quantity</span>
-                            <div className="contract-stepper-wrap">
-                                <button
-                                    type="button"
-                                    className="stepper-btn"
-                                    onClick={() => setBetQuantity(prev => Math.max(1, prev - 1))}
-                                    aria-label="Decrease quantity"
-                                >
-                                    −
-                                </button>
-                                <span className="stepper-value">{betQuantity}</span>
-                                <button
-                                    type="button"
-                                    className="stepper-btn"
-                                    onClick={() => setBetQuantity(prev => prev + 1)}
-                                    aria-label="Increase quantity"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Actions: Cancel & Confirm */}
-                        <div className="contract-actions-row">
-                            <button
-                                type="button"
-                                className="contract-cancel-btn"
-                                onClick={() => setBetModalOpen(false)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className={`contract-confirm-btn confirm-bg-${selectedBetTarget.colorTheme}`}
-                                onClick={confirmBet}
-                                disabled={modalTotalBet <= 0}
-                            >
-                                Total {currencySymbol}{modalTotalBet.toLocaleString()} · Confirm
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
 
             {/* How to Play Rules Modal */}
             <Modal
