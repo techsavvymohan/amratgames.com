@@ -12,14 +12,32 @@ export class ErrorBoundary extends Component {
 
     componentDidCatch(error, errorInfo) {
         console.error('ErrorBoundary caught error:', error, errorInfo)
+
+        const isChunkError = /failed to fetch dynamically imported module|importing a module script failed|loading chunk|chunkloaderror/i.test(
+            error?.message || ''
+        )
+
+        if (isChunkError && typeof window !== 'undefined') {
+            const hasRetried = window.sessionStorage.getItem('chunk_eb_reloaded')
+            if (!hasRetried) {
+                window.sessionStorage.setItem('chunk_eb_reloaded', 'true')
+                window.location.reload()
+            }
+        }
     }
 
     handleReload = () => {
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem('chunk_eb_reloaded')
+        }
         this.setState({ hasError: false, error: null })
         window.location.reload()
     }
 
     handleHome = () => {
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem('chunk_eb_reloaded')
+        }
         this.setState({ hasError: false, error: null })
         window.location.href = '/'
     }

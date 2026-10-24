@@ -5,7 +5,35 @@ import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 import GameAuthGuard from './components/Auth/GameAuthGuard'
 
-const HomePage = lazy(() => import('./pages/HomePage'))
+// Automatic recovery from Vite dynamic import chunk hash mismatches after deployments
+function lazyWithRetry(componentImport) {
+    return lazy(async () => {
+        const pageKey = 'chunk_retry_' + (typeof window !== 'undefined' ? window.location.pathname : '')
+        const hasRetried = typeof window !== 'undefined' ? window.sessionStorage.getItem(pageKey) : null
+
+        try {
+            const component = await componentImport()
+            if (typeof window !== 'undefined') window.sessionStorage.removeItem(pageKey)
+            return component
+        } catch (error) {
+            console.error('[Dynamic Import Failed]', error)
+            const isChunkError = /failed to fetch dynamically imported module|importing a module script failed|loading chunk|chunkloaderror/i.test(
+                error?.message || ''
+            )
+
+            if (!hasRetried && isChunkError && typeof window !== 'undefined') {
+                window.sessionStorage.setItem(pageKey, 'true')
+                window.location.reload()
+                return new Promise(() => {}) // suspend while reloading
+            }
+
+            if (typeof window !== 'undefined') window.sessionStorage.removeItem(pageKey)
+            throw error
+        }
+    })
+}
+
+const HomePage = lazyWithRetry(() => import('./pages/HomePage'))
 const loadCrash = () => import('./games/crash')
 const loadPlinko = () => import('./games/plinko')
 const loadMines = () => import('./games/mines')
@@ -15,27 +43,27 @@ const loadColorMatch = () => import('./games/color-match')
 const loadCoinToss = () => import('./games/coin-toss')
 const loadAdmin = () => import('./admin-panel')
 
-const CrashPage = lazy(loadCrash)
-const PlinkoPage = lazy(loadPlinko)
-const MinesPage = lazy(loadMines)
-const LimboPage = lazy(loadLimbo)
-const DragonTigerPage = lazy(loadDragonTiger)
-const ColorMatchPage = lazy(loadColorMatch)
-const CoinTossPage = lazy(loadCoinToss)
-const AdminPage = lazy(loadAdmin)
-const ProfilePage = lazy(() => import('./pages/ProfilePage'))
-const FavouritesPage = lazy(() => import('./pages/FavouritesPage'))
-const RecentPage = lazy(() => import('./pages/RecentPage'))
-const ChallengesPage = lazy(() => import('./pages/ChallengesPage'))
-const MyBetsPage = lazy(() => import('./pages/MyBetsPage'))
-const ProvablyFairPage = lazy(() => import('./pages/ProvablyFairPage'))
-const ResponsibleGamblingPage = lazy(() => import('./pages/ResponsibleGamblingPage'))
-const TermsPage = lazy(() => import('./pages/TermsPage'))
-const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
-const CrashStrategyPage = lazy(() => import('./pages/CrashStrategyPage'))
-const PlinkoOddsPage = lazy(() => import('./pages/PlinkoOddsPage'))
-const UpiWithdrawalsGuidePage = lazy(() => import('./pages/UpiWithdrawalsGuidePage'))
-const VipRewardsPage = lazy(() => import('./pages/VipRewardsPage'))
+const CrashPage = lazyWithRetry(loadCrash)
+const PlinkoPage = lazyWithRetry(loadPlinko)
+const MinesPage = lazyWithRetry(loadMines)
+const LimboPage = lazyWithRetry(loadLimbo)
+const DragonTigerPage = lazyWithRetry(loadDragonTiger)
+const ColorMatchPage = lazyWithRetry(loadColorMatch)
+const CoinTossPage = lazyWithRetry(loadCoinToss)
+const AdminPage = lazyWithRetry(loadAdmin)
+const ProfilePage = lazyWithRetry(() => import('./pages/ProfilePage'))
+const FavouritesPage = lazyWithRetry(() => import('./pages/FavouritesPage'))
+const RecentPage = lazyWithRetry(() => import('./pages/RecentPage'))
+const ChallengesPage = lazyWithRetry(() => import('./pages/ChallengesPage'))
+const MyBetsPage = lazyWithRetry(() => import('./pages/MyBetsPage'))
+const ProvablyFairPage = lazyWithRetry(() => import('./pages/ProvablyFairPage'))
+const ResponsibleGamblingPage = lazyWithRetry(() => import('./pages/ResponsibleGamblingPage'))
+const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'))
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'))
+const CrashStrategyPage = lazyWithRetry(() => import('./pages/CrashStrategyPage'))
+const PlinkoOddsPage = lazyWithRetry(() => import('./pages/PlinkoOddsPage'))
+const UpiWithdrawalsGuidePage = lazyWithRetry(() => import('./pages/UpiWithdrawalsGuidePage'))
+const VipRewardsPage = lazyWithRetry(() => import('./pages/VipRewardsPage'))
 
 function App() {
     // Eagerly prefetch game modules during browser idle time
