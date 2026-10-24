@@ -62,7 +62,9 @@ export function buildAppUpiUris(params) {
         universal: baseUri,
         phonepe: `phonepe://pay?${queryString}`,
         paytm: `paytmmp://pay?${queryString}`,
-        gpay: `gpay://upi/pay?${queryString}`
+        gpay: `tez://upi/pay?${queryString}`,
+        bhim: `upi://pay?${queryString}`,
+        cred: `cred://upi/pay?${queryString}`
     }
 }
 
@@ -86,16 +88,22 @@ export function launchUpiApp(uri) {
         const link = document.createElement('a')
         link.href = uri
         link.rel = 'noopener noreferrer'
+        link.style.display = 'none'
         document.body.appendChild(link)
         link.click()
-        document.body.removeChild(link)
+        setTimeout(() => {
+            try {
+                if (document.body.contains(link)) {
+                    document.body.removeChild(link)
+                }
+            } catch {}
+        }, 1000)
+    } catch {}
+
+    try {
+        window.location.href = uri
         return true
     } catch {
-        try {
-            window.location.href = uri
-            return true
-        } catch {
-            return false
-        }
+        return false
     }
 }

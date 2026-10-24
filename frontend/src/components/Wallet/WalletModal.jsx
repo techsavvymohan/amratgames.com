@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
+import { QRCode } from 'antd'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
 import { useWebSocket } from '../../context/WebSocketContext'
 import { paymentBridge } from '../../services/PaymentBridge'
 import { getOptimizedImageUrl } from '../../utils/cloudinary'
+import { launchUpiApp } from '../../utils/upiIntent'
 import './WalletModal.css'
 
 export const OFFICIAL_UPI_ID = 'shanviientrrprisee@ybl'
@@ -127,6 +129,13 @@ export default function WalletModal() {
         return (transactions || []).filter((tx) => tx.type !== 'bet' && tx.type !== 'win')
     }, [transactions])
 
+    // Dynamic universal UPI URI for QR code & 1-tap payment (updates in real time with depositAmount)
+    const dynamicUpiUri = useMemo(() => {
+        const amt = parseFloat(depositAmount)
+        const amtStr = (!isNaN(amt) && amt >= 100) ? amt.toFixed(2) : '100.00'
+        return `upi://pay?pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent('Deposit AmratGames')}`
+    }, [depositAmount])
+
     // Real-time listener on shared WebSocket for deposit auto-crediting and withdrawals
     useEffect(() => {
         if (!subscribe) return
@@ -231,7 +240,8 @@ export default function WalletModal() {
     }
 
     // ⚡ 1-Click Instant UPI App Redirection (PhonePe, GPay, Paytm, BHIM, CRED)
-    const handleAppPay = async (app) => {
+    // Guarantees that whatever amount is entered is automatically pre-filled in the redirected UPI app!
+    const handleAppPay = (app) => {
         const amt = parseFloat(depositAmount)
         if (isNaN(amt) || amt < 100) {
             showToast?.('error', 'Minimum Deposit', 'Minimum deposit is ₹100 for instant payment')
@@ -247,63 +257,52 @@ export default function WalletModal() {
         try {
             setLoadingApp(app.id)
             const amtStr = amt.toFixed(2)
-
-            // Attempt to create session with sovereign YouPI-PG
-            let session = null
-            try {
-                session = await paymentBridge.requestSession(amt, effectiveToken, 'youpi')
-            } catch (sessionErr) {
-                console.warn('[SESSION INIT WARNING]', sessionErr)
-            }
-
-            const orderRef = session?.orderId || `DEP_${Date.now()}`
+            const orderRef = `DEP_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`
             const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
             const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
             const isMobile = isAndroid || isIOS
 
-            if (isMobile) {
-                // If automated gateway returned a direct mobile UPI intent (targeting dynamic receiver)
-                if (session?.upiIntent) {
-                    showToast?.('info', `Opening ${app.name}`, `Launching UPI payment...`)
-                    window.location.href = session.upiIntent
-                    return
-                }
+            // Standard NPCI UPI URI with exact amount pre-filled
+            const note = `Deposit ${orderRef}`
+            const upiQuery = `pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent(note)}&tr=${encodeURIComponent(orderRef)}`
 
-                // If automated gateway returned a checkout URL (portal with 1-tap app launchers)
-                if (session?.checkoutUrl) {
-                    showToast?.('info', 'Opening Gateway', 'Redirecting to payment checkout portal...')
-                    window.location.href = session.checkoutUrl
-                    return
-                }
+            let primaryUri = ''
+            let fallbackUri = ''
 
-                // Manual fallback: NPCI intent to official merchant VPA
-                let redirectUri = ''
-                if (isAndroid && app.packageName) {
-                    const upiQuery = `pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent(orderRef)}`
-                    redirectUri = `intent://pay?${upiQuery}#Intent;scheme=upi;package=${app.packageName};end`
-                } else {
-                    redirectUri = app.customScheme(OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, amtStr, orderRef)
-                }
-
-                showToast?.('info', `Opening ${app.name}`, `Redirecting to ${app.name} to complete payment...`)
-                window.location.href = redirectUri
+            if (isAndroid && app.packageName) {
+                // Direct Android package-targeted intent with pre-filled amount
+                primaryUri = `intent://pay?${upiQuery}#Intent;scheme=upi;package=${app.packageName};end`
+                fallbackUri = app.customScheme ? app.customScheme(OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, amtStr, orderRef) : `upi://pay?${upiQuery}`
+            } else if (app.customScheme) {
+                primaryUri = app.customScheme(OFFICIAL_UPI_ID, OFFICIAL_PAYEE_NAME, amtStr, orderRef)
+                fallbackUri = `upi://pay?${upiQuery}`
             } else {
-                // Desktop browser
-                if (session?.checkoutUrl) {
-                    paymentBridge.launchSession(session)
-                    showToast?.('success', `Opening ${app.name} Checkout`, 'Complete payment in the checkout window.')
-                } else {
-                    try {
-                        await navigator.clipboard.writeText(OFFICIAL_UPI_ID)
-                    } catch {}
-                    showToast?.('success', 'UPI ID Copied', `${OFFICIAL_UPI_ID} copied to clipboard! Open ${app.name} on your mobile to complete payment.`)
-                }
+                primaryUri = `upi://pay?${upiQuery}`
+                fallbackUri = primaryUri
             }
+
+            showToast?.('info', `Opening ${app.name}`, `Launching ${app.name} with ₹${amtStr} pre-filled…`)
+
+            // 1. Immediately launch inside user-gesture context so mobile browsers don't block intent or drop amount
+            let launched = launchUpiApp(primaryUri)
+            if (!launched && fallbackUri && fallbackUri !== primaryUri) {
+                launchUpiApp(fallbackUri)
+            }
+
+            // 2. Also copy UPI ID to clipboard as courteous backup
+            try {
+                navigator.clipboard.writeText(OFFICIAL_UPI_ID)
+            } catch {}
+
+            // 3. Initiate backend session in background for authoritative ledger tracking
+            paymentBridge.requestSession(amt, effectiveToken, 'youpi').catch((sessionErr) => {
+                console.warn('[SESSION BACKGROUND ERROR]', sessionErr)
+            })
         } catch (err) {
             console.error('[HANDLE APP PAY ERROR]', err)
             showToast?.('error', 'Checkout Error', err?.message || 'Failed to initialize payment')
         } finally {
-            setLoadingApp(null)
+            setTimeout(() => setLoadingApp(null), 1500)
         }
     }
 
@@ -370,7 +369,8 @@ export default function WalletModal() {
     }
 
     // ⚡ Instant Automated UPI Payment via Sovereign Gateway
-    const handleInstantPay = async () => {
+    // Guarantees that whatever amount is entered is automatically pre-filled in the redirected UPI app!
+    const handleInstantPay = () => {
         const amt = parseFloat(depositAmount)
         if (isNaN(amt) || amt < 100) {
             showToast?.('error', 'Minimum Deposit', 'Minimum deposit is ₹100 for instant payment')
@@ -385,17 +385,29 @@ export default function WalletModal() {
 
         try {
             setIsInstantPaying(true)
-            const session = await paymentBridge.requestSession(amt, effectiveToken, 'youpi')
-            if (session.checkoutUrl) {
-                paymentBridge.launchSession(session)
-                showToast?.('success', 'UPI Gateway Connected', 'Complete payment in the checkout window. Your balance will be credited automatically!')
-            } else if (session.requiresUtr) {
-                showToast?.('info', 'Manual Gateway Mode', 'Please scan the QR code above and enter the 12-digit UTR below.')
-            }
+            const amtStr = amt.toFixed(2)
+            const orderRef = `DEP_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`
+            const note = `Deposit ${orderRef}`
+            const universalUpiUri = `upi://pay?pa=${encodeURIComponent(OFFICIAL_UPI_ID)}&pn=${encodeURIComponent(OFFICIAL_PAYEE_NAME)}&am=${encodeURIComponent(amtStr)}&cu=INR&tn=${encodeURIComponent(note)}&tr=${encodeURIComponent(orderRef)}`
+
+            showToast?.('info', 'Opening UPI Payment', `Launching payment with ₹${amtStr} pre-filled…`)
+
+            // 1. Immediately launch universal UPI intent on mobile so native app chooser opens with amount prefilled
+            launchUpiApp(universalUpiUri)
+
+            // 2. Also copy UPI ID to clipboard as courteous backup
+            try {
+                navigator.clipboard.writeText(OFFICIAL_UPI_ID)
+            } catch {}
+
+            // 3. Initiate backend session in background
+            paymentBridge.requestSession(amt, effectiveToken, 'youpi').catch((sessionErr) => {
+                console.warn('[SESSION BACKGROUND ERROR]', sessionErr)
+            })
         } catch (err) {
-            showToast?.('warning', 'Instant Gateway Offline', 'Please scan the QR code above and submit your 12-digit UTR.')
+            showToast?.('warning', 'Instant Gateway Offline', 'Please scan the QR code above or pay via UPI ID and submit your 12-digit UTR.')
         } finally {
-            setIsInstantPaying(false)
+            setTimeout(() => setIsInstantPaying(false), 1500)
         }
     }
 
@@ -824,6 +836,28 @@ export default function WalletModal() {
                                             >
                                                 {copied ? '✓ Copied' : '📋 Copy UPI'}
                                             </button>
+                                        </div>
+
+                                        {/* Dynamic Live QR Code (Auto-fills exact deposit amount when scanned with PhonePe, GPay, Paytm) */}
+                                        <div className="amrat-dynamic-qr-card">
+                                            <div className="amrat-qr-wrap">
+                                                <QRCode
+                                                    value={dynamicUpiUri}
+                                                    size={104}
+                                                    bgColor="#ffffff"
+                                                    color="#0b0f19"
+                                                    bordered={false}
+                                                />
+                                            </div>
+                                            <div className="amrat-qr-info">
+                                                <div className="amrat-qr-badge">⚡ Auto-Filled QR</div>
+                                                <div className="amrat-qr-amount">
+                                                    ₹{parseFloat(depositAmount && parseFloat(depositAmount) >= 100 ? depositAmount : 100).toLocaleString('en-IN')}
+                                                </div>
+                                                <p className="amrat-qr-desc">
+                                                    Scan with <strong>GPay, PhonePe or Paytm</strong>. That exact amount will be <strong>filled automatically</strong>.
+                                                </p>
+                                            </div>
                                         </div>
 
                                         {/* Seamless Visual Divider to Manual Fallback */}
