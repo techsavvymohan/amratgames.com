@@ -58,6 +58,9 @@ router.post('/deposit', requireAuth, sensitiveApiLimiter, async (req, res) => {
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             return res.status(400).json({ success: false, error: 'Valid deposit amount required' })
         }
+        if (currency === 'INR' && parsedAmount < 100) {
+            return res.status(400).json({ success: false, error: 'Minimum deposit amount is ₹100' })
+        }
 
         const user = db.findUserById(req.user.id)
         if (!user) return res.status(404).json({ success: false, error: 'User not found' })

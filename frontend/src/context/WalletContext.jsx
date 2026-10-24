@@ -17,7 +17,8 @@ export const CURRENCIES = {
         name: 'Indian Rupee',
         flag: '🇮🇳',
         initial: 100.00, // ₹100 Free Welcome Bonus for every new player
-        presets: [300, 500, 1000, 2500, 5000],
+        presets: [100, 300, 500, 1000, 2500, 5000],
+        minDeposit: 100,
         minBet: 10,
         maxBet: 100000,
         step: 50,
@@ -788,6 +789,10 @@ export function WalletProvider({ children }) {
     const deposit = useCallback(async (amount, options = {}) => {
         const amt = parseFloat(amount)
         if (isNaN(amt) || amt <= 0) return
+        if (currencyRef.current === 'INR' && amt < 100) {
+            showToast('error', 'Minimum Deposit', 'Minimum deposit is ₹100')
+            throw new Error('Minimum deposit is ₹100')
+        }
 
         const method = typeof options === 'string' ? options : (options.method || 'UPI')
         const utrNumber = typeof options === 'object' && options.utrNumber ? options.utrNumber : ''

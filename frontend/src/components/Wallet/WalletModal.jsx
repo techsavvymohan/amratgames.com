@@ -98,7 +98,7 @@ export default function WalletModal() {
     const [copied, setCopied] = useState(false)
 
     // Deposit State
-    const [depositAmount, setDepositAmount] = useState('300')
+    const [depositAmount, setDepositAmount] = useState('100')
     const [utrNumber, setUtrNumber] = useState('')
     const [isDepositing, setIsDepositing] = useState(false)
     const [isInstantPaying, setIsInstantPaying] = useState(false)
@@ -472,7 +472,7 @@ export default function WalletModal() {
         }
     }
 
-    const PRESET_AMOUNTS = [300, 500, 1000, 2500, 5000]
+    const PRESET_AMOUNTS = [100, 300, 500, 1000, 2500, 5000]
 
     return (
         <div className="amrat-wallet-overlay" onClick={closeWalletModal}>
@@ -750,7 +750,7 @@ export default function WalletModal() {
                                                 <input
                                                     type="number"
                                                     className="amrat-field-input has-prefix"
-                                                    placeholder="Enter custom amount"
+                                                    placeholder="Enter amount (min ₹100)"
                                                     value={depositAmount}
                                                     min="100"
                                                     step="1"
@@ -758,6 +758,11 @@ export default function WalletModal() {
                                                     required
                                                 />
                                             </div>
+                                            {depositAmount !== '' && parseFloat(depositAmount) < 100 && (
+                                                <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '5px', fontWeight: '600' }}>
+                                                    ⚠️ Minimum deposit is ₹100.
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Step 2: Instant 1-Click UPI App Redirection */}
@@ -774,7 +779,7 @@ export default function WalletModal() {
                                                         type="button"
                                                         className={`amrat-upi-app-btn app-${app.id} ${loadingApp === app.id ? 'loading' : ''}`}
                                                         onClick={() => handleAppPay(app)}
-                                                        disabled={loadingApp !== null || isInstantPaying}
+                                                        disabled={loadingApp !== null || isInstantPaying || !depositAmount || parseFloat(depositAmount) < 100}
                                                         title={`Pay ₹${depositAmount || '0'} via ${app.name}`}
                                                     >
                                                         <div className="amrat-upi-app-icon-wrap">
@@ -801,9 +806,9 @@ export default function WalletModal() {
                                             type="button"
                                             className="amrat-instant-pay-btn"
                                             onClick={handleInstantPay}
-                                            disabled={isInstantPaying || loadingApp !== null || !depositAmount || parseFloat(depositAmount) <= 0}
+                                            disabled={isInstantPaying || loadingApp !== null || !depositAmount || parseFloat(depositAmount) < 100}
                                         >
-                                            <span>{isInstantPaying ? '⏳ Connecting UPI Gateway…' : '⚡ Pay Instantly via UPI (Auto-Credit)'}</span>
+                                            <span>{isInstantPaying ? '⏳ Connecting UPI Gateway…' : (!depositAmount || parseFloat(depositAmount) < 100) ? 'Minimum Deposit is ₹100' : '⚡ Pay Instantly via UPI (Auto-Credit)'}</span>
                                         </button>
 
                                         {/* UPI ID Bar with One-Click Copy */}
@@ -850,11 +855,13 @@ export default function WalletModal() {
                                         <button
                                             type="submit"
                                             className="amrat-submit-deposit-btn"
-                                            disabled={isDepositing || !depositAmount || parseFloat(depositAmount) <= 0}
+                                            disabled={isDepositing || !depositAmount || parseFloat(depositAmount) < 100}
                                         >
                                             {isDepositing
                                                 ? 'Verifying & Adding Funds…'
-                                                : `Submit Deposit of ₹${Number(depositAmount || 0).toLocaleString('en-IN')}`}
+                                                : (!depositAmount || parseFloat(depositAmount) < 100)
+                                                    ? 'Minimum Deposit is ₹100'
+                                                    : `Submit Deposit of ₹${Number(depositAmount || 0).toLocaleString('en-IN')}`}
                                         </button>
                                     </form>
                                 )}
