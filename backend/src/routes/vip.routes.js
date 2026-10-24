@@ -6,6 +6,7 @@
 import express from 'express'
 import { db } from '../db/db.js'
 import { requireAuth } from '../middleware/auth.js'
+import { cashierLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -32,7 +33,7 @@ router.get('/status', requireAuth, (req, res) => {
 })
 
 // POST /api/vip/claim-rakeback
-router.post('/claim-rakeback', requireAuth, async (req, res) => {
+router.post('/claim-rakeback', cashierLimiter, requireAuth, async (req, res) => {
     try {
         const result = await db.claimRakeback(req.user.id)
         res.json({

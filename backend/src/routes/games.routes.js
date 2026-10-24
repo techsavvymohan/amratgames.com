@@ -9,6 +9,8 @@ import { minesRoutes } from '../games/mines/index.js'
 import { crashRoutes } from '../games/crash/index.js'
 import { coinTossRoutes } from '../games/coin-toss/index.js'
 import { bankrollRisk } from '../services/BankrollRiskService.js'
+import { redisCache, CACHE_TTL } from '../services/RedisCacheService.js'
+import { gameActionLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -23,33 +25,44 @@ router.use('/coin-toss', coinTossRoutes)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
 // GET /api/games/recent
-router.get('/recent', (req, res) => {
+router.get('/recent', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit, 10) || 20
         const game = req.query.game ? String(req.query.game).toLowerCase().trim() : null
-        let bets = db.getRecentBets(100)
-        if (game) {
-            const target = game.replace(/[^a-z0-9]/g, '')
-            bets = bets.filter(b => {
-                const bg = String(b.game || b.gameName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-                return bg.includes(target) || target.includes(bg)
-            })
-        }
-        res.json({ success: true, bets: bets.slice(0, limit) })
+        const cacheKey = `games:recent:${game || 'all'}:${limit}`
+
+        const bets = await redisCache.getOrSet(cacheKey, CACHE_TTL.RECENT_BETS, async () => {
+            let list = db.getRecentBets(100)
+            if (game) {
+                const target = game.replace(/[^a-z0-9]/g, '')
+                list = list.filter(b => {
+                    const bg = String(b.game || b.gameName || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+                    return bg.includes(target) || target.includes(bg)
+                })
+            }
+            return list.slice(0, limit)
+        })
+
+        res.json({ success: true, bets })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
     }
 })
 
 // GET /api/games/provably-fair/seed
-router.get('/provably-fair/seed', (req, res) => {
+router.get('/provably-fair/seed', async (req, res) => {
     try {
+        const data = await redisCache.getOrSet('games:provably-fair:seed', CACHE_TTL.SEED_INFO, async () => {
+            return {
+                serverSeedHash: db.data.settings?.serverSeedHash,
+                rtp: db.data.settings?.rtp || 98.0,
+                houseEdge: db.data.settings?.houseEdge || 2.0,
+                announcement: db.data.settings?.activeAnnouncements
+            }
+        })
         res.json({
             success: true,
-            serverSeedHash: db.data.settings?.serverSeedHash,
-            rtp: db.data.settings?.rtp || 98.0,
-            houseEdge: db.data.settings?.houseEdge || 2.0,
-            announcement: db.data.settings?.activeAnnouncements
+            ...data
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -326,7 +339,7 @@ function evaluateGameRound({
 
 // ── 2. Universal Server-Authoritative Bet Processor ─────────
 // POST /api/games/bet
-router.post('/bet', authenticate, async (req, res) => {
+router.post('/bet', gameActionLimiter, authenticate, async (req, res) => {
     try {
         const {
             game = 'crash',
@@ -397,6 +410,7 @@ router.post('/bet', authenticate, async (req, res) => {
         })
 
         broadcastEvent('NEW_BET', betResult.bet)
+        redisCache.delPattern('games:recent:*').catch(() => {})
 
         return res.json({
             success: true,

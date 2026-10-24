@@ -10,6 +10,7 @@ import { testSupabaseConnection } from './db/SupabaseClient.js'
 import { emailService } from './services/EmailService.js'
 import { redisCache } from './services/RedisCacheService.js'
 import { floorActivityEngine } from './services/FloorActivityEngine.js'
+import { globalApiLimiter } from './middleware/rateLimiter.js'
 
 import authRoutes from './routes/auth.routes.js'
 import adminPanelModule from './admin-panel/index.js'
@@ -116,6 +117,27 @@ app.use(express.json({
     }
 }))
 app.use(authenticate)
+
+// ── Resilience & Anti-DoS: Request Timeout (15s) and Global Rate Limiter ──
+function requestTimeout(seconds = 15) {
+    return (req, res, next) => {
+        if (req.headers.upgrade === 'websocket') return next()
+        const timer = setTimeout(() => {
+            if (!res.headersSent) {
+                res.status(504).json({
+                    success: false,
+                    error: 'Gateway Timeout: Request processing took too long under high load. Please retry.',
+                    code: 'GATEWAY_TIMEOUT'
+                })
+            }
+        }, seconds * 1000)
+        if (timer.unref) timer.unref()
+        res.on('finish', () => clearTimeout(timer))
+        res.on('close', () => clearTimeout(timer))
+        next()
+    }
+}
+app.use('/api', requestTimeout(15), globalApiLimiter)
 
 // Fast Health Check (Cached in Redis for 3s to handle high-frequency LB probes)
 app.get('/api/health', async (req, res) => {

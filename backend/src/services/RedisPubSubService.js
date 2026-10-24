@@ -25,6 +25,14 @@ export class RedisPubSubService {
         this.init()
     }
 
+    get isAvailable() {
+        return Boolean(this.isConnected && this.pubClient && (this.pubClient.status === 'ready' || this.pubClient.status === 'connect'))
+    }
+
+    get publisher() {
+        return this.pubClient
+    }
+
     init() {
         const redisUrl = CONFIG.REDIS_URL || 'redis://127.0.0.1:6379'
 

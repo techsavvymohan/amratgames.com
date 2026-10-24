@@ -65,10 +65,39 @@ export function initWebSocketServer(server) {
         }
     })
 
-    wss.on('connection', (ws) => {
+    // Track concurrent connections per IP to prevent socket starvation / file descriptor exhaustion
+    const activeIpConnections = new Map() // IP -> count
+    const MAX_WS_PER_IP = 30
+
+    wss.on('connection', (ws, req) => {
+        const clientIp = (req?.headers?.['x-forwarded-for']
+            ? req.headers['x-forwarded-for'].split(',')[0].trim()
+            : (req?.socket?.remoteAddress || '127.0.0.1'))
+
+        const ipCount = (activeIpConnections.get(clientIp) || 0) + 1
+        if (ipCount > MAX_WS_PER_IP) {
+            try {
+                ws.close(1008, 'Too many concurrent WebSocket connections from this IP')
+            } catch {}
+            return
+        }
+        activeIpConnections.set(clientIp, ipCount)
+
         ws.isAlive = true
         ws.messageCount = 0
         ws.lastMessageReset = Date.now()
+
+        const cleanupIp = () => {
+            const count = (activeIpConnections.get(clientIp) || 1) - 1
+            if (count <= 0) {
+                activeIpConnections.delete(clientIp)
+            } else {
+                activeIpConnections.set(clientIp, count)
+            }
+        }
+
+        ws.on('close', cleanupIp)
+        ws.on('error', cleanupIp)
 
         ws.on('pong', () => {
             ws.isAlive = true

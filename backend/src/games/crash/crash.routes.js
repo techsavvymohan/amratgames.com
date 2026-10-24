@@ -5,6 +5,7 @@ import { authenticate } from '../../middleware/auth.js'
 import { broadcastEvent } from '../../websocket.js'
 import { crashEngine } from './crash.engine.js'
 import { crashRoomService } from '../../services/CrashRoomService.js'
+import { gameActionLimiter } from '../../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -20,7 +21,7 @@ router.get('/active', authenticate, (req, res) => {
 })
 
 // POST /api/games/crash/start
-router.post('/start', authenticate, async (req, res) => {
+router.post('/start', gameActionLimiter, authenticate, async (req, res) => {
     try {
         const { betAmount, currency = 'INR', autoCashout, clientSeed } = req.body
         const parsedAmount = parseFloat(betAmount)
@@ -247,8 +248,8 @@ const handleRoomBet = async (req, res) => {
         })
     }
 }
-router.post('/room/bet', authenticate, handleRoomBet)
-router.post('/room-bet', authenticate, handleRoomBet)
+router.post('/room/bet', gameActionLimiter, authenticate, handleRoomBet)
+router.post('/room-bet', gameActionLimiter, authenticate, handleRoomBet)
 
 // POST /api/games/crash/room/cashout and /api/games/crash/room-cashout
 const handleRoomCashout = async (req, res) => {

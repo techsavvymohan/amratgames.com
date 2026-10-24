@@ -4,6 +4,7 @@ import { db } from '../../db/db.js'
 import { authenticate } from '../../middleware/auth.js'
 import { broadcastEvent } from '../../websocket.js'
 import { minesEngine } from './mines.engine.js'
+import { gameActionLimiter } from '../../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -19,7 +20,7 @@ router.get('/active', authenticate, (req, res) => {
 })
 
 // POST /api/games/mines/start
-router.post('/start', authenticate, async (req, res) => {
+router.post('/start', gameActionLimiter, authenticate, async (req, res) => {
     try {
         const { betAmount, currency = 'INR', minesCount = 3, clientSeed } = req.body
         const parsedAmount = parseFloat(betAmount)
@@ -72,7 +73,7 @@ router.post('/start', authenticate, async (req, res) => {
 })
 
 // POST /api/games/mines/reveal
-router.post('/reveal', authenticate, async (req, res) => {
+router.post('/reveal', gameActionLimiter, authenticate, async (req, res) => {
     try {
         const { roundId, tileIndex } = req.body
         if (!roundId || tileIndex === undefined) {

@@ -6,7 +6,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
 import { automatedSettlement } from '../services/AutomatedSettlementService.js'
 import { webhookSignatureVerifier } from '../gateways/security/WebhookSignatureVerifier.js'
-import { sensitiveApiLimiter } from '../middleware/rateLimiter.js'
+import { cashierLimiter, sensitiveApiLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -50,7 +50,7 @@ router.get('/crypto-deposit-info', requireAuth, (req, res) => {
 })
 
 // POST /api/wallet/deposit
-router.post('/deposit', requireAuth, sensitiveApiLimiter, async (req, res) => {
+router.post('/deposit', requireAuth, cashierLimiter, async (req, res) => {
     try {
         const { currency = 'INR', amount, paymentMethod = 'UPI', utrNumber = '' } = req.body
         const parsedAmount = parseFloat(amount)
@@ -90,7 +90,7 @@ router.post('/deposit', requireAuth, sensitiveApiLimiter, async (req, res) => {
 })
 
 // POST /api/wallet/withdraw
-router.post('/withdraw', requireAuth, sensitiveApiLimiter, async (req, res) => {
+router.post('/withdraw', requireAuth, cashierLimiter, async (req, res) => {
     try {
         const { currency = 'INR', amount, payoutDestination, payoutMethod = 'UPI', bankDetails = null } = req.body
         const parsedAmount = parseFloat(amount)
