@@ -6,6 +6,7 @@ import { requireAuth } from '../middleware/auth.js'
 import { broadcastEvent } from '../websocket.js'
 import { automatedSettlement } from '../services/AutomatedSettlementService.js'
 import { webhookSignatureVerifier } from '../gateways/security/WebhookSignatureVerifier.js'
+import { sensitiveApiLimiter } from '../middleware/rateLimiter.js'
 
 const router = express.Router()
 
@@ -49,7 +50,7 @@ router.get('/crypto-deposit-info', requireAuth, (req, res) => {
 })
 
 // POST /api/wallet/deposit
-router.post('/deposit', requireAuth, async (req, res) => {
+router.post('/deposit', requireAuth, sensitiveApiLimiter, async (req, res) => {
     try {
         const { currency = 'INR', amount, paymentMethod = 'UPI', utrNumber = '' } = req.body
         const parsedAmount = parseFloat(amount)
@@ -86,7 +87,7 @@ router.post('/deposit', requireAuth, async (req, res) => {
 })
 
 // POST /api/wallet/withdraw
-router.post('/withdraw', requireAuth, async (req, res) => {
+router.post('/withdraw', requireAuth, sensitiveApiLimiter, async (req, res) => {
     try {
         const { currency = 'INR', amount, payoutDestination, payoutMethod = 'UPI', bankDetails = null } = req.body
         const parsedAmount = parseFloat(amount)
@@ -94,12 +95,39 @@ router.post('/withdraw', requireAuth, async (req, res) => {
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             return res.status(400).json({ success: false, error: 'Valid withdrawal amount required' })
         }
+        if (currency === 'INR' && parsedAmount < 100) {
+            return res.status(400).json({ success: false, error: 'Minimum withdrawal amount is ₹100' })
+        }
+        if (currency === 'INR' && parsedAmount > 200000) {
+            return res.status(400).json({ success: false, error: 'Maximum withdrawal per request is ₹2,00,000' })
+        }
+
+        // Validate payout destination format
+        if (payoutMethod === 'UPI') {
+            const cleanDest = String(payoutDestination || '').trim()
+            if (!cleanDest || cleanDest.length < 3 || !cleanDest.includes('@')) {
+                return res.status(400).json({ success: false, error: 'Please enter a valid UPI ID (e.g. yourname@upi)' })
+            }
+        } else if (payoutMethod === 'BANK') {
+            if (!bankDetails || !bankDetails.accountNumber || !bankDetails.ifsc || !bankDetails.holder) {
+                return res.status(400).json({ success: false, error: 'Bank account number, IFSC code, and account holder name are required' })
+            }
+        }
 
         const result = await db.withUserLock(req.user.id, async () => {
             const user = db.findUserById(req.user.id)
             if (!user) {
                 const err = new Error('User not found')
                 err.status = 404
+                throw err
+            }
+
+            // ── Rule 0: Prevent concurrent pending withdrawal spam ──
+            const existingPending = (db.data.withdrawals || []).find(w => w.userId === req.user.id && w.status === 'pending')
+            if (existingPending) {
+                const err = new Error('You already have a withdrawal request under security verification. Please wait for it to be processed before submitting another.')
+                err.code = 'CONCURRENT_WITHDRAWAL_BLOCKED'
+                err.status = 400
                 throw err
             }
 

@@ -326,6 +326,57 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
         assert.match(otp, /^[0-9]{6}$/)
     })
 
+    it('verifies WalletRepository enforces ₹100 minimum, ₹2,00,000 maximum, and blocks concurrent pending withdrawals', () => {
+        const player = db.createUser({
+            username: 'wd_guard_user_' + Date.now(),
+            email: `wd_guard_${Date.now()}@test.com`,
+            passwordHash: 'dummy',
+            role: 'player'
+        })
+        player.balances.INR = 500000
+        player.totalDeposited = 1000
+        player.totalWagered = 1500
+
+        // 1. Rejects below ₹100
+        assert.throws(() => {
+            db.requestWithdrawal({
+                userId: player.id,
+                currency: 'INR',
+                amount: 50,
+                payoutDestination: 'test@upi'
+            })
+        }, /Minimum withdrawal amount is ₹100/)
+
+        // 2. Rejects above ₹2,00,000
+        assert.throws(() => {
+            db.requestWithdrawal({
+                userId: player.id,
+                currency: 'INR',
+                amount: 250000,
+                payoutDestination: 'test@upi'
+            })
+        }, /Maximum withdrawal amount is ₹2,00,000/)
+
+        // 3. Allows valid withdrawal (₹500)
+        const firstWd = db.requestWithdrawal({
+            userId: player.id,
+            currency: 'INR',
+            amount: 500,
+            payoutDestination: 'test@upi'
+        })
+        assert.equal(firstWd.withdrawal.status, 'pending')
+
+        // 4. Blocks second concurrent pending withdrawal
+        assert.throws(() => {
+            db.requestWithdrawal({
+                userId: player.id,
+                currency: 'INR',
+                amount: 1000,
+                payoutDestination: 'test@upi'
+            })
+        }, /You already have a withdrawal request under security verification/)
+    })
+
     // Clean exit for node test runner when Redis is not running locally
     after(() => {
         setTimeout(() => process.exit(0), 100).unref()

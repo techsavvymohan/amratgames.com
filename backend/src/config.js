@@ -73,7 +73,7 @@ export const CONFIG = {
     OTP_RESEND_COOLDOWN_SECONDS: parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS, 10) || 60,
     OTP_MAX_ATTEMPTS: parseInt(process.env.OTP_MAX_ATTEMPTS, 10) || 5,
     DEMO_OTP_BYPASS_ENABLED: (process.env.NODE_ENV === 'production')
-        ? (process.env.DEMO_OTP_BYPASS_ENABLED === 'true')
+        ? false
         : (process.env.DEMO_OTP_BYPASS_ENABLED !== 'false'),
     DEMO_OTP_CODE: process.env.DEMO_OTP_CODE || '777777',
 

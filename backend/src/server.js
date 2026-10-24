@@ -43,13 +43,30 @@ app.use(compression({
         return compression.filter(req, res)
     }
 }))
+const defaultAllowedOrigins = [
+    'https://amratgames.com',
+    'https://www.amratgames.com',
+    'https://admin.amratgames.com'
+]
+
 app.use(cors({
-    origin: CONFIG.isProduction && CONFIG.CORS_ORIGIN !== '*'
-        ? CONFIG.CORS_ORIGIN
-        : true,
+    origin: (origin, callback) => {
+        // Allow mobile apps, curl, Postman, or local headless requests with no origin
+        if (!origin) return callback(null, true)
+        if (!CONFIG.isProduction) return callback(null, true)
+
+        const allowed = Array.isArray(CONFIG.CORS_ORIGIN)
+            ? CONFIG.CORS_ORIGIN
+            : (CONFIG.CORS_ORIGIN && CONFIG.CORS_ORIGIN !== '*' ? [CONFIG.CORS_ORIGIN] : defaultAllowedOrigins)
+
+        if (allowed.includes(origin) || allowed.includes('*')) {
+            return callback(null, true)
+        }
+        return callback(new Error(`Origin ${origin} blocked by CORS security policy`))
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Webhook-Signature', 'X-Signature']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Webhook-Signature', 'Webhook-Signature', 'X-Signature', 'X-Device-Fingerprint']
 }))
 app.use(express.json({
     limit: '1mb',

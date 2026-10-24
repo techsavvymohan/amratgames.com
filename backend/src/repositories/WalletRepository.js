@@ -64,14 +64,31 @@ export class WalletRepository extends BaseRepository {
         if (!user) throw new Error('User not found')
         if (!user.balances) user.balances = { INR: 0, BTC: 0, USDT: 0, AMRAT: 0 }
 
+        const parsedAmount = parseFloat(amount)
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            throw new Error('Valid withdrawal amount is required')
+        }
+        if (currency === 'INR' && parsedAmount < 100) {
+            throw new Error('Minimum withdrawal amount is ₹100')
+        }
+        if (currency === 'INR' && parsedAmount > 200000) {
+            throw new Error('Maximum withdrawal amount is ₹2,00,000 per transaction')
+        }
+
+        // Prevent concurrent pending withdrawal spam
+        const existingPending = (this.data.withdrawals || []).find(w => w.userId === userId && w.status === 'pending')
+        if (existingPending) {
+            throw new Error('You already have a withdrawal request under security verification. Please wait for it to be processed before submitting another.')
+        }
+
         const currentBal = user.balances[currency] || 0
-        if (amount > currentBal) {
+        if (parsedAmount > currentBal) {
             throw new Error(`Insufficient ${currency} balance (Available: ₹${currentBal.toLocaleString('en-IN')})`)
         }
 
         const curr = String(currency || 'INR').toUpperCase()
         const precision = curr === 'BTC' ? 8 : (curr === 'USDT' ? 4 : 2)
-        const newBal = Math.max(0, parseFloat((currentBal - amount).toFixed(precision)))
+        const newBal = Math.max(0, parseFloat((currentBal - parsedAmount).toFixed(precision)))
         user.balances[currency] = newBal
 
         const withdrawalId = 'wd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
