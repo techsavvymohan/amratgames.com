@@ -514,8 +514,11 @@ function ColorMatchGame() {
 
     return (
         <div className="wingo-game-container">
-            {/* Perforated Coral Red Ticket Banner (Directly at Top - Matches Reference Screenshot) */}
-            <div className="wingo-ticket-banner">
+            <div className="wingo-split-layout">
+                {/* ── LEFT COLUMN: 30s Win Go Betting Arena ── */}
+                <div className="wingo-betting-column">
+                    {/* Perforated Coral Red Ticket Banner (Directly at Top - Matches Reference Screenshot) */}
+                    <div className="wingo-ticket-banner">
                 {/* Perforation Cutouts */}
                 <div className="ticket-notch notch-top"></div>
                 <div className="ticket-notch notch-bottom"></div>
@@ -704,9 +707,12 @@ function ColorMatchGame() {
                     </button>
                 </div>
             )}
+                </div>
 
-            {/* 3 Tabs: Game history, Chart, My history */}
-            <div className="wingo-tabs-bar">
+                {/* ── RIGHT COLUMN: Live Roadmap, History & Analytics Console ── */}
+                <div className="wingo-roadmap-column">
+                    {/* 3 Tabs: Game history, Chart, My history */}
+                    <div className="wingo-tabs-bar">
                 <button
                     type="button"
                     className={`wingo-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
@@ -867,6 +873,8 @@ function ColorMatchGame() {
                     )}
                 </div>
             )}
+                </div>
+            </div>
 
             {/* Simplest Mini Win Popup (Subtle floating notification at top) */}
             {winPopup && (

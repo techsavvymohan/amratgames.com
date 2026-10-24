@@ -37,6 +37,21 @@
     position: relative;
 }
 
+.wingo-split-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.wingo-betting-column,
+.wingo-roadmap-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
 /* Ensure no child card is squished by flexbox */
 .wingo-ticket-banner,
 .wingo-color-pills-row,
@@ -1582,4 +1597,369 @@
 @keyframes textFlash {
     from { opacity: 0.7; }
     to { opacity: 1; }
+}
+
+/* ==========================================================================
+   LAPTOP & DESKTOP EXECUTIVE 2-COLUMN VIEWPORT (>= 992px)
+   Balances the Betting Arena (Left) and Live Roadmap & Analytics (Right)
+   with zero vertical jumps, rich typography, and seamless ergonomics.
+   ========================================================================== */
+@media (min-width: 992px) {
+    .wingo-game-container {
+        max-width: 1240px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 18px 24px 60px;
+        gap: 16px;
+    }
+
+    .wingo-split-layout {
+        display: grid;
+        grid-template-columns: 460px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .wingo-betting-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        position: sticky;
+        top: 16px;
+    }
+
+    .wingo-roadmap-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    /* Ticket Banner Enhancement */
+    .wingo-ticket-banner {
+        min-height: 98px;
+        padding: 12px 18px;
+        border-radius: 18px;
+        box-shadow: 0 10px 25px rgba(249, 89, 89, 0.28);
+    }
+
+    .ticket-rule-btn {
+        font-size: 12px;
+        padding: 3px 12px;
+    }
+
+    .ticket-mode-label {
+        font-size: 15px;
+        margin: 4px 0;
+    }
+
+    .ticket-time-label {
+        font-size: 13.5px;
+    }
+
+    .flip-digit-card {
+        width: 25px;
+        height: 34px;
+        font-size: 21px;
+        border-radius: 5px;
+    }
+
+    .flip-colon {
+        font-size: 19px;
+        margin: 0 2px;
+    }
+
+    .ticket-period-id {
+        font-size: 13px;
+    }
+
+    .ticket-mini-ball-wrap .wingo-lottery-ball.size-mini {
+        width: 26px;
+        height: 26px;
+    }
+
+    .ticket-mini-ball-wrap .wingo-lottery-ball.size-mini .ball-number {
+        font-size: 13px;
+    }
+
+    /* 3 Color Pills Enhancement */
+    .wingo-color-pills-row {
+        gap: 10px;
+    }
+
+    .wingo-pill-btn {
+        min-height: 48px;
+        border-radius: 14px;
+        padding: 10px 8px;
+    }
+
+    .pill-text {
+        font-size: 18px;
+    }
+
+    .pill-staked-badge {
+        top: -9px;
+        right: -5px;
+        font-size: 12px;
+        padding: 2px 8px;
+    }
+
+    /* 10 Numbers Board Enhancement */
+    .wingo-balls-card {
+        padding: 14px 12px;
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .wingo-balls-grid {
+        row-gap: 12px;
+        column-gap: 8px;
+    }
+
+    .wingo-lottery-ball.size-board {
+        width: 52px;
+        height: 52px;
+    }
+
+    .wingo-lottery-ball.size-board .ball-number {
+        font-size: 24px;
+    }
+
+    .size-board .ball-scallop {
+        width: 13px;
+        height: 13px;
+    }
+    .size-board .ball-scallop.scallop-t { top: -6.5px; }
+    .size-board .ball-scallop.scallop-b { bottom: -6.5px; }
+    .size-board .ball-scallop.scallop-l { left: -6.5px; }
+    .size-board .ball-scallop.scallop-r { right: -6.5px; }
+
+    .ball-staked-badge {
+        top: -8px;
+        right: -8px;
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+
+    /* Multiplier Pills Enhancement */
+    .wingo-multiplier-bar {
+        gap: 8px;
+    }
+
+    .wingo-random-btn {
+        font-size: 15px;
+        padding: 6px 14px;
+        border-radius: 10px;
+    }
+
+    .wingo-mult-pill {
+        min-width: 44px;
+        padding: 7px 4px;
+        font-size: 12.5px;
+        border-radius: 8px;
+    }
+
+    /* Big / Small Row Enhancement */
+    .wingo-big-small-row {
+        border-radius: 24px;
+    }
+
+    .wingo-bs-btn {
+        min-height: 46px;
+        padding: 10px 8px;
+    }
+
+    .bs-text {
+        font-size: 19px;
+    }
+
+    /* Active Staked Banner */
+    .wingo-active-stake-banner {
+        padding: 10px 18px;
+        border-radius: 14px;
+    }
+
+    .stake-info {
+        font-size: 14.5px;
+    }
+
+    .stake-amt {
+        font-size: 17px;
+    }
+
+    .stake-clear-btn {
+        font-size: 13px;
+        padding: 6px 14px;
+        border-radius: 10px;
+    }
+
+    /* Right Column Tabs */
+    .wingo-tabs-bar {
+        background: #ffffff;
+        padding: 6px;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .wingo-tab-btn {
+        padding: 10px 18px;
+        font-size: 15.5px;
+        border-radius: 10px;
+    }
+
+    /* Right Column Cards (History / Chart / MyBets) */
+    .wingo-history-card,
+    .wingo-mybets-card,
+    .wingo-chart-card {
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        max-height: 640px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f8fafc;
+    }
+
+    .wingo-history-card::-webkit-scrollbar,
+    .wingo-mybets-card::-webkit-scrollbar,
+    .wingo-chart-card::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .wingo-history-card::-webkit-scrollbar-thumb,
+    .wingo-mybets-card::-webkit-scrollbar-thumb,
+    .wingo-chart-card::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .table-header-coral th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding: 12px 14px;
+        font-size: 14.5px;
+    }
+
+    .table-row td {
+        padding: 11px 14px;
+        font-size: 14px;
+    }
+
+    .cell-period {
+        font-size: 14px;
+        padding-left: 16px !important;
+    }
+
+    .cell-number .num-val {
+        font-size: 22px;
+    }
+
+    .cell-bs .bs-script-val {
+        font-size: 14.5px;
+        font-weight: 600;
+    }
+
+    .dots-container {
+        gap: 8px;
+    }
+
+    .color-dot {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Chart Tab on Laptop */
+    .wingo-chart-card {
+        padding: 20px;
+    }
+
+    .chart-title {
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .chart-stat-grid {
+        padding: 14px 10px;
+        gap: 8px;
+        border-radius: 14px;
+    }
+
+    .stat-bar-track {
+        width: 16px;
+        height: 75px;
+    }
+
+    .stat-num {
+        font-size: 14px;
+    }
+
+    .stat-count {
+        font-size: 12px;
+    }
+
+    .roadmap-digits {
+        grid-template-columns: repeat(10, 24px);
+        gap: 6px;
+    }
+
+    .roadmap-digits span {
+        font-size: 13px;
+    }
+
+    .roadmap-cells {
+        grid-template-columns: repeat(10, 24px);
+        gap: 6px;
+    }
+
+    .roadmap-cell {
+        width: 24px;
+        height: 24px;
+    }
+
+    .hit-dot {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+
+    .roadmap-period {
+        font-size: 13px;
+    }
+
+    .roadmap-row {
+        padding: 6px 0;
+    }
+}
+
+/* Wide Laptop & Large Desktop Viewport (>= 1280px) */
+@media (min-width: 1280px) {
+    .wingo-game-container {
+        max-width: 1340px;
+        padding: 22px 32px 60px;
+    }
+
+    .wingo-split-layout {
+        grid-template-columns: 500px 1fr;
+        gap: 30px;
+    }
+
+    .wingo-lottery-ball.size-board {
+        width: 56px;
+        height: 56px;
+    }
+
+    .wingo-lottery-ball.size-board .ball-number {
+        font-size: 26px;
+    }
+
+    .size-board .ball-scallop {
+        width: 14px;
+        height: 14px;
+    }
+    .size-board .ball-scallop.scallop-t { top: -7px; }
+    .size-board .ball-scallop.scallop-b { bottom: -7px; }
+    .size-board .ball-scallop.scallop-l { left: -7px; }
+    .size-board .ball-scallop.scallop-r { right: -7px; }
 }
