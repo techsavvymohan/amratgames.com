@@ -459,9 +459,9 @@ export default function WalletModal() {
                 destination,
                 id: res?.withdrawal?.id || null,
                 status: res?.status || res?.withdrawal?.status || 'pending',
-                instantPayout: Boolean(res?.instantPayout || res?.withdrawal?.status === 'approved'),
+                instantPayout: false,
                 dispatchRef: res?.dispatchRef || res?.withdrawal?.transactionRef || null,
-                estimatedArrival: res?.estimatedArrival || (res?.instantPayout ? 'Instant (60s)' : '10-30 minutes')
+                estimatedArrival: '5-10 minutes'
             })
             setWithdrawAmount('')
             refreshWithdrawals?.()
@@ -867,40 +867,39 @@ export default function WalletModal() {
                        ══════════════════════════════════════════════════════════ */}
                     {activeTab === 'withdraw' && (
                         withdrawSuccess ? (
-                            <div className="amrat-success-card">
-                                <div className="amrat-success-icon" style={{ borderColor: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', color: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', background: withdrawSuccess.instantPayout ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)' }}>
-                                    {withdrawSuccess.instantPayout ? '⚡' : '⏳'}
+                            <div className="amrat-success-card" style={{ borderColor: 'rgba(245, 158, 11, 0.4)' }}>
+                                <div className="amrat-success-icon" style={{ borderColor: '#f59e0b', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)' }}>
+                                    ⏳
                                 </div>
-                                <h3 style={{ margin: 0, color: withdrawSuccess.instantPayout ? '#10b981' : '#f59e0b', fontSize: '1.25rem' }}>
-                                    {withdrawSuccess.instantPayout ? 'Instant Settlement Dispatched!' : 'Withdrawal Request Submitted!'}
+                                <h3 style={{ margin: 0, color: '#f59e0b', fontSize: '1.25rem' }}>
+                                    Withdrawal Request Placed
                                 </h3>
-                                <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                                    {withdrawSuccess.instantPayout ? (
-                                        <>₹{withdrawSuccess.amount.toLocaleString('en-IN')} approved automatically via high-speed settlement rails.</>
-                                    ) : (
-                                        <>Your request for ₹{withdrawSuccess.amount.toLocaleString('en-IN')} has been sent to our cashier team.</>
-                                    )}
-                                    <br />
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                        Destination: <strong>{withdrawSuccess.destination}</strong>
-                                    </span>
-                                    {withdrawSuccess.dispatchRef && (
-                                        <>
-                                            <br />
-                                            <span style={{ fontSize: '0.75rem', color: '#34d399', fontFamily: 'monospace' }}>
-                                                Settlement Ref: <strong>{withdrawSuccess.dispatchRef}</strong>
-                                            </span>
-                                        </>
-                                    )}
-                                    <br />
-                                    <span style={{ fontSize: '0.74rem', color: withdrawSuccess.instantPayout ? '#34d399' : '#fbbf24', marginTop: '6px', display: 'inline-block' }}>
-                                        Status: <strong>{withdrawSuccess.instantPayout ? 'Auto-Approved (Sub-60s Transfer)' : 'Priority Cashier Queue (' + (withdrawSuccess.estimatedArrival || '10 to 20 mins') + ')'}</strong>
-                                    </span>
+                                <p style={{ margin: 0, color: '#f1f5f9', fontSize: '0.92rem', lineHeight: 1.6, fontWeight: 500 }}>
+                                    Your withdrawal request of <strong style={{ color: '#fbbf24' }}>₹{withdrawSuccess.amount.toLocaleString('en-IN')}</strong> has been placed. Please wait <strong>5–10 minutes</strong> for verification.
                                 </p>
+                                <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px dashed rgba(245, 158, 11, 0.3)', borderRadius: '8px', padding: '12px 14px', fontSize: '0.8rem', color: '#cbd5e1', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#94a3b8' }}>Payout Destination:</span>
+                                        <strong style={{ color: '#f8fafc' }}>{withdrawSuccess.destination}</strong>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: '#94a3b8' }}>Verification Status:</span>
+                                        <strong style={{ color: '#fbbf24' }}>Under Security Verification (5–10 Minutes)</strong>
+                                    </div>
+                                    {withdrawSuccess.id && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem' }}>
+                                            <span style={{ color: '#64748b' }}>Request Ticket:</span>
+                                            <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>#{withdrawSuccess.id.slice(-8).toUpperCase()}</span>
+                                        </div>
+                                    )}
+                                    <div style={{ fontSize: '0.73rem', color: '#94a3b8', marginTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '6px', lineHeight: 1.4 }}>
+                                        🔒 All profit earnings and gameplay sessions undergo security audit before funds are released to your bank/UPI.
+                                    </div>
+                                </div>
                                 <button
                                     type="button"
                                     className="amrat-submit-withdraw-btn"
-                                    style={{ marginTop: '12px' }}
+                                    style={{ marginTop: '8px' }}
                                     onClick={() => {
                                         setWithdrawSuccess(null)
                                         setActiveTab('history')
@@ -985,11 +984,6 @@ export default function WalletModal() {
                                 <div className="amrat-unlocked-card">
                                     <span>✓</span>
                                     <span>Payouts Unlocked (Deposited: ₹{totalDeposited} · Rollover: 100% Completed)</span>
-                                </div>
-
-                                <div className="amrat-settlement-tier-badge">
-                                    <span>⚡</span>
-                                    <span>Instant Settlement Active: Requests under ₹10,000 are auto-approved &amp; disbursed in 60s.</span>
                                 </div>
 
                                 {/* Amount Input */}
@@ -1231,7 +1225,7 @@ export default function WalletModal() {
                                                                     borderRadius: '12px',
                                                                     border: '1px solid rgba(245, 158, 11, 0.3)'
                                                                 }}>
-                                                                    ⏳ Pending Review
+                                                                    ⏳ Verification (5–10m)
                                                                 </span>
                                                             )}
                                                             {isApproved && (
@@ -1289,6 +1283,11 @@ export default function WalletModal() {
                                                             </span>
                                                         )}
                                                     </div>
+                                                    {isPending && (
+                                                        <div style={{ fontSize: '0.72rem', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.08)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                                                            Wait for 5–10 minutes for verification
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )
                                         })}

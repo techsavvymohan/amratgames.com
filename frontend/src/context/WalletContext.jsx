@@ -930,7 +930,7 @@ export function WalletProvider({ children }) {
         if (isInstant) {
             showToast('success', '⚡ Instant Settlement Dispatched', `₹${amt.toLocaleString('en-IN')} auto-approved via high-speed settlement rails!`)
         } else {
-            showToast('success', 'Withdrawal Requested', `Withdrawal for ${currencySymbol}${amt.toLocaleString('en-IN')} submitted successfully!`)
+            showToast('success', 'Withdrawal Request Placed', `Your withdrawal request of ₹${amt.toLocaleString('en-IN')} has been placed. Please wait 5–10 minutes for verification.`)
         }
 
         return {
@@ -940,7 +940,7 @@ export function WalletProvider({ children }) {
             instantPayout: isInstant,
             status: finalStatus,
             dispatchRef: data?.dispatchRef || data?.withdrawal?.transactionRef || null,
-            estimatedArrival: data?.estimatedArrival || (isInstant ? 'Instant (60s)' : '10-30 minutes')
+            estimatedArrival: data?.estimatedArrival || (isInstant ? 'Instant (60s)' : '5-10 minutes')
         }
     }, [totalDeposited, token, setStoredBalance, currencySymbol, showToast])
 

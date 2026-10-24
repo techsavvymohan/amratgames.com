@@ -149,7 +149,9 @@ router.post('/withdraw', requireAuth, async (req, res) => {
                 bankDetails
             })
 
-            // ── Pillar 3: Automated Settlement & Risk Evaluation ──
+            // ── Middle Man Verification & Security Review Queue ──
+            // Withdrawals (including profit earnings) are routed to the security middle-man queue.
+            // Funds are NOT auto-released without human verification. The user waits 5–10 minutes for verification.
             const evaluation = automatedSettlement.evaluateWithdrawal(
                 { currency, amount: parsedAmount, payoutMethod },
                 user,
@@ -157,34 +159,33 @@ router.post('/withdraw', requireAuth, async (req, res) => {
             )
 
             let finalWithdrawal = withdrawalResult.withdrawal
-            let instantPayout = false
 
-            if (evaluation.instantPayout) {
-                finalWithdrawal = automatedSettlement.dispatchInstantPayout(finalWithdrawal, db, evaluation)
-                instantPayout = true
-            }
+            // Enforce middle man review queue
+            finalWithdrawal.status = 'pending'
+            finalWithdrawal.verificationStatus = 'UNDER_SECURITY_REVIEW'
+            finalWithdrawal.estimatedArrival = '5-10 minutes'
+            db.persist()
 
             return {
                 ...withdrawalResult,
                 withdrawal: finalWithdrawal,
                 evaluation,
-                instantPayout,
+                instantPayout: false,
                 totalDeposited,
                 totalWagered
             }
         })
 
-        const statusMsg = result.instantPayout
-            ? `⚡ Instant Settlement Dispatched! ₹${parsedAmount.toLocaleString('en-IN')} approved automatically via high-speed settlement rails.`
-            : `Withdrawal request for ${currency} ${parsedAmount.toLocaleString('en-IN')} submitted successfully! ${result.evaluation?.reviewReason || 'Your request is in priority review queue.'}`
+        const statusMsg = `Your withdrawal request of ₹${parsedAmount.toLocaleString('en-IN')} has been placed. Please wait 5–10 minutes for verification.`
 
         res.json({
             success: true,
             message: statusMsg,
-            status: result.withdrawal.status,
-            instantPayout: result.instantPayout,
-            dispatchRef: result.withdrawal.transactionRef || null,
-            estimatedArrival: result.evaluation?.eta || '10-30 minutes',
+            status: 'pending',
+            verificationStatus: 'UNDER_SECURITY_REVIEW',
+            instantPayout: false,
+            dispatchRef: null,
+            estimatedArrival: '5-10 minutes',
             balances: result.user.balances,
             totalDeposited: result.totalDeposited,
             totalWagered: result.totalWagered,
