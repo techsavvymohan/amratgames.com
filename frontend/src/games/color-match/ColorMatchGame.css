@@ -23,7 +23,7 @@
 .wingo-game-container {
     max-width: 440px;
     margin: 0 auto;
-    padding: 10px 12px 80px;
+    padding: 6px 10px 80px;
     background: var(--wingo-bg);
     min-height: 100%;
     height: auto;
@@ -33,7 +33,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     position: relative;
 }
 
@@ -57,20 +57,20 @@
 .wingo-ticket-banner {
     position: relative;
     background: linear-gradient(135deg, #f95959 0%, #ff6262 100%);
-    border-radius: 16px;
-    padding: 14px 16px;
+    border-radius: 14px;
+    padding: 9px 12px;
     display: flex;
     color: #ffffff;
-    box-shadow: 0 8px 20px rgba(249, 89, 89, 0.25);
-    min-height: 110px;
+    box-shadow: 0 6px 16px rgba(249, 89, 89, 0.22);
+    min-height: 82px;
     box-sizing: border-box;
 }
 
 /* Semicircular Perforation Cutout Notches */
 .ticket-notch {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     background: var(--wingo-bg);
     border-radius: 50%;
     left: 49%;
@@ -79,11 +79,11 @@
 }
 
 .ticket-notch.notch-top {
-    top: -10px;
+    top: -8px;
 }
 
 .ticket-notch.notch-bottom {
-    bottom: -10px;
+    bottom: -8px;
 }
 
 /* Left Half of Ticket */
@@ -99,15 +99,15 @@
     align-self: flex-start;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     background: rgba(255, 255, 255, 0.22);
     border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 20px;
-    padding: 3px 12px;
+    padding: 2px 9px;
     color: #ffffff;
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 12.5px;
+    font-size: 11px;
     cursor: pointer;
     backdrop-filter: blur(4px);
     transition: background 0.2s ease;
@@ -120,9 +120,9 @@
 .ticket-mode-label {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 14.5px;
+    font-size: 13px;
     letter-spacing: 0.3px;
-    margin: 4px 0;
+    margin: 2px 0;
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -130,7 +130,7 @@
 .ticket-recent-balls {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 
 .ticket-mini-ball-wrap {
@@ -143,7 +143,7 @@
 .ticket-dashed-divider {
     width: 2px;
     border-right: 2px dashed rgba(255, 255, 255, 0.4);
-    margin: 4px 0;
+    margin: 2px 0;
 }
 
 /* Right Half of Ticket */
@@ -153,13 +153,13 @@
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
-    padding-left: 12px;
+    padding-left: 10px;
 }
 
 .ticket-time-label {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 13.5px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.95);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -168,23 +168,23 @@
 .ticket-flip-clock {
     display: flex;
     align-items: center;
-    gap: 3px;
-    margin: 2px 0;
+    gap: 2px;
+    margin: 1px 0;
 }
 
 .flip-digit-card {
-    width: 24px;
-    height: 32px;
+    width: 19px;
+    height: 25px;
     background: #ffffff;
     color: var(--wingo-coral);
     font-family: 'Outfit', monospace, sans-serif;
     font-weight: 800;
-    font-size: 20px;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-radius: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
     position: relative;
 }
 
@@ -200,20 +200,20 @@
 }
 
 .flip-colon {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 900;
     color: #ffffff;
     line-height: 1;
-    margin: 0 1px;
+    margin: 0;
 }
 
 .ticket-period-id {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    font-size: 13.5px;
-    letter-spacing: 0.5px;
+    font-size: 11.5px;
+    letter-spacing: 0.4px;
     color: #ffffff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ==========================================================================
@@ -222,13 +222,13 @@
 .wingo-color-pills-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+    gap: 7px;
 }
 
 .wingo-pill-btn {
     border: none;
-    border-radius: 12px;
-    padding: 11px 6px;
+    border-radius: 10px;
+    padding: 7px 4px;
     color: #ffffff;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -237,7 +237,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 46px;
+    min-height: 36px;
 }
 
 .wingo-pill-btn:hover:not(:disabled) {
@@ -271,8 +271,8 @@
 .pill-text {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 18px;
-    letter-spacing: 0.5px;
+    font-size: 15.5px;
+    letter-spacing: 0.4px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -296,20 +296,20 @@
    ========================================================================== */
 .wingo-balls-card {
     background: var(--wingo-card);
-    border-radius: 16px;
-    padding: 16px 10px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    border-radius: 14px;
+    padding: 8px 6px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: visible;
-    min-height: 145px;
+    min-height: 100px;
     height: auto;
 }
 
 .wingo-balls-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    row-gap: 14px;
-    column-gap: 8px;
+    row-gap: 7px;
+    column-gap: 5px;
     justify-items: center;
 }
 
@@ -357,12 +357,12 @@
 }
 
 .wingo-lottery-ball.size-board {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
 }
 
 .wingo-lottery-ball.size-board .ball-number {
-    font-size: 24px;
+    font-size: 19px;
     font-weight: 800;
 }
 
@@ -413,8 +413,8 @@
 }
 
 .size-board .ball-scallop {
-    width: 15px;
-    height: 15px;
+    width: 11px;
+    height: 11px;
 }
 
 .size-mini .ball-scallop {
@@ -428,25 +428,25 @@
 }
 
 .size-board .ball-scallop.scallop-t {
-    top: -7px;
+    top: -5.5px;
     left: 50%;
     transform: translateX(-50%);
 }
 
 .size-board .ball-scallop.scallop-b {
-    bottom: -7px;
+    bottom: -5.5px;
     left: 50%;
     transform: translateX(-50%);
 }
 
 .size-board .ball-scallop.scallop-l {
-    left: -7px;
+    left: -5.5px;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .size-board .ball-scallop.scallop-r {
-    right: -7px;
+    right: -5.5px;
     top: 50%;
     transform: translateY(-50%);
 }
@@ -541,7 +541,7 @@
 .wingo-multiplier-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .wingo-random-btn {
@@ -550,11 +550,11 @@
     color: var(--wingo-coral);
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 16px;
-    padding: 6px 14px;
-    border-radius: 10px;
+    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(249, 89, 89, 0.12);
+    box-shadow: 0 2px 5px rgba(249, 89, 89, 0.1);
     transition: all 0.2s ease;
     white-space: nowrap;
 }
@@ -584,14 +584,14 @@
 
 .wingo-mult-pill {
     flex: 1;
-    min-width: 40px;
-    padding: 8px 4px;
+    min-width: 34px;
+    padding: 5px 2px;
     border: none;
     background: #eef1f6;
     color: #64748b;
     font-weight: 700;
-    font-size: 12px;
-    border-radius: 8px;
+    font-size: 11px;
+    border-radius: 6px;
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease;
@@ -614,15 +614,15 @@
     display: flex;
     gap: 0;
     width: 100%;
-    border-radius: 24px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
 .wingo-bs-btn {
     flex: 1;
     border: none;
-    padding: 12px 10px;
+    padding: 8px 6px;
     color: #ffffff;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -630,7 +630,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 48px;
+    min-height: 38px;
 }
 
 .wingo-bs-btn:hover:not(:disabled) {
@@ -648,18 +648,18 @@
 
 .wingo-bs-btn.btn-big {
     background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-    border-radius: 24px 0 0 24px;
+    border-radius: 20px 0 0 20px;
 }
 
 .wingo-bs-btn.btn-small {
     background: linear-gradient(180deg, #5b9cf6 0%, #3b82f6 100%);
-    border-radius: 0 24px 24px 0;
+    border-radius: 0 20px 20px 0;
 }
 
 .bs-text {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 20px;
+    font-size: 17px;
     letter-spacing: 0.5px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -716,20 +716,20 @@
 .wingo-tabs-bar {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 4px;
+    gap: 6px;
+    margin-top: 2px;
 }
 
 .wingo-tab-btn {
     flex: 1;
-    padding: 10px 4px;
+    padding: 6px 4px;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: #eef1f6;
     color: #475569;
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 16px;
+    font-size: 14.5px;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -752,9 +752,9 @@
 .wingo-mybets-card,
 .wingo-chart-card {
     background: var(--wingo-card);
-    border-radius: 16px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
 }
 
 .wingo-table {
@@ -766,10 +766,10 @@
 .table-header-coral th {
     background: var(--wingo-coral);
     color: #ffffff;
-    padding: 10px 8px;
+    padding: 7px 6px;
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 15.5px;
+    font-size: 13.5px;
     letter-spacing: 0.3px;
     white-space: nowrap;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
@@ -777,12 +777,12 @@
 
 .table-header-coral th:first-child {
     text-align: left;
-    padding-left: 14px;
+    padding-left: 10px;
 }
 
 .table-header-coral th:last-child {
     text-align: center;
-    padding-right: 14px;
+    padding-right: 10px;
 }
 
 .table-row {
@@ -794,8 +794,8 @@
 }
 
 .table-row td {
-    padding: 11px 8px;
-    font-size: 13.5px;
+    padding: 7px 6px;
+    font-size: 12.5px;
     vertical-align: middle;
     white-space: nowrap;
 }
@@ -803,17 +803,17 @@
 .cell-period {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 14.5px;
+    font-size: 13px;
     font-weight: 600;
     color: #1e293b;
     text-align: left;
-    padding-left: 14px !important;
+    padding-left: 10px !important;
 }
 
 .cell-number .num-val {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     line-height: 1;
 }
@@ -833,7 +833,7 @@
 .cell-bs .bs-script-val {
     font-family: 'Courgette', cursive, sans-serif;
     font-style: italic;
-    font-size: 15px;
+    font-size: 13px;
     color: #334155;
 }
 
