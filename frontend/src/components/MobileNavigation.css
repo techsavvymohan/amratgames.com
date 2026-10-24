@@ -11,8 +11,12 @@
         left: 0;
         display: flex;
         align-items: center;
+        box-sizing: border-box;
         height: var(--mobile-nav-space);
-        padding: 4px 6px env(safe-area-inset-bottom);
+        padding-top: 4px;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+        padding-left: calc(6px + env(safe-area-inset-left, 0px));
+        padding-right: calc(6px + env(safe-area-inset-right, 0px));
         border-top: 1px solid var(--border-subtle);
         background: var(--bg-header);
         box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4);
