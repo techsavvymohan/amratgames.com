@@ -444,19 +444,9 @@ function ColorMatchGame() {
                 <div className="ticket-notch notch-top"></div>
                 <div className="ticket-notch notch-bottom"></div>
 
-                {/* Left Half: How to play, Mode label, Recent 5 result balls */}
+                {/* Left Half: Recent result balls */}
                 <div className="ticket-left-half">
-                    <button
-                        type="button"
-                        className="ticket-rule-btn"
-                        onClick={() => setRulesOpen(true)}
-                    >
-                        <BookOutlined /> How to play
-                    </button>
-
-                    <div className="ticket-mode-label">
-                        Win Go 30 second
-                    </div>
+                    <div className="ticket-time-label">Recent results</div>
 
                     <div className="ticket-recent-balls">
                         {recentBalls.map((b, idx) => (
