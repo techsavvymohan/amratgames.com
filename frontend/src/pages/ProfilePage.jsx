@@ -21,12 +21,14 @@ export default function ProfilePage() {
         return 'profile'
     })
 
-    // Auto-scroll active subnav chip into view on mobile
+    // Auto-scroll active subnav chip into view horizontally on mobile (without vertical jump)
     useEffect(() => {
         if (subnavRef.current) {
             const activeBtn = subnavRef.current.querySelector(`.profile-subnav-btn[data-tab="${activeTab}"]`)
             if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+                const container = subnavRef.current
+                const scrollLeft = activeBtn.offsetLeft - (container.clientWidth / 2) + (activeBtn.clientWidth / 2)
+                container.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' })
             }
         }
     }, [activeTab])
@@ -52,16 +54,9 @@ export default function ProfilePage() {
         }
     }, [searchParams])
 
-    // Main Info Form State
+    // Main Info Form State (Streamlined & Professional)
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
-    const [dobDay, setDobDay] = useState('21')
-    const [dobMonth, setDobMonth] = useState('4')
-    const [dobYear, setDobYear] = useState('2005')
-    const [gender, setGender] = useState('Male')
-    const [country, setCountry] = useState('India')
-    const [city, setCity] = useState('')
-    const [newsletter, setNewsletter] = useState(true)
     const [copiedUuid, setCopiedUuid] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
     const [updateMsg, setUpdateMsg] = useState('')
@@ -97,15 +92,6 @@ export default function ProfilePage() {
         if (user) {
             setFirstName(user.firstName || user.username || '')
             setLastName(user.lastName || '')
-            if (user.dob) {
-                setDobDay(user.dob.day || '21')
-                setDobMonth(user.dob.month || '4')
-                setDobYear(user.dob.year || '2005')
-            }
-            if (user.gender) setGender(user.gender)
-            if (user.country) setCountry(user.country)
-            if (user.city) setCity(user.city)
-            if (user.newsletter !== undefined) setNewsletter(user.newsletter)
             setLegalName(`${user.firstName || user.username || ''} ${user.lastName || ''}`.trim())
         }
     }, [user])
@@ -196,15 +182,10 @@ export default function ProfilePage() {
         setUpdateMsg('')
         try {
             await updateProfile({
-                firstName,
-                lastName,
-                dob: { day: dobDay, month: dobMonth, year: dobYear },
-                gender,
-                country,
-                city,
-                newsletter
+                firstName: firstName.trim(),
+                lastName: lastName.trim()
             })
-            setUpdateMsg('Profile data updated successfully!')
+            setUpdateMsg('Profile updated successfully!')
             setTimeout(() => setUpdateMsg(''), 3000)
         } catch (err) {
             setUpdateMsg('Error: ' + err.message)
@@ -308,7 +289,7 @@ export default function ProfilePage() {
                         <div className="profile-hero-meta">
                             {user.phone && <span className="profile-meta-item">📱 +91 {user.phone}</span>}
                             {user.email && <span className="profile-meta-item">✉️ {user.email}</span>}
-                            {user.id && <span className="profile-meta-item">🆔 ID: {String(user.id).slice(0, 8)}...</span>}
+                            <span className="profile-meta-item">🪙 {(user.balances?.AMRAT || 0).toLocaleString()} $AMRAT</span>
                         </div>
                     </div>
                 </div>
@@ -334,7 +315,7 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('profile')}
                         >
                             <span>👤</span>
-                            <span>Profile Details</span>
+                            <span>Profile</span>
                         </button>
                         <button
                             type="button"
@@ -352,7 +333,7 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('affiliate')}
                         >
                             <span>💸</span>
-                            <span>Affiliates (3-Tier)</span>
+                            <span>Affiliates</span>
                         </button>
                         <button
                             type="button"
@@ -370,7 +351,7 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('payments')}
                         >
                             <span>💳</span>
-                            <span>Payments History</span>
+                            <span>Transactions</span>
                         </button>
                         <button
                             type="button"
@@ -379,7 +360,7 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('bets')}
                         >
                             <span>🎲</span>
-                            <span>Bets History</span>
+                            <span>Bets</span>
                         </button>
                         <button
                             type="button"
@@ -388,7 +369,7 @@ export default function ProfilePage() {
                             onClick={() => setActiveTab('support')}
                         >
                             <span>🎧</span>
-                            <span>24/7 Support</span>
+                            <span>Support</span>
                         </button>
                     </div>
 
@@ -413,87 +394,44 @@ export default function ProfilePage() {
                 <main className="profile-content-area">
                     {/* TAB 1: PROFILE */}
                     {activeTab === 'profile' && (
-                        <>
-                            {/* Cards: Phone & Email in 2-col on Laptop */}
-                            <div className="profile-cards-grid-2col">
-                                {/* Card 1: Phone Number */}
-                                <div className="profile-card">
-                                    <div className="profile-card-title">Phone number</div>
-                                    <div className="profile-verified-field">
-                                        <div className="profile-flag-pill">
-                                            <span>🇮🇳</span>
-                                            <span>+91</span>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            className="profile-verified-input"
-                                            value={user.phone || '7470718282'}
-                                            readOnly
-                                        />
-                                        <div className="profile-badge-check" title="Verified Phone Number">✓</div>
-                                    </div>
-                                </div>
-
-                                {/* Card 2: Email */}
-                                <div className="profile-card">
-                                    <div className="profile-card-title">Email</div>
-                                    <div className="profile-verified-field">
-                                        <input
-                                            type="text"
-                                            className="profile-verified-input"
-                                            value={user.email || 'anuragsingh01321@gmail.com'}
-                                            readOnly
-                                        />
-                                        <div className="profile-badge-check" title="Verified Email">✓</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Card 3: Main Info */}
+                        <div className="profile-tab-content">
+                            {/* Card 1: Account Identity */}
                             <div className="profile-card">
-                                <div className="profile-card-title">Main Info</div>
+                                <div className="profile-card-header-row">
+                                    <div className="profile-card-title">Account Identity</div>
+                                    {user.kycStatus === 'verified' ? (
+                                        <span className="profile-badge-verified-pill">🛡️ KYC Level 2 Verified</span>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="profile-btn-verify-mini"
+                                            onClick={() => setShowKycModal(true)}
+                                        >
+                                            ⚡ Complete KYC
+                                        </button>
+                                    )}
+                                </div>
 
-                                <form onSubmit={handleUpdateData}>
-                                    {/* UUID */}
-                                    <div className="profile-input-group">
-                                        <label className="profile-input-label">UUID</label>
-                                        <div className="profile-input-wrapper">
-                                            <input
-                                                type="text"
-                                                className="profile-text-input"
-                                                value={user.id}
-                                                readOnly
-                                                style={{ fontFamily: 'monospace', color: '#94a3b8' }}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="profile-icon-btn"
-                                                onClick={handleCopyUuid}
-                                                title="Copy UUID"
-                                            >
-                                                {copiedUuid ? '✓ Copied' : '📋'}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Name & Surname 2-Col on Laptop */}
+                                <form onSubmit={handleUpdateData} className="profile-clean-form">
                                     <div className="profile-form-grid-2col">
+                                        {/* Display Name */}
                                         <div className="profile-input-group">
-                                            <label className="profile-input-label">Name</label>
+                                            <label className="profile-input-label">First Name / Display Name</label>
                                             <div className="profile-input-wrapper">
                                                 <input
                                                     type="text"
                                                     className="profile-text-input"
                                                     value={firstName}
                                                     onChange={(e) => setFirstName(e.target.value)}
-                                                    placeholder="Your first name"
+                                                    placeholder="Your name"
                                                 />
                                                 <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
                                             </div>
                                         </div>
 
+                                        {/* Surname */}
                                         <div className="profile-input-group">
-                                            <label className="profile-input-label">Surname</label>
+                                            <label className="profile-input-label">Last Name</label>
                                             <div className="profile-input-wrapper">
                                                 <input
                                                     type="text"
@@ -507,280 +445,194 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
 
-                                    {/* Date of Birth & Gender 2-Col on Laptop */}
-                                    <div className="profile-form-grid-2col">
-                                        <div className="profile-input-group">
-                                            <label className="profile-input-label">Date of Birth</label>
-                                            <div className="profile-dob-row">
-                                                <select
-                                                    className="profile-select"
-                                                    value={dobDay}
-                                                    onChange={(e) => setDobDay(e.target.value)}
-                                                >
-                                                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                                                        <option key={d} value={d}>{d}</option>
-                                                    ))}
-                                                </select>
-                                                <select
-                                                    className="profile-select"
-                                                    value={dobMonth}
-                                                    onChange={(e) => setDobMonth(e.target.value)}
-                                                >
-                                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                                        <option key={m} value={m}>{m}</option>
-                                                    ))}
-                                                </select>
-                                                <select
-                                                    className="profile-select"
-                                                    value={dobYear}
-                                                    onChange={(e) => setDobYear(e.target.value)}
-                                                >
-                                                    {Array.from({ length: 58 }, (_, i) => 2007 - i).map(y => (
-                                                        <option key={y} value={y}>{y}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="profile-input-group">
-                                            <label className="profile-input-label">Gender</label>
-                                            <select
-                                                className="profile-select"
-                                                value={gender}
-                                                onChange={(e) => setGender(e.target.value)}
+                                    {/* Account UUID */}
+                                    <div className="profile-input-group">
+                                        <label className="profile-input-label">Account Player UUID</label>
+                                        <div className="profile-input-wrapper">
+                                            <input
+                                                type="text"
+                                                className="profile-text-input profile-mono-input"
+                                                value={user.id}
+                                                readOnly
+                                            />
+                                            <button
+                                                type="button"
+                                                className="profile-copy-btn"
+                                                onClick={handleCopyUuid}
+                                                title="Copy UUID"
                                             >
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
-                                            </select>
+                                                {copiedUuid ? '✓ Copied' : '📋 Copy UUID'}
+                                            </button>
                                         </div>
                                     </div>
 
-                                    {/* Country & City 2-Col on Laptop */}
+                                    {/* Contact Information (Phone & Email) */}
                                     <div className="profile-form-grid-2col">
                                         <div className="profile-input-group">
-                                            <label className="profile-input-label">Country</label>
-                                            <select
-                                                className="profile-select"
-                                                value={country}
-                                                onChange={(e) => setCountry(e.target.value)}
-                                            >
-                                                <option value="India">India</option>
-                                                <option value="United Arab Emirates">United Arab Emirates</option>
-                                                <option value="United Kingdom">United Kingdom</option>
-                                                <option value="Canada">Canada</option>
-                                            </select>
-                                        </div>
-
-                                        <div className="profile-input-group">
-                                            <label className="profile-input-label">City</label>
-                                            <div className="profile-input-wrapper">
+                                            <label className="profile-input-label">Verified Mobile Number</label>
+                                            <div className="profile-verified-field">
+                                                <div className="profile-flag-pill">
+                                                    <span>🇮🇳</span>
+                                                    <span>+91</span>
+                                                </div>
                                                 <input
                                                     type="text"
-                                                    className="profile-text-input"
-                                                    value={city}
-                                                    onChange={(e) => setCity(e.target.value)}
-                                                    placeholder="City name"
+                                                    className="profile-verified-input"
+                                                    value={user.phone || 'Not linked'}
+                                                    readOnly
                                                 />
-                                                <span style={{ color: '#64748b', fontSize: '13px' }}>✏️</span>
+                                                <div className="profile-badge-check" title="Verified Phone Number">✓</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Verified Email Address</label>
+                                            <div className="profile-verified-field">
+                                                <input
+                                                    type="text"
+                                                    className="profile-verified-input"
+                                                    value={user.email || 'Not linked'}
+                                                    readOnly
+                                                />
+                                                <div className="profile-badge-check" title="Verified Email">✓</div>
                                             </div>
                                         </div>
                                     </div>
 
-                            {/* Newsletter Checkbox */}
-                            <label className="profile-checkbox-row">
-                                <input
-                                    type="checkbox"
-                                    className="profile-checkbox"
-                                    checked={newsletter}
-                                    onChange={(e) => setNewsletter(e.target.checked)}
-                                />
-                                <span>I want to receive newsletters and be updated on AmratGames news, events and offers.</span>
-                            </label>
+                                    {updateMsg && (
+                                        <div className={`profile-feedback-msg ${updateMsg.startsWith('Error') ? 'error' : 'success'}`}>
+                                            {updateMsg}
+                                        </div>
+                                    )}
 
-                            {/* Support notice */}
-                            <div className="profile-support-notice">
-                                <div className="profile-support-text">
-                                    If you have a necessity to change data in some fields which are not editable - please <Link to="#" onClick={(e) => { e.preventDefault(); setActiveTab('support'); }} style={{ color: '#3b82f6', textDecoration: 'underline' }}>contact support</Link>
+                                    <div className="profile-form-actions">
+                                        <button
+                                            type="submit"
+                                            className="profile-btn-primary"
+                                            disabled={isUpdating}
+                                        >
+                                            {isUpdating ? 'Saving...' : 'Save Profile Changes'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Card 2: Security & Credentials */}
+                            <div className="profile-card">
+                                <div className="profile-card-title">Security & Password</div>
+                                <p className="profile-card-desc">Protect your gaming balance by maintaining a strong, confidential password.</p>
+
+                                <form onSubmit={handleChangePassword} className="profile-clean-form">
+                                    <div className="profile-form-grid-3col">
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Current Password</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type={showOldPass ? 'text' : 'password'}
+                                                    className="profile-text-input"
+                                                    placeholder="Enter old password"
+                                                    value={oldPassword}
+                                                    onChange={(e) => setOldPassword(e.target.value)}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="profile-icon-btn"
+                                                    onClick={() => setShowOldPass(!showOldPass)}
+                                                >
+                                                    {showOldPass ? '👁️' : '🙈'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">New Password</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type={showNewPass ? 'text' : 'password'}
+                                                    className="profile-text-input"
+                                                    placeholder="Min 6 characters"
+                                                    value={newPassword}
+                                                    onChange={(e) => setNewPassword(e.target.value)}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="profile-icon-btn"
+                                                    onClick={() => setShowNewPass(!showNewPass)}
+                                                >
+                                                    {showNewPass ? '👁️' : '🙈'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="profile-input-group">
+                                            <label className="profile-input-label">Confirm New Password</label>
+                                            <div className="profile-input-wrapper">
+                                                <input
+                                                    type={showRepeatPass ? 'text' : 'password'}
+                                                    className="profile-text-input"
+                                                    placeholder="Repeat new password"
+                                                    value={repeatPassword}
+                                                    onChange={(e) => setRepeatPassword(e.target.value)}
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="profile-icon-btn"
+                                                    onClick={() => setShowRepeatPass(!showRepeatPass)}
+                                                >
+                                                    {showRepeatPass ? '👁️' : '🙈'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {passError && (
+                                        <div className="profile-feedback-msg error">
+                                            ⚠️ {passError}
+                                        </div>
+                                    )}
+
+                                    {passMsg && (
+                                        <div className="profile-feedback-msg success">
+                                            ✓ {passMsg}
+                                        </div>
+                                    )}
+
+                                    <div className="profile-form-actions">
+                                        <button
+                                            type="submit"
+                                            className="profile-btn-primary profile-btn-secondary"
+                                            disabled={isChangingPass}
+                                        >
+                                            {isChangingPass ? 'Updating...' : 'Update Password'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Card 3: Session Logout */}
+                            <div className="profile-card profile-logout-card">
+                                <div className="profile-logout-info">
+                                    <div className="profile-logout-title">Sign Out of Account</div>
+                                    <div className="profile-logout-desc">Safely terminate your active casino session on this device.</div>
                                 </div>
                                 <button
                                     type="button"
-                                    className="profile-support-btn"
-                                    onClick={() => setActiveTab('support')}
-                                    title="Live Support"
+                                    className="profile-btn-logout-clean"
+                                    onClick={() => {
+                                        if (window.confirm('Are you sure you want to log out?')) {
+                                            logout()
+                                            navigate('/')
+                                        }
+                                    }}
                                 >
-                                    💬
+                                    🚪 Log Out
                                 </button>
                             </div>
-
-                            {updateMsg && (
-                                <div style={{
-                                    padding: '8px 12px',
-                                    marginBottom: '12px',
-                                    borderRadius: '8px',
-                                    background: updateMsg.startsWith('Error') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                                    color: updateMsg.startsWith('Error') ? '#f87171' : '#10b981',
-                                    fontSize: '0.85rem'
-                                }}>
-                                    {updateMsg}
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                className="profile-btn-primary"
-                                disabled={isUpdating}
-                            >
-                                {isUpdating ? 'Updating...' : 'Update Data'}
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* Card 4: Change Password */}
-                    <div className="profile-card">
-                        <div className="profile-card-title">Change password</div>
-
-                        <form onSubmit={handleChangePassword}>
-                            <div className="profile-input-group">
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type={showOldPass ? 'text' : 'password'}
-                                        className="profile-text-input"
-                                        placeholder="Old password"
-                                        value={oldPassword}
-                                        onChange={(e) => setOldPassword(e.target.value)}
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        className="profile-icon-btn"
-                                        onClick={() => setShowOldPass(!showOldPass)}
-                                    >
-                                        {showOldPass ? '👁️' : '🙈'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="profile-input-group">
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type={showNewPass ? 'text' : 'password'}
-                                        className="profile-text-input"
-                                        placeholder="New password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        className="profile-icon-btn"
-                                        onClick={() => setShowNewPass(!showNewPass)}
-                                    >
-                                        {showNewPass ? '👁️' : '🙈'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="profile-input-group">
-                                <div className="profile-input-wrapper">
-                                    <input
-                                        type={showRepeatPass ? 'text' : 'password'}
-                                        className="profile-text-input"
-                                        placeholder="Repeat password"
-                                        value={repeatPassword}
-                                        onChange={(e) => setRepeatPassword(e.target.value)}
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        className="profile-icon-btn"
-                                        onClick={() => setShowRepeatPass(!showRepeatPass)}
-                                    >
-                                        {showRepeatPass ? '👁️' : '🙈'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {passError && (
-                                <div style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '12px' }}>
-                                    ⚠️ {passError}
-                                </div>
-                            )}
-
-                            {passMsg && (
-                                <div style={{ color: '#10b981', fontSize: '0.85rem', marginBottom: '12px' }}>
-                                    ✓ {passMsg}
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                className="profile-btn-primary"
-                                style={{ background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)' }}
-                                disabled={isChangingPass}
-                            >
-                                {isChangingPass ? 'Updating...' : 'Change Password'}
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* Card 5: Profile Verification (KYC) */}
-                    <div className="profile-card profile-verify-card">
-                        <div className="profile-verify-badges">
-                            <div className="profile-avatar-circle">👤</div>
-                            <div className="profile-shield-circle">🛡️</div>
                         </div>
-
-                        <div className="profile-verify-title">Profile verification</div>
-                        <div className="profile-verify-desc">
-                            Upgrade your account by completing verification to get exclusive offers and instant VIP payouts.
-                        </div>
-
-                        {user.kycStatus === 'verified' ? (
-                            <div style={{
-                                padding: '12px',
-                                background: 'rgba(16, 185, 129, 0.15)',
-                                border: '1px solid rgba(16, 185, 129, 0.4)',
-                                borderRadius: '10px',
-                                color: '#10b981',
-                                fontWeight: 800,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                marginBottom: '14px'
-                            }}>
-                                <span>👑</span>
-                                <span>Account Verified (Level 2 VIP)</span>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                className="profile-verify-btn"
-                                onClick={() => setShowKycModal(true)}
-                            >
-                                VERIFICATION
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Card 6: Logout */}
-                    <div className="profile-card" style={{ padding: '8px' }}>
-                        <button
-                            type="button"
-                            className="profile-btn-logout"
-                            onClick={() => {
-                                if (window.confirm('Are you sure you want to log out?')) {
-                                    logout()
-                                    navigate('/')
-                                }
-                            }}
-                        >
-                            LOGOUT
-                        </button>
-                    </div>
-                </>
-            )}
+                    )}
 
             {/* TAB 2: PAYMENTS HISTORY */}
             {activeTab === 'payments' && (
