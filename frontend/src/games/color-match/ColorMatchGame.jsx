@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
+import { useWebSocket } from '../../context/WebSocketContext'
 import casinoAudio from '../../utils/casinoAudio'
 import './ColorMatchGame.css'
 
@@ -35,14 +36,13 @@ function ColorMatchGame() {
     const {
         balance,
         currencySymbol,
-        executeGameBet,
-        creditGamePayout,
-        holdChips,
-        releaseChips,
         notifyWin,
-        notifyLoss
+        notifyLoss,
+        placeColorMatchRoomBet,
+        getColorMatchRoomState
     } = useWallet()
     const { user, openAuthModal } = useAuth()
+    const { colorGameState, subscribe } = useWebSocket()
 
     // Calculate live seconds remaining in 30s cycle directly from system clock (Always in sync)
     const getSecondsRemaining = () => {
@@ -62,44 +62,44 @@ function ColorMatchGame() {
         return parseInt(`${yyyy}${mm}${dd}30${String(roundNum).padStart(4, '0')}`, 10)
     }
 
-    const [periodId, setPeriodId] = useState(getClockPeriod)
-    const [timeLeft, setTimeLeft] = useState(getSecondsRemaining)
+    const [periodId, setPeriodId] = useState(() => colorGameState?.periodId || getClockPeriod())
+    const [timeLeft, setTimeLeft] = useState(() => colorGameState?.timeLeft ?? getSecondsRemaining())
     const [maxTime] = useState(30)
-    const [isLocked, setIsLocked] = useState(() => getSecondsRemaining() <= 5)
-    const [isDrawing, setIsDrawing] = useState(false)
+    const [isLocked, setIsLocked] = useState(() => colorGameState?.isLocked ?? (getSecondsRemaining() <= 5))
+    const [isDrawing, setIsDrawing] = useState(() => colorGameState?.isDrawing ?? false)
 
     // Active placed bets in this round
     const [bets, setBets] = useState({})
     const [activeMultiplier, setActiveMultiplier] = useState(1)
 
-    // Auto-Run Player Betting System (Auto Re-Stake each round)
-    const [isAutoRunning, setIsAutoRunning] = useState(false)
-    const [autoBetTemplate, setAutoBetTemplate] = useState(null)
+    // Auto-Run Player Betting System (Persisted in localStorage across routes)
+    const [isAutoRunning, setIsAutoRunning] = useState(() => {
+        try { return localStorage.getItem('amrat_wingo_autorun_enabled') === 'true' } catch { return false }
+    })
+    const [autoBetTemplate, setAutoBetTemplate] = useState(() => {
+        try {
+            const raw = localStorage.getItem('amrat_wingo_autorun_template')
+            return raw ? JSON.parse(raw) : null
+        } catch { return null }
+    })
     const [autoRoundCount, setAutoRoundCount] = useState(0)
 
-    // Current draw display & recent 5 balls
+    // Current draw display & recent 5 balls from server room state
     const [displayNum, setDisplayNum] = useState(null)
-    const [recentBalls, setRecentBalls] = useState([
-        { num: 4, colors: ['red'], bigSmall: 'small', period: getClockPeriod() - 1 },
-        { num: 0, colors: ['violet', 'red'], bigSmall: 'small', period: getClockPeriod() - 2 },
-        { num: 2, colors: ['red'], bigSmall: 'small', period: getClockPeriod() - 3 },
-        { num: 8, colors: ['red'], bigSmall: 'big', period: getClockPeriod() - 4 },
-        { num: 5, colors: ['violet', 'green'], bigSmall: 'big', period: getClockPeriod() - 5 },
-    ])
+    const [recentBalls, setRecentBalls] = useState(() => {
+        if (colorGameState?.recentBalls && colorGameState.recentBalls.length > 0) {
+            return colorGameState.recentBalls
+        }
+        return []
+    })
 
-    // Game history roadmap
-    const [history, setHistory] = useState([
-        { period: getClockPeriod() - 1, num: 4, colors: ['red'], bigSmall: 'small' },
-        { period: getClockPeriod() - 2, num: 0, colors: ['violet', 'red'], bigSmall: 'small' },
-        { period: getClockPeriod() - 3, num: 2, colors: ['red'], bigSmall: 'small' },
-        { period: getClockPeriod() - 4, num: 8, colors: ['red'], bigSmall: 'big' },
-        { period: getClockPeriod() - 5, num: 5, colors: ['violet', 'green'], bigSmall: 'big' },
-        { period: getClockPeriod() - 6, num: 7, colors: ['green'], bigSmall: 'big' },
-        { period: getClockPeriod() - 7, num: 3, colors: ['green'], bigSmall: 'small' },
-        { period: getClockPeriod() - 8, num: 6, colors: ['red'], bigSmall: 'big' },
-        { period: getClockPeriod() - 9, num: 1, colors: ['green'], bigSmall: 'small' },
-        { period: getClockPeriod() - 10, num: 9, colors: ['green'], bigSmall: 'big' },
-    ])
+    // Game history roadmap from server room state
+    const [history, setHistory] = useState(() => {
+        if (colorGameState?.history && colorGameState.history.length > 0) {
+            return colorGameState.history
+        }
+        return []
+    })
 
     // Player personal bets record
     const [myBets, setMyBets] = useState([])
@@ -158,17 +158,142 @@ function ColorMatchGame() {
     useEffect(() => { isAutoRunningRef.current = isAutoRunning }, [isAutoRunning])
     useEffect(() => { autoBetTemplateRef.current = autoBetTemplate }, [autoBetTemplate])
 
-    // Safety refund on unmount if bets were held without draw
+    // Sync with global colorGameState from WebSocketContext
     useEffect(() => {
-        return () => {
-            if (totalStakedRef.current > 0 && !isDrawingRef.current) {
-                releaseChips?.(totalStakedRef.current)
+        if (colorGameState) {
+            if (!isDrawingRef.current) {
+                if (colorGameState.periodId) setPeriodId(colorGameState.periodId)
+                if (typeof colorGameState.timeLeft === 'number') setTimeLeft(colorGameState.timeLeft)
+                if (typeof colorGameState.isLocked === 'boolean') setIsLocked(colorGameState.isLocked)
+            }
+            if (colorGameState.recentBalls && colorGameState.recentBalls.length > 0) {
+                setRecentBalls(colorGameState.recentBalls)
+            }
+            if (colorGameState.history && colorGameState.history.length > 0) {
+                setHistory(colorGameState.history)
             }
         }
-    }, [releaseChips])
+    }, [colorGameState])
 
-    // Direct in-game bet placement on any target (No popup modals - instant staking)
-    const placeDirectBet = (targetKey) => {
+    // Initial hydration via REST endpoint
+    useEffect(() => {
+        getColorMatchRoomState().then(room => {
+            if (room) {
+                if (!isDrawingRef.current) {
+                    if (room.periodId) setPeriodId(room.periodId)
+                    if (typeof room.timeLeft === 'number') setTimeLeft(room.timeLeft)
+                    if (typeof room.isLocked === 'boolean') setIsLocked(room.isLocked)
+                }
+                if (room.recentBalls && room.recentBalls.length > 0) setRecentBalls(room.recentBalls)
+                if (room.history && room.history.length > 0) setHistory(room.history)
+            }
+        }).catch(() => {})
+    }, [getColorMatchRoomState])
+
+    // Real-Time Global Server Room Subscriptions
+    useEffect(() => {
+        let isMounted = true
+
+        const unsubs = [
+            subscribe('COLOR_GAME_TICK', (payload) => {
+                if (!isMounted || !payload) return
+                if (!isDrawingRef.current) {
+                    setTimeLeft(payload.timeLeft)
+                    setIsLocked(Boolean(payload.isLocked))
+                    if (payload.periodId && periodIdRef.current !== payload.periodId) {
+                        setPeriodId(payload.periodId)
+                        // If new period starts and auto run is on, load template
+                        if (isAutoRunningRef.current && autoBetTemplateRef.current) {
+                            setBets({ ...autoBetTemplateRef.current })
+                        } else {
+                            setBets({})
+                        }
+                    }
+                }
+            }),
+
+            subscribe('COLOR_GAME_DRAW', (payload) => {
+                if (!isMounted || !payload) return
+                setIsDrawing(true)
+                setIsLocked(true)
+                setTimeLeft(0)
+
+                // Rapid rolling animation for 1.4s ending on exact server luckyNumber
+                let rollCounter = 0
+                const interval = setInterval(() => {
+                    setDisplayNum(Math.floor(Math.random() * 10))
+                    rollCounter++
+                    if (rollCounter >= 14) {
+                        clearInterval(interval)
+                        setDisplayNum(payload.num)
+                        casinoAudio.playChip?.()
+
+                        // Conclude visual draw after 1.8s
+                        setTimeout(() => {
+                            if (!isMounted) return
+                            setDisplayNum(null)
+                            setIsDrawing(false)
+                            if (payload.recentBalls) setRecentBalls(payload.recentBalls)
+                            if (payload.history) setHistory(payload.history)
+                        }, 1800)
+                    }
+                }, 80)
+            }),
+
+            subscribe('COLOR_GAME_PLAYER_SETTLEMENT', (payload) => {
+                if (!isMounted || !payload || !user) return
+                if (payload.userId !== user.id) return
+
+                const outcome = payload.outcome || {}
+                const winningNum = outcome.luckyNumber ?? 0
+                const colors = outcome.winningColors || []
+                const bigSmall = outcome.bigSmall || 'small'
+
+                if (payload.won && payload.payout > 0) {
+                    notifyWin?.(payload.payout, payload.multiplier)
+                    if (payload.multiplier >= 3) {
+                        casinoAudio.playBigWin?.()
+                    } else {
+                        casinoAudio.playWin?.()
+                    }
+                    setWinPopup({
+                        amount: payload.payout,
+                        num: winningNum,
+                        colors,
+                        bigSmall,
+                        period: payload.periodId,
+                        multiplier: payload.multiplier
+                    })
+                } else {
+                    notifyLoss?.('Round ended')
+                    casinoAudio.playLoss?.()
+                }
+
+                setMyBets(prev => [
+                    {
+                        period: payload.periodId,
+                        stake: payload.totalAmount || 0,
+                        win: payload.payout || 0,
+                        resultNum: winningNum,
+                        colors,
+                        bigSmall,
+                        won: payload.won,
+                        time: Date.now()
+                    },
+                    ...prev.slice(0, 24)
+                ])
+                setBets({})
+            })
+        ]
+
+        return () => {
+            isMounted = false
+            unsubs.forEach(unsub => { if (typeof unsub === 'function') unsub() })
+        }
+    }, [subscribe, user, notifyWin, notifyLoss])
+
+    // Direct in-game bet placement on any target (No popup modals - instant staking to server room)
+    const placeDirectBet = async (targetKey) => {
         if (isLocked || isDrawing) return
 
         if (!user) {
@@ -185,12 +310,26 @@ function ColorMatchGame() {
         }
 
         casinoAudio.playChip?.()
-        holdChips(betAmt)
 
-        setBets(prev => ({
-            ...prev,
-            [targetKey]: (prev[targetKey] || 0) + betAmt
-        }))
+        const updatedBets = {
+            ...bets,
+            [targetKey]: (bets[targetKey] || 0) + betAmt
+        }
+        setBets(updatedBets)
+
+        try {
+            const res = await placeColorMatchRoomBet({
+                periodId: periodIdRef.current,
+                bets: updatedBets
+            })
+            if (!res || !res.success) {
+                setBets(bets)
+                notifyLoss?.(res?.error || 'Unable to place bet on round')
+            }
+        } catch (err) {
+            setBets(bets)
+            notifyLoss?.(err.message || 'Error placing bet')
+        }
     }
 
     // Pick Random Bet (Win Go [Random] pill - immediately bets on random number 0-9)
@@ -200,19 +339,20 @@ function ColorMatchGame() {
         placeDirectBet(`num_${randNum}`)
     }
 
-    // Clear bets: Refunds held chips back to wallet
+    // Clear bets: resets bets and disables auto-run
     const clearBets = () => {
         if (isLocked || isDrawing || totalStaked === 0) return
         if (isAutoRunning) {
             setIsAutoRunning(false)
             setAutoBetTemplate(null)
+            localStorage.removeItem('amrat_wingo_autorun_enabled')
+            localStorage.removeItem('amrat_wingo_autorun_template')
         }
-        releaseChips(totalStaked)
         setBets({})
         casinoAudio.playChip?.()
     }
 
-    // Toggle Auto Run mode (repeats player's active bets every round automatically)
+    // Toggle Auto Run mode (persisted to localStorage so BackgroundGameRunner continues in background)
     const toggleAutoRun = () => {
         if (!user) {
             openAuthModal?.('register')
@@ -222,6 +362,8 @@ function ColorMatchGame() {
         if (isAutoRunning) {
             setIsAutoRunning(false)
             setAutoBetTemplate(null)
+            localStorage.removeItem('amrat_wingo_autorun_enabled')
+            localStorage.removeItem('amrat_wingo_autorun_template')
             casinoAudio.playChip?.()
             return
         }
@@ -234,221 +376,20 @@ function ColorMatchGame() {
         setIsAutoRunning(true)
         setAutoBetTemplate({ ...bets })
         setAutoRoundCount(1)
+        localStorage.setItem('amrat_wingo_autorun_enabled', 'true')
+        localStorage.setItem('amrat_wingo_autorun_template', JSON.stringify({ ...bets }))
         casinoAudio.playBet?.()
     }
 
-    // Resolve round payout: Credits balance at the exact moment of visual outcome reveal
-    const resolveRound = useCallback((winningNum, evalData = {}, betResponse = {}, roundBets = {}, roundStaked = 0) => {
-        const item = NUMBER_DATA[winningNum]
-        const colors = evalData.winningColors || item.colors
-        const bigSmall = evalData.bigSmall || item.bigSmall
-
-        const totalWin = betResponse.payout ?? evalData.payout ?? 0
-        const isWin = Boolean(betResponse.won ?? evalData.won)
-        const currentPeriod = periodIdRef.current
-
-        // Credit winnings & notify only if player staked
-        if (roundStaked > 0) {
-            if (isWin && totalWin > 0) {
-                if (betResponse?.applyPayout) {
-                    betResponse.applyPayout()
-                } else {
-                    creditGamePayout(totalWin, betResponse.balances)
-                }
-                notifyWin?.(totalWin, (totalWin / roundStaked).toFixed(2))
-                if ((totalWin / roundStaked) >= 3) {
-                    casinoAudio.playBigWin?.()
-                } else {
-                    casinoAudio.playWin?.()
-                }
-
-                // Show celebratory Win Modal
-                setWinPopup({
-                    amount: totalWin,
-                    num: winningNum,
-                    colors,
-                    bigSmall,
-                    period: currentPeriod,
-                    multiplier: (totalWin / roundStaked).toFixed(2)
-                })
-            } else {
-                notifyLoss?.(roundStaked)
-                casinoAudio.playLoss?.()
-            }
-
-            // Record to personal history
-            setMyBets(prev => [
-                {
-                    period: currentPeriod,
-                    stake: roundStaked,
-                    win: totalWin,
-                    resultNum: winningNum,
-                    colors,
-                    bigSmall,
-                    won: isWin && totalWin > 0,
-                    time: Date.now()
-                },
-                ...prev.slice(0, 24)
-            ])
-        }
-
-        // Add to global outcome history & recent balls
-        const resultRecord = {
-            period: currentPeriod,
-            num: winningNum,
-            colors: colors,
-            bigSmall: bigSmall
-        }
-
-        setHistory(prev => [resultRecord, ...prev.slice(0, 29)])
-        setRecentBalls(prev => [resultRecord, ...prev.slice(0, 4)])
-
-        // Clear active round bets
-        setBets({})
-
-        // Auto-Run Bet Re-Staking for the next round
-        if (isAutoRunningRef.current && autoBetTemplateRef.current) {
-            const template = autoBetTemplateRef.current
-            const templateTotal = Object.values(template).reduce((a, b) => a + (Number(b) || 0), 0)
-
-            if (balanceRef.current >= templateTotal) {
-                setTimeout(() => {
-                    holdChips(templateTotal)
-                    setBets({ ...template })
-                    setAutoRoundCount(prev => prev + 1)
-                    casinoAudio.playChip?.()
-                }, 1000)
-            } else {
-                setIsAutoRunning(false)
-                setAutoBetTemplate(null)
-                notifyLoss?.('Auto Run stopped: Insufficient balance')
-            }
-        }
-
-        // Show winning result for 1.8s, then finish draw state
-        setTimeout(() => {
-            setDisplayNum(null)
-            setIsDrawing(false)
-            setIsLocked(getSecondsRemaining() <= 5)
-            setTimeLeft(getSecondsRemaining())
-        }, 1800)
-    }, [notifyWin, notifyLoss, creditGamePayout])
-
-    // Trigger Draw Sequence (Server-Authoritative Provably Fair with Auto-Run support)
-    const triggerDraw = useCallback(async () => {
-        if (isDrawingRef.current) return
-
-        const activeStaked = totalStakedRef.current
-        const activeBets = { ...betsRef.current }
-
-        setIsDrawing(true)
-        setIsLocked(true)
-        setTimeLeft(0)
-        casinoAudio.playCardDeal?.()
-
-        // 1. If player placed bets, execute server-authoritative bet
-        if (activeStaked > 0) {
-            let betResponse
-            try {
-                betResponse = await executeGameBet({
-                    game: 'color-match',
-                    gameName: 'Win Go 30s',
-                    betAmount: activeStaked,
-                    bets: activeBets,
-                    alreadyHeld: true
-                })
-            } catch (err) {
-                console.error('[ColorMatch] Error submitting bet:', err)
-            }
-
-            if (!betResponse || !betResponse.success) {
-                releaseChips(activeStaked)
-                setBets({})
-                setIsDrawing(false)
-                setIsLocked(getSecondsRemaining() <= 5)
-                setTimeLeft(getSecondsRemaining())
-                notifyLoss?.(betResponse?.error || 'Unable to submit bet')
-                return
-            }
-
-            const evalData = betResponse.evaluation || {}
-            const serverWinningNum = evalData.luckyNumber ?? Math.floor(Math.random() * 10)
-            if (evalData.hash) {
-                setServerSeedHash(evalData.hash)
-            }
-
-            // Rapid rolling animation for 1.6s
-            let rollCounter = 0
-            const interval = setInterval(() => {
-                setDisplayNum(Math.floor(Math.random() * 10))
-                casinoAudio.playChip?.()
-                rollCounter++
-                if (rollCounter >= 16) {
-                    clearInterval(interval)
-                    setDisplayNum(serverWinningNum)
-                    setTimeout(() => {
-                        resolveRound(serverWinningNum, evalData, betResponse, activeBets, activeStaked)
-                    }, 400)
-                }
-            }, 80)
-        } else {
-            // 2. Spectator / Zero-stake auto draw: continuous provably fair live game loop
-            const simulatedNum = Math.floor(Math.random() * 10)
-            const item = NUMBER_DATA[simulatedNum]
-            const simulatedEval = {
-                luckyNumber: simulatedNum,
-                winningColors: item.colors,
-                bigSmall: item.bigSmall,
-                won: false,
-                payout: 0
-            }
-
-            let rollCounter = 0
-            const interval = setInterval(() => {
-                setDisplayNum(Math.floor(Math.random() * 10))
-                rollCounter++
-                if (rollCounter >= 16) {
-                    clearInterval(interval)
-                    setDisplayNum(simulatedNum)
-                    setTimeout(() => {
-                        resolveRound(simulatedNum, simulatedEval, { success: true, won: false, payout: 0 }, {}, 0)
-                    }, 400)
-                }
-            }, 80)
-        }
-    }, [executeGameBet, resolveRound, notifyLoss, releaseChips])
-
-    const triggerDrawRef = useRef(null)
-    triggerDrawRef.current = triggerDraw
-
-    // 24/7 Continuous Auto-Running Live Game Loop (Clock-Synchronized & Resilient)
+    // 24/7 Continuous Local Interpolator (Smooth countdown when between socket ticks)
     useEffect(() => {
         const timer = setInterval(() => {
-            const secRem = getSecondsRemaining()
-            const clockPeriod = getClockPeriod()
-
-            // When not actively drawing, keep countdown and period locked to system clock
             if (!isDrawingRef.current) {
-                setTimeLeft(secRem)
-
-                if (periodIdRef.current !== clockPeriod) {
-                    setPeriodId(clockPeriod)
+                const secRem = getSecondsRemaining()
+                if (secRem <= 5 && !isLockedRef.current) {
+                    setIsLocked(true)
+                    casinoAudio.playChip?.()
                 }
-
-                if (secRem <= 5) {
-                    if (!isLockedRef.current) {
-                        setIsLocked(true)
-                        casinoAudio.playChip?.()
-                    }
-                } else if (secRem > 5 && isLockedRef.current) {
-                    setIsLocked(false)
-                }
-            }
-
-            // Auto-trigger draw when round window ends (secRem <= 1) exactly once per period
-            if (secRem <= 1 && !isDrawingRef.current && lastDrawnPeriodRef.current !== clockPeriod) {
-                lastDrawnPeriodRef.current = clockPeriod
-                triggerDrawRef.current?.()
             }
         }, 250)
 

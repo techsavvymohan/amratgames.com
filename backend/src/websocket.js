@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { CONFIG } from './config.js'
 import { db } from './db/db.js'
 import { crashRoomService } from './services/CrashRoomService.js'
+import { colorMatchRoomService } from './services/ColorMatchRoomService.js'
 import { chatService } from './services/ChatService.js'
 import { redisPubSub } from './services/RedisPubSubService.js'
 import { isTokenRevoked } from './middleware/auth.js'
@@ -31,10 +32,11 @@ export function initWebSocketServer(server) {
         maxPayload: 1024 * 1024 // 1MB payload cap to prevent memory exhaustion DoS
     })
 
-    // Start synchronized multiplayer Crash room loop (only on primary worker instance)
+    // Start synchronized multiplayer Crash and Color Game room loops (only on primary worker instance)
     const isPrimaryInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0'
     if (isPrimaryInstance) {
         crashRoomService.start()
+        colorMatchRoomService.start()
     }
 
     // Subscribe to cross-instance Redis event channels
@@ -103,11 +105,12 @@ export function initWebSocketServer(server) {
             ws.isAlive = true
         })
 
-        // Send initial welcome with active Crash room state and recent community chat
+        // Send initial welcome with active Crash room, Color Game room state and recent community chat
         ws.send(JSON.stringify({
             type: 'CONNECTED',
             message: 'Connected to AmratGames Real-time Live Engine',
             crashRoom: crashRoomService.getState(),
+            colorRoom: colorMatchRoomService.getState(),
             recentChat: chatService.getRecentMessages(30),
             timestamp: new Date().toISOString()
         }))
@@ -131,6 +134,8 @@ export function initWebSocketServer(server) {
                     ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }))
                 } else if (data.type === 'GET_CRASH_ROOM_STATE') {
                     ws.send(JSON.stringify({ type: 'CRASH_ROOM_STATE', payload: crashRoomService.getState() }))
+                } else if (data.type === 'GET_COLOR_ROOM_STATE') {
+                    ws.send(JSON.stringify({ type: 'COLOR_GAME_STATE', payload: colorMatchRoomService.getState() }))
                 } else if (data.type === 'GET_CHAT_HISTORY') {
                     ws.send(JSON.stringify({ type: 'CHAT_HISTORY', payload: chatService.getRecentMessages(50) }))
                 } else if (data.type === 'SEND_CHAT_MESSAGE') {

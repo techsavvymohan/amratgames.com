@@ -713,6 +713,45 @@ export function WalletProvider({ children }) {
         }
     }, [])
 
+    // Synchronized Color Match / Win Go Room Methods
+    const placeColorMatchRoomBet = useCallback(async ({ periodId, bets }) => {
+        if (!user) {
+            authContext?.openAuthModal?.('register')
+            return { success: false, code: 'AUTH_REQUIRED', error: 'Please create an account or sign in to play' }
+        }
+        try {
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers.Authorization = `Bearer ${token}`
+            const res = await fetch('/api/games/color-match/room/bet', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    periodId,
+                    bets,
+                    currency: currencyRef.current
+                })
+            })
+            const data = await res.json()
+            if (data.success && data.balances) {
+                const updatedBal = data.balances[currencyRef.current]
+                if (typeof updatedBal === 'number') setStoredBalance(updatedBal)
+            }
+            return data
+        } catch (err) {
+            return { success: false, error: err.message }
+        }
+    }, [user, authContext, token, setStoredBalance])
+
+    const getColorMatchRoomState = useCallback(async () => {
+        try {
+            const res = await fetch('/api/games/color-match/room/state')
+            const data = await res.json()
+            return data.room || data.state || null
+        } catch {
+            return null
+        }
+    }, [])
+
     // VIP Loyalty Engine Methods
     const getVipStatus = useCallback(async () => {
         try {
@@ -1019,6 +1058,8 @@ export function WalletProvider({ children }) {
         cashoutRoomCrash,
         cancelRoomCrashBet,
         getRoomCrashState,
+        placeColorMatchRoomBet,
+        getColorMatchRoomState,
         getVipStatus,
         claimVipRakeback,
         getAffiliateStats,

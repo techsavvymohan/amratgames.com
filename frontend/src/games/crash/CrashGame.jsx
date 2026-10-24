@@ -46,7 +46,7 @@ export const CRASH_GROWTH_RATE = 0.16
 
 function CrashGame() {
     const { user } = useAuth()
-    const { subscribe, sendJson, isConnected } = useWebSocket()
+    const { subscribe, sendJson, isConnected, crashRoomState } = useWebSocket()
     const {
         balance,
         startCrashRound,
@@ -65,15 +65,29 @@ function CrashGame() {
     const activeRoundIdRef = useRef(null)
     const targetCrashPointRef = useRef(null)
     const [gameMode, setGameMode] = useState('arena') // 'arena' (multiplayer synchronized) | 'solo' (provably fair)
-    const [roomBets, setRoomBets] = useState([])
-    const roomRoundIdRef = useRef(null)
-    const flightStartTimeRef = useRef(null)
-    const [phase, setPhase] = useState(PHASE.WAITING)
-    const [multiplier, setMultiplier] = useState(1.00)
-    const [flightStartTime, setFlightStartTime] = useState(null)
-    const [countdown, setCountdown] = useState(6)
-    const [elapsedTime, setElapsedTime] = useState(0)
-    const [history, setHistory] = useState([1.61, 7.07, 1.41, 1.25, 1.12, 3.02, 1.90, 1.05, 14.80, 2.15, 1.34, 4.20])
+    const [roomBets, setRoomBets] = useState(() => crashRoomState?.bets || [])
+    const roomRoundIdRef = useRef(crashRoomState?.roundId || null)
+    const flightStartTimeRef = useRef(crashRoomState?.flightStartTime || null)
+    const [phase, setPhase] = useState(() => {
+        if (crashRoomState?.state === 'FLYING') return PHASE.RUNNING
+        if (crashRoomState?.state === 'CRASHED') return PHASE.CRASHED
+        return PHASE.WAITING
+    })
+    const [multiplier, setMultiplier] = useState(() => crashRoomState?.currentMultiplier || 1.00)
+    const [flightStartTime, setFlightStartTime] = useState(() => crashRoomState?.flightStartTime || null)
+    const [countdown, setCountdown] = useState(() => crashRoomState?.countdown || 0)
+    const [elapsedTime, setElapsedTime] = useState(() => {
+        if (crashRoomState?.state === 'FLYING' && crashRoomState.flightStartTime) {
+            return Math.max(0, Math.min(50, (Date.now() - crashRoomState.flightStartTime) / 1000))
+        }
+        return 0
+    })
+    const [history, setHistory] = useState(() => {
+        if (crashRoomState?.history && Array.isArray(crashRoomState.history)) {
+            return crashRoomState.history.map(h => typeof h === 'object' ? h.crashPoint : h)
+        }
+        return [1.61, 7.07, 1.41, 1.25, 1.12, 3.02, 1.90, 1.05, 14.80, 2.15, 1.34, 4.20]
+    })
     const [soundEnabled, setSoundEnabled] = useState(true)
 
     // DUAL BETTING PANELS STATE (Aviator Signature Architecture)
@@ -269,6 +283,13 @@ function CrashGame() {
             }).catch(() => {})
         }
     }, [isConnected, gameMode, sendJson, getRoomCrashState, syncRoomState])
+
+    // Live continuous sync with global room state
+    useEffect(() => {
+        if (crashRoomState && gameMode === 'arena') {
+            syncRoomState(crashRoomState)
+        }
+    }, [crashRoomState, gameMode, syncRoomState])
 
     // Real-Time Multiplayer Room & Solo Mode WebSocket Connection
     useEffect(() => {

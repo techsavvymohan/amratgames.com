@@ -19,11 +19,43 @@ function BettingPanel({
     onRemove = null
 }) {
     const { currencySymbol, currency, balance } = useWallet()
-    const [activeTab, setActiveTab] = useState('bet') // 'bet' | 'auto'
-    const [amount, setAmount] = useState(betAmount || 25)
-    const [autoBetEnabled, setAutoBetEnabled] = useState(false)
-    const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false)
-    const [autoCashoutMult, setAutoCashoutMult] = useState(2.00)
+    const [activeTab, setActiveTab] = useState(() => {
+        try {
+            return localStorage.getItem(`amrat_aviator_autobet_p${panelId}`) === 'true' ? 'auto' : 'bet'
+        } catch { return 'bet' }
+    })
+    const [amount, setAmount] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`amrat_aviator_amount_p${panelId}`)
+            return saved ? parseFloat(saved) : (betAmount || 25)
+        } catch { return betAmount || 25 }
+    })
+    const [autoBetEnabled, setAutoBetEnabled] = useState(() => {
+        try {
+            return localStorage.getItem(`amrat_aviator_autobet_p${panelId}`) === 'true'
+        } catch { return false }
+    })
+    const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(() => {
+        try {
+            return localStorage.getItem(`amrat_aviator_autocashout_enabled_p${panelId}`) === 'true'
+        } catch { return false }
+    })
+    const [autoCashoutMult, setAutoCashoutMult] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`amrat_aviator_autocashout_mult_p${panelId}`)
+            return saved ? parseFloat(saved) : 2.00
+        } catch { return 2.00 }
+    })
+
+    // Persist auto-bet parameters across routes
+    useEffect(() => {
+        try {
+            localStorage.setItem(`amrat_aviator_autobet_p${panelId}`, autoBetEnabled ? 'true' : 'false')
+            localStorage.setItem(`amrat_aviator_amount_p${panelId}`, String(amount))
+            localStorage.setItem(`amrat_aviator_autocashout_enabled_p${panelId}`, autoCashoutEnabled ? 'true' : 'false')
+            localStorage.setItem(`amrat_aviator_autocashout_mult_p${panelId}`, String(autoCashoutMult))
+        } catch {}
+    }, [autoBetEnabled, amount, autoCashoutEnabled, autoCashoutMult, panelId])
 
     // Sync external betAmount if updated
     useEffect(() => {

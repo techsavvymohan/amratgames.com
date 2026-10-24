@@ -8,6 +8,7 @@ import { checkGameMaintenance } from '../middleware/circuitBreaker.js'
 import { minesRoutes } from '../games/mines/index.js'
 import { crashRoutes } from '../games/crash/index.js'
 import { coinTossRoutes } from '../games/coin-toss/index.js'
+import { colorMatchRoutes } from '../games/color-match/index.js'
 import { bankrollRisk } from '../services/BankrollRiskService.js'
 import { redisCache, CACHE_TTL } from '../services/RedisCacheService.js'
 import { gameActionLimiter } from '../middleware/rateLimiter.js'
@@ -22,6 +23,8 @@ router.use('/mines', minesRoutes)
 router.use('/crash', crashRoutes)
 router.use('/aviator', crashRoutes)
 router.use('/coin-toss', coinTossRoutes)
+router.use('/color-match', colorMatchRoutes)
+router.use('/wingo', colorMatchRoutes)
 
 // ── 1. Public Info & Seed Endpoints ─────────────────────────
 // GET /api/games/recent

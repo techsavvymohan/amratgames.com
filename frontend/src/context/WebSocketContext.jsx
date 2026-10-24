@@ -1,12 +1,27 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
+import BackgroundGameRunner from './BackgroundGameRunner'
 
 const WebSocketContext = createContext(null)
 
 export function WebSocketProvider({ children }) {
     const [isConnected, setIsConnected] = useState(false)
     const [crashRoomState, setCrashRoomState] = useState(null)
+    const [colorGameState, setColorGameState] = useState(null)
     const [recentBets, setRecentBets] = useState([])
     const [chatMessages, setChatMessages] = useState([])
+
+    // Immediate hydration of both 24/7 background room engines on initial mount
+    useEffect(() => {
+        fetch('/api/games/crash/room/state')
+            .then(r => r.json())
+            .then(d => { if (d.room) setCrashRoomState(d.room) })
+            .catch(() => {})
+
+        fetch('/api/games/color-match/room/state')
+            .then(r => r.json())
+            .then(d => { if (d.room) setColorGameState(d.room) })
+            .catch(() => {})
+    }, [])
 
     const wsRef = useRef(null)
     const subscribersRef = useRef(new Map()) // eventType -> Set of callbacks
@@ -98,6 +113,15 @@ export function WebSocketProvider({ children }) {
                                 })
                             }
                         }
+                        if (data.colorRoom) {
+                            setColorGameState(data.colorRoom)
+                            const colorCbs = subscribersRef.current.get('COLOR_GAME_STATE')
+                            if (colorCbs) {
+                                colorCbs.forEach(cb => {
+                                    try { cb(data.colorRoom, data) } catch (err) { console.error('[WS] Callback error:', err) }
+                                })
+                            }
+                        }
                         if (Array.isArray(data.recentChat)) setChatMessages(data.recentChat)
                     } else if (type === 'CRASH_ROOM_STATE' && payload) {
                         setCrashRoomState(payload)
@@ -105,6 +129,23 @@ export function WebSocketProvider({ children }) {
                         setCrashRoomState(prev => prev ? { ...prev, ...payload } : payload)
                     } else if (type === 'CRASH_ROOM_BUST' && payload) {
                         setCrashRoomState(prev => prev ? { ...prev, state: 'CRASHED', ...payload } : payload)
+                    } else if (type === 'COLOR_GAME_STATE' && payload) {
+                        setColorGameState(payload)
+                    } else if (type === 'COLOR_GAME_TICK' && payload) {
+                        setColorGameState(prev => prev ? { ...prev, ...payload } : payload)
+                    } else if (type === 'COLOR_GAME_DRAW' && payload) {
+                        setColorGameState(prev => {
+                            if (!prev) return payload
+                            const nextRecent = payload.recentBalls || [payload, ...(prev.recentBalls || []).slice(0, 4)]
+                            const nextHistory = payload.history || [payload, ...(prev.history || []).slice(0, 29)]
+                            return {
+                                ...prev,
+                                ...payload,
+                                recentBalls: nextRecent,
+                                history: nextHistory,
+                                isDrawing: true
+                            }
+                        })
                     } else if (type === 'NEW_BET' && payload) {
                         setRecentBets(prev => [payload, ...prev.slice(0, 49)])
                     } else if (type === 'NEW_CHAT_MESSAGE' && payload) {
@@ -157,6 +198,7 @@ export function WebSocketProvider({ children }) {
     const value = {
         isConnected,
         crashRoomState,
+        colorGameState,
         recentBets,
         chatMessages,
         subscribe,
@@ -165,6 +207,7 @@ export function WebSocketProvider({ children }) {
 
     return (
         <WebSocketContext.Provider value={value}>
+            <BackgroundGameRunner />
             {children}
         </WebSocketContext.Provider>
     )
