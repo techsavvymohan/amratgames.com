@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useWallet } from '../context/WalletContext'
 import MultiTierAffiliateDashboard from '../components/Affiliate/MultiTierAffiliateDashboard'
-import HouseVaultDashboard from '../components/Vault/HouseVaultDashboard'
 import './ProfilePage.css'
 
 export default function ProfilePage() {
@@ -15,7 +14,7 @@ export default function ProfilePage() {
 
     const [activeTab, setActiveTab] = useState(() => {
         const t = searchParams.get('tab')
-        if (t && ['profile', 'vip', 'affiliate', 'vault', 'payments', 'bets', 'support'].includes(t)) {
+        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
             return t
         }
         return 'profile'
@@ -49,7 +48,7 @@ export default function ProfilePage() {
     // Sync tab when query param changes
     useEffect(() => {
         const t = searchParams.get('tab')
-        if (t && ['profile', 'vip', 'affiliate', 'vault', 'payments', 'bets', 'support'].includes(t)) {
+        if (t && ['profile', 'vip', 'affiliate', 'payments', 'bets', 'support'].includes(t)) {
             setActiveTab(t)
         }
     }, [searchParams])
@@ -298,9 +297,6 @@ export default function ProfilePage() {
                     <div className="profile-hero-balance-val">
                         {currencySymbol}{(user.balances?.INR || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
-                    <div className="profile-hero-sub-balance">
-                        Vault: {(user.balances?.AMRAT || 0).toLocaleString()} $AMRAT
-                    </div>
                 </div>
             </div>
 
@@ -334,15 +330,6 @@ export default function ProfilePage() {
                         >
                             <span>💸</span>
                             <span>Affiliates</span>
-                        </button>
-                        <button
-                            type="button"
-                            data-tab="vault"
-                            className={`profile-subnav-btn ${activeTab === 'vault' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('vault')}
-                        >
-                            <span>🏛️</span>
-                            <span>House Vault</span>
                         </button>
                         <button
                             type="button"
@@ -949,8 +936,6 @@ export default function ProfilePage() {
             {/* TAB: MULTI-TIER VIRAL AFFILIATE TREE */}
             {activeTab === 'affiliate' && <MultiTierAffiliateDashboard />}
 
-            {/* TAB: BE THE HOUSE LIQUIDITY VAULT */}
-            {activeTab === 'vault' && <HouseVaultDashboard />}
                 </main>
             </div>
 
