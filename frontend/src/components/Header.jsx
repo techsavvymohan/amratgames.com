@@ -107,69 +107,36 @@ function Header({
 
             <div className="header-center">
                 <div className="header-wallet">
-                    <button
-                        type="button"
-                        id="header-mobile-wallet-btn"
-                        className="mobile-wallet-balance"
-                        aria-label={`Open wallet, balance ${currencySymbol}${formattedBalance}`}
-                        onClick={() => {
-                            if (!user) {
-                                openAuthModal('login')
-                            } else {
-                                openWalletModal('deposit')
-                            }
-                        }}
-                        title="1-Tap Deposit & Withdraw"
-                    >
-                        <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
-                        <span className="mobile-bal-text">{formattedBalance}</span>
-                        <span className="mobile-deposit-plus" aria-hidden="true">+</span>
-                    </button>
-                    {isGamePage && (
+                    {user && (
+                        <button
+                            type="button"
+                            id="header-mobile-wallet-btn"
+                            className="mobile-wallet-balance"
+                            aria-label={`Open wallet, balance ${currencySymbol}${formattedBalance}`}
+                            onClick={() => openWalletModal('deposit')}
+                            title="1-Tap Deposit & Withdraw"
+                        >
+                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
+                            <span className="mobile-bal-text">{formattedBalance}</span>
+                            <span className="mobile-deposit-plus" aria-hidden="true">+</span>
+                        </button>
+                    )}
+                    {isGamePage && user && (
                         <>
                             <div
                                 id="header-wallet-balance-display"
                                 className="wallet-balance-display"
-                                onClick={() => {
-                                    if (!user) {
-                                        openAuthModal('login')
-                                    } else {
-                                        openWalletModal('deposit')
-                                    }
-                                }}
+                                onClick={() => openWalletModal('deposit')}
                                 style={{ cursor: 'pointer' }}
                                 title="Click to Open Wallet / Cashier"
                             >
                                 <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
                                 <span className="wallet-balance-amount">{formattedBalance}</span>
-                                <button
-                                    id="header-wallet-dropdown-btn"
-                                    className="wallet-dropdown-toggle"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        if (!user) {
-                                            openAuthModal('login')
-                                        } else {
-                                            openWalletModal('deposit')
-                                        }
-                                    }}
-                                    title="Open Cashier"
-                                >
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                        <path d="M7 10l5 5 5-5z" />
-                                    </svg>
-                                </button>
                             </div>
                             <button
                                 id="header-wallet-modal-btn"
                                 className="wallet-btn"
-                                onClick={() => {
-                                    if (!user) {
-                                        openAuthModal('login')
-                                    } else {
-                                        openWalletModal('deposit')
-                                    }
-                                }}
+                                onClick={() => openWalletModal('deposit')}
                                 title="Deposit Funds (Cashier)"
                                 aria-label="Deposit Funds"
                             >
@@ -361,51 +328,22 @@ function Header({
                 </div>
 
                 {/* Desktop Always-Present Wallet & Deposit Pill on Home & Hub Pages */}
-                {!isGamePage && (
+                {!isGamePage && user && (
                     <div className="header-wallet desktop-only-control" style={{ marginRight: '8px' }}>
                         <div
                             id="header-wallet-balance-display-global"
                             className="wallet-balance-display"
-                            onClick={() => {
-                                if (!user) {
-                                    openAuthModal('login')
-                                } else {
-                                    openWalletModal('deposit')
-                                }
-                            }}
+                            onClick={() => openWalletModal('deposit')}
                             style={{ cursor: 'pointer' }}
                             title="Click to Open Wallet & Cashier"
                         >
                             <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
                             <span className="wallet-balance-amount">{formattedBalance}</span>
-                            <button
-                                id="header-wallet-dropdown-btn-global"
-                                className="wallet-dropdown-toggle"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (!user) {
-                                        openAuthModal('login')
-                                    } else {
-                                        openWalletModal('deposit')
-                                    }
-                                }}
-                                title="Open Cashier"
-                            >
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                    <path d="M7 10l5 5 5-5z" />
-                                </svg>
-                            </button>
                         </div>
                         <button
                             id="header-wallet-modal-btn-global"
                             className="wallet-btn"
-                            onClick={() => {
-                                if (!user) {
-                                    openAuthModal('login')
-                                } else {
-                                    openWalletModal('deposit')
-                                }
-                            }}
+                            onClick={() => openWalletModal('deposit')}
                             title="Deposit Funds (Cashier)"
                             aria-label="Deposit Funds"
                         >
