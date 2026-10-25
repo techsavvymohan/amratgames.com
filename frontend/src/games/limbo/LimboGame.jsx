@@ -531,58 +531,7 @@ function LimboGame() {
 
     return (
         <div className="amrat-limbo-wrapper">
-            {/* Top Responsive Mini-Header (Matches Amrat Originals standard) */}
-            <header className="amrat-limbo-header">
-                <div className="header-brand-wrap">
-                    <span className="brand-gem-symbol">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L2 9.5L12 22L22 9.5L12 2Z" fill="url(#gem_grad_limbo)" stroke="#1475e1" strokeWidth="1.5"/>
-                            <defs>
-                                <linearGradient id="gem_grad_limbo" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                    <stop stopColor="#1475e1"/>
-                                    <stop offset="1" stopColor="#00e701"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </span>
-                    <span className="brand-logo-text">Amrat</span>
-                </div>
 
-                <div className="header-center-actions">
-                    <button className="balance-pill-btn" onClick={openWalletModal} title="Wallet Balance">
-                        <span className="balance-amount-text">
-                            {(effectiveBalance || 0).toFixed(8)}
-                        </span>
-                        <span className="balance-crypto-icon">
-                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={10} />
-                        </span>
-                        <span className="balance-chevron">▼</span>
-                    </button>
-
-                    <button className="wallet-action-btn" onClick={openWalletModal} title="Open Cashier Deposit">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-6 0h-4V4h4v3z"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="header-right-tools">
-                    {!user && (
-                        <button
-                            className={`demo-toggle-btn ${isDemoMode ? 'active' : ''}`}
-                            onClick={() => setIsDemoMode(prev => !prev)}
-                            title="Toggle Demo Play"
-                        >
-                            {isDemoMode ? 'Demo' : 'Free Play'}
-                        </button>
-                    )}
-                    <button className="header-icon-btn" onClick={() => user ? openWalletModal() : openAuthModal('login')} title="Account">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </button>
-                </div>
-            </header>
 
             {/* Main Game Screen */}
             <div className="amrat-limbo-container">
