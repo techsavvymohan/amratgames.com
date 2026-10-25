@@ -170,19 +170,10 @@ function Header({
                                         openWalletModal('deposit')
                                     }
                                 }}
-                                style={{
-                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                    color: '#fff',
-                                    fontWeight: 800,
-                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
-                                }}
-                                title="Instant Deposit & Cashier"
+                                title="Deposit Funds (Cashier)"
+                                aria-label="Deposit Funds"
                             >
-                                <span>+</span>
-                                <span>Deposit</span>
+                                +
                             </button>
                         </>
                     )}
@@ -415,19 +406,10 @@ function Header({
                                     openWalletModal('deposit')
                                 }
                             }}
-                            style={{
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                color: '#fff',
-                                fontWeight: 800,
-                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                            title="Instant Deposit (UPI & Crypto)"
+                            title="Deposit Funds (Cashier)"
+                            aria-label="Deposit Funds"
                         >
-                            <span>+</span>
-                            <span>Deposit</span>
+                            +
                         </button>
                     </div>
                 )}

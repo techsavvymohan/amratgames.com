@@ -495,17 +495,22 @@ a {
 }
 
 .wallet-btn {
-    background: var(--accent-blue);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
     border: none;
     border-radius: 0 6px 6px 0;
-    padding: 8px 20px;
+    padding: 0 12px;
     height: 40px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
 }
 
 .wallet-btn:hover {
