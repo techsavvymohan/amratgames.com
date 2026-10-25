@@ -1,672 +1,1199 @@
-/* =================================================================
-   AMRATGAMES.COM — LIMBO TURBO PROVABLY FAIR 99% RTP
-   Responsive Single-Page Layout (Zero Vertical Scroll on Mobile)
-   ================================================================= */
+/* ==========================================================================
+   Amrat Limbo Multiplier — Dark Slate Design System
+   Exact visual match to mobile & desktop screenshots (Amrat Originals dark slate design)
+   Palette: #0f212e (canvas), #1a2c38 (panels), #213743 (bevels/borders), #1475e1 (action blue), #00e701 (win green), #ed4263 (loss red)
+   ========================================================================== */
 
-.limbo-page {
+/* ── Wrapper & Page Layout ── */
+.amrat-limbo-wrapper {
+    position: relative;
     width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 12px 16px;
-    user-select: none;
+    min-height: 100vh;
+    background-color: #0f212e;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
     box-sizing: border-box;
 }
 
-@media (min-width: 901px) {
-    .limbo-page {
-        height: calc(100vh - 60px);
-        max-height: calc(100vh - 60px);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .limbo-container {
-        flex: 1;
-        min-height: 0;
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        gap: 16px;
-        align-items: stretch;
-        overflow: hidden;
-    }
-
-    .limbo-arena {
-        height: 100%;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-    }
-
-    .limbo-controls-card {
-        height: 100%;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-    }
-}
-
-/* Touch responsiveness for mobile: zero delay, instant tactile press */
-button, .limbo-bet-btn, .limbo-quick-actions button, .limbo-history-pill, .limbo-preset-chip, .limbo-mode-tab {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.limbo-bet-btn:active,
-.limbo-quick-actions button:active,
-.limbo-history-pill:active,
-.limbo-preset-chip:active,
-.limbo-mode-tab:active {
-    transform: scale(0.94) !important;
-    filter: brightness(1.2) !important;
-    transition: transform 0.05s ease !important;
-}
-
-/* ── Roll Arena (Left/Top) ── */
-.limbo-arena {
+/* ── Top Responsive Mini-Header (Matches Screenshot 1 & 2) ── */
+.amrat-limbo-header {
+    height: 58px;
+    background: #1a2c38;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 480px;
-    padding: 20px;
-    border-radius: 16px;
-    background: radial-gradient(circle at 50% 40%, #151821 0%, #0c0e14 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-    position: relative;
-    overflow: hidden;
-}
-
-.limbo-arena::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 180px;
-    background: radial-gradient(circle at 50% 0%, rgba(245, 175, 25, 0.12), transparent 70%);
-    pointer-events: none;
-}
-
-/* History Bar */
-.limbo-history-bar {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    scrollbar-width: none;
-}
-.limbo-history-bar::-webkit-scrollbar {
-    display: none;
-}
-
-.limbo-history-empty {
-    font-size: 11px;
-    color: #64748b;
-    font-style: italic;
-    padding: 2px 4px;
-}
-
-.limbo-live-status {
-    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #f87171;
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 12px;
-    padding: 3px 8px;
-    white-space: nowrap;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 50;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
-.limbo-live-status .live-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 6px #ef4444;
-    animation: liveDotPulse 1s infinite alternate;
-}
-
-@keyframes liveDotPulse {
-    from { transform: scale(0.8); opacity: 0.6; }
-    to { transform: scale(1.3); opacity: 1; }
-}
-
-.limbo-history-pill {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    animation: limboPillPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes limboPillPop {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.limbo-history-pill.win {
-    background: rgba(16, 185, 129, 0.16);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.limbo-history-pill.lose {
-    background: rgba(239, 68, 68, 0.12);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-/* Multiplier Display */
-.limbo-display {
+.header-brand-wrap {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-gem-symbol {
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 16px;
-    text-align: center;
-    position: relative;
-    flex: 1;
 }
 
-.limbo-multiplier-number {
-    font-size: clamp(3.5rem, 10vw, 6.5rem);
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    line-height: 1;
+.brand-logo-text {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-center-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.balance-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.balance-pill-btn:hover {
+    border-color: #1475e1;
+    background: #142330;
+}
+
+.balance-amount-text {
+    font-size: 13.5px;
+    font-weight: 700;
     color: #ffffff;
     font-variant-numeric: tabular-nums;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    transition: color 0.15s ease, transform 0.15s ease;
+    letter-spacing: 0.01em;
 }
 
-.limbo-x {
-    font-size: 0.65em;
-    color: #f5af19;
+.balance-crypto-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.balance-chevron {
+    font-size: 9px;
+    color: #94a3b8;
     margin-left: 2px;
 }
 
-.limbo-display.win .limbo-multiplier-number {
-    color: #10b981;
-    text-shadow: 0 0 32px rgba(16, 185, 129, 0.5);
-    animation: limboWinGlow 0.3s ease;
+.wallet-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 34px;
+    background: #1475e1;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.limbo-display.lose .limbo-multiplier-number {
-    color: #ef4444;
-    text-shadow: 0 0 24px rgba(239, 68, 68, 0.35);
+.wallet-action-btn:hover {
+    background: #1a85f7;
+    transform: translateY(-1px);
 }
 
-@keyframes limboWinGlow {
-    0% { transform: scale(0.96); }
-    50% { transform: scale(1.05); }
+.header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.demo-toggle-btn {
+    background: rgba(20, 117, 225, 0.15);
+    border: 1px solid rgba(20, 117, 225, 0.4);
+    color: #60a5fa;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.demo-toggle-btn.active {
+    background: #1475e1;
+    color: #ffffff;
+}
+
+.header-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.header-icon-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Main Container: Responsive Stack ── */
+.amrat-limbo-container {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 12px 14px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+/* Desktop layout (>= 1024px) */
+@media (min-width: 1024px) {
+    .amrat-limbo-container {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 24px 20px;
+        gap: 16px;
+    }
+
+    .amrat-limbo-controls {
+        width: 360px;
+        flex-shrink: 0;
+        order: 1;
+    }
+
+    .amrat-limbo-arena {
+        flex: 1;
+        min-height: 520px;
+        order: 2;
+    }
+}
+
+/* Mobile layout (< 1024px) */
+@media (max-width: 1023px) {
+    .amrat-limbo-container {
+        flex-direction: column;
+        padding: 10px 10px 16px;
+    }
+
+    .amrat-limbo-arena {
+        order: 1;
+    }
+
+    .amrat-limbo-controls {
+        order: 2;
+    }
+}
+
+/* ==========================================================================
+   1. ARENA VIEWPORT (Exact match to Screenshots 1, 2, 3 & 4)
+   ========================================================================== */
+.amrat-limbo-arena {
+    background: #0f212e;
+    border: 1px solid #213743;
+    border-radius: 10px;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .amrat-limbo-arena {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+}
+
+/* Top bar: Autobet toast on left, History pills on right */
+.arena-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 34px;
+    margin-bottom: 20px;
+    gap: 8px;
+}
+
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.autobet-started-toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a2c38;
+    border: 1px solid #2f4553;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toast-icon {
+    font-size: 12px;
+    color: #00e701;
+    animation: spinSlow 3s linear infinite;
+}
+
+@keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.toast-text {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.toast-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 4px;
+    margin-left: 2px;
+    border-radius: 4px;
+}
+
+.toast-close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.top-bar-history {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.history-multiplier-pill {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: rgba(33, 55, 67, 0.7);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.history-multiplier-pill.win {
+    background: rgba(0, 231, 1, 0.18);
+    color: #00e701;
+    border-color: rgba(0, 231, 1, 0.35);
+}
+
+.history-multiplier-pill.lose {
+    color: #8596a5;
+}
+
+/* ── Center Big Multiplier Display ── */
+.arena-center-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 10px 40px;
+    min-height: 160px;
+}
+
+.giant-multiplier-display {
+    font-size: clamp(3.8rem, 11vw, 6.2rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    transition: color 0.18s ease, transform 0.18s ease;
+    user-select: none;
+}
+
+.giant-multiplier-display .multiplier-x {
+    font-size: 0.65em;
+    margin-left: 3px;
+    font-weight: 700;
+}
+
+/* Colors matching Screenshot 1, 2, 3, 4 */
+.giant-multiplier-display.color-idle {
+    color: #ffffff;
+}
+
+.giant-multiplier-display.color-rolling {
+    color: #ffffff;
+    opacity: 0.95;
+    animation: pulseRolling 0.12s infinite alternate;
+}
+
+@keyframes pulseRolling {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.02); }
+}
+
+.giant-multiplier-display.color-loss {
+    color: #ed4263;
+    text-shadow: 0 0 35px rgba(237, 66, 99, 0.35);
+}
+
+.giant-multiplier-display.color-win {
+    color: #00e701;
+    text-shadow: 0 0 35px rgba(0, 231, 1, 0.45);
+    animation: winPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes winPop {
+    0% { transform: scale(0.92); }
+    60% { transform: scale(1.06); }
     100% { transform: scale(1); }
 }
 
-.limbo-target-badge {
-    margin-top: 10px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+/* ── Dual Targets Card: Target Multiplier & Win Chance ── */
+.arena-targets-card {
+    background: #1a2c38;
+    border: 1px solid #213743;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.target-input-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.target-field-label {
     font-size: 12px;
-    color: #b1b6c6;
-    display: inline-flex;
+    font-weight: 600;
+    color: #8596a5;
+    user-select: none;
+}
+
+.target-compound-box {
+    display: flex;
+    align-items: center;
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 6px;
+    height: 42px;
+    padding: 0 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.target-compound-box:focus-within {
+    border-color: #1475e1;
+    box-shadow: 0 0 0 1px #1475e1;
+}
+
+.compound-text-input {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 14.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+}
+
+.compound-text-input::-webkit-outer-spin-button,
+.compound-text-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.compound-text-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.compound-suffix-sign {
+    color: #8596a5;
+    font-size: 13px;
+    font-weight: 700;
+    margin-left: 6px;
+    user-select: none;
+}
+
+/* ── Arena Primary Action Button (Right under the card) ── */
+.arena-primary-btn-wrap {
+    width: 100%;
+}
+
+.amrat-primary-btn {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: 6px;
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+
+.amrat-primary-btn.bet-state {
+    background: #1475e1;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(20, 117, 225, 0.35);
+}
+
+.amrat-primary-btn.bet-state:hover:not(:disabled) {
+    background: #1a85f7;
+    box-shadow: 0 6px 18px rgba(20, 117, 225, 0.5);
+    transform: translateY(-1px);
+}
+
+.amrat-primary-btn.bet-state:active:not(:disabled) {
+    background: #0d62c9;
+    transform: translateY(1px);
+}
+
+.amrat-primary-btn.stop-autobet-state {
+    background: #1475e1;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(20, 117, 225, 0.35);
+}
+
+.amrat-primary-btn.stop-autobet-state:hover {
+    background: #1a85f7;
+}
+
+.amrat-primary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.btn-sub-icon {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   2. COCKPIT CONTROLS PANEL (Exact match to Screenshots 1, 2, 3 & 4)
+   ========================================================================== */
+.amrat-limbo-controls {
+    background: #1a2c38;
+    border: 1px solid #213743;
+    border-radius: 10px;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .amrat-limbo-controls {
+        padding: 18px 16px;
+        border-radius: 12px;
+    }
+}
+
+.control-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.field-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8596a5;
+    user-select: none;
+}
+
+.field-fiat-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8596a5;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Compound Input Structure ── */
+.amrat-input-compound {
+    display: flex;
+    align-items: center;
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 6px;
+    height: 42px;
+    padding: 0 4px 0 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.amrat-input-compound:focus-within {
+    border-color: #1475e1;
+    box-shadow: 0 0 0 1px #1475e1;
+}
+
+.amrat-num-input {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+}
+
+.amrat-num-input::-webkit-outer-spin-button,
+.amrat-num-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.amrat-num-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.input-currency-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+}
+
+.input-divider {
+    width: 1px;
+    height: 20px;
+    background: #2f4553;
+    margin: 0 2px;
+}
+
+.compound-action-btn {
+    background: transparent;
+    border: none;
+    color: #b1bad3;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0 10px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    user-select: none;
+}
+
+.compound-action-btn:hover:not(:disabled) {
+    color: #ffffff;
+    background: #213743;
+}
+
+.compound-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Readonly Profit Display ── */
+.amrat-readonly-display {
+    display: flex;
+    align-items: center;
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 6px;
+    height: 42px;
+    padding: 0 10px;
+}
+
+.amrat-display-input {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+}
+
+/* ── Auto Mode Additional Controls ── */
+.infinite-badge-btn {
+    background: transparent;
+    border: 1px solid #2f4553;
+    color: #94a3b8;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.infinite-badge-btn.active {
+    background: rgba(20, 117, 225, 0.2);
+    border-color: #1475e1;
+    color: #60a5fa;
+}
+
+.auto-remaining-pill {
+    background: #213743;
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.advanced-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.advanced-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+/* ── Switch Toggle (iOS style) ── */
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2f4553;
+    transition: .25s;
+    border-radius: 24px;
+}
+
+.slider-round:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: .25s;
+    border-radius: 50%;
+}
+
+.switch-toggle input:checked + .slider-round {
+    background-color: #1475e1;
+}
+
+.switch-toggle input:checked + .slider-round:before {
+    transform: translateX(20px);
+}
+
+/* ── Advanced Auto Panel ── */
+.advanced-auto-panel {
+    background: #142330;
+    border: 1px solid #213743;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.martingale-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.martingale-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #8596a5;
+}
+
+.martingale-actions {
+    display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.limbo-target-badge strong {
-    color: #f5af19;
+.action-pill {
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    color: #94a3b8;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
-.limbo-badge-divider {
-    opacity: 0.4;
-    font-size: 10px;
+.action-pill.active {
+    background: #213743;
+    border-color: #1475e1;
+    color: #ffffff;
 }
 
-.limbo-payout-toast {
-    margin-top: 12px;
-    padding: 6px 16px;
+.percent-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 4px;
+    height: 28px;
+    padding: 0 6px;
+    flex: 1;
+}
+
+.percent-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.percent-symbol {
+    font-size: 11px;
+    color: #8596a5;
+    font-weight: 700;
+}
+
+.stop-thresholds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.threshold-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.threshold-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8596a5;
+}
+
+.threshold-input {
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    border-radius: 4px;
+    height: 32px;
+    padding: 0 8px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+}
+
+.threshold-input:focus {
+    border-color: #1475e1;
+}
+
+.auto-launch-btn {
+    margin-top: 4px;
+}
+
+/* ── Segmented Mode Switcher (Capsule at bottom) ── */
+.amrat-mode-switcher-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.capsule-mode-switcher {
+    display: inline-flex;
+    background: #0f212e;
+    border: 1px solid #213743;
+    border-radius: 24px;
+    padding: 3px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.capsule-tab {
+    flex: 1;
+    height: 34px;
+    background: transparent;
+    border: none;
+    border-radius: 20px;
+    color: #8596a5;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.capsule-tab.active {
+    background: #2f4553;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.capsule-tab:hover:not(.active):not(:disabled) {
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   3. SECONDARY TOOLS FOOTER ROW (Settings, Live Stats, Fairness)
+   ========================================================================== */
+.amrat-tools-row {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.tools-left-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #1a2c38;
+    border: 1px solid #213743;
+    border-radius: 6px;
+    color: #8596a5;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tool-btn:hover {
+    color: #ffffff;
+    background: #213743;
+    border-color: #2f4553;
+}
+
+.tools-right-group {
+    display: flex;
+    align-items: center;
+}
+
+.fairness-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1a2c38;
+    border: 1px solid #213743;
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: #8596a5;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.fairness-pill-btn:hover {
+    color: #ffffff;
+    background: #213743;
+    border-color: #2f4553;
+}
+
+.fairness-check-icon {
+    color: #00e701;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   4. ORIGINALS COMMUNITY CARD
+   ========================================================================== */
+.amrat-originals-card {
+    width: 100%;
+    max-width: 1180px;
+    margin: 16px auto 24px;
+    padding: 14px 16px;
+    background: #1a2c38;
+    border: 1px solid #213743;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.card-brand-col {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.originals-logo-badge {
+    width: 44px;
+    height: 44px;
+    background: #0f212e;
+    border: 1px solid #213743;
     border-radius: 8px;
     display: flex;
-    gap: 8px;
     align-items: center;
+    justify-content: center;
+}
+
+.badge-logo-text {
     font-size: 13px;
+    font-weight: 800;
+    color: #60a5fa;
+    letter-spacing: -0.02em;
+}
+
+.originals-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.originals-title {
+    margin: 0;
+    font-size: 15px;
     font-weight: 700;
-    animation: limboPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: #ffffff;
 }
 
-@keyframes limboPop {
-    from { transform: scale(0.88); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+.originals-followers {
+    font-size: 12px;
+    color: #8596a5;
 }
 
-.limbo-payout-toast.win {
-    background: rgba(16, 185, 129, 0.2);
-    border: 1px solid #10b981;
-    color: #10b981;
+.card-heart-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #0f212e;
+    border: 1px solid #213743;
+    border-radius: 8px;
+    color: #8596a5;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
-.limbo-payout-toast.lose {
-    background: rgba(239, 68, 68, 0.16);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    color: #ef4444;
+.card-heart-btn:hover {
+    color: #ffffff;
+    border-color: #2f4553;
 }
 
-.limbo-arena-footer {
+.card-heart-btn.favorited {
+    border-color: rgba(237, 66, 99, 0.4);
+    background: rgba(237, 66, 99, 0.08);
+}
+
+/* ==========================================================================
+   5. MODALS & LIVE STATS
+   ========================================================================== */
+.amrat-modal.dark-glass .ant-modal-content {
+    background: #1a2c38 !important;
+    border: 1px solid #213743 !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+.amrat-modal.dark-glass .ant-modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid #213743 !important;
+    padding-bottom: 12px !important;
+}
+
+.amrat-modal.dark-glass .ant-modal-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.amrat-modal.dark-glass .ant-modal-close {
+    color: #8596a5 !important;
+}
+
+.amrat-modal.dark-glass .ant-modal-close:hover {
+    color: #ffffff !important;
+}
+
+.modal-settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.setting-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.setting-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.setting-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.setting-desc {
+    font-size: 12px;
+    color: #8596a5;
+}
+
+/* Live Stats */
+.stats-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 8px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media (min-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.stat-card {
+    background: #0f212e;
+    border: 1px solid #213743;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #8596a5;
+    font-weight: 600;
+}
+
+.stat-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-chart-wrapper {
+    background: #0f212e;
+    border: 1px solid #213743;
+    border-radius: 8px;
+    padding: 12px;
+    height: 180px;
+}
+
+.stats-actions {
     display: flex;
     justify-content: flex-end;
 }
 
-.limbo-btn-secondary {
-    color: #8f9bb3 !important;
-    font-size: 11px !important;
-}
-
-/* ── Controls Cockpit (Right/Bottom) ── */
-.limbo-controls-card {
-    background: #0f131c;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
-}
-
-/* Mode Switch Tabs */
-.limbo-mode-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: #090c12;
-    padding: 3px;
-    border-radius: 8px;
-    gap: 4px;
-}
-
-.limbo-mode-tab {
-    padding: 6px 12px;
-    border: none;
-    background: transparent;
-    color: #94a3b8;
-    font-size: 13px;
-    font-weight: 700;
+.amrat-secondary-btn {
+    background: #0f212e;
+    border: 1px solid #2f4553;
+    color: #8596a5;
     border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.limbo-mode-tab.active {
-    background: #1e2536;
-    color: #f5af19;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.limbo-control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.limbo-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.limbo-label {
+    padding: 8px 14px;
     font-size: 12px;
     font-weight: 600;
-    color: #8f9bb3;
-}
-
-.limbo-balance-hint {
-    font-size: 11px;
-    color: #64748b;
-}
-
-.limbo-input-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.limbo-input {
-    background: #171a24 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    color: #ffffff !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    height: 40px !important;
-}
-
-.limbo-input:focus {
-    border-color: #f5af19 !important;
-    box-shadow: 0 0 0 2px rgba(245, 175, 25, 0.2) !important;
-}
-
-.limbo-quick-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-}
-
-.limbo-quick-actions button {
-    height: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-    color: #b1b6c6;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
-.limbo-quick-actions button:hover:not(:disabled) {
-    background: rgba(245, 175, 25, 0.15);
-    color: #f5af19;
-    border-color: rgba(245, 175, 25, 0.3);
+.amrat-secondary-btn:hover {
+    color: #ffffff;
+    border-color: #1475e1;
 }
 
-/* Quick Multiplier Presets */
-.limbo-presets-row {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 4px;
-}
-
-.limbo-preset-chip {
-    height: 28px;
-    padding: 0 2px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    color: #94a3b8;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.12s ease;
-    white-space: nowrap;
-}
-
-.limbo-preset-chip:hover:not(:disabled) {
-    border-color: rgba(245, 175, 25, 0.3);
-    color: #e2e8f0;
-}
-
-.limbo-preset-chip.active {
-    background: rgba(245, 175, 25, 0.15);
-    color: #f5af19;
-    border-color: #f5af19;
-}
-
-.limbo-grid-two {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.limbo-profit-preview {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
-    font-size: 12px;
-    color: #8f9bb3;
-}
-
-.text-gold {
-    color: #f5af19;
-    font-size: 14px;
-}
-
-.limbo-bet-btn {
-    height: 48px !important;
-    background: linear-gradient(135deg, #f5af19 0%, #d49110 100%) !important;
-    border: none !important;
-    color: #0b0d12 !important;
-    font-weight: 800 !important;
-    font-size: 15px !important;
-    letter-spacing: 0.5px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 14px rgba(245, 175, 25, 0.3) !important;
-    transition: all 0.15s ease !important;
-}
-
-.limbo-bet-btn:hover:not(:disabled) {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(245, 175, 25, 0.45) !important;
-}
-
-.limbo-bet-btn:disabled {
-    opacity: 0.55 !important;
-    cursor: not-allowed !important;
-}
-
-/* Auto Bet Controls */
-.limbo-auto-counts {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.limbo-count-btn {
-    height: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-    color: #b1b6c6;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.limbo-count-btn.active {
-    background: rgba(245, 175, 25, 0.2);
-    color: #f5af19;
-    border-color: #f5af19;
-}
-
-.limbo-auto-running-box {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.limbo-auto-status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: rgba(245, 175, 25, 0.1);
-    border: 1px solid rgba(245, 175, 25, 0.25);
-    border-radius: 8px;
-    font-size: 12px;
-    color: #f5af19;
-}
-
-.limbo-pulse-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #f5af19;
-    animation: limboPulse 1s infinite alternate;
-}
-
-@keyframes limboPulse {
-    from { opacity: 0.3; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1.2); }
-}
-
-.limbo-stop-btn {
-    background: #ef4444 !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3) !important;
-}
-
-/* ── Laptop Viewport Fit ── */
-@media (min-width: 901px) {
-    .limbo-page {
-        min-height: calc(100vh - 70px);
-        padding: 16px 20px 60px;
-    }
-    .limbo-container {
-        min-height: 520px;
-    }
-    .limbo-arena {
-        min-height: 480px;
-        padding: 20px !important;
-    }
-    .limbo-controls-card {
-        padding: 20px !important;
-        justify-content: space-between;
-    }
-}
-
-/* ── Mobile Viewport Fit ── */
-@media (max-width: 900px) {
-    .limbo-page {
-        height: 100% !important;
-        max-height: 100% !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-        padding: 4px 8px 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-    }
-
-    .limbo-container {
-        height: 100% !important;
-        max-height: 100% !important;
-        min-height: 0 !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        grid-template-columns: 1fr !important;
-        gap: 6px !important;
-        padding: 0 !important;
-    }
-
-    .limbo-arena {
-        flex: 1 1 auto !important;
-        min-height: 0 !important;
-        padding: 10px 12px !important;
-        border-radius: 14px !important;
-        justify-content: space-between !important;
-    }
-
-    .limbo-display {
-        padding: 6px 0 !important;
-    }
-
-    .limbo-multiplier-number {
-        font-size: clamp(2.8rem, 8.5vh, 4rem) !important;
-    }
-
-    .limbo-target-badge {
-        margin-top: 4px !important;
-        padding: 2px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .limbo-payout-toast {
-        margin-top: 4px !important;
-        padding: 3px 10px !important;
-        font-size: 11px !important;
-    }
-
-    .limbo-arena-footer {
-        display: none !important;
-    }
-
-    .limbo-controls-card {
-        flex-shrink: 0 !important;
-        padding: 6px 10px 8px !important;
-        gap: 6px !important;
-        background: #0f131c !important;
-        border-radius: 12px 12px 0 0 !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4) !important;
-    }
-
-    .limbo-mode-tabs {
-        padding: 2px !important;
-    }
-
-    .limbo-mode-tab {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .limbo-control-group {
-        gap: 2px !important;
-    }
-
-    .limbo-label {
-        font-size: 11px !important;
-    }
-
-    .limbo-input {
-        height: 38px !important;
-        font-size: 14px !important;
-    }
-
-    .limbo-quick-actions button {
-        height: 36px !important;
-        min-height: 36px !important;
-        padding: 0 10px !important;
-        font-size: 12px !important;
-        font-weight: 700 !important;
-    }
-
-    .limbo-presets-row {
-        gap: 6px !important;
-    }
-
-    .limbo-preset-chip {
-        height: 36px !important;
-        min-height: 36px !important;
-        padding: 0 10px !important;
-        font-size: 12px !important;
-        font-weight: 700 !important;
-    }
-
-    .limbo-grid-two {
-        gap: 6px !important;
-    }
-
-    .limbo-profit-preview {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
-    }
-
-    .text-gold {
-        font-size: 12px !important;
-    }
-
-    .limbo-bet-btn {
-        min-height: 46px !important;
-        height: 46px !important;
-        font-size: 15px !important;
-        font-weight: 800 !important;
-        margin-top: 4px !important;
-    }
-}
+/* Utilities */
+.text-green { color: #00e701 !important; }
+.text-red { color: #ed4263 !important; }
+.text-muted { color: #8596a5 !important; }

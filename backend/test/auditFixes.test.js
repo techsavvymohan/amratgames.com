@@ -144,7 +144,7 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
         assert.equal(result.won, result.choice === expectedOutcome)
     })
 
-    it('verifies Limbo roll strictly honors 98.00% RTP mathematical curve', () => {
+    it('verifies Limbo roll strictly honors 99.00% RTP mathematical curve', () => {
         const result = gameEngine.evaluateLimbo({
             betAmount: 100,
             targetMultiplier: 2.0,
@@ -156,12 +156,12 @@ describe('🛡️ Platform Audit & Integrity Verification Suite', () => {
         const floatVal = intVal / 0x100000000
 
         let expectedRoll = 1.00
-        if (floatVal >= 0.02) {
-            expectedRoll = Math.floor((98.0 / (1 - floatVal))) / 100
+        if (floatVal >= 0.01) {
+            expectedRoll = Math.floor((99.0 / (1 - floatVal))) / 100
         }
         expectedRoll = Math.max(1.00, Math.min(expectedRoll, 1000000.0))
 
-        assert.equal(result.roll, expectedRoll, 'Limbo roll must strictly match 98% RTP mathematical curve')
+        assert.equal(result.roll, expectedRoll, 'Limbo roll must strictly match 99% RTP mathematical curve')
     })
 
     it('verifies BTC withdrawal rejection preserves full 8-decimal Satoshi precision on refund', () => {

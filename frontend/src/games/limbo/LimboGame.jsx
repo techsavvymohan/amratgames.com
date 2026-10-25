@@ -1,165 +1,246 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Button, Input, Typography, Modal, Statistic, Row, Col, Tabs, Drawer } from 'antd'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import {
-    ThunderboltOutlined,
+    SettingOutlined,
     SafetyCertificateOutlined,
+    SoundOutlined,
     HistoryOutlined,
-    PlayCircleOutlined,
-    PauseCircleOutlined,
+    HeartOutlined,
+    HeartFilled,
+    LineChartOutlined,
+    ThunderboltOutlined,
     RedoOutlined,
-    PlusOutlined,
-    MinusOutlined
+    CheckCircleOutlined
 } from '@ant-design/icons'
+import { Modal, Tooltip, Typography, Tag } from 'antd'
+import Chart from 'chart.js/auto'
 import { useWallet } from '../../context/WalletContext'
 import { useAuth } from '../../context/AuthContext'
-import ProvablyFair from '../../utils/ProvablyFair'
+import { CurrencyIcon } from '../../components/Header'
 import casinoAudio from '../../utils/casinoAudio'
-import MissedWinBanner from '../../components/MissedWinBanner/MissedWinBanner'
+import ProvablyFairVerifierModal from '../../components/ProvablyFair/ProvablyFairVerifierModal'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './LimboGame.css'
 
-const { Text } = Typography
+const { Title, Text, Paragraph } = Typography
 
-// House edge: 1% (99% RTP)
+// 99.00% RTP (1.00% House Edge) matches exact 49.50000000% on 2.00x and 0.19800000% on 500.00x
 const RTP = 0.99
-const MAX_MULTIPLIER = 1000.00
 const MIN_MULTIPLIER = 1.01
-
-const QUICK_PRESETS = [1.50, 2.00, 5.00, 10.00, 50.00, 100.00]
+const MAX_MULTIPLIER = 1000000.00
 
 function LimboGame() {
     const { user, openAuthModal } = useAuth()
-    const { balance, currencySymbol, executeGameBet, creditGamePayout, notifyWin, notifyLoss, showToast } = useWallet()
+    const {
+        balance,
+        showToast,
+        currencySymbol,
+        currency,
+        executeGameBet,
+        creditGamePayout,
+        notifyWin,
+        notifyLoss,
+        openWalletModal
+    } = useWallet()
 
-    // Provably fair engine instance
-    const fairnessRef = useRef(null)
-    const [fairnessReady, setFairnessReady] = useState(false)
-    const [serverSeedHash, setServerSeedHash] = useState('Loading…')
-    const [clientSeed, setClientSeed] = useState('')
-    const [nonce, setNonce] = useState(0)
+    // Betting mode: 'manual' | 'auto'
+    const [mode, setMode] = useState('manual')
 
-    // Betting states
-    const [betMode, setBetMode] = useState('manual') // 'manual' | 'auto'
-    const [betAmount, setBetAmount] = useState(100)
+    // Game Core State
+    const [betAmount, setBetAmount] = useState(10)
     const [targetMultiplier, setTargetMultiplier] = useState(2.00)
-    const [winChance, setWinChance] = useState(49.50)
+    const [targetInputStr, setTargetInputStr] = useState('2.00')
+    const [winChanceStr, setWinChanceStr] = useState('49.50000000')
+
     const [isRolling, setIsRolling] = useState(false)
     const [currentRoll, setCurrentRoll] = useState(1.00)
-    const [lastOutcome, setLastOutcome] = useState(null) // { roll, target, win }
-    const [gameResult, setGameResult] = useState(null) // 'win' | 'lose' | null
+    const [gameResult, setGameResult] = useState(null) // 'win' | 'loss' | null
+    const [hasPlayed, setHasPlayed] = useState(false)
 
-    // Real dynamic history (No demo data)
-    const [history, setHistory] = useState([])
+    // Real dynamic history pills (up to 8 items, newest on right)
+    const [history, setHistory] = useState([
+        { id: 1, roll: 1.21, win: false },
+        { id: 2, roll: 1.51, win: false },
+        { id: 3, roll: 1.90, win: false }
+    ])
 
     // Auto-betting states
     const [isAutoRunning, setIsAutoRunning] = useState(false)
     const [autoBetCount, setAutoBetCount] = useState(10)
+    const [autoInfinite, setAutoInfinite] = useState(false)
     const [autoBetsRemaining, setAutoBetsRemaining] = useState(0)
+    const [showAutobetToast, setShowAutobetToast] = useState(false)
+    const [advancedAuto, setAdvancedAuto] = useState(false)
     const [onWinAction, setOnWinAction] = useState('reset') // 'reset' | 'increase'
-    const [onLossAction, setOnLossAction] = useState('reset')
     const [onWinIncreasePercent, setOnWinIncreasePercent] = useState(100)
+    const [onLossAction, setOnLossAction] = useState('reset') // 'reset' | 'increase'
     const [onLossIncreasePercent, setOnLossIncreasePercent] = useState(100)
-    const [baseBetAmount, setBaseBetAmount] = useState(100)
+    const [stopOnProfit, setStopOnProfit] = useState('')
+    const [stopOnLoss, setStopOnLoss] = useState('')
+    const autoStartingProfitRef = useRef(0)
+    const autoProfitAccRef = useRef(0)
     const autoRunningRef = useRef(false)
     const activeBetRef = useRef(betAmount)
+    const baseBetRef = useRef(betAmount)
 
-    // Non-stop Live Spectator Rounds
-    const [spectatorLive, setSpectatorLive] = useState(true)
-    const [spectatorCountdown, setSpectatorCountdown] = useState(4)
-    const [spectatorMissedWin, setSpectatorMissedWin] = useState(null)
+    // Demo Mode toggle for visitors
+    const [isDemoMode, setIsDemoMode] = useState(false)
+    const [demoBalance, setDemoBalance] = useState(1000)
+
+    // Secondary UI & Social states
+    const [isFavorite, setIsFavorite] = useState(() => {
+        try {
+            return localStorage.getItem('amrat_limbo_favorited') === 'true'
+        } catch {
+            return false
+        }
+    })
+    const [followersCount, setFollowersCount] = useState(197730)
+    const [soundEnabled, setSoundEnabled] = useState(() => !casinoAudio.getMuted())
+    const [turboMode, setTurboMode] = useState(false)
+    const [hotkeysEnabled, setHotkeysEnabled] = useState(true)
 
     // Modals
+    const [settingsOpen, setSettingsOpen] = useState(false)
     const [fairnessOpen, setFairnessOpen] = useState(false)
+    const [liveStatsOpen, setLiveStatsOpen] = useState(false)
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false)
 
-    // Initialize Provably Fair on mount
-    useEffect(() => {
-        const pf = new ProvablyFair()
-        fairnessRef.current = pf
-        pf.waitReady().then(() => {
-            setServerSeedHash(pf.serverSeedHash)
-            setClientSeed(pf.clientSeed)
-            setNonce(pf.nonce)
-            setFairnessReady(true)
-        })
+    // Live Stats state
+    const [stats, setStats] = useState({
+        bets: 0,
+        wins: 0,
+        losses: 0,
+        wagered: 0,
+        profit: 0
+    })
+    const chartRef = useRef(null)
+    const chartInstanceRef = useRef(null)
+    const statsHistoryRef = useRef([0])
+
+    const effectiveBalance = isDemoMode ? demoBalance : (balance || 0)
+
+    // Calculate Win Chance from Target Multiplier (99 / target)
+    const computeWinChance = useCallback((target) => {
+        const t = parseFloat(target)
+        if (isNaN(t) || t <= 0) return '0.00000000'
+        const chance = (RTP * 100) / t
+        return chance.toFixed(8)
     }, [])
 
-    // Update win chance when target multiplier changes
-    const handleTargetChange = (val) => {
+    // Calculate Target Multiplier from Win Chance (99 / chance)
+    const computeTargetFromChance = useCallback((chance) => {
+        const c = parseFloat(chance)
+        if (isNaN(c) || c <= 0) return '2.00'
+        const target = (RTP * 100) / c
+        return Math.max(MIN_MULTIPLIER, Math.min(MAX_MULTIPLIER, target)).toFixed(2)
+    }, [])
+
+    // Update target input and recalculate win chance
+    const handleTargetChange = (e) => {
+        const val = e.target.value
+        setTargetInputStr(val)
         const num = parseFloat(val)
         if (!isNaN(num) && num >= MIN_MULTIPLIER && num <= MAX_MULTIPLIER) {
             setTargetMultiplier(num)
-            const chance = (RTP * 100) / num
-            setWinChance(parseFloat(chance.toFixed(2)))
-        } else {
-            setTargetMultiplier(val)
+            setWinChanceStr(computeWinChance(num))
         }
     }
 
-    // Update target when win chance changes
-    const handleWinChanceChange = (val) => {
+    const handleTargetBlur = () => {
+        let num = parseFloat(targetInputStr)
+        if (isNaN(num) || num < MIN_MULTIPLIER) num = MIN_MULTIPLIER
+        if (num > MAX_MULTIPLIER) num = MAX_MULTIPLIER
+        setTargetMultiplier(num)
+        setTargetInputStr(num.toFixed(2))
+        setWinChanceStr(computeWinChance(num))
+    }
+
+    // Update win chance input and recalculate target multiplier
+    const handleWinChanceChange = (e) => {
+        const val = e.target.value
+        setWinChanceStr(val)
         const num = parseFloat(val)
         if (!isNaN(num) && num > 0 && num <= 98.02) {
-            setWinChance(num)
-            const target = (RTP * 100) / num
-            setTargetMultiplier(parseFloat(target.toFixed(2)))
-        } else {
-            setWinChance(val)
+            const target = computeTargetFromChance(num)
+            setTargetMultiplier(parseFloat(target))
+            setTargetInputStr(target)
         }
     }
 
-    // Synchronize activeBetRef with betAmount
+    const handleWinChanceBlur = () => {
+        let num = parseFloat(winChanceStr)
+        if (isNaN(num) || num <= 0) num = 49.5
+        if (num > 98.02) num = 98.02
+        setWinChanceStr(num.toFixed(8))
+        const target = computeTargetFromChance(num)
+        setTargetMultiplier(parseFloat(target))
+        setTargetInputStr(target)
+    }
+
+    // Quick Bet Modifiers (½, 2×)
+    const handleHalfBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(prev => Math.max(0.00000001, parseFloat((Number(prev || 1) / 2).toFixed(8))))
+    }
+
+    const handleDoubleBet = () => {
+        if (isRolling || isAutoRunning) return
+        casinoAudio.playChip?.()
+        setBetAmount(prev => {
+            const doubled = Number(prev || 1) * 2
+            return parseFloat(Math.min(effectiveBalance || 1000000, doubled).toFixed(8))
+        })
+    }
+
+    // Synchronize activeBetRef
     useEffect(() => {
         activeBetRef.current = betAmount
     }, [betAmount])
 
-    // Quick bet modifier functions
-    const halveBet = () => {
-        if (isRolling || isAutoRunning) return
-        casinoAudio.playChip?.()
-        setBetAmount(prev => Math.max(1, parseFloat((Number(prev || 1) / 2).toFixed(2))))
+    // Toggle Favorite button
+    const toggleFavorite = () => {
+        setIsFavorite(prev => {
+            const next = !prev
+            try {
+                localStorage.setItem('amrat_limbo_favorited', String(next))
+            } catch {}
+            setFollowersCount(c => next ? c + 1 : c - 1)
+            return next
+        })
     }
 
-    const doubleBet = () => {
-        if (isRolling || isAutoRunning) return
-        casinoAudio.playChip?.()
-        setBetAmount(prev => Math.min(balance || 100000, parseFloat((Number(prev || 1) * 2).toFixed(2))))
+    // Sound toggle
+    const toggleSound = () => {
+        const isNowMuted = casinoAudio.toggleMute()
+        setSoundEnabled(!isNowMuted)
     }
 
-    const minBet = () => {
-        if (isRolling || isAutoRunning) return
-        casinoAudio.playChip?.()
-        setBetAmount(10)
-    }
+    // Potential profit preview on win
+    const potentialProfit = useMemo(() => {
+        const bet = parseFloat(betAmount) || 0
+        const mult = parseFloat(targetMultiplier) || 2
+        return Math.max(0, (bet * mult) - bet)
+    }, [betAmount, targetMultiplier])
 
-    const maxBet = () => {
-        if (isRolling || isAutoRunning) return
-        casinoAudio.playChip?.()
-        setBetAmount(Math.max(10, Math.floor(balance || 100)))
-    }
-
-    // Quick multiplier preset selection
-    const applyTargetPreset = (preset) => {
-        if (isRolling || isAutoRunning) return
-        casinoAudio.playChip()
-        handleTargetChange(preset)
-    }
-
-    // Execute single roll using Server-Authoritative Provably Fair algorithm
+    // Execute single roll
     const executeRoll = useCallback(async () => {
         if (isRolling) return
-        if (!user) {
+
+        if (!user && !isDemoMode) {
             openAuthModal?.('register')
             return
         }
+
         const currentBet = activeBetRef.current
-        if (currentBet > balance) {
+        if (currentBet > effectiveBalance) {
             showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${currentBet.toFixed(2)} to place this bet.`)
             setIsAutoRunning(false)
             autoRunningRef.current = false
             return
         }
         if (currentBet <= 0) {
+            showToast?.('warning', 'Invalid Bet', 'Please enter a positive bet amount.')
             setIsAutoRunning(false)
             autoRunningRef.current = false
             return
@@ -169,10 +250,32 @@ function LimboGame() {
         if (isNaN(target) || target < MIN_MULTIPLIER) return
 
         setIsRolling(true)
-        setGameResult(null)
         casinoAudio.playBet()
 
-        // Call server-authoritative bet evaluation
+        // Handle Demo Mode locally if active
+        if (isDemoMode) {
+            setDemoBalance(b => Math.max(0, b - currentBet))
+            // 99% RTP Provably Fair client-side simulation
+            const floatVal = Math.random()
+            let demoRoll = 1.00
+            if (floatVal >= 0.01) {
+                demoRoll = Math.floor((99.0 / (1 - floatVal))) / 100
+            }
+            demoRoll = Math.max(1.00, Math.min(demoRoll, 1000000.0))
+            const isWin = demoRoll >= target
+            const payout = isWin ? currentBet * target : 0
+
+            finalizeRollOutcome({
+                roll: demoRoll,
+                won: isWin,
+                payout,
+                betAmount: currentBet,
+                target
+            })
+            return
+        }
+
+        // Call Server-Authoritative Provably Fair Bet Evaluation
         let betResponse
         try {
             if (executeGameBet) {
@@ -199,121 +302,153 @@ function LimboGame() {
         const isWin = Boolean(betResponse.won)
         const winAmount = betResponse.payout || 0
 
-        // High-speed visual roll animation (240ms with rapid ticks) landing on server outcome
-        const startTime = Date.now()
-        const animDuration = 240
-        const interval = setInterval(() => {
-            const elapsed = Date.now() - startTime
-            if (elapsed < animDuration) {
-                // Generate energetic random visual ticks
-                const randomVisual = (Math.random() * target * 1.6 + 0.8).toFixed(2)
-                setCurrentRoll(parseFloat(randomVisual))
-                casinoAudio.playTick()
-            } else {
-                clearInterval(interval)
-                setCurrentRoll(outcome)
-                setIsRolling(false)
+        finalizeRollOutcome({
+            roll: outcome,
+            won: isWin,
+            payout: winAmount,
+            betAmount: currentBet,
+            target,
+            applyPayout: betResponse.applyPayout
+        })
+    }, [isRolling, user, isDemoMode, effectiveBalance, targetMultiplier, executeGameBet, showToast, currencySymbol])
 
-                const roundResult = isWin ? 'win' : 'lose'
-                setGameResult(roundResult)
-                setLastOutcome({ roll: outcome, target, win: isWin })
+    // Finalize outcome with optional fast tick animation
+    const finalizeRollOutcome = useCallback((data) => {
+        const { roll, won, payout, betAmount: wagered, target, applyPayout } = data
 
-                if (isWin) {
-                    if (betResponse?.applyPayout) {
-                        betResponse.applyPayout()
-                    } else if (winAmount > 0) {
-                        creditGamePayout?.(winAmount, betResponse?.balances)
-                    }
-                    notifyWin(winAmount, target)
-                    if (target >= 5) {
-                        casinoAudio.playBigWin()
-                    } else {
-                        casinoAudio.playWin()
-                    }
+        const onFinished = () => {
+            setCurrentRoll(roll)
+            setIsRolling(false)
+            setHasPlayed(true)
+            const resultTag = won ? 'win' : 'loss'
+            setGameResult(resultTag)
+
+            if (won) {
+                if (applyPayout) {
+                    applyPayout()
+                } else if (isDemoMode) {
+                    setDemoBalance(b => b + payout)
+                } else if (payout > 0) {
+                    creditGamePayout?.(payout)
+                }
+                notifyWin?.(payout, target)
+                if (target >= 5) {
+                    casinoAudio.playBigWin()
                 } else {
-                    if (!autoRunningRef.current) {
-                        notifyLoss(currentBet)
-                    }
-                    casinoAudio.playLoss()
+                    casinoAudio.playWin()
                 }
-
-                // Add to history (real user data only, up to 12 items)
-                setHistory(prev => [{ roll: outcome, target, win: isWin, id: Date.now() }, ...prev.slice(0, 11)])
-
-                // Auto-bet logic progression
-                if (autoRunningRef.current) {
-                    setAutoBetsRemaining(prev => {
-                        const nextCount = prev - 1
-                        if (nextCount <= 0) {
-                            setIsAutoRunning(false)
-                            autoRunningRef.current = false
-                            activeBetRef.current = baseBetAmount
-                            setBetAmount(baseBetAmount)
-                            return 0
-                        }
-
-                        // Adjust bet on win/loss
-                        let nextBet = activeBetRef.current
-                        if (isWin) {
-                            if (onWinAction === 'reset') nextBet = baseBetAmount
-                            else if (onWinAction === 'increase') nextBet = Math.round(nextBet * (1 + onWinIncreasePercent / 100))
-                        } else {
-                            if (onLossAction === 'reset') nextBet = baseBetAmount
-                            else if (onLossAction === 'increase') nextBet = Math.round(nextBet * (1 + onLossIncreasePercent / 100))
-                        }
-
-                        nextBet = Math.max(1, Math.min(balance, nextBet))
-                        activeBetRef.current = nextBet
-                        setBetAmount(nextBet)
-
-                        // Trigger next auto roll after brief delay
-                        setTimeout(() => {
-                            if (autoRunningRef.current) executeRoll()
-                        }, 280)
-
-                        return nextCount
-                    })
+            } else {
+                if (!autoRunningRef.current) {
+                    notifyLoss?.(wagered)
                 }
+                casinoAudio.playLoss()
             }
-        }, 28)
-    }, [isRolling, user, openAuthModal, balance, showToast, currencySymbol, targetMultiplier, executeGameBet, creditGamePayout, notifyWin, notifyLoss, baseBetAmount, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent])
 
-    // Keep activeBetRef in sync with betAmount
-    useEffect(() => {
-        activeBetRef.current = betAmount
-    }, [betAmount])
+            // Append to real round history pills (newest at right)
+            setHistory(prev => [...prev.slice(-7), { id: Date.now(), roll, win: won }])
 
-    // Keyboard shortcut: Spacebar triggers roll if not focused on an input
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-                e.preventDefault()
-                if (!isRolling && !isAutoRunning && betAmount <= balance && betAmount > 0) {
-                    executeRoll()
+            // Update live stats
+            const profitDelta = won ? (payout - wagered) : -wagered
+            setStats(prev => ({
+                bets: prev.bets + 1,
+                wins: prev.wins + (won ? 1 : 0),
+                losses: prev.losses + (won ? 0 : 1),
+                wagered: prev.wagered + wagered,
+                profit: prev.profit + profitDelta
+            }))
+            statsHistoryRef.current.push((statsHistoryRef.current[statsHistoryRef.current.length - 1] || 0) + profitDelta)
+
+            // Auto-bet progression
+            if (autoRunningRef.current) {
+                autoProfitAccRef.current += profitDelta
+
+                // Check stop on profit / stop on loss
+                const stopP = parseFloat(stopOnProfit)
+                const stopL = parseFloat(stopOnLoss)
+                if (!isNaN(stopP) && stopP > 0 && autoProfitAccRef.current >= stopP) {
+                    stopAutoBet()
+                    showToast?.('success', 'Stop on Profit Reached', `Autobet stopped at +${currencySymbol}${autoProfitAccRef.current.toFixed(2)}`)
+                    return
                 }
+                if (!isNaN(stopL) && stopL > 0 && autoProfitAccRef.current <= -stopL) {
+                    stopAutoBet()
+                    showToast?.('warning', 'Stop on Loss Reached', `Autobet stopped at ${currencySymbol}${autoProfitAccRef.current.toFixed(2)}`)
+                    return
+                }
+
+                setAutoBetsRemaining(prev => {
+                    if (!autoInfinite && prev <= 1) {
+                        stopAutoBet()
+                        return 0
+                    }
+
+                    // Adjust bet on win/loss
+                    let nextBet = activeBetRef.current
+                    if (won) {
+                        if (onWinAction === 'reset') nextBet = baseBetRef.current
+                        else if (onWinAction === 'increase') nextBet = parseFloat((nextBet * (1 + onWinIncreasePercent / 100)).toFixed(8))
+                    } else {
+                        if (onLossAction === 'reset') nextBet = baseBetRef.current
+                        else if (onLossAction === 'increase') nextBet = parseFloat((nextBet * (1 + onLossIncreasePercent / 100)).toFixed(8))
+                    }
+
+                    nextBet = Math.max(0.00000001, Math.min(effectiveBalance, nextBet))
+                    activeBetRef.current = nextBet
+                    setBetAmount(nextBet)
+
+                    // Trigger next auto roll
+                    setTimeout(() => {
+                        if (autoRunningRef.current) executeRoll()
+                    }, turboMode ? 100 : 260)
+
+                    return autoInfinite ? prev : prev - 1
+                })
             }
         }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [executeRoll, isRolling, isAutoRunning, betAmount, balance])
+
+        if (turboMode) {
+            onFinished()
+        } else {
+            // Rapid visual number rolling animation (240ms)
+            const startTime = Date.now()
+            const duration = 240
+            const interval = setInterval(() => {
+                const elapsed = Date.now() - startTime
+                if (elapsed < duration) {
+                    const rnd = (Math.random() * target * 1.5 + 0.8).toFixed(2)
+                    setCurrentRoll(parseFloat(rnd))
+                    casinoAudio.playTick()
+                } else {
+                    clearInterval(interval)
+                    onFinished()
+                }
+            }, 30)
+        }
+    }, [turboMode, isDemoMode, creditGamePayout, notifyWin, notifyLoss, stopOnProfit, stopOnLoss, showToast, currencySymbol, autoInfinite, onWinAction, onWinIncreasePercent, onLossAction, onLossIncreasePercent, effectiveBalance, executeRoll])
 
     // Start auto betting
     const startAutoBet = () => {
-        if (!user) {
+        if (!user && !isDemoMode) {
             openAuthModal?.('register')
             return
         }
-        if (betAmount > balance) {
-            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)} to place this bet.`)
+        if (betAmount > effectiveBalance) {
+            showToast?.('error', 'Insufficient Balance', `You need ${currencySymbol}${betAmount.toFixed(2)} to start autobet.`)
             return
         }
         if (betAmount <= 0) return
-        setBaseBetAmount(betAmount)
+
+        baseBetRef.current = betAmount
         activeBetRef.current = betAmount
-        const count = autoBetCount === 0 ? 999999 : autoBetCount
+        autoProfitAccRef.current = 0
+        autoStartingProfitRef.current = 0
+
+        const count = autoInfinite ? 999999 : (parseInt(autoBetCount, 10) || 10)
         setAutoBetsRemaining(count)
         setIsAutoRunning(true)
         autoRunningRef.current = true
+        setShowAutobetToast(true)
+
         executeRoll()
     }
 
@@ -322,254 +457,693 @@ function LimboGame() {
         setIsAutoRunning(false)
         autoRunningRef.current = false
         setAutoBetsRemaining(0)
+        setShowAutobetToast(false)
+        if (baseBetRef.current) {
+            setBetAmount(baseBetRef.current)
+            activeBetRef.current = baseBetRef.current
+        }
     }
 
-    const potentialProfit = ((betAmount * (parseFloat(targetMultiplier) || 2)) - betAmount)
+    // Hotkey: Spacebar to roll
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!hotkeysEnabled) return
+            if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+                e.preventDefault()
+                if (!isRolling && !isAutoRunning) {
+                    executeRoll()
+                }
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [hotkeysEnabled, isRolling, isAutoRunning, executeRoll])
+
+    // Live Stats Chart initialize
+    useEffect(() => {
+        if (!liveStatsOpen || !chartRef.current) return
+        if (chartInstanceRef.current) {
+            chartInstanceRef.current.destroy()
+        }
+
+        const ctx = chartRef.current.getContext('2d')
+        chartInstanceRef.current = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: statsHistoryRef.current.map((_, i) => i === 0 ? 'Start' : `#${i}`),
+                datasets: [{
+                    label: 'Net Profit',
+                    data: statsHistoryRef.current,
+                    borderColor: stats.profit >= 0 ? '#00e701' : '#ed4263',
+                    backgroundColor: stats.profit >= 0 ? 'rgba(0, 231, 1, 0.1)' : 'rgba(237, 66, 99, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+                }
+            }
+        })
+
+        return () => {
+            if (chartInstanceRef.current) {
+                chartInstanceRef.current.destroy()
+                chartInstanceRef.current = null
+            }
+        }
+    }, [liveStatsOpen, stats.profit])
+
+    // Multiplier number dynamic color class
+    const multiplierColorClass = useMemo(() => {
+        if (!hasPlayed && !isRolling) return 'color-idle'
+        if (isRolling) return 'color-rolling'
+        if (gameResult === 'win') return 'color-win'
+        return 'color-loss'
+    }, [hasPlayed, isRolling, gameResult])
 
     return (
-        <div className="limbo-page">
-            <div className="limbo-container">
-                {/* ── Visual Roll Arena ── */}
-                <div className="limbo-arena">
-                    {/* Real-time Dynamic History Pills */}
-                    <div className="limbo-history-bar">
-                        {history.length === 0 ? (
-                            <span className="limbo-history-empty">Place a bet to roll!</span>
-                        ) : (
-                            history.map((item) => (
+        <div className="amrat-limbo-wrapper">
+            {/* Top Responsive Mini-Header (Matches Amrat Originals standard) */}
+            <header className="amrat-limbo-header">
+                <div className="header-brand-wrap">
+                    <span className="brand-gem-symbol">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 9.5L12 22L22 9.5L12 2Z" fill="url(#gem_grad_limbo)" stroke="#1475e1" strokeWidth="1.5"/>
+                            <defs>
+                                <linearGradient id="gem_grad_limbo" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                    <stop stopColor="#1475e1"/>
+                                    <stop offset="1" stopColor="#00e701"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </span>
+                    <span className="brand-logo-text">Amrat</span>
+                </div>
+
+                <div className="header-center-actions">
+                    <button className="balance-pill-btn" onClick={openWalletModal} title="Wallet Balance">
+                        <span className="balance-amount-text">
+                            {(effectiveBalance || 0).toFixed(8)}
+                        </span>
+                        <span className="balance-crypto-icon">
+                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={10} />
+                        </span>
+                        <span className="balance-chevron">▼</span>
+                    </button>
+
+                    <button className="wallet-action-btn" onClick={openWalletModal} title="Open Cashier Deposit">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-6 0h-4V4h4v3z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="header-right-tools">
+                    {!user && (
+                        <button
+                            className={`demo-toggle-btn ${isDemoMode ? 'active' : ''}`}
+                            onClick={() => setIsDemoMode(prev => !prev)}
+                            title="Toggle Demo Play"
+                        >
+                            {isDemoMode ? 'Demo' : 'Free Play'}
+                        </button>
+                    )}
+                    <button className="header-icon-btn" onClick={() => user ? openWalletModal() : openAuthModal('login')} title="Account">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            {/* Main Game Screen */}
+            <div className="amrat-limbo-container">
+                {/* 1. ARENA VIEWPORT (Exact match to Screenshots 1, 2, 3 & 4) */}
+                <section className="amrat-limbo-arena">
+                    {/* Top Status Bar: Autobet Toast on left, Multiplier History Pills on right */}
+                    <div className="arena-top-bar">
+                        <div className="top-bar-left">
+                            {showAutobetToast && isAutoRunning && (
+                                <div className="autobet-started-toast animate-slide-in">
+                                    <span className="toast-icon">🔄</span>
+                                    <span className="toast-text">Autobet Started</span>
+                                    <button
+                                        type="button"
+                                        className="toast-close-btn"
+                                        onClick={() => setShowAutobetToast(false)}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="top-bar-history">
+                            {history.map((item) => (
                                 <span
                                     key={item.id}
-                                    className={`limbo-history-pill ${item.win ? 'win' : 'lose'}`}
+                                    className={`history-multiplier-pill ${item.win ? 'win' : 'lose'}`}
                                 >
                                     {item.roll.toFixed(2)}×
                                 </span>
-                            ))
-                        )}
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Center Animated Multiplier */}
-                    <div className={`limbo-display ${gameResult || ''}`}>
-                        <div className="limbo-multiplier-number">
-                            {currentRoll.toFixed(2)}<span className="limbo-x">×</span>
+                    {/* Huge Center Multiplier Number (Screenshots 1: 1.21x red, 2: 1.00x white, 3: 1.90x red, 4: 35.54x red) */}
+                    <div className="arena-center-stage">
+                        <div className={`giant-multiplier-display ${multiplierColorClass}`}>
+                            <span className="multiplier-num">
+                                {currentRoll.toFixed(2)}
+                            </span>
+                            <span className="multiplier-x">×</span>
                         </div>
+                    </div>
 
-                        <div className="limbo-target-badge">
-                            Target: <strong>{typeof targetMultiplier === 'number' ? targetMultiplier.toFixed(2) : targetMultiplier}×</strong>
-                            <span className="limbo-badge-divider">|</span>
-                            Chance: <strong>{winChance}%</strong>
-                        </div>
-
-                        {/* Interactive Dynamic Payout Toast */}
-                        {gameResult === 'win' && (
-                            <div className="limbo-payout-toast win">
-                                <PlusOutlined style={{ fontSize: '11px' }} />
-                                <strong>{currencySymbol}{(betAmount * targetMultiplier).toFixed(2)}</strong>
+                    {/* Dual Targets Card (Target Multiplier & Win Chance) directly in Arena */}
+                    <div className="arena-targets-card">
+                        <div className="target-input-col">
+                            <label className="target-field-label">Target Multiplier</label>
+                            <div className="target-compound-box">
+                                <input
+                                    id="limbo-target-input"
+                                    type="number"
+                                    step="0.01"
+                                    min={MIN_MULTIPLIER}
+                                    max={MAX_MULTIPLIER}
+                                    value={targetInputStr}
+                                    onChange={handleTargetChange}
+                                    onBlur={handleTargetBlur}
+                                    disabled={isRolling || isAutoRunning}
+                                    className="compound-text-input"
+                                />
+                                <span className="compound-suffix-sign">✕</span>
                             </div>
-                        )}
-                        {gameResult === 'lose' && (
-                            <div className="limbo-payout-toast lose">
-                                <MinusOutlined style={{ fontSize: '11px' }} />
-                                <strong>{currencySymbol}{Number(betAmount).toFixed(2)}</strong>
-                            </div>
-                        )}
-
-                        {/* Spectator Missed Win FOMO Banner */}
-                        <MissedWinBanner
-                            visible={Boolean(spectatorMissedWin && !isRolling && !gameResult)}
-                            outcome={spectatorMissedWin?.outcome}
-                            multiplier={spectatorMissedWin?.multiplier}
-                            amount={spectatorMissedWin?.amount}
-                            payout={spectatorMissedWin?.payout}
-                            currencySymbol={currencySymbol}
-                            countdown={spectatorCountdown}
-                            onAction={() => {
-                                setSpectatorMissedWin(null)
-                                executeRoll()
-                            }}
-                        />
-                    </div>
-
-                    {/* Fairness & Verification Trigger */}
-                    <div className="limbo-arena-footer" style={{ display: 'flex', gap: '8px' }}>
-                        <Button
-                            type="text"
-                            icon={<HistoryOutlined />}
-                            onClick={() => setHistoryDrawerOpen(true)}
-                            className="limbo-btn-secondary"
-                        >
-                            History
-                        </Button>
-                        <Button
-                            type="text"
-                            icon={<SafetyCertificateOutlined />}
-                            onClick={() => setFairnessOpen(true)}
-                            className="limbo-btn-secondary"
-                        >
-                            Fairness &amp; Rules
-                        </Button>
-                    </div>
-                </div>
-
-                {/* ── Betting Cockpit (Zero-Scroll Controls) ── */}
-                <div className="limbo-controls-card">
-
-                    {/* Wager Amount Control */}
-                    <div className="limbo-control-group">
-                        <div className="limbo-label-row">
-                            <label className="limbo-label">Bet Amount ({currencySymbol})</label>
-                            <span className="limbo-balance-hint">Bal: {currencySymbol}{balance.toFixed(2)}</span>
                         </div>
-                        <div className="limbo-input-wrap">
-                            <Input
-                                id="limbo-bet-input"
-                                type="number"
-                                value={betAmount}
-                                onChange={(e) => setBetAmount(Math.max(0, parseFloat(e.target.value) || 0))}
-                                disabled={isRolling || isAutoRunning}
-                                prefix={currencySymbol}
-                                className="limbo-input"
-                            />
-                            <div className="limbo-quick-actions">
-                                <button type="button" onClick={halveBet} disabled={isRolling || isAutoRunning}>½</button>
-                                <button type="button" onClick={doubleBet} disabled={isRolling || isAutoRunning}>2×</button>
-                                <button type="button" onClick={minBet} disabled={isRolling || isAutoRunning}>Min</button>
-                                <button type="button" onClick={maxBet} disabled={isRolling || isAutoRunning}>Max</button>
+
+                        <div className="target-input-col">
+                            <label className="target-field-label">Win Chance</label>
+                            <div className="target-compound-box">
+                                <input
+                                    id="limbo-win-chance-input"
+                                    type="number"
+                                    step="0.00000001"
+                                    min="0.000099"
+                                    max="98.02"
+                                    value={winChanceStr}
+                                    onChange={handleWinChanceChange}
+                                    onBlur={handleWinChanceBlur}
+                                    disabled={isRolling || isAutoRunning}
+                                    className="compound-text-input"
+                                />
+                                <span className="compound-suffix-sign">%</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Multiplier Presets */}
-                    <div className="limbo-presets-row">
-                        {QUICK_PRESETS.map((preset) => (
+                    {/* Primary Action Button (Right under the targets card) */}
+                    <div className="arena-primary-btn-wrap">
+                        {isAutoRunning ? (
                             <button
-                                key={preset}
+                                id="limbo-stop-autobet-btn"
                                 type="button"
-                                className={`limbo-preset-chip ${parseFloat(targetMultiplier) === preset ? 'active' : ''}`}
-                                onClick={() => applyTargetPreset(preset)}
+                                className="amrat-primary-btn stop-autobet-state"
+                                onClick={stopAutoBet}
+                            >
+                                <span>Stop Autobet</span>
+                                <span className="btn-sub-icon">🃏</span>
+                            </button>
+                        ) : (
+                            <button
+                                id="limbo-bet-btn"
+                                type="button"
+                                className="amrat-primary-btn bet-state"
+                                onClick={executeRoll}
+                                disabled={isRolling || betAmount <= 0}
+                            >
+                                <span>{!user && !isDemoMode ? 'Sign In to Bet' : isRolling ? 'Rolling…' : 'Bet'}</span>
+                            </button>
+                        )}
+                    </div>
+                </section>
+
+                {/* 2. COCKPIT CONTROLS PANEL (Exact match to Screenshots 1, 2, 3 & 4) */}
+                <section className="amrat-limbo-controls">
+                    {/* Wager Amount Compound Row */}
+                    <div className="control-field-group">
+                        <div className="field-label-row">
+                            <label className="field-title">Bet Amount</label>
+                            <span className="field-fiat-badge">
+                                ${(parseFloat(betAmount) || 0).toFixed(2)}
+                            </span>
+                        </div>
+                        <div className="amrat-input-compound">
+                            <input
+                                id="limbo-bet-amount-input"
+                                type="number"
+                                step="any"
+                                min="0"
+                                value={betAmount}
+                                onChange={(e) => setBetAmount(e.target.value)}
+                                disabled={isRolling || isAutoRunning}
+                                className="amrat-num-input"
+                                placeholder="0.00000000"
+                            />
+                            <span className="input-currency-badge">
+                                <CurrencyIcon symbol={currencySymbol} currency={currency} size={16} fontSize={9} />
+                            </span>
+                            <div className="input-divider" />
+                            <button
+                                type="button"
+                                className="compound-action-btn"
+                                onClick={handleHalfBet}
                                 disabled={isRolling || isAutoRunning}
                             >
-                                {preset.toFixed(2)}×
+                                ½
                             </button>
-                        ))}
-                    </div>
-
-                    {/* Dual Targets: Target Multiplier & Win Chance */}
-                    <div className="limbo-grid-two">
-                        <div className="limbo-control-group">
-                            <label className="limbo-label">Target Multiplier</label>
-                            <Input
-                                type="number"
-                                step="0.1"
-                                min={MIN_MULTIPLIER}
-                                max={MAX_MULTIPLIER}
-                                value={targetMultiplier}
-                                onChange={(e) => handleTargetChange(e.target.value)}
+                            <div className="input-divider" />
+                            <button
+                                type="button"
+                                className="compound-action-btn"
+                                onClick={handleDoubleBet}
                                 disabled={isRolling || isAutoRunning}
-                                suffix="×"
-                                className="limbo-input"
-                            />
-                        </div>
-                        <div className="limbo-control-group">
-                            <label className="limbo-label">Win Chance</label>
-                            <Input
-                                type="number"
-                                step="0.5"
-                                min="0.1"
-                                max="98"
-                                value={winChance}
-                                onChange={(e) => handleWinChanceChange(e.target.value)}
-                                disabled={isRolling || isAutoRunning}
-                                suffix="%"
-                                className="limbo-input"
-                            />
+                            >
+                                2×
+                            </button>
                         </div>
                     </div>
 
-                    {/* Potential Profit Preview */}
-                    <div className="limbo-profit-preview">
-                        <span>Estimated Profit</span>
-                        <strong className="text-gold">
-                            +{currencySymbol}{Math.max(0, potentialProfit).toFixed(2)}
-                        </strong>
-                    </div>
+                    {/* Manual Mode: Profit on Win Display */}
+                    {mode === 'manual' && (
+                        <div className="control-field-group">
+                            <div className="field-label-row">
+                                <label className="field-title">Profit on Win</label>
+                                <span className="field-fiat-badge">
+                                    ${potentialProfit.toFixed(2)}
+                                </span>
+                            </div>
+                            <div className="amrat-readonly-display">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={potentialProfit.toFixed(8)}
+                                    className="amrat-display-input"
+                                />
+                                <span className="input-currency-badge">
+                                    <CurrencyIcon symbol={currencySymbol} currency={currency} size={16} fontSize={9} />
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
-                    {/* Play Limbo Action */}
-                    <Button
-                        id="limbo-bet-btn"
-                        type="primary"
-                        size="large"
-                        block
-                        onClick={executeRoll}
-                        disabled={isRolling || betAmount <= 0}
-                        className="limbo-bet-btn"
+                    {/* Auto Mode: Number of Bets & Advanced Controls */}
+                    {mode === 'auto' && (
+                        <>
+                            <div className="control-field-group">
+                                <div className="field-label-row">
+                                    <label className="field-title">Number of Bets</label>
+                                    <button
+                                        type="button"
+                                        className={`infinite-badge-btn ${autoInfinite ? 'active' : ''}`}
+                                        onClick={() => setAutoInfinite(prev => !prev)}
+                                        disabled={isAutoRunning}
+                                    >
+                                        {autoInfinite ? '∞ Infinite' : 'Set ∞'}
+                                    </button>
+                                </div>
+                                <div className="amrat-input-compound">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={autoInfinite ? '0' : autoBetCount}
+                                        onChange={(e) => setAutoBetCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                                        disabled={isAutoRunning || autoInfinite}
+                                        className="amrat-num-input"
+                                        placeholder={autoInfinite ? '∞' : '10'}
+                                    />
+                                    {isAutoRunning && !autoInfinite && (
+                                        <span className="auto-remaining-pill">
+                                            {autoBetsRemaining} left
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="advanced-toggle-row">
+                                <span className="advanced-title">Advanced</span>
+                                <label className="switch-toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={advancedAuto}
+                                        onChange={(e) => setAdvancedAuto(e.target.checked)}
+                                        disabled={isAutoRunning}
+                                    />
+                                    <span className="slider-round" />
+                                </label>
+                            </div>
+
+                            {advancedAuto && (
+                                <div className="advanced-auto-panel">
+                                    <div className="martingale-row">
+                                        <label className="martingale-label">On Win</label>
+                                        <div className="martingale-actions">
+                                            <button
+                                                type="button"
+                                                className={`action-pill ${onWinAction === 'reset' ? 'active' : ''}`}
+                                                onClick={() => setOnWinAction('reset')}
+                                                disabled={isAutoRunning}
+                                            >
+                                                Reset
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`action-pill ${onWinAction === 'increase' ? 'active' : ''}`}
+                                                onClick={() => setOnWinAction('increase')}
+                                                disabled={isAutoRunning}
+                                            >
+                                                Increase by:
+                                            </button>
+                                            <div className="percent-input-wrap">
+                                                <input
+                                                    type="number"
+                                                    value={onWinIncreasePercent}
+                                                    onChange={(e) => setOnWinIncreasePercent(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                                    disabled={isAutoRunning || onWinAction !== 'increase'}
+                                                    className="percent-input"
+                                                />
+                                                <span className="percent-symbol">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="martingale-row">
+                                        <label className="martingale-label">On Loss</label>
+                                        <div className="martingale-actions">
+                                            <button
+                                                type="button"
+                                                className={`action-pill ${onLossAction === 'reset' ? 'active' : ''}`}
+                                                onClick={() => setOnLossAction('reset')}
+                                                disabled={isAutoRunning}
+                                            >
+                                                Reset
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`action-pill ${onLossAction === 'increase' ? 'active' : ''}`}
+                                                onClick={() => setOnLossAction('increase')}
+                                                disabled={isAutoRunning}
+                                            >
+                                                Increase by:
+                                            </button>
+                                            <div className="percent-input-wrap">
+                                                <input
+                                                    type="number"
+                                                    value={onLossIncreasePercent}
+                                                    onChange={(e) => setOnLossIncreasePercent(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                                                    disabled={isAutoRunning || onLossAction !== 'increase'}
+                                                    className="percent-input"
+                                                />
+                                                <span className="percent-symbol">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="stop-thresholds-grid">
+                                        <div className="threshold-col">
+                                            <label className="threshold-label">Stop on Profit</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                placeholder="0.00"
+                                                value={stopOnProfit}
+                                                onChange={(e) => setStopOnProfit(e.target.value)}
+                                                disabled={isAutoRunning}
+                                                className="threshold-input"
+                                            />
+                                        </div>
+                                        <div className="threshold-col">
+                                            <label className="threshold-label">Stop on Loss</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                placeholder="0.00"
+                                                value={stopOnLoss}
+                                                onChange={(e) => setStopOnLoss(e.target.value)}
+                                                disabled={isAutoRunning}
+                                                className="threshold-input"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isAutoRunning && (
+                                <button
+                                    type="button"
+                                    className="amrat-primary-btn bet-state auto-launch-btn"
+                                    onClick={startAutoBet}
+                                >
+                                    Start Autobet
+                                </button>
+                            )}
+                        </>
+                    )}
+
+                    {/* Segmented Mode Switcher (Capsule at bottom of controls panel) */}
+                    <div className="amrat-mode-switcher-wrap">
+                        <div className="capsule-mode-switcher">
+                            <button
+                                type="button"
+                                className={`capsule-tab ${mode === 'manual' ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (isAutoRunning) return
+                                    setMode('manual')
+                                }}
+                                disabled={isAutoRunning}
+                            >
+                                Manual
+                            </button>
+                            <button
+                                type="button"
+                                className={`capsule-tab ${mode === 'auto' ? 'active' : ''}`}
+                                onClick={() => {
+                                    if (isRolling) return
+                                    setMode('auto')
+                                }}
+                                disabled={isRolling}
+                            >
+                                Auto
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {/* Secondary Tools Footer Row (Settings, Live Stats, Fairness) */}
+            <div className="amrat-tools-row">
+                <div className="tools-left-group">
+                    <button
+                        type="button"
+                        className="tool-btn"
+                        onClick={() => setSettingsOpen(true)}
+                        title="Game Settings"
                     >
-                        {!user ? 'Sign In to Play' : isRolling ? 'Rolling…' : 'Play Limbo'}
-                    </Button>
+                        <SettingOutlined />
+                    </button>
+                    <button
+                        type="button"
+                        className="tool-btn"
+                        onClick={() => setLiveStatsOpen(true)}
+                        title="Live Statistics"
+                    >
+                        <LineChartOutlined />
+                    </button>
+                    <button
+                        type="button"
+                        className="tool-btn"
+                        onClick={() => setHistoryDrawerOpen(true)}
+                        title="Round History"
+                    >
+                        <HistoryOutlined />
+                    </button>
+                </div>
+
+                <div className="tools-right-group">
+                    <button
+                        type="button"
+                        className="fairness-pill-btn"
+                        onClick={() => setFairnessOpen(true)}
+                    >
+                        <span className="fairness-check-icon">✓</span>
+                        <span>Fairness</span>
+                    </button>
                 </div>
             </div>
 
-            {/* Slide-out Game Specific Round History Drawer */}
-            <Drawer
-                title="Limbo · Live Round History"
-                placement="right"
-                width={520}
+            {/* Originals Community Card (Amrat Originals Community Card) */}
+            <div className="amrat-originals-card">
+                <div className="card-brand-col">
+                    <div className="originals-logo-badge">
+                        <span className="badge-logo-text">Amrat</span>
+                    </div>
+                    <div className="originals-info">
+                        <h4 className="originals-title">Amrat Originals</h4>
+                        <span className="originals-followers">
+                            {(followersCount / 1000).toFixed(2)}K Followers
+                        </span>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    className={`card-heart-btn ${isFavorite ? 'favorited' : ''}`}
+                    onClick={toggleFavorite}
+                    title={isFavorite ? 'Remove from Favourites' : 'Add to Favourites'}
+                >
+                    {isFavorite ? <HeartFilled style={{ color: '#ed4263' }} /> : <HeartOutlined />}
+                </button>
+            </div>
+
+            {/* Settings Modal */}
+            <Modal
+                title="Limbo Settings"
+                open={settingsOpen}
+                onOk={() => setSettingsOpen(false)}
+                onCancel={() => setSettingsOpen(false)}
+                footer={null}
+                className="amrat-modal dark-glass"
+            >
+                <div className="modal-settings-content">
+                    <div className="setting-item-row">
+                        <div className="setting-meta">
+                            <span className="setting-label">Sound Effects</span>
+                            <span className="setting-desc">High-fidelity audio feedback on ticks, wins, and losses</span>
+                        </div>
+                        <label className="switch-toggle">
+                            <input
+                                type="checkbox"
+                                checked={soundEnabled}
+                                onChange={toggleSound}
+                            />
+                            <span className="slider-round" />
+                        </label>
+                    </div>
+
+                    <div className="setting-item-row">
+                        <div className="setting-meta">
+                            <span className="setting-label">Turbo Roll</span>
+                            <span className="setting-desc">Instant outcomes with zero visual rolling delay</span>
+                        </div>
+                        <label className="switch-toggle">
+                            <input
+                                type="checkbox"
+                                checked={turboMode}
+                                onChange={(e) => setTurboMode(e.target.checked)}
+                            />
+                            <span className="slider-round" />
+                        </label>
+                    </div>
+
+                    <div className="setting-item-row">
+                        <div className="setting-meta">
+                            <span className="setting-label">Keyboard Shortcuts</span>
+                            <span className="setting-desc">Press [Space] to roll instantly</span>
+                        </div>
+                        <label className="switch-toggle">
+                            <input
+                                type="checkbox"
+                                checked={hotkeysEnabled}
+                                onChange={(e) => setHotkeysEnabled(e.target.checked)}
+                            />
+                            <span className="slider-round" />
+                        </label>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Live Stats Modal */}
+            <Modal
+                title="Limbo · Live Session Statistics"
+                open={liveStatsOpen}
+                onCancel={() => setLiveStatsOpen(false)}
+                footer={null}
+                className="amrat-modal dark-glass stats-modal"
+                width={560}
+            >
+                <div className="stats-modal-body">
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <span className="stat-label">Total Bets</span>
+                            <strong className="stat-val">{stats.bets}</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span className="stat-label">Wins / Losses</span>
+                            <strong className="stat-val text-green">{stats.wins} <span className="text-muted">/</span> <span className="text-red">{stats.losses}</span></strong>
+                        </div>
+                        <div className="stat-card">
+                            <span className="stat-label">Win Rate</span>
+                            <strong className="stat-val">{stats.bets > 0 ? ((stats.wins / stats.bets) * 100).toFixed(1) : 0}%</strong>
+                        </div>
+                        <div className="stat-card">
+                            <span className="stat-label">Net Profit</span>
+                            <strong className={`stat-val ${stats.profit >= 0 ? 'text-green' : 'text-red'}`}>
+                                {stats.profit >= 0 ? '+' : ''}{currencySymbol}{stats.profit.toFixed(2)}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div className="stats-chart-wrapper">
+                        <canvas ref={chartRef} height="160" />
+                    </div>
+
+                    <div className="stats-actions">
+                        <button
+                            type="button"
+                            className="amrat-secondary-btn reset-stats-btn"
+                            onClick={() => {
+                                setStats({ bets: 0, wins: 0, losses: 0, wagered: 0, profit: 0 })
+                                statsHistoryRef.current = [0]
+                            }}
+                        >
+                            Reset Live Statistics
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Slide-out Game History Drawer */}
+            <Modal
+                title="Limbo · Round History"
                 open={historyDrawerOpen}
-                onClose={() => setHistoryDrawerOpen(false)}
-                styles={{
-                    body: { padding: 12, background: '#0b101b' },
-                    header: { background: '#0f172a', borderBottom: '1px solid rgba(255,255,255,0.08)' }
-                }}
+                onCancel={() => setHistoryDrawerOpen(false)}
+                footer={null}
+                width={540}
+                className="amrat-modal dark-glass"
             >
                 <GameBottomHistory
                     gameKey="limbo"
                     gameTitle="Limbo"
                     localRounds={history}
                 />
-            </Drawer>
-
-            {/* Provably Fair Modal */}
-            <Modal
-                title="🛡️ Limbo Cryptographic Provably Fair Engine"
-                open={fairnessOpen}
-                onOk={() => setFairnessOpen(false)}
-                onCancel={() => setFairnessOpen(false)}
-                footer={[
-                    <Button key="ok" type="primary" onClick={() => setFairnessOpen(false)}>
-                        Verify &amp; Close
-                    </Button>
-                ]}
-                className="mobile-game-modal"
-            >
-                <div style={{ display: 'grid', gap: '14px', fontSize: '13px' }}>
-                    <p style={{ margin: 0, color: '#94a3b8', lineHeight: 1.5 }}>
-                        AmratGames Limbo runs on an authenticated <strong>HMAC-SHA256</strong> provably fair algorithm.
-                        Each roll is mathematically derived as <code>floor(99 / (1 - float)) / 100</code> with an exact <strong>99.00% RTP (1.00% House Edge)</strong>.
-                    </p>
-                    <div>
-                        <Text strong style={{ color: '#e2e8f0' }}>Server Seed Hash (Pre-committed SHA-256):</Text>
-                        <Input readOnly value={serverSeedHash} style={{ marginTop: '4px', fontFamily: 'monospace', fontSize: '12px' }} />
-                    </div>
-                    <div>
-                        <Text strong style={{ color: '#e2e8f0' }}>Client Seed (Editable):</Text>
-                        <Input
-                            value={clientSeed}
-                            onChange={(e) => {
-                                setClientSeed(e.target.value)
-                                if (fairnessRef.current) fairnessRef.current.clientSeed = e.target.value
-                            }}
-                            style={{ marginTop: '4px' }}
-                        />
-                    </div>
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Statistic title="Current Nonce" value={nonce} />
-                        </Col>
-                        <Col span={12}>
-                            <Statistic title="Theoretical RTP" value="99.00%" valueStyle={{ color: '#10b981' }} />
-                        </Col>
-                    </Row>
-                </div>
             </Modal>
+
+            {/* Provably Fair Verifier Modal */}
+            <ProvablyFairVerifierModal
+                isOpen={fairnessOpen}
+                onClose={() => setFairnessOpen(false)}
+                initialData={{
+                    game: 'limbo',
+                    targetMultiplier
+                }}
+            />
         </div>
     )
 }

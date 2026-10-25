@@ -18,10 +18,10 @@ export class LimboEngine {
             currentBet: totalBet
         })
 
-        // 100% Provably Fair HMAC-SHA256 outcome (98.00% RTP with 2% instant bust)
+        // 100% Provably Fair HMAC-SHA256 outcome (99.00% RTP with 1% instant bust)
         let roll = 1.00
-        if (floatVal >= 0.02) {
-            roll = Math.floor((98.0 / (1 - floatVal))) / 100
+        if (floatVal >= 0.01) {
+            roll = Math.floor((99.0 / (1 - floatVal))) / 100
         }
         roll = Math.max(1.00, Math.min(roll, 1000000.0))
 
