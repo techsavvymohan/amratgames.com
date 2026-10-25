@@ -1125,7 +1125,11 @@ a {
     overflow: hidden;
 }
 
+.main-content.main-content-game:has(.amrat-mines-wrapper),
+.main-content.main-content-game:has(.amrat-limbo-wrapper),
 .main-content.main-content-game:has(.wingo-game-container),
+.main-content:has(.amrat-mines-wrapper),
+.main-content:has(.amrat-limbo-wrapper),
 .main-content:has(.wingo-game-container) {
     height: 100% !important;
     overflow-y: auto !important;

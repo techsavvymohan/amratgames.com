@@ -31,7 +31,18 @@
     color: var(--mines-text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     overflow-x: hidden;
-    padding-bottom: 24px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 95px;
+    box-sizing: border-box;
+}
+
+.amrat-mines-wrapper::-webkit-scrollbar {
+    width: 5px;
+}
+.amrat-mines-wrapper::-webkit-scrollbar-thumb {
+    background: #243b48;
+    border-radius: 4px;
 }
 
 /* ── 2. Main Game Screen Layout ───────────────────────────────────────────── */
@@ -77,24 +88,184 @@
 }
 
 @media (max-width: 1024px) {
+    .amrat-mines-container {
+        padding: 8px 10px;
+        gap: 10px;
+    }
+
     .amrat-board-viewport {
         order: 1;
         width: 100%;
+        padding: 10px 10px 12px;
+        border-radius: 8px;
     }
 
     .amrat-controls-panel {
         order: 2;
         width: 100%;
+        padding: 10px 12px;
+        gap: 10px;
+        border-radius: 8px;
     }
 
-    /* On mobile, primary button is placed directly under the sub-bar, matching screenshot 1 & 4 */
+    /* On mobile, primary button is placed directly under the sub-bar */
     .mobile-primary-btn-wrap {
         display: block;
-        margin: 12px 0 16px 0;
+        margin: 8px 0 10px 0;
     }
 
     .desktop-primary-btn-wrap {
         display: none !important;
+    }
+
+    .minefield-frame {
+        max-width: clamp(240px, 76vw, 320px) !important;
+    }
+
+    .minefield-grid {
+        gap: 6px !important;
+    }
+
+    .amrat-mine-tile {
+        border-radius: 8px !important;
+        box-shadow: 0 3px 0 var(--mines-tile-bevel), 0 3px 6px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .sub-grid-status-bar {
+        height: 38px !important;
+        padding: 4px 8px !important;
+        margin-top: 8px !important;
+    }
+
+    .sub-bar-btn {
+        height: 28px !important;
+        padding: 0 8px !important;
+        font-size: 0.76rem !important;
+    }
+
+    .sub-bar-pill {
+        height: 30px !important;
+        padding: 3px 10px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .amrat-primary-btn {
+        height: 42px !important;
+        font-size: 0.95rem !important;
+        border-radius: 6px !important;
+    }
+
+    .cashout-profit-tag {
+        font-size: 0.85rem !important;
+        padding: 2px 6px !important;
+    }
+
+    .amrat-input-compound,
+    .amrat-readonly-display {
+        height: 38px !important;
+        border-radius: 6px !important;
+    }
+
+    .amrat-num-input,
+    .amrat-display-input {
+        font-size: 0.88rem !important;
+    }
+
+    .quick-action-btn {
+        height: 28px !important;
+        min-width: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 4px !important;
+    }
+
+    .amrat-secondary-btn {
+        height: 36px !important;
+        font-size: 0.84rem !important;
+        border-radius: 6px !important;
+    }
+
+    .control-label {
+        font-size: 0.78rem !important;
+    }
+
+    .fiat-reference-label {
+        font-size: 0.76rem !important;
+    }
+
+    .slider-label-group .label-title {
+        font-size: 0.78rem !important;
+    }
+
+    .label-val-badge {
+        font-size: 0.78rem !important;
+        padding: 1px 6px !important;
+    }
+
+    .amrat-range-slider {
+        height: 6px !important;
+    }
+
+    .amrat-range-slider::-webkit-slider-thumb {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .amrat-range-slider::-moz-range-thumb {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .mode-segmented-tabs {
+        padding: 3px !important;
+        border-radius: 24px !important;
+    }
+
+    .mode-tab-btn {
+        height: 30px !important;
+        font-size: 0.8rem !important;
+        border-radius: 20px !important;
+    }
+
+    .tool-icon-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+    }
+
+    .fairness-pill-btn {
+        height: 32px !important;
+        padding: 0 10px !important;
+        font-size: 0.76rem !important;
+        border-radius: 6px !important;
+    }
+
+    .originals-community-card {
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
+        margin-top: 6px !important;
+    }
+
+    .originals-badge-square {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 0.7rem !important;
+        border-radius: 6px !important;
+    }
+
+    .meta-title {
+        font-size: 0.86rem !important;
+    }
+
+    .meta-followers {
+        font-size: 0.72rem !important;
+    }
+
+    .favorite-heart-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 15px !important;
+        border-radius: 6px !important;
     }
 }
 

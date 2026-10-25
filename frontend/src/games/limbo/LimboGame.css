@@ -8,13 +8,25 @@
 .amrat-limbo-wrapper {
     position: relative;
     width: 100%;
-    min-height: 100vh;
+    min-height: calc(100vh - 60px);
     background-color: #0f212e;
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 95px;
     box-sizing: border-box;
+}
+
+.amrat-limbo-wrapper::-webkit-scrollbar {
+    width: 5px;
+}
+.amrat-limbo-wrapper::-webkit-scrollbar-thumb {
+    background: #243b48;
+    border-radius: 4px;
 }
 
 /* ── Main Container: Responsive Stack ── */
@@ -55,15 +67,155 @@
 @media (max-width: 1023px) {
     .amrat-limbo-container {
         flex-direction: column;
-        padding: 10px 10px 16px;
+        padding: 8px 10px;
+        gap: 10px;
     }
 
     .amrat-limbo-arena {
         order: 1;
+        padding: 10px 10px 12px;
+        border-radius: 8px;
     }
 
     .amrat-limbo-controls {
         order: 2;
+        padding: 10px 12px;
+        gap: 10px;
+        border-radius: 8px;
+    }
+
+    .arena-top-bar {
+        min-height: 26px !important;
+        margin-bottom: 6px !important;
+    }
+
+    .history-multiplier-pill {
+        padding: 3px 8px !important;
+        font-size: 11px !important;
+        border-radius: 10px !important;
+    }
+
+    .autobet-started-toast {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+    }
+
+    .arena-center-stage {
+        padding: 12px 0 16px !important;
+        min-height: 80px !important;
+    }
+
+    .giant-multiplier-display {
+        font-size: clamp(2.4rem, 8.5vw, 3.4rem) !important;
+    }
+
+    .arena-targets-card {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+        border-radius: 6px !important;
+    }
+
+    .target-field-label {
+        font-size: 11px !important;
+    }
+
+    .target-compound-box {
+        height: 36px !important;
+        padding: 0 8px !important;
+        border-radius: 5px !important;
+    }
+
+    .compound-text-input {
+        font-size: 13.5px !important;
+    }
+
+    .compound-suffix-sign {
+        font-size: 12px !important;
+    }
+
+    .amrat-primary-btn {
+        height: 42px !important;
+        font-size: 0.95rem !important;
+        border-radius: 6px !important;
+    }
+
+    .field-title {
+        font-size: 0.78rem !important;
+    }
+
+    .field-fiat-badge {
+        font-size: 0.76rem !important;
+    }
+
+    .amrat-input-compound,
+    .amrat-readonly-display {
+        height: 38px !important;
+        border-radius: 6px !important;
+    }
+
+    .amrat-num-input,
+    .amrat-display-input {
+        font-size: 0.88rem !important;
+    }
+
+    .compound-action-btn {
+        height: 28px !important;
+        min-width: 34px !important;
+        font-size: 0.78rem !important;
+        border-radius: 4px !important;
+    }
+
+    .capsule-mode-switcher {
+        height: 32px !important;
+        max-width: 240px !important;
+        padding: 2px !important;
+    }
+
+    .capsule-tab {
+        height: 28px !important;
+        font-size: 12px !important;
+    }
+
+    .tool-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+    }
+
+    .fairness-pill-btn {
+        height: 32px !important;
+        padding: 0 10px !important;
+        font-size: 0.76rem !important;
+        border-radius: 6px !important;
+    }
+
+    .amrat-originals-card {
+        padding: 8px 10px !important;
+        border-radius: 8px !important;
+        margin-top: 6px !important;
+    }
+
+    .originals-logo-badge {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 6px !important;
+    }
+
+    .originals-title {
+        font-size: 0.86rem !important;
+    }
+
+    .originals-followers {
+        font-size: 0.72rem !important;
+    }
+
+    .card-heart-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 15px !important;
+        border-radius: 6px !important;
     }
 }
 
