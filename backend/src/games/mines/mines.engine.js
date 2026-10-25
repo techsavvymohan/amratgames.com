@@ -26,7 +26,7 @@ export class MinesEngine {
 
     calculateMultiplier(minesCount, gemsRevealed) {
         if (gemsRevealed <= 0) return 1.00
-        const houseEdge = 0.98 // 2% edge (98% RTP)
+        const houseEdge = 0.99 // 1% house edge (99% RTP - 1 mine max is 24.75x, 4 mines max is 12,523.50x)
         let mult = 1.0
         for (let i = 0; i < gemsRevealed; i++) {
             mult *= (25 - i) / (25 - minesCount - i)
