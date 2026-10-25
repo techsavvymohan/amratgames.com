@@ -170,8 +170,19 @@ function Header({
                                         openWalletModal('deposit')
                                     }
                                 }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    color: '#fff',
+                                    fontWeight: 800,
+                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                }}
+                                title="Instant Deposit & Cashier"
                             >
-                                Wallet
+                                <span>+</span>
+                                <span>Deposit</span>
                             </button>
                         </>
                     )}
@@ -358,6 +369,69 @@ function Header({
                     )}
                 </div>
 
+                {/* Desktop Always-Present Wallet & Deposit Pill on Home & Hub Pages */}
+                {!isGamePage && (
+                    <div className="header-wallet desktop-only-control" style={{ marginRight: '8px' }}>
+                        <div
+                            id="header-wallet-balance-display-global"
+                            className="wallet-balance-display"
+                            onClick={() => {
+                                if (!user) {
+                                    openAuthModal('login')
+                                } else {
+                                    openWalletModal('deposit')
+                                }
+                            }}
+                            style={{ cursor: 'pointer' }}
+                            title="Click to Open Wallet & Cashier"
+                        >
+                            <CurrencyIcon symbol={currencySymbol} currency={currency} size={18} fontSize={11} />
+                            <span className="wallet-balance-amount">{formattedBalance}</span>
+                            <button
+                                id="header-wallet-dropdown-btn-global"
+                                className="wallet-dropdown-toggle"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (!user) {
+                                        openAuthModal('login')
+                                    } else {
+                                        openWalletModal('deposit')
+                                    }
+                                }}
+                                title="Open Cashier"
+                            >
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                    <path d="M7 10l5 5 5-5z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <button
+                            id="header-wallet-modal-btn-global"
+                            className="wallet-btn"
+                            onClick={() => {
+                                if (!user) {
+                                    openAuthModal('login')
+                                } else {
+                                    openWalletModal('deposit')
+                                }
+                            }}
+                            style={{
+                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                color: '#fff',
+                                fontWeight: 800,
+                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Instant Deposit (UPI & Crypto)"
+                        >
+                            <span>+</span>
+                            <span>Deposit</span>
+                        </button>
+                    </div>
+                )}
+
                 <div className="desktop-auth-container">
                     {user ? (
                         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={userDropdownRef}>
@@ -393,6 +467,88 @@ function Header({
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Direct Cashier Actions in Profile Menu */}
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            openWalletModal('deposit')
+                                        }}
+                                        style={{
+                                            background: 'rgba(16, 185, 129, 0.1)',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#34d399',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '11px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 700,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '15px' }}>💰</span>
+                                        <span>Deposit Funds (UPI / Crypto)</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            openWalletModal('withdraw')
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#fbbf24',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '11px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 700,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '15px' }}>🏧</span>
+                                        <span>Withdraw to Bank / UPI</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="amrat-user-dropdown-action"
+                                        onClick={() => {
+                                            setShowUserDropdown(false)
+                                            openWalletModal('history')
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                            color: '#cbd5e1',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px 14px',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '15px' }}>📜</span>
+                                        <span>Transaction History</span>
+                                    </button>
 
                                     <Link
                                         to="/profile"

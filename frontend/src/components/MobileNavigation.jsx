@@ -4,6 +4,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { GAMES } from '../games'
 import { useThemeSettings } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { useWallet } from '../context/WalletContext'
 import './MobileNavigation.css'
 
 const HomeIcon = () => (
@@ -112,6 +113,7 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
     const navigate = useNavigate()
     const { paletteId, palettes, setPaletteId } = useThemeSettings()
     const { user, logout, openAuthModal } = useAuth()
+    const { openWalletModal } = useWallet()
     const [searchQuery, setSearchQuery] = useState('')
 
     // Carousel refs & scroll state
@@ -313,6 +315,64 @@ function MobileNavigation({ drawerOpen, onClose, returnFocusRef }) {
                         </div>
                     )}
 
+                    {/* Quick Cashier Buttons in Drawer */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose()
+                                if (!user) openAuthModal('login')
+                                else openWalletModal('deposit')
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: '11px',
+                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                boxShadow: '0 3px 10px rgba(16, 185, 129, 0.3)'
+                            }}
+                            title="Instant UPI & Crypto Deposit"
+                        >
+                            <span>💰</span>
+                            <span>Deposit INR</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose()
+                                if (!user) openAuthModal('login')
+                                else openWalletModal('withdraw')
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: '11px',
+                                background: 'rgba(255, 255, 255, 0.07)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '10px',
+                                color: '#f8fafc',
+                                fontWeight: 700,
+                                fontSize: '0.88rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                            title="Instant Bank & UPI Withdrawal"
+                        >
+                            <span>🏧</span>
+                            <span>Withdraw</span>
+                        </button>
+                    </div>
                 </div>
 
                 <label className="mobile-drawer-field">

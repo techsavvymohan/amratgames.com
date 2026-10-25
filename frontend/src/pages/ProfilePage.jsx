@@ -7,7 +7,7 @@ import './ProfilePage.css'
 
 export default function ProfilePage() {
     const { user, logout, updateProfile, changePassword, submitKycVerification, getBetsHistory, getPaymentsHistory } = useAuth()
-    const { getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission, currencySymbol } = useWallet()
+    const { getVipStatus, claimVipRakeback, getAffiliateStats, claimAffiliateCommission, currencySymbol, openWalletModal } = useWallet()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const subnavRef = useRef(null)
@@ -296,6 +296,51 @@ export default function ProfilePage() {
                     <div className="profile-hero-balance-label">Cash Wallet</div>
                     <div className="profile-hero-balance-val">
                         {currencySymbol}{(user.balances?.INR || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <button
+                            type="button"
+                            onClick={() => openWalletModal('deposit')}
+                            style={{
+                                padding: '6px 14px',
+                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#fff',
+                                fontWeight: 800,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                            }}
+                            title="Instant UPI & Crypto Deposit"
+                        >
+                            <span>+</span>
+                            <span>Deposit</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => openWalletModal('withdraw')}
+                            style={{
+                                padding: '6px 14px',
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '8px',
+                                color: '#e2e8f0',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Instant Bank & UPI Withdrawal"
+                        >
+                            <span>🏧</span>
+                            <span>Withdraw</span>
+                        </button>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { GAMES } from '../games'
+import { useWallet } from '../context/WalletContext'
+import { useAuth } from '../context/AuthContext'
 
 const navItems = [
     { icon: 'star', label: 'Favourites', path: '/favourites' },
@@ -37,6 +39,8 @@ const icons = {
 
 function Sidebar({ isOpen, toggleSidebar }) {
     const isHomePage = useLocation().pathname === '/'
+    const { openWalletModal } = useWallet()
+    const { user, openAuthModal } = useAuth()
 
     return (
         <aside className={`app-sidebar ${isHomePage ? 'app-sidebar-home' : ''} ${!isOpen ? 'app-sidebar-hidden' : ''}`}>
@@ -55,6 +59,62 @@ function Sidebar({ isOpen, toggleSidebar }) {
             </div>
 
             <nav className="sidebar-nav">
+                {/* 💳 Quick Cashier: Deposit & Withdraw */}
+                <div className="nav-section" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '10px', marginBottom: '10px' }}>
+                    <button
+                        type="button"
+                        className="nav-item"
+                        onClick={() => {
+                            if (!user) openAuthModal('login')
+                            else openWalletModal('deposit')
+                        }}
+                        style={{
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08))',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            borderRadius: '8px',
+                            color: '#34d399',
+                            fontWeight: 700,
+                            width: '100%',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 14px',
+                            marginBottom: '4px'
+                        }}
+                        title="Instant Deposit (UPI & Crypto)"
+                    >
+                        <span style={{ fontSize: '16px' }}>💰</span>
+                        <span>Deposit INR</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="nav-item"
+                        onClick={() => {
+                            if (!user) openAuthModal('login')
+                            else openWalletModal('withdraw')
+                        }}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#e2e8f0',
+                            fontWeight: 600,
+                            width: '100%',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '8px 14px'
+                        }}
+                        title="Instant Bank & UPI Withdrawal"
+                    >
+                        <span style={{ fontSize: '16px' }}>🏧</span>
+                        <span>Withdraw</span>
+                    </button>
+                </div>
+
                 <div className="nav-section">
                     {navItems.map((item) => (
                         <NavLink

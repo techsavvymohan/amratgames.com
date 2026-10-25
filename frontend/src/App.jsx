@@ -4,6 +4,15 @@ import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 import GameAuthGuard from './components/Auth/GameAuthGuard'
+import { useWallet } from './context/WalletContext'
+
+function CashierRoute({ defaultTab = 'deposit' }) {
+    const { openWalletModal } = useWallet()
+    useEffect(() => {
+        openWalletModal(defaultTab)
+    }, [openWalletModal, defaultTab])
+    return <HomePage />
+}
 
 // Automatic recovery from Vite dynamic import chunk hash mismatches after deployments
 function lazyWithRetry(componentImport) {
@@ -139,6 +148,9 @@ function App() {
                             <Route path="guides/plinko-odds" element={<PlinkoOddsPage />} />
                             <Route path="payments/instant-upi-withdrawals" element={<UpiWithdrawalsGuidePage />} />
                             <Route path="vip-rewards" element={<VipRewardsPage />} />
+                            <Route path="deposit" element={<CashierRoute defaultTab="deposit" />} />
+                            <Route path="withdraw" element={<CashierRoute defaultTab="withdraw" />} />
+                            <Route path="wallet" element={<CashierRoute defaultTab="deposit" />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
