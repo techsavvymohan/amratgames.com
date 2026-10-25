@@ -151,6 +151,19 @@ function App() {
                             <Route path="deposit" element={<CashierRoute defaultTab="deposit" />} />
                             <Route path="withdraw" element={<CashierRoute defaultTab="withdraw" />} />
                             <Route path="wallet" element={<CashierRoute defaultTab="deposit" />} />
+                            <Route path="cashier" element={<CashierRoute defaultTab="deposit" />} />
+
+                            {/* Game Route Aliases & Permalinks */}
+                            <Route path="games/crash" element={<Navigate to="/crash" replace />} />
+                            <Route path="games/aviator" element={<Navigate to="/aviator" replace />} />
+                            <Route path="games/plinko" element={<Navigate to="/plinko" replace />} />
+                            <Route path="games/mines" element={<Navigate to="/mines" replace />} />
+                            <Route path="games/limbo" element={<Navigate to="/limbo" replace />} />
+                            <Route path="games/dragon-tiger" element={<Navigate to="/dragon-tiger" replace />} />
+                            <Route path="games/color-match" element={<Navigate to="/color-match" replace />} />
+                            <Route path="games/coin-toss" element={<Navigate to="/coin-toss" replace />} />
+                            <Route path="wingo" element={<Navigate to="/color-match" replace />} />
+                            <Route path="games/wingo" element={<Navigate to="/color-match" replace />} />
                         </Route>
 
                         {/* Dedicated Standalone Admin Portal (Independent Fullscreen Page) */}
