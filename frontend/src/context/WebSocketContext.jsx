@@ -66,13 +66,17 @@ export function WebSocketProvider({ children }) {
         try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
             const host = window.location.host || 'localhost:3001'
-            const wsUrl = `${protocol}//${host}/ws`
+            const savedToken = typeof window !== 'undefined' ? localStorage.getItem('amrat_auth_token') : null
+            const wsUrl = `${protocol}//${host}/ws${savedToken ? `?token=${encodeURIComponent(savedToken)}` : ''}`
 
             const ws = new WebSocket(wsUrl)
             wsRef.current = ws
 
             ws.onopen = () => {
                 setIsConnected(true)
+                if (savedToken) {
+                    try { ws.send(JSON.stringify({ type: 'AUTH', payload: { token: savedToken } })) } catch {}
+                }
                 // Start 25s client-side heartbeat
                 clearInterval(pingTimerRef.current)
                 pingTimerRef.current = setInterval(() => {

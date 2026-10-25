@@ -10,8 +10,11 @@ import { isTokenRevoked } from './middleware/auth.js'
 
 let wss = null
 
+const PRIVATE_USER_EVENTS = new Set(['DEPOSIT_STATUS_UPDATED', 'WITHDRAWAL_STATUS_UPDATED'])
+
 function sendLocalClients(type, payload) {
     if (!wss) return
+    const isPrivate = PRIVATE_USER_EVENTS.has(type)
     const message = JSON.stringify({
         type,
         payload,
@@ -20,7 +23,15 @@ function sendLocalClients(type, payload) {
 
     wss.clients.forEach((client) => {
         if (client.readyState === 1) { // 1 = WebSocket.OPEN
-            try { client.send(message) } catch {}
+            if (isPrivate) {
+                // Privacy protection: Never broadcast financial transactions/UTRs to all players.
+                // Only dispatch to the authenticated owner of the deposit/withdrawal or an administrator.
+                if (payload?.userId && (client.userId === payload.userId || client.userRole === 'admin')) {
+                    try { client.send(message) } catch {}
+                }
+            } else {
+                try { client.send(message) } catch {}
+            }
         }
     })
 }
@@ -88,6 +99,22 @@ export function initWebSocketServer(server) {
         ws.isAlive = true
         ws.messageCount = 0
         ws.lastMessageReset = Date.now()
+        ws.userId = null
+        ws.userRole = null
+
+        // Authenticate connection from query param (?token=...)
+        try {
+            const urlObj = new URL(req.url, 'http://localhost')
+            const queryToken = urlObj.searchParams.get('token')
+            if (queryToken && !isTokenRevoked(queryToken)) {
+                const decoded = jwt.verify(queryToken, CONFIG.JWT_SECRET)
+                const user = db.findUserById(decoded.id)
+                if (user && !user.isBanned) {
+                    ws.userId = user.id
+                    ws.userRole = user.role
+                }
+            }
+        } catch {}
 
         const cleanupIp = () => {
             const count = (activeIpConnections.get(clientIp) || 1) - 1
@@ -112,6 +139,8 @@ export function initWebSocketServer(server) {
             crashRoom: crashRoomService.getState(),
             colorRoom: colorMatchRoomService.getState(),
             recentChat: chatService.getRecentMessages(30),
+            authenticated: Boolean(ws.userId),
+            userId: ws.userId || null,
             timestamp: new Date().toISOString()
         }))
 
@@ -132,6 +161,26 @@ export function initWebSocketServer(server) {
                 if (data.type === 'PING') {
                     ws.isAlive = true
                     ws.send(JSON.stringify({ type: 'PONG', timestamp: Date.now() }))
+                } else if (data.type === 'AUTH') {
+                    const token = data.payload?.token || data.token
+                    if (!token) {
+                        return ws.send(JSON.stringify({ type: 'AUTH_ERROR', error: 'Token is required' }))
+                    }
+                    if (isTokenRevoked(token)) {
+                        return ws.send(JSON.stringify({ type: 'AUTH_ERROR', error: 'Token is revoked' }))
+                    }
+                    try {
+                        const decoded = jwt.verify(token, CONFIG.JWT_SECRET)
+                        const user = db.findUserById(decoded.id)
+                        if (!user || user.isBanned) {
+                            return ws.send(JSON.stringify({ type: 'AUTH_ERROR', error: 'User not authorized' }))
+                        }
+                        ws.userId = user.id
+                        ws.userRole = user.role
+                        return ws.send(JSON.stringify({ type: 'AUTH_SUCCESS', userId: user.id }))
+                    } catch (err) {
+                        return ws.send(JSON.stringify({ type: 'AUTH_ERROR', error: 'Invalid authentication token' }))
+                    }
                 } else if (data.type === 'GET_CRASH_ROOM_STATE') {
                     ws.send(JSON.stringify({ type: 'CRASH_ROOM_STATE', payload: crashRoomService.getState() }))
                 } else if (data.type === 'GET_COLOR_ROOM_STATE') {
@@ -151,6 +200,8 @@ export function initWebSocketServer(server) {
                         const user = db.findUserById(decoded.id)
                         if (!user) throw new Error('User not found')
                         if (user.isBanned) throw new Error('Account suspended')
+                        ws.userId = user.id
+                        ws.userRole = user.role
                         await chatService.postMessage({ user, text })
                     } catch (authErr) {
                         ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: authErr.message }))
@@ -168,6 +219,8 @@ export function initWebSocketServer(server) {
                         const user = db.findUserById(decoded.id)
                         if (!user) throw new Error('User not found')
                         if (user.isBanned) throw new Error('Account suspended')
+                        ws.userId = user.id
+                        ws.userRole = user.role
                         await chatService.shareBet({ user, betId })
                     } catch (authErr) {
                         ws.send(JSON.stringify({ type: 'CHAT_ERROR', error: authErr.message }))

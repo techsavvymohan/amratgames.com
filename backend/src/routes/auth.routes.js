@@ -39,6 +39,9 @@ function sanitizeUser(user) {
     return safeUser
 }
 
+// Pre-computed dummy bcrypt hash to ensure constant-time comparison on nonexistent logins
+const DUMMY_PASSWORD_HASH = '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/q7pD78oN8wJqQ9m49wB7PZkY2G0u'
+
 // ── 1. Password Login (Email, Phone, or Username) ──────────
 // POST /api/auth/login
 router.post('/login', loginRateLimiter, (req, res) => {
@@ -50,7 +53,9 @@ router.post('/login', loginRateLimiter, (req, res) => {
 
         const user = db.findUserByLogin(login)
         if (!user) {
-            return res.status(401).json({ success: false, error: 'No account found with this email, phone, or username' })
+            // Mitigate timing attacks and user enumeration with constant-time dummy verification
+            bcrypt.compareSync(password, DUMMY_PASSWORD_HASH)
+            return res.status(401).json({ success: false, error: 'Invalid login credentials. Please check your details.' })
         }
 
         if (user.isBanned) {
@@ -59,7 +64,7 @@ router.post('/login', loginRateLimiter, (req, res) => {
 
         const valid = bcrypt.compareSync(password, user.passwordHash)
         if (!valid) {
-            return res.status(401).json({ success: false, error: 'Invalid password. Please check your credentials.' })
+            return res.status(401).json({ success: false, error: 'Invalid login credentials. Please check your details.' })
         }
 
         // Update last login
@@ -442,7 +447,7 @@ router.post('/forgot-password', otpRateLimiter, (req, res) => {
         res.json({
             success: true,
             message: `Password reset OTP has been sent to your registered email (${maskedEmail})`,
-            email: targetEmail,
+            email: maskedEmail,
             expiresAt
         })
     } catch (err) {
@@ -451,7 +456,7 @@ router.post('/forgot-password', otpRateLimiter, (req, res) => {
 })
 
 // POST /api/auth/reset-password
-router.post('/reset-password', (req, res) => {
+router.post('/reset-password', otpRateLimiter, (req, res) => {
     try {
         const { email, otp, newPassword } = req.body
         if (!email || !otp || !newPassword) {

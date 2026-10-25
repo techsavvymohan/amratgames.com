@@ -106,3 +106,38 @@ export function requireAdmin(req, res, next) {
     }
     next()
 }
+
+/**
+ * Guards observer bank telemetry ingest (SMS/Email) and verification pipeline.
+ * Accepts:
+ *  - Observer API token (X-Observer-Token or Bearer)
+ *  - Master Admin Key (X-API-Key, X-Admin-Key, or Bearer)
+ *  - Authenticated admin JWT session
+ */
+export function requireObserverOrAdmin(req, res, next) {
+    const observerToken = process.env.YOUPI_OBSERVER_API_TOKEN || 'youpi_observer_internal_token_2025'
+    const adminKey = CONFIG.ADMIN_API_KEY || 'amrat_internal_secret_admin_key_2025'
+
+    const headerObserver = req.headers['x-observer-token']
+    const headerAdmin = req.headers['x-api-key'] || req.headers['x-admin-key']
+    const authHeader = req.headers['authorization'] || ''
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : ''
+
+    if (headerObserver && (headerObserver === observerToken || headerObserver === adminKey)) {
+        return next()
+    }
+    if (headerAdmin && headerAdmin === adminKey) {
+        return next()
+    }
+    if (bearer && (bearer === observerToken || bearer === adminKey)) {
+        return next()
+    }
+    if (req.user && req.user.role === 'admin') {
+        return next()
+    }
+
+    return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: observer or administrator credentials required.'
+    })
+}

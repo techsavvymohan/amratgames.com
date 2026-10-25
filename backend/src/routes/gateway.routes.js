@@ -1,6 +1,6 @@
 import express from 'express'
 import { paymentGatewayManager } from '../gateways/PaymentGatewayManager.js'
-import { requireAuth, requireAdmin } from '../middleware/auth.js'
+import { requireAuth, requireAdmin, requireObserverOrAdmin } from '../middleware/auth.js'
 import { db } from '../db/db.js'
 
 const router = express.Router()
@@ -103,7 +103,7 @@ router.get('/health', async (req, res) => {
  * GET /api/gateway/diagnostics
  * Full system diagnostic status covering SQLite WAL, table metrics, active VPA, and core engines.
  */
-router.get('/diagnostics', async (req, res) => {
+router.get('/diagnostics', requireAuth, requireAdmin, async (req, res) => {
     try {
         const diagnostics = await paymentGatewayManager.getDiagnostics()
         res.json({
@@ -118,15 +118,29 @@ router.get('/diagnostics', async (req, res) => {
 /**
  * GET /api/gateway/vpa
  * Returns current active VPA and list of all configured receiving accounts.
+ * Non-admin callers only receive sanitized public VPA information.
  */
 router.get('/vpa', (req, res) => {
     try {
         const active = paymentGatewayManager.getActiveVpa()
-        const all = paymentGatewayManager.listVpas()
+        const isAdmin = req.user && req.user.role === 'admin'
+
+        if (isAdmin) {
+            const all = paymentGatewayManager.listVpas()
+            return res.json({
+                success: true,
+                activeVpa: active,
+                configuredAccounts: all
+            })
+        }
+
+        // Sanitized public/player view
         res.json({
             success: true,
-            activeVpa: active,
-            configuredAccounts: all
+            activeVpa: active ? {
+                upiId: active.upiId,
+                payeeName: active.payeeName
+            } : null
         })
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -209,6 +223,20 @@ router.get('/session/:paymentId', requireAuth, async (req, res) => {
         if (!result.success) {
             return res.status(404).json(result)
         }
+
+        // Ownership enforcement: prevent IDOR session snooping
+        let meta = result.session?.metadata
+        if (typeof meta === 'string') {
+            try { meta = JSON.parse(meta) } catch {}
+        }
+        const sessionUserId = result.session?.userId || meta?.userId || result.session?.customer?.userId
+        if (req.user.role !== 'admin' && sessionUserId && String(sessionUserId) !== String(req.user.id)) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied: you do not own this payment session.'
+            })
+        }
+
         res.json(result)
     } catch (err) {
         res.status(500).json({ success: false, error: err.message })
@@ -221,6 +249,21 @@ router.get('/session/:paymentId', requireAuth, async (req, res) => {
  */
 router.post('/session/:paymentId/cancel', requireAuth, async (req, res) => {
     try {
+        const existing = await paymentGatewayManager.getPaymentSession(req.params.paymentId)
+        if (existing.success && existing.session) {
+            let meta = existing.session?.metadata
+            if (typeof meta === 'string') {
+                try { meta = JSON.parse(meta) } catch {}
+            }
+            const sessionUserId = existing.session?.userId || meta?.userId || existing.session?.customer?.userId
+            if (req.user.role !== 'admin' && sessionUserId && String(sessionUserId) !== String(req.user.id)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Access denied: you do not own this payment session.'
+                })
+            }
+        }
+
         const result = await paymentGatewayManager.cancelPaymentSession(req.params.paymentId)
         res.json(result)
     } catch (err) {
@@ -232,7 +275,7 @@ router.post('/session/:paymentId/cancel', requireAuth, async (req, res) => {
  * POST /api/gateway/observe/sms
  * Ingests a bank SMS notification, runs attribution, and automatically settles the deposit.
  */
-router.post('/observe/sms', async (req, res) => {
+router.post('/observe/sms', requireObserverOrAdmin, async (req, res) => {
     try {
         const { message, sender = 'VM-HDFCBK', timestamp = new Date(), receivingAccountId = null, runFullPipeline = false } = req.body
         if (!message) {
@@ -257,7 +300,7 @@ router.post('/observe/sms', async (req, res) => {
  * POST /api/gateway/observe/email
  * Ingests a bank email notification, runs attribution, and automatically settles the deposit.
  */
-router.post('/observe/email', async (req, res) => {
+router.post('/observe/email', requireObserverOrAdmin, async (req, res) => {
     try {
         const { subject, body, sender = 'alerts@hdfcbank.net', timestamp = new Date(), receivingAccountId = null } = req.body
         if (!body && !subject) {
@@ -282,7 +325,7 @@ router.post('/observe/email', async (req, res) => {
  * POST /api/gateway/verify
  * Runs observation through the 6-stage anti-fraud PaymentVerificationPipeline.
  */
-router.post('/verify', async (req, res) => {
+router.post('/verify', requireObserverOrAdmin, async (req, res) => {
     try {
         const result = await paymentGatewayManager.verifyPayment(req.body)
         res.json({
