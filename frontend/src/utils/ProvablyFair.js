@@ -121,7 +121,7 @@ class ProvablyFair {
 
         // Formula: e = 99 / (1 - r)  =>  result in [1.00, ∞)
         const e = Math.floor((99 / (1 - result))) / 100;
-        return Math.max(1.00, Math.min(e, 1000.00));
+        return Math.max(1.00, Math.min(e, 10000.00));
     }
 
     /**

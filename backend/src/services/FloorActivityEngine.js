@@ -9,6 +9,7 @@ import { broadcastEvent } from '../websocket.js'
 import { pvpService } from './PvPService.js'
 import { chatService } from './ChatService.js'
 import { houseVaultService } from './HouseVaultService.js'
+import { CONFIG } from '../config.js'
 
 export const BOT_PERSONAS = [
     { id: 'usr_bot_aryan', username: 'Aryan_King', email: 'aryan_bot@amratgames.internal', vipTier: 'Gold' },
@@ -82,7 +83,7 @@ export class FloorActivityEngine {
                     role: 'player',
                     isBot: true,
                     isMarketMaker: true,
-                    balances: { INR: 0.0, USDT: 0.0, BTC: 0.0, AMRAT: 500000.0 },
+                    balances: { INR: 500000.0, USDT: 10000.0, BTC: 1.0, AMRAT: 500000.0 },
                     totalWagered: 150000.0,
                     vipTier: persona.vipTier,
                     isBanned: false,
@@ -91,11 +92,13 @@ export class FloorActivityEngine {
                 db.data.users.push(u)
             } else {
                 // Top up if depleted
-                if (!u.balances) u.balances = { INR: 0.0, USDT: 0.0, BTC: 0.0, AMRAT: 500000.0 }
+                if (!u.balances) u.balances = { INR: 500000.0, USDT: 10000.0, BTC: 1.0, AMRAT: 500000.0 }
                 if ((u.balances.AMRAT || 0) < 50000.0) {
                     u.balances.AMRAT = 500000.0
                 }
-                u.balances.INR = 0.0
+                if ((u.balances.INR || 0) < 50000.0) {
+                    u.balances.INR = 500000.0
+                }
                 u.isMarketMaker = true
             }
             if (db._indexUser) db._indexUser(u)
@@ -224,9 +227,9 @@ export class FloorActivityEngine {
         const now = Date.now()
 
         for (const d of activeDuels) {
-            // Market maker bots must NEVER play with unbacked balances in real-money (INR/USDT/BTC) duels!
-            // Restrict bot matchmaking strictly to virtual tokens (AMRAT)
-            if (d.currency !== 'AMRAT') continue
+            // Market maker bots must NEVER play with unbacked balances in real-money (INR/USDT/BTC) duels in production!
+            // Restrict production bot matchmaking strictly to virtual tokens (AMRAT)
+            if (CONFIG.isProduction && d.currency !== 'AMRAT') continue
 
             if (d.status === 'open' && d.creatorId && !d.creatorId.startsWith('usr_bot_')) {
                 const waitTime = now - new Date(d.createdAt).getTime()

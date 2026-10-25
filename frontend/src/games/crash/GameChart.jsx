@@ -214,7 +214,7 @@ function GameChart({
             // 7. Update Center Multiplier Display
             if (multiplierNumberRef.current) {
                 const safeMult = (typeof curMult === 'number' && isFinite(curMult) && curMult >= 1.0)
-                    ? Math.min(1000.0, curMult)
+                    ? Math.min(10000.0, curMult)
                     : 1.00
                 multiplierNumberRef.current.textContent = `${safeMult.toFixed(2)}x`
             }
@@ -261,7 +261,7 @@ function GameChart({
             } else {
                 maxElapsedRef.current = 0
                 if (phase === 'running') {
-                    const safeM = Math.min(1000.0, Math.max(1.0, multiplier || 1.0))
+                    const safeM = Math.min(10000.0, Math.max(1.0, multiplier || 1.0))
                     const estimatedSecs = Math.log(safeM) / CRASH_GROWTH_RATE
                     activeFlightStartRef.current = Date.now() - estimatedSecs * 1000
                 }
@@ -274,12 +274,12 @@ function GameChart({
     // Re-anchor to authoritative server multiplier if client drifted (e.g. background tab)
     useEffect(() => {
         if (phase === 'running' && multiplier && multiplier >= 1.0) {
-            const safeM = Math.min(1000.0, multiplier)
+            const safeM = Math.min(10000.0, multiplier)
             const serverElapsed = Math.log(safeM) / CRASH_GROWTH_RATE
             const expectedAnchor = Date.now() - serverElapsed * 1000
             if (!activeFlightStartRef.current || Math.abs(activeFlightStartRef.current - expectedAnchor) > 1500) {
                 activeFlightStartRef.current = expectedAnchor
-                maxElapsedRef.current = Math.min(50, serverElapsed)
+                maxElapsedRef.current = Math.min(65, serverElapsed)
             }
         }
     }, [multiplier, phase])
@@ -290,7 +290,7 @@ function GameChart({
             milestonesCrossedRef.current = { 5: false, 10: false, 50: false }
             let anchorTime = flightStartTime
             if (!anchorTime) {
-                const safeM = Math.min(1000.0, Math.max(1.0, multiplier || 1.0))
+                const safeM = Math.min(10000.0, Math.max(1.0, multiplier || 1.0))
                 const estimatedSecs = Math.log(safeM) / CRASH_GROWTH_RATE
                 anchorTime = Date.now() - estimatedSecs * 1000
             }
@@ -301,17 +301,16 @@ function GameChart({
                 const now = Date.now()
                 const rawElapsed = Math.max(0, (now - activeFlightStartRef.current) / 1000)
 
-                // Safety timeout: Maximum possible flight duration is 50 seconds (1000x takes 43.1s)
-                // If rawElapsed exceeds 55s or anchor time is older than 60s, client desynced (e.g. phone was locked/asleep)
-                if (rawElapsed > 55 || (now - activeFlightStartRef.current) > 60000) {
+                // Safety timeout: Maximum possible flight duration is 65 seconds (10,000x takes ~58s)
+                if (rawElapsed > 70 || (now - activeFlightStartRef.current) > 80000) {
                     animFrameRef.current = null
                     return
                 }
 
-                const curElapsed = Math.min(50, Math.max(maxElapsedRef.current, rawElapsed))
+                const curElapsed = Math.min(65, Math.max(maxElapsedRef.current, rawElapsed))
                 maxElapsedRef.current = curElapsed
 
-                const curMult = Math.min(1000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * curElapsed)))
+                const curMult = Math.min(10000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * curElapsed)))
 
                 // Multiplayer Sound Atmosphere: subtle jet engine sound acceleration as multiplier crosses 5x, 10x, and 50x
                 if (curMult >= 5.0 && !milestonesCrossedRef.current[5]) {
@@ -351,8 +350,8 @@ function GameChart({
             activeFlightStartRef.current = null
             maxElapsedRef.current = 0
             const rawCrashMult = typeof multiplier === 'number' && multiplier >= 1.0 ? multiplier : (lastRenderedRef.current.multiplier || 1.00)
-            const crashMult = Math.min(1000.0, Math.max(1.00, rawCrashMult))
-            const crashElapsed = crashMult > 1.0 ? Math.min(50, Math.log(crashMult) / CRASH_GROWTH_RATE) : 0
+            const crashMult = Math.min(10000.0, Math.max(1.00, rawCrashMult))
+            const crashElapsed = crashMult > 1.0 ? Math.min(65, Math.log(crashMult) / CRASH_GROWTH_RATE) : 0
             drawScene(crashElapsed, crashMult, true)
         } else {
             // idle or waiting
@@ -443,10 +442,10 @@ function GameChart({
                     className={`aviator-multiplier-val ${isCrashed ? 'crashed-val' : ''}`}
                 >
                     {isCrashed
-                        ? `${Math.min(1000.0, Math.max(1.0, multiplier || 1.00)).toFixed(2)}x`
+                        ? `${Math.min(10000.0, Math.max(1.0, multiplier || 1.00)).toFixed(2)}x`
                         : (isRunning && lastRenderedRef.current.multiplier > 1.0
-                            ? `${Math.min(1000.0, Math.max(1.0, lastRenderedRef.current.multiplier)).toFixed(2)}x`
-                            : `${Math.min(1000.0, Math.max(1.0, multiplier || 1.00)).toFixed(2)}x`)}
+                            ? `${Math.min(10000.0, Math.max(1.0, lastRenderedRef.current.multiplier)).toFixed(2)}x`
+                            : `${Math.min(10000.0, Math.max(1.0, multiplier || 1.00)).toFixed(2)}x`)}
                 </div>
 
                 {/* Waiting Countdown bar */}

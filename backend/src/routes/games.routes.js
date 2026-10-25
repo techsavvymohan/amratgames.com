@@ -121,7 +121,7 @@ router.post('/provably-fair/verify', (req, res) => {
             if (floatVal >= 0.02) {
                 crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
             }
-            crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.0))
+            crashPoint = Math.max(1.00, Math.min(crashPoint, 10000.00))
             result = { game: isMultiplayerCrash ? 'crash-multiplayer' : 'crash', crashPoint, floatVal }
         } else if (gameType === 'plinko') {
             const numRows = Math.max(8, Math.min(parseInt(rows, 10) || 16, 16))

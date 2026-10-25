@@ -19,10 +19,11 @@ export async function dropPlinkoBall({
     pendingDrops.current++;
     try {
         let binIndex = Math.floor(rowCount / 2);
+        let betRes = null;
 
         if (executeGameBet) {
             if (engine.getActiveBallCount() >= MAX_ACTIVE_BALLS) return 'busy';
-            const betRes = await executeGameBet({
+            betRes = await executeGameBet({
                 game: 'plinko',
                 gameName: 'Plinko',
                 betAmount,

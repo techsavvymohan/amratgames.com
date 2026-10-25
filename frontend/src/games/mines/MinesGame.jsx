@@ -30,7 +30,7 @@ import MobileBetSheet from '../../components/MobileBetSheet'
 import GameBottomHistory from '../../components/GameHistory/GameBottomHistory'
 import './MinesGame.css'
 
-const HOUSE_EDGE = 0.96; // 4% edge (96% RTP)
+const HOUSE_EDGE = 0.98; // 2% edge (98% RTP)
 
 const calculateMultiplier = (mines, hits) => {
     if (hits === 0) return 1.00;

@@ -201,18 +201,18 @@ function CrashGame() {
             setFlightStartTime(null)
         } else if (room.state === 'FLYING') {
             setPhase(PHASE.RUNNING)
-            const currentMult = Math.min(1000.0, Math.max(1.00, room.currentMultiplier || 1.00))
+            const currentMult = Math.min(10000.0, Math.max(1.00, room.currentMultiplier || 1.00))
             setMultiplier(currentMult)
             multiplierRef.current = currentMult
             const fStart = room.flightStartTime || (Date.now() - (Math.log(Math.max(1.0, currentMult)) / CRASH_GROWTH_RATE) * 1000)
             flightStartTimeRef.current = fStart
             setFlightStartTime(fStart)
-            const elapsed = Math.max(0, Math.min(50, (Date.now() - fStart) / 1000))
+            const elapsed = Math.max(0, Math.min(65, (Date.now() - fStart) / 1000))
             setElapsedTime(elapsed)
             elapsedTimeRef.current = elapsed
         } else if (room.state === 'CRASHED') {
             setPhase(PHASE.CRASHED)
-            const bust = Math.min(1000.0, Math.max(1.00, room.crashPoint || 1.00))
+            const bust = Math.min(10000.0, Math.max(1.00, room.crashPoint || 1.00))
             setMultiplier(bust)
             multiplierRef.current = bust
             flightStartTimeRef.current = null
@@ -327,7 +327,7 @@ function CrashGame() {
                     setPanel2(p => ({ ...p, cashedOut: false, payout: 0 }))
                 } else if (payload.state === 'FLYING') {
                     setPhase(PHASE.RUNNING)
-                    const sMult = Math.min(1000.0, Math.max(1.00, payload.multiplier || 1.00))
+                    const sMult = Math.min(10000.0, Math.max(1.00, payload.multiplier || 1.00))
                     setMultiplier(sMult)
                     multiplierRef.current = sMult
 
@@ -345,7 +345,7 @@ function CrashGame() {
                         setFlightStartTime(fStart)
                     }
                     const fStart = flightStartTimeRef.current || Date.now()
-                    const elapsed = Math.max(0, Math.min(50, (Date.now() - fStart) / 1000))
+                    const elapsed = Math.max(0, Math.min(65, (Date.now() - fStart) / 1000))
                     setElapsedTime(elapsed)
                     elapsedTimeRef.current = elapsed
                 }
@@ -353,7 +353,7 @@ function CrashGame() {
             subscribe('CRASH_ROOM_BUST', (payload) => {
                 if (!isMounted || !payload) return
                 setPhase(PHASE.CRASHED)
-                const bustPoint = Math.min(1000.0, Math.max(1.00, payload.crashPoint || 1.00))
+                const bustPoint = Math.min(10000.0, Math.max(1.00, payload.crashPoint || 1.00))
                 setMultiplier(bustPoint)
                 multiplierRef.current = bustPoint
                 flightStartTimeRef.current = null
@@ -442,7 +442,7 @@ function CrashGame() {
                 if (!isMounted || !payload) return
                 if (activeRoundIdRef.current && activeRoundIdRef.current === payload.roundId) {
                     setPhase(PHASE.CRASHED)
-                    const bustPoint = Math.min(1000.0, Math.max(1.00, payload.crashPoint || 1.00))
+                    const bustPoint = Math.min(10000.0, Math.max(1.00, payload.crashPoint || 1.00))
                     setMultiplier(bustPoint)
                     multiplierRef.current = bustPoint
                     flightStartTimeRef.current = null
@@ -613,7 +613,7 @@ function CrashGame() {
         let animFrame
         const updateSoloFlight = () => {
             const elapsed = Math.max(0, (Date.now() - flightStartTime) / 1000)
-            const curMult = Math.min(1000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)))
+            const curMult = Math.min(10000.0, Math.max(1.00, Math.pow(Math.E, CRASH_GROWTH_RATE * elapsed)))
 
             setMultiplier(curMult)
             setElapsedTime(elapsed)

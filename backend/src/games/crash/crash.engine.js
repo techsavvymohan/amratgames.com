@@ -19,7 +19,7 @@ export class CrashEngine {
         setInterval(() => {
             const now = Date.now()
             for (const [roundId, session] of this.activeCrashRounds.entries()) {
-                if (now - session.startedAt > 60000) { // Max flight lifespan is ~44s, so 60s is safe
+                if (now - session.startedAt > 90000) { // Max flight lifespan for 10,000x is ~58s, so 90s is safe
                     if (session.timer) clearTimeout(session.timer)
                     this.activeCrashRounds.delete(roundId)
                 }
@@ -42,7 +42,7 @@ export class CrashEngine {
         if (floatVal >= 0.02) {
             crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.00))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 10000.00))
 
         const won = requestedMultiplier > 1.0 && requestedMultiplier <= crashPoint
         const actualMultiplier = won ? parseFloat(requestedMultiplier.toFixed(2)) : 0
@@ -75,7 +75,7 @@ export class CrashEngine {
         if (floatVal >= 0.02) {
             crashPoint = Math.floor((98.0 / (1 - floatVal))) / 100
         }
-        crashPoint = Math.max(1.00, Math.min(crashPoint, 1000.00))
+        crashPoint = Math.max(1.00, Math.min(crashPoint, 10000.00))
 
         // Dynamic Bankroll Liability Protection
         const maxSingleRoundExposure = bankrollRisk.getMaxProfitCap(currency) || 50000.00

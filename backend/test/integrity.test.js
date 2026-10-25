@@ -1316,6 +1316,7 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
             passwordHash: 'hash'
         })
         humanPlayer.balances.INR = 10000.0
+        humanPlayer.balances.AMRAT = 10000.0
 
         const joinRes = await pvpService.joinDuel({
             duelId: botDuel.id,

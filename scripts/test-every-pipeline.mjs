@@ -45,7 +45,7 @@ function recordStep(pipelineName, stepName, ok, detail = '') {
 
 async function runCommand(cmd, args, cwd) {
     return new Promise((resolve, reject) => {
-        const proc = spawn(cmd, args, { cwd, shell: true })
+        const proc = spawn(cmd, args, { cwd, shell: true, env: { ...process.env, NODE_ENV: 'test' } })
         let stdout = ''
         let stderr = ''
         proc.stdout.on('data', d => stdout += d.toString())
@@ -101,8 +101,10 @@ async function executeAllPipelines() {
         recordStep('P2_OTP_ENGINE', 'Cryptographic OTP Generation', Boolean(otp && otp.length === 6), `Generated: ${otp}`)
 
         // Master bypass verification
-        const bypassOk = db.verifyOtp('test_bypass@amratgames.com', CONFIG.DEMO_OTP_CODE || '777777')
-        recordStep('P2_OTP_ENGINE', 'Testing Master Bypass Code Verification', bypassOk)
+        const bypassOk = CONFIG.DEMO_OTP_BYPASS_ENABLED
+            ? db.verifyOtp('test_bypass@amratgames.com', CONFIG.DEMO_OTP_CODE || '777777')
+            : !db.verifyOtp('test_bypass@amratgames.com', CONFIG.DEMO_OTP_CODE || '777777')
+        recordStep('P2_OTP_ENGINE', 'Testing Master Bypass Code Verification', bypassOk, CONFIG.DEMO_OTP_BYPASS_ENABLED ? 'Bypass allowed in test/dev' : 'Bypass safely blocked in production')
 
         // Real OTP verification & burning
         const realOtpOk = db.verifyOtp(targetEmail, otp)

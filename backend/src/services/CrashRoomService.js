@@ -90,7 +90,7 @@ export class CrashRoomService {
         if (floatVal >= 0.02) {
             point = Math.floor((98.0 / (1 - floatVal))) / 100
         }
-        this.crashPoint = Math.max(1.00, Math.min(point, 1000.00))
+        this.crashPoint = Math.max(1.00, Math.min(point, 10000.00))
 
         broadcastEvent('CRASH_ROOM_STATE', this.getState())
     }
