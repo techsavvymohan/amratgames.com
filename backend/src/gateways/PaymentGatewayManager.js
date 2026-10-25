@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { YouPiGatewayAdapter } from './adapters/YouPiGatewayAdapter.js'
 import { FallbackManualAdapter } from './adapters/FallbackManualAdapter.js'
+import { youPiGatewayBridge } from './bridge/YouPiGatewayBridge.js'
 import { webhookSignatureVerifier } from './security/WebhookSignatureVerifier.js'
 import { db } from '../db/db.js'
 import { broadcastEvent } from '../websocket.js'
@@ -17,9 +18,10 @@ export class PaymentGatewayManager {
         this.adapters = new Map()
         this.primaryGatewayName = 'youpi'
         this.fallbackGatewayName = 'manual'
+        this.bridge = youPiGatewayBridge
 
         // Register default adapters
-        this.registerAdapter(new YouPiGatewayAdapter())
+        this.registerAdapter(new YouPiGatewayAdapter({ bridge: this.bridge }))
         this.registerAdapter(new FallbackManualAdapter())
     }
 
@@ -290,6 +292,74 @@ export class PaymentGatewayManager {
             credited: false,
             message: `Recorded non-success event: ${payload.event || payload.status}`
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Sovereign YouPI Bridge Delegation Methods
+    // ─────────────────────────────────────────────────────────────────────────
+
+    async getDiagnostics() {
+        return await this.bridge.getDiagnostics()
+    }
+
+    getActiveVpa() {
+        return this.bridge.getActiveVpa()
+    }
+
+    listVpas() {
+        return this.bridge.listVpas()
+    }
+
+    switchActiveVpa(upiId, payeeName) {
+        return this.bridge.switchActiveVpa(upiId, payeeName)
+    }
+
+    createVpa(data) {
+        return this.bridge.createVpa(data)
+    }
+
+    async ingestSmsObservation(params) {
+        return await this.bridge.ingestSmsObservation(params)
+    }
+
+    async ingestEmailObservation(params) {
+        return await this.bridge.ingestEmailObservation(params)
+    }
+
+    async verifyPayment(payload) {
+        return await this.bridge.verifyPayment(payload)
+    }
+
+    getQueueStatus(accountId) {
+        return this.bridge.getQueueStatus(accountId)
+    }
+
+    listDevices() {
+        return this.bridge.listDevices()
+    }
+
+    registerDevice(deviceData) {
+        return this.bridge.registerDevice(deviceData)
+    }
+
+    listSupportTickets() {
+        return this.bridge.listSupportTickets()
+    }
+
+    getAuditLogs(limit) {
+        return this.bridge.getAuditLogs(limit)
+    }
+
+    listSessions(filters) {
+        return this.bridge.listSessions(filters)
+    }
+
+    async getPaymentSession(paymentId) {
+        return await this.bridge.getPaymentSession(paymentId)
+    }
+
+    async cancelPaymentSession(paymentId) {
+        return await this.bridge.cancelPaymentSession(paymentId)
     }
 }
 
