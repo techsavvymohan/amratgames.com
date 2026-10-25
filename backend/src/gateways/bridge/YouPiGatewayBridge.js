@@ -554,8 +554,27 @@ export class YouPiGatewayBridge {
             }
         }
 
-        const parsedAmount = this.core.extractIntelligentAmount(message)
+        // Ignore pure debits or non-credit notifications
+        if (/(debited|withdrawn|sent rs|paid rs)/i.test(message) && !/(credited|received|deposit)/i.test(message)) {
+            return { success: false, parsed: false, error: 'SMS message is a debit alert, not a credit alert' }
+        }
+
+        let parsedAmount = null
+        let extractedUtr = null
+
+        if (this.core.BankSmsParser?.parse) {
+            const parsedSms = this.core.BankSmsParser.parse({ text: message, sender, timestamp })
+            if (parsedSms) {
+                parsedAmount = { amountStr: parsedSms.amount, amountPaise: parsedSms.amountPaise }
+                extractedUtr = parsedSms.bankReferenceNumber
+            }
+        }
+
         if (!parsedAmount) {
+            parsedAmount = this.core.extractIntelligentAmount(message)
+        }
+
+        if (!parsedAmount || parsedAmount.amountPaise <= 0n) {
             return { success: false, parsed: false, error: 'Could not extract valid credit amount from SMS text' }
         }
 
@@ -571,7 +590,7 @@ export class YouPiGatewayBridge {
 
         // Extract UTR reference if present
         const utrMatch = message.match(/\b(\d{12})\b/) || message.match(/ref(?:erence)?(?:\s*no)?[:\s]+([a-zA-Z0-9]+)/i)
-        const bankReferenceNumber = utrMatch ? (utrMatch[1] || utrMatch[2]) : null
+        const bankReferenceNumber = extractedUtr || (utrMatch ? (utrMatch[1] || utrMatch[2]) : null)
 
         const { ObserverSource, ObservationAttributionStatus } = this.common
         const observationSource = ObserverSource?.SMS_GATEWAY || 'SMS_GATEWAY'
@@ -708,7 +727,7 @@ export class YouPiGatewayBridge {
      */
     recoverStaleSessions() {
         if (!this.core.recoveryEngine) return { recovered: 0 }
-        return this.core.recoveryEngine.recoverStaleSessions()
+        return this.core.recoveryEngine.recover()
     }
 
     // ─────────────────────────────────────────────────────────────────────────

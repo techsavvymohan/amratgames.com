@@ -1340,14 +1340,14 @@ describe('AmratGames.com Backend CI Integrity & Fairness Suite', () => {
             email: 'human_waiter@test.com',
             passwordHash: 'hash'
         })
-        human.balances.INR = 5000.0
+        human.balances.AMRAT = 5000.0
 
         // Create human challenge
         const createRes = await pvpService.createDuel({
             userId: human.id,
             stake: 100,
             choice: 'heads',
-            currency: 'INR'
+            currency: 'AMRAT'
         })
         assert.equal(createRes.success, true)
 
