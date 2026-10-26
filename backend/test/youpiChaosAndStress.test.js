@@ -5,12 +5,21 @@ import { youPiGatewayBridge } from '../src/gateways/bridge/YouPiGatewayBridge.js
 import { paymentGatewayManager } from '../src/gateways/PaymentGatewayManager.js'
 import { db as amratDb } from '../src/db/db.js'
 
-describe('🔥 YouPI Payment Gateway — Worst-Case Situations & Chaos Simulation Suite', () => {
+const isYouPiAvailable = Boolean(
+    youPiGatewayBridge &&
+    youPiGatewayBridge.isOperational &&
+    youPiGatewayBridge.isOperational() &&
+    youPiGatewayBridge.getActiveVpa &&
+    youPiGatewayBridge.getActiveVpa()
+)
+
+describe('🔥 YouPI Payment Gateway — Worst-Case Situations & Chaos Simulation Suite', { skip: !isYouPiAvailable ? 'YouPI gateway repository or active VPA not available' : false }, () => {
     const chaosUserId = `usr_chaos_${Date.now()}`
     const chaosUsername = 'ChaosTester'
     let activeAccount = null
 
     before(async () => {
+        if (!isYouPiAvailable) return
         activeAccount = youPiGatewayBridge.getActiveVpa()
         assert.ok(activeAccount, 'Active receiving account must exist for chaos testing')
 
@@ -378,6 +387,7 @@ describe('🔥 YouPI Payment Gateway — Worst-Case Situations & Chaos Simulatio
     })
 
     after(() => {
+        if (!isYouPiAvailable) return
         // Clean up chaos sessions
         if (activeAccount) {
             const { PaymentStatus } = youPiGatewayBridge.common

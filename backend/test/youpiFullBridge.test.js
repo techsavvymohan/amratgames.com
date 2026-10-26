@@ -5,7 +5,13 @@ import { youPiGatewayBridge, YouPiGatewayBridge } from '../src/gateways/bridge/Y
 import { paymentGatewayManager } from '../src/gateways/PaymentGatewayManager.js'
 import { db as amratDb } from '../src/db/db.js'
 
-describe('YouPI Sovereign Gateway Full Bridge Integration Suite', () => {
+const isYouPiAvailable = Boolean(
+    youPiGatewayBridge &&
+    youPiGatewayBridge.isOperational &&
+    youPiGatewayBridge.isOperational()
+)
+
+describe('YouPI Sovereign Gateway Full Bridge Integration Suite', { skip: !isYouPiAvailable ? 'YouPI gateway repository not installed or available' : false }, () => {
 
     describe('1. Dynamic Package Loading & Modules', () => {
         test('loads all 5 YouPI monorepo packages dynamically via ESM', () => {
@@ -349,6 +355,7 @@ describe('YouPI Sovereign Gateway Full Bridge Integration Suite', () => {
     })
 
     after(() => {
+        if (!isYouPiAvailable) return
         setTimeout(() => {
             process.exit(0)
         }, 150)

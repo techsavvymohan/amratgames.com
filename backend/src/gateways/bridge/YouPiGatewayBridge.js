@@ -27,7 +27,7 @@ function resolveYouPiRoot() {
         }
     }
     // Default fallback
-    return path.resolve(__dirname, '../../../../../gateway-service/youpi-pg')
+    return process.env.YOUPI_PG_ROOT || path.resolve(__dirname, '../../../../../gateway-service/youpi-pg')
 }
 
 const YOUPI_ROOT = resolveYouPiRoot()
@@ -37,25 +37,27 @@ const COMMON_PACKAGE_INDEX = pathToFileURL(path.join(YOUPI_ROOT, 'packages/commo
 const CLIENT_SDK_INDEX = pathToFileURL(path.join(YOUPI_ROOT, 'packages/merchant-sdk/src/client.js')).href
 const OBSERVER_SDK_INDEX = pathToFileURL(path.join(YOUPI_ROOT, 'packages/observer-sdk/src/index.js')).href
 
-// Dynamically import all YouPI packages via ESM
+// Dynamically import all YouPI packages via ESM if repository exists
 let youpiDbModule = null
 let youpiCoreModule = null
 let youpiCommonModule = null
 let youpiClientModule = null
 let youpiObserverModule = null
 
-try {
-    youpiDbModule = await import(DB_PACKAGE_INDEX)
-    youpiCoreModule = await import(CORE_PACKAGE_INDEX)
-    youpiCommonModule = await import(COMMON_PACKAGE_INDEX)
-    youpiClientModule = await import(CLIENT_SDK_INDEX)
+if (fs.existsSync(path.join(YOUPI_ROOT, 'packages/db/src/index.js'))) {
     try {
-        youpiObserverModule = await import(OBSERVER_SDK_INDEX)
-    } catch (e) {
-        console.warn('[YouPiGatewayBridge] Observer SDK optional load note:', e.message)
+        youpiDbModule = await import(DB_PACKAGE_INDEX)
+        youpiCoreModule = await import(CORE_PACKAGE_INDEX)
+        youpiCommonModule = await import(COMMON_PACKAGE_INDEX)
+        youpiClientModule = await import(CLIENT_SDK_INDEX)
+        try {
+            youpiObserverModule = await import(OBSERVER_SDK_INDEX)
+        } catch (e) {
+            console.warn('[YouPiGatewayBridge] Observer SDK optional load note:', e.message)
+        }
+    } catch (loadErr) {
+        console.warn('[YouPiGatewayBridge] Warning: Could not eagerly import YouPI packages:', loadErr.message)
     }
-} catch (loadErr) {
-    console.warn('[YouPiGatewayBridge] Warning: Could not eagerly import YouPI packages:', loadErr.message)
 }
 
 /**
@@ -277,6 +279,14 @@ export class YouPiGatewayBridge {
         } catch (err) {
             console.error('[YouPiGatewayBridge] Bridge initialization failed:', err.message)
         }
+    }
+
+    /**
+     * Checks if the YouPI sovereign gateway packages and direct database are loaded and operational.
+     * @returns {boolean}
+     */
+    isOperational() {
+        return Boolean(this.modules.db && this.modules.core && this.db)
     }
 
     // ─────────────────────────────────────────────────────────────────────────

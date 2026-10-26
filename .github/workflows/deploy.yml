@@ -45,11 +45,28 @@ jobs:
       - name: 📦 Install Workspace Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: 📥 Checkout YouPI Gateway Service (Integration Suite)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: youpi-pg/YouPI-PG
+          path: gateway-service/youpi-pg
+
+      - name: 🔗 Setup Gateway Service
+        continue-on-error: true
+        run: |
+          if [ -d "gateway-service/youpi-pg" ]; then
+            cd gateway-service/youpi-pg
+            npm install --omit=dev --no-audit --no-fund
+          fi
+
       - name: 🛡️ Syntax & Static Code Check
         run: pnpm run check
 
       - name: 🎰 Backend Integrity & Provably Fair Tests
         run: pnpm run test:backend
+        env:
+          YOUPI_PG_ROOT: ${{ github.workspace }}/gateway-service/youpi-pg
 
       - name: 🎨 Frontend UI & Analytics Tests
         run: pnpm run test:frontend

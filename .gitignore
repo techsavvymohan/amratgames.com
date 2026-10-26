@@ -45,3 +45,6 @@ backend/data/*.json
 backend/data/*.tmp
 *.tmp
 .chrome-temp*
+
+# Sovereign Gateway Service local clone
+gateway-service/
