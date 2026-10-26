@@ -231,6 +231,12 @@ export class YouPiGatewayBridge {
                     eventEmitter: this.eventEmitter
                 })
 
+                const safeExtractIntelligentAmount = (text) => {
+                    if (!text || typeof text !== 'string') return null
+                    if (/(?:^|[^\w.])-\s*[\d,]+(?:\.\d+)?/.test(text)) return null
+                    return extractIntelligentAmount(text)
+                }
+
                 this.core = {
                     queueEngine,
                     timingEngine,
@@ -243,7 +249,7 @@ export class YouPiGatewayBridge {
                     QrCode,
                     generateQrSvg,
                     generateQrMatrix,
-                    extractIntelligentAmount,
+                    extractIntelligentAmount: safeExtractIntelligentAmount,
                     extractIntelligentPaise,
                     ObservationNormalizer,
                     deviceSecurity: {
