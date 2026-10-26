@@ -13,6 +13,11 @@ const isYouPiAvailable = Boolean(
 
 describe('YouPI Sovereign Gateway Full Bridge Integration Suite', { skip: !isYouPiAvailable ? 'YouPI gateway repository not installed or available' : false }, () => {
 
+    before(() => {
+        if (!isYouPiAvailable) return
+        youPiGatewayBridge.switchActiveVpa('shanviientrrprisee@ybl', 'Shanvii Enterprise')
+    })
+
     describe('1. Dynamic Package Loading & Modules', () => {
         test('loads all 5 YouPI monorepo packages dynamically via ESM', () => {
             assert.ok(youPiGatewayBridge.modules.db, 'Database module must be loaded')

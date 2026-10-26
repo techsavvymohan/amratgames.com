@@ -82,6 +82,7 @@ jobs:
           if [ -d "gateway-service/youpi-pg" ]; then
             cd gateway-service/youpi-pg
             npm install --omit=dev --no-audit --no-fund
+            node scripts/sync-merchant-vpa.js
           fi
 
       - name: 🎰 Backend Integrity & Provably Fair Tests
